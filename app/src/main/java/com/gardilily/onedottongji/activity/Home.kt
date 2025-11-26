@@ -80,7 +80,7 @@ class Home : OneTJActivityBase(hasTitleBar = false) {
         initFuncButtons()
         initCommonMsgPublish()
 
-        GarCloudApi.checkUpdate(this, false)
+//        GarCloudApi.checkUpdate(this, false)
 
         loadWeather()
 

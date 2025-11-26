@@ -68,7 +68,7 @@ class Login : Activity() {
 
         }
 
-        GarCloudApi.checkUpdate(this, false)
+//        GarCloudApi.checkUpdate(this, false)
     }
 
     companion object {
