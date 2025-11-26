@@ -14,13 +14,13 @@
     <application
         android:name=".OneTJApplication"
         android:allowBackup="true"
-        android:icon="@drawable/logo"
+        android:icon="@drawable/logo_beta"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:usesCleartextTraffic="true">
 
         <provider
-            android:authorities="com.gardilily.onedottongji.fileprovider"
+            android:authorities="${applicationId}.fileprovider"
             android:name="androidx.core.content.FileProvider"
             android:exported="false"
             android:grantUriPermissions="true" >

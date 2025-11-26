@@ -1,3 +1,5 @@
+import org.gradle.internal.impldep.com.google.api.services.storage.Storage
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -26,6 +28,14 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+
+        create("beta"){
+            initWith(getByName("release"))
+            applicationIdSuffix = ".beta"
+            versionNameSuffix = "-beta"
+
+            resValue("string", "app_name", "一块钱Beta")
         }
     }
 
