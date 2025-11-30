@@ -2,7 +2,6 @@
 
 package com.gardilily.onedottongji.service
 
-import android.app.Activity
 import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
@@ -11,17 +10,6 @@ import android.view.View
 import android.widget.RemoteViews
 import android.widget.RemoteViewsService
 import com.gardilily.onedottongji.R
-import com.gardilily.onedottongji.tools.tongjiapi.TongjiApi
-import com.gardilily.onedottongji.tools.tongjiapi.TongjiApi.Companion.BASE_URL
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.supervisorScope
-import kotlinx.coroutines.withContext
-import org.json.JSONArray
-import java.util.Calendar
 
 class SingleDayCurriculumAppWidgetGridContainerService : RemoteViewsService() {
 
@@ -64,31 +52,17 @@ class SingleDayCurriculumAppWidgetGridContainerService : RemoteViewsService() {
         }
 
         override fun getCount(): Int {
-            return if (infoList.isEmpty()) 1 else infoList.size
+            return infoList.size
         }
 
         override fun getViewAt(position: Int): RemoteViews {
             val remoteView = RemoteViews(context.packageName, R.layout.appwidget_singledaycurriculum_item)
-            //列表为空的提示
-            if (infoList.isEmpty()){
-                remoteView.setViewVisibility(R.id.widget_course_name, View.GONE)
-                remoteView.setViewVisibility(R.id.widget_course_room, View.GONE)
-                remoteView.setViewVisibility(R.id.widget_course_teacher, View.GONE)
-                remoteView.setViewVisibility(R.id.widget_course_time, View.GONE)
 
-                remoteView.setViewVisibility(R.id.widget_course_empty, View.VISIBLE)
-                if (isDataLoaded){
-                    remoteView.setTextViewText(R.id.widget_course_empty, "今天没有课！")
-                }else{
-                    remoteView.setTextViewText(R.id.widget_course_empty, "正在加载课程表...")
-                }
-            }else{
-                val course = infoList[position]
-                remoteView.setTextViewText(R.id.widget_course_name, course.name)
-                remoteView.setTextViewText(R.id.widget_course_room, course.room)
-                remoteView.setTextViewText(R.id.widget_course_teacher, course.teacher)
-                remoteView.setTextViewText(R.id.widget_course_time, "${course.timeStart}-${course.timeEnd}")
-            }
+            val course = infoList[position]
+            remoteView.setTextViewText(R.id.widget_course_name, course.name)
+            remoteView.setTextViewText(R.id.widget_course_room, course.room)
+            remoteView.setTextViewText(R.id.widget_course_teacher, course.teacher)
+            remoteView.setTextViewText(R.id.widget_course_time, "${course.timeStart}-${course.timeEnd}")
 
             return remoteView
         }
