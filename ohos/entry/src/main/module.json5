@@ -1,4 +1,3 @@
-
 {
   "module": {
     "name": "entry",
@@ -6,7 +5,8 @@
     "description": "$string:module_desc",
     "mainElement": "EntryAbility",
     "deviceTypes": [
-      "phone"
+      "phone",
+      "tablet"
     ],
     "deliveryWithInstall": true,
     "installationFree": false,
@@ -16,9 +16,9 @@
         "name": "EntryAbility",
         "srcEntry": "./ets/entryability/EntryAbility.ets",
         "description": "$string:EntryAbility_desc",
-        "icon": "$media:icon",
+        "icon": "$media:layered_image",
         "label": "$string:EntryAbility_label",
-        "startWindowIcon": "$media:icon",
+        "startWindowIcon": "$media:logo",
         "startWindowBackground": "$color:start_window_background",
         "exported": true,
         "skills": [
@@ -27,14 +27,22 @@
               "entity.system.home"
             ],
             "actions": [
-              "action.system.home"
+              "ohos.want.action.home"
             ]
           }
         ]
       }
     ],
     "requestPermissions": [
-      {"name" :  "ohos.permission.INTERNET"},
+      {
+        "name": "ohos.permission.INTERNET",
+        "reason": "$string:Permission_Internet_require_reason"
+        // TODO :"usedScene" https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/declare-permissions
+      },
+      {
+        "name": "ohos.permission.GET_BUNDLE_INFO",
+        "reason": "$string:Permission_Bundle_info_require"
+      }
     ]
   }
 }
