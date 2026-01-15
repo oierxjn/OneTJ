@@ -1,9 +1,9 @@
 {
   "app": {
-    "bundleName": "com.example.onetj",
-    "vendor": "example",
-    "versionCode": 1000000,
-    "versionName": "1.0.0",
+    "bundleName": "com.oierxjn.onetj",
+    "vendor": "tongji",
+    "versionCode": 2000000,
+    "versionName": "2.0.0",
     "icon": "$media:layered_image",
     "label": "$string:app_name"
   }
