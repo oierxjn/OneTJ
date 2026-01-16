@@ -3,6 +3,10 @@
     {
       "name": "app_name",
       "value": "一统同济"
+    },
+    {
+      "name": "app_version",
+      "value": "2.0.0"
     }
   ]
 }

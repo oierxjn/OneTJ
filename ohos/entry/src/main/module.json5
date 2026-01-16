@@ -36,8 +36,13 @@
     "requestPermissions": [
       {
         "name": "ohos.permission.INTERNET",
-        "reason": "$string:Permission_Internet_require_reason"
-        // TODO :"usedScene" https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/declare-permissions
+        "reason": "$string:Permission_Internet_require_reason",
+        "usedScene": {
+          "when": "inuse",
+          "abilities": [
+            "EntryAbility"
+          ]
+        }
       },
       {
         "name": "ohos.permission.GET_BUNDLE_INFO",

@@ -11,6 +11,30 @@
     {
       "name": "EntryAbility_label",
       "value": "OneTJ"
+    },
+    {
+      "name": "Uni_login",
+      "value": "Unified Identity Authentication Login"
+    },
+    {
+      "name": "Join_in_group",
+      "value": "Join Discussion Group"
+    },
+    {
+      "name": "Build_time",
+      "value": "2026.01.14-17:43"
+    },
+    {
+      "name": "Version_name",
+      "value": "1.0.2"
+    },
+    {
+      "name": "Permission_Internet_require_reason",
+      "value": "Used to verify user login and request cloud user data"
+    },
+    {
+      "name": "Permission_Bundle_info_require",
+      "value": "Used to read the version package information of this application"
     }
   ]
 }
