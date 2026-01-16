@@ -110,6 +110,78 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_inappwebview:
+    dependency: "direct main"
+    description:
+      path: flutter_inappwebview
+      ref: HEAD
+      resolved-ref: bfc8e52cc9ba6e4f361bad95f7a6ee92a56ec6f6
+      url: "https://gitee.com/openharmony-sig/flutter_inappwebview.git"
+    source: git
+    version: "6.0.0"
+  flutter_inappwebview_android:
+    dependency: transitive
+    description:
+      path: flutter_inappwebview_android
+      ref: HEAD
+      resolved-ref: bfc8e52cc9ba6e4f361bad95f7a6ee92a56ec6f6
+      url: "https://gitee.com/openharmony-sig/flutter_inappwebview.git"
+    source: git
+    version: "1.0.12"
+  flutter_inappwebview_internal_annotations:
+    dependency: transitive
+    description:
+      path: "dev_packages/flutter_inappwebview_internal_annotations"
+      ref: HEAD
+      resolved-ref: bfc8e52cc9ba6e4f361bad95f7a6ee92a56ec6f6
+      url: "https://gitee.com/openharmony-sig/flutter_inappwebview.git"
+    source: git
+    version: "1.1.1"
+  flutter_inappwebview_ios:
+    dependency: transitive
+    description:
+      path: flutter_inappwebview_ios
+      ref: HEAD
+      resolved-ref: bfc8e52cc9ba6e4f361bad95f7a6ee92a56ec6f6
+      url: "https://gitee.com/openharmony-sig/flutter_inappwebview.git"
+    source: git
+    version: "1.0.13"
+  flutter_inappwebview_macos:
+    dependency: transitive
+    description:
+      path: flutter_inappwebview_macos
+      ref: HEAD
+      resolved-ref: bfc8e52cc9ba6e4f361bad95f7a6ee92a56ec6f6
+      url: "https://gitee.com/openharmony-sig/flutter_inappwebview.git"
+    source: git
+    version: "1.0.11"
+  flutter_inappwebview_ohos:
+    dependency: transitive
+    description:
+      path: flutter_inappwebview_ohos
+      ref: HEAD
+      resolved-ref: bfc8e52cc9ba6e4f361bad95f7a6ee92a56ec6f6
+      url: "https://gitee.com/openharmony-sig/flutter_inappwebview.git"
+    source: git
+    version: "0.0.1"
+  flutter_inappwebview_platform_interface:
+    dependency: transitive
+    description:
+      path: flutter_inappwebview_platform_interface
+      ref: HEAD
+      resolved-ref: bfc8e52cc9ba6e4f361bad95f7a6ee92a56ec6f6
+      url: "https://gitee.com/openharmony-sig/flutter_inappwebview.git"
+    source: git
+    version: "1.0.10"
+  flutter_inappwebview_web:
+    dependency: transitive
+    description:
+      path: flutter_inappwebview_web
+      ref: HEAD
+      resolved-ref: bfc8e52cc9ba6e4f361bad95f7a6ee92a56ec6f6
+      url: "https://gitee.com/openharmony-sig/flutter_inappwebview.git"
+    source: git
+    version: "1.0.8"
   flutter_launcher_icons:
     dependency: "direct main"
     description:
@@ -131,6 +203,11 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_web_plugins:
+    dependency: transitive
+    description: flutter
+    source: sdk
+    version: "0.0.0"
   image:
     dependency: transitive
     description:
@@ -139,6 +216,14 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "4.7.2"
+  js:
+    dependency: transitive
+    description:
+      name: js
+      sha256: f2c445dce49627136094980615a031419f7f3eb393237e4ecd97ac15dea343f3
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "0.6.7"
   json_annotation:
     dependency: transitive
     description:
@@ -219,6 +304,14 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "6.0.2"
+  plugin_platform_interface:
+    dependency: transitive
+    description:
+      name: plugin_platform_interface
+      sha256: "4820fbfdb9478b1ebae27888254d445073732dae3d6ea81f0b7e06d5dedc3f02"
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "2.1.8"
   posix:
     dependency: transitive
     description:
