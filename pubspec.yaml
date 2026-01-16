@@ -39,6 +39,7 @@ dependencies:
 
   flutter_inappwebview:
     path: ./assets/packages/flutter_inappwebview
+  webview_windows: ^0.4.0
 
 dev_dependencies:
   flutter_test:
