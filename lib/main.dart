@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:onetj/features/lancher/views/lancher_view.dart';
+import 'package:onetj/features/launcher/views/launcher_view.dart';
 import 'package:onetj/features/login/views/login_view.dart';
 
 void main() {
