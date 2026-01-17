@@ -37,6 +37,8 @@ dependencies:
   flutter_launcher_icons: ^0.13.1
   go_router: ^14.2.0
 
+  uuid: ^4.4.2
+
   flutter_inappwebview:
     path: ./local_packages/flutter_inappwebview/flutter_inappwebview
 
