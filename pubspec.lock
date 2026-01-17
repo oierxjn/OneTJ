@@ -113,73 +113,66 @@ packages:
   flutter_inappwebview:
     dependency: "direct main"
     description:
-      path: "assets/packages/flutter_inappwebview"
+      path: "local_packages/flutter_inappwebview/flutter_inappwebview"
       relative: true
     source: path
-    version: "6.0.0"
+    version: "6.1.5"
   flutter_inappwebview_android:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
-      path: flutter_inappwebview_android
-      ref: HEAD
-      resolved-ref: "5f0fff2fd666c5f3bb8cf336e69f1bcf37774410"
-      url: "https://gitcode.com/openharmony-sig/flutter_inappwebview.git"
-    source: git
-    version: "1.0.12"
+      path: "local_packages/flutter_inappwebview/flutter_inappwebview_android"
+      relative: true
+    source: path
+    version: "1.1.3"
   flutter_inappwebview_internal_annotations:
     dependency: transitive
     description:
-      path: "dev_packages/flutter_inappwebview_internal_annotations"
-      ref: HEAD
-      resolved-ref: "5f0fff2fd666c5f3bb8cf336e69f1bcf37774410"
-      url: "https://gitcode.com/openharmony-sig/flutter_inappwebview.git"
-    source: git
+      path: "local_packages/flutter_inappwebview/dev_packages/flutter_inappwebview_internal_annotations"
+      relative: true
+    source: path
     version: "1.1.1"
   flutter_inappwebview_ios:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
-      path: flutter_inappwebview_ios
-      ref: HEAD
-      resolved-ref: "5f0fff2fd666c5f3bb8cf336e69f1bcf37774410"
-      url: "https://gitcode.com/openharmony-sig/flutter_inappwebview.git"
-    source: git
-    version: "1.0.13"
+      path: "local_packages/flutter_inappwebview/flutter_inappwebview_ios"
+      relative: true
+    source: path
+    version: "1.1.2"
   flutter_inappwebview_macos:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
-      path: flutter_inappwebview_macos
-      ref: HEAD
-      resolved-ref: "5f0fff2fd666c5f3bb8cf336e69f1bcf37774410"
-      url: "https://gitcode.com/openharmony-sig/flutter_inappwebview.git"
-    source: git
-    version: "1.0.11"
+      path: "local_packages/flutter_inappwebview/flutter_inappwebview_macos"
+      relative: true
+    source: path
+    version: "1.1.2"
   flutter_inappwebview_ohos:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
-      path: flutter_inappwebview_ohos
-      ref: HEAD
-      resolved-ref: "5f0fff2fd666c5f3bb8cf336e69f1bcf37774410"
-      url: "https://gitcode.com/openharmony-sig/flutter_inappwebview.git"
-    source: git
-    version: "0.0.1"
+      path: "local_packages/flutter_inappwebview/flutter_inappwebview_ohos"
+      relative: true
+    source: path
+    version: "1.1.3"
   flutter_inappwebview_platform_interface:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
-      path: flutter_inappwebview_platform_interface
-      ref: HEAD
-      resolved-ref: "5f0fff2fd666c5f3bb8cf336e69f1bcf37774410"
-      url: "https://gitcode.com/openharmony-sig/flutter_inappwebview.git"
-    source: git
-    version: "1.0.10"
+      path: "local_packages/flutter_inappwebview/flutter_inappwebview_platform_interface"
+      relative: true
+    source: path
+    version: "1.3.0+1"
   flutter_inappwebview_web:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
-      path: flutter_inappwebview_web
-      ref: HEAD
-      resolved-ref: "5f0fff2fd666c5f3bb8cf336e69f1bcf37774410"
-      url: "https://gitcode.com/openharmony-sig/flutter_inappwebview.git"
-    source: git
-    version: "1.0.8"
+      path: "local_packages/flutter_inappwebview/flutter_inappwebview_web"
+      relative: true
+    source: path
+    version: "1.1.2"
+  flutter_inappwebview_windows:
+    dependency: "direct overridden"
+    description:
+      path: "local_packages/flutter_inappwebview/flutter_inappwebview_windows"
+      relative: true
+    source: path
+    version: "0.6.0"
   flutter_launcher_icons:
     dependency: "direct main"
     description:
@@ -222,14 +215,6 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "4.7.2"
-  js:
-    dependency: transitive
-    description:
-      name: js
-      sha256: f2c445dce49627136094980615a031419f7f3eb393237e4ecd97ac15dea343f3
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "0.6.7"
   json_annotation:
     dependency: transitive
     description:
@@ -411,14 +396,14 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "14.3.0"
-  webview_windows:
-    dependency: "direct main"
+  web:
+    dependency: transitive
     description:
-      name: webview_windows
-      sha256: "47fcad5875a45db29dbb5c9e6709bf5c88dcc429049872701343f91ed7255730"
+      name: web
+      sha256: "868d88a33d8a87b18ffc05f9f030ba328ffefba92d6c127917a2ba740f9cfe4a"
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "0.4.0"
+    version: "1.1.1"
   xml:
     dependency: transitive
     description:
@@ -437,4 +422,4 @@ packages:
     version: "3.1.3"
 sdks:
   dart: ">=3.6.2 <4.0.0"
-  flutter: ">=3.22.0"
+  flutter: ">=3.24.0"
