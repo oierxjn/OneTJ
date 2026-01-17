@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../view_models/login_view_model.dart';
 
@@ -12,7 +13,7 @@ class LoginView extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('一统同济'),
+        title: Text(AppLocalizations.of(context).appTitle),
       ),
       body: InAppWebView(
         initialUrlRequest: URLRequest(

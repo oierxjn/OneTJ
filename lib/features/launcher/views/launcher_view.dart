@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
-class LancherView extends StatefulWidget {
-  const LancherView({super.key});
+class LauncherView extends StatefulWidget {
+  const LauncherView({super.key});
 
   @override
-  State<LancherView> createState() => _LancherViewState();
+  State<LauncherView> createState() => _LauncherViewState();
 }
 
-class _LancherViewState extends State<LancherView> {
+class _LauncherViewState extends State<LauncherView> {
   @override
   void initState() {
     super.initState();
@@ -22,7 +23,7 @@ class _LancherViewState extends State<LancherView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('一统同济'),
+        title: Text(AppLocalizations.of(context).appTitle),
       ),
       body: Center(
         child: Image.asset('assets/icon/logo.jpg'),
