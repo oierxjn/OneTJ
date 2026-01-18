@@ -33,6 +33,9 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   intl: any
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -41,6 +44,7 @@ dependencies:
   go_router: ^14.2.0
 
   uuid: ^4.4.2
+  shared_preferences: ^2.3.2
 
   flutter_inappwebview:
     path: ./local_packages/flutter_inappwebview/flutter_inappwebview

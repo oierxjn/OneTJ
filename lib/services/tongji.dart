@@ -24,8 +24,10 @@ class TongjiApi{
     );
     if (response.statusCode >= 200 && response.statusCode < 300) {
       final Code2TokenData data = Code2TokenData.fromJson(json.decode(response.body));
+      // TODO 可能需要做Token存储
       return data.toJson();
     } else {
+      // TODO 需要用 NetworkException 包装
       throw AppException(response.statusCode.toString(), 'Failed to get token');
     }
   }
