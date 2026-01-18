@@ -1,18 +1,19 @@
 import 'package:uuid/uuid.dart';
-import 'package:onetj/app/constant/site_constant.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+
+import 'package:onetj/app/constant/site_constant.dart';
 import 'package:onetj/app/exception/app_exception.dart';
 
 class LoginModel {
-  final String _baseUrl = 'api.tongji.edu.cn';
-  final String _path = '/keycloak/realms/OpenPlatform/protocol/openid-connect/auth';
+  final String _baseUrl = tongjiApiBaseUrl;
+  final String _path = loginEndpointPath;
 
   final String _responseType = 'code';
   final String _scope = oauthScope.join(' ');
   final String _kcIdpHint = 'tjiam';
-  final String _clientId = 'authorization-xxb-onedottongji-yuchen';
+  final String _clientId = tongjiClientID;
 
-  final String _redirectUri = 'onetj://fakeredir.jkljkluiouio.top';
+  final String _redirectUri = oneTJredirectUri;
 
   final String _state = Uuid().v4();
 

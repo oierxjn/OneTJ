@@ -1,10 +1,11 @@
 import 'dart:async';
 
-import '../models/login_model.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+
 import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/models/event_model.dart';
-import '../../../models/base_model.dart';
+import 'package:onetj/features/login/models/login_model.dart';
+import 'package:onetj/models/base_model.dart';
 
 class LoginViewModel extends BaseModel {
   LoginViewModel({
