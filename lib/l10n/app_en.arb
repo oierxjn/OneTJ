@@ -1,4 +1,5 @@
 {
   "@@locale": "en",
-  "appTitle": "OneTJ"
+  "appTitle": "OneTJ",
+  "authStateMismatch": "Auth state mismatch, possible network attack"
 }

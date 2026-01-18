@@ -2,13 +2,13 @@ sealed class BaseEvent {
   const BaseEvent();
 }
 sealed class UiEvent extends BaseEvent {
-  const UiEvent();
+  final String? message;
+  final String? code;
+  const UiEvent({this.message, this.code});
 }
 class ShowToastEvent extends UiEvent {
-  final String message;
-  const ShowToastEvent(this.message);
+  const ShowToastEvent({super.message, super.code});
 }
 class ShowSnackBarEvent extends UiEvent {
-  final String message;
-  const ShowSnackBarEvent(this.message);
+  const ShowSnackBarEvent({super.message, super.code});
 }

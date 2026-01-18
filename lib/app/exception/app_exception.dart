@@ -10,5 +10,6 @@ class AppException implements Exception {
 }
 
 class AuthStateMismatchException extends AppException {
-  AuthStateMismatchException() : super('AUTH_STATE_MISMATCH', 'Auth state mismatch, possible network attack');
+  static const String _code = 'AUTH_STATE_MISMATCH';
+  AuthStateMismatchException() : super(_code, 'Auth state mismatch, possible network attack');
 }

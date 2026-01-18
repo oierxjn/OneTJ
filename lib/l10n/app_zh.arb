@@ -1,4 +1,5 @@
 {
     "@@locale": "zh",
-    "appTitle": "一统同济"
+    "appTitle": "一统同济",
+    "authStateMismatch": "认证状态不匹配，可能遭受到网络攻击"
 }
