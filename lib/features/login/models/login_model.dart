@@ -31,7 +31,7 @@ class LoginModel {
     );
   }
 
-  Future<void> handleRedirectUri(InAppWebViewController controller, WebUri uri) async {
+  Future<NavigationActionPolicy> handleRedirectUri(InAppWebViewController controller, WebUri uri) async {
     if (uri.toString().startsWith(_redirectUri)) {
       final code = uri.queryParameters['code'] ?? '';
       final state = uri.queryParameters['state'] ?? '';
@@ -39,7 +39,9 @@ class LoginModel {
         throw AuthStateMismatchException();
       }
       // TODO: 处理 code，例如发送到服务器进行交换 token
+      return NavigationActionPolicy.CANCEL;
     }
+    return NavigationActionPolicy.ALLOW;
   }
 
 }

@@ -59,11 +59,11 @@ class _LoginViewState extends State<LoginView> {
         initialUrlRequest: URLRequest(
           url: WebUri(viewModel.authUri.toString()),
         ),
-        onLoadStart: (controller, url) async {
-          if (url == null) {
-            return;
+        shouldOverrideUrlLoading: (controller, navigationAction) async {
+          if (navigationAction.request.url == null) {
+            return NavigationActionPolicy.ALLOW;
           }
-          await viewModel.handleRedirectUri(controller, url);
+          return await viewModel.handleRedirectUri(controller, navigationAction.request.url!);
         },
       ),
     );

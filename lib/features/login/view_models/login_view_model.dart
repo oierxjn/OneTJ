@@ -19,11 +19,12 @@ class LoginViewModel extends BaseModel {
 
   Uri get authUri => _model.buildAuthUri();
 
-  Future<void> handleRedirectUri(InAppWebViewController controller, WebUri uri) async {
+  Future<NavigationActionPolicy> handleRedirectUri(InAppWebViewController controller, WebUri uri) async {
     try {
-      await _model.handleRedirectUri(controller, uri);
+      return await _model.handleRedirectUri(controller, uri);
     } on AppException catch (e) {
       _eventController.add(ShowSnackBarEvent(message: e.message, code: e.code));
+      return NavigationActionPolicy.CANCEL;
     }
   }
 
