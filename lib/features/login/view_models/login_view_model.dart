@@ -1,7 +1,8 @@
 import '../models/login_model.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import '../../../models/base_model.dart';
 
-class LoginViewModel {
+class LoginViewModel extends BaseModel {
   LoginViewModel({
     LoginModel? model,
   }) : _model = model ?? LoginModel();
@@ -10,7 +11,7 @@ class LoginViewModel {
 
   Uri get authUri => _model.buildAuthUri();
 
-  void handleRedirectUri(InAppWebViewController controller, WebUri uri) {
-    _model.handleRedirectUri(controller, uri);
+  Future<void> handleRedirectUri(InAppWebViewController controller, WebUri uri) async {
+    await _model.handleRedirectUri(controller, uri);
   }
 }

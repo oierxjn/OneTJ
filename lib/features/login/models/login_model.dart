@@ -31,7 +31,7 @@ class LoginModel {
     );
   }
 
-  void handleRedirectUri(InAppWebViewController controller, WebUri uri) {
+  Future<void> handleRedirectUri(InAppWebViewController controller, WebUri uri) async {
     if (uri.toString().startsWith(_redirectUri)) {
       final code = uri.queryParameters['code'] ?? '';
       final state = uri.queryParameters['state'] ?? '';

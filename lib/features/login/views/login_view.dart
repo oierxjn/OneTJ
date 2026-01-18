@@ -19,11 +19,11 @@ class LoginView extends StatelessWidget {
         initialUrlRequest: URLRequest(
           url: WebUri(viewModel.authUri.toString()),
         ),
-        onLoadStart: (controller, url) {
+        onLoadStart: (controller, url) async {
           if (url == null) {
             return;
           }
-          viewModel.handleRedirectUri(controller, url);
+          await viewModel.handleRedirectUri(controller, url);
         },
       ),
     );
