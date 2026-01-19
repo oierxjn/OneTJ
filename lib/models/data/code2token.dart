@@ -19,7 +19,10 @@ class Code2TokenData {
   @JsonKey(name: 'refresh_expires_in')
   final int refreshExpiresIn;
 
-  @JsonKey(name: 'id_token')
+  @JsonKey(name: 'not-before-policy', defaultValue: 0)
+  final int notBeforePolicy;
+
+  @JsonKey(name: 'id_token', defaultValue: '')
   final String idToken;
 
   final String scope;
@@ -33,6 +36,7 @@ class Code2TokenData {
     required this.expiresIn,
     required this.refreshToken,
     required this.refreshExpiresIn,
+    required this.notBeforePolicy,
     required this.idToken,
     required this.scope,
     required this.sessionState,
