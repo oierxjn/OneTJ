@@ -112,7 +112,12 @@ class TongjiApi {
         responseBody: response.body,
       );
     }
-    final Map<String, dynamic> jsonBody = json.decode(response.body) as Map<String, dynamic>;
+    final Map<String, dynamic> jsonBody;
+    try {
+      jsonBody = json.decode(response.body) as Map<String, dynamic>;
+    } catch (error) {
+      throw JSONResolveException(message: 'Failed to parse response JSON', cause: error);
+    }
     final ApiResponse<T> payload = ApiResponse.fromJson(jsonBody, parseData);
     return payload.data;
   }
@@ -159,7 +164,12 @@ class TongjiApi {
         responseBody: response.body,
       );
     }
-    final Map<String, dynamic> jsonBody = json.decode(response.body) as Map<String, dynamic>;
+    final Map<String, dynamic> jsonBody;
+    try {
+      jsonBody = json.decode(response.body) as Map<String, dynamic>;
+    } catch (error) {
+      throw JSONResolveException(message: 'Failed to parse response JSON', cause: error);
+    }
     final ApiResponse<T> payload = ApiResponse.fromJson(jsonBody, parseData);
     return payload.data;
   }
