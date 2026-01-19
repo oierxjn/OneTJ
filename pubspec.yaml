@@ -50,6 +50,7 @@ dependencies:
     path: ./local_packages/flutter_inappwebview/flutter_inappwebview
   http: ^1.6.0
   json_annotation: ^4.9.0
+  logging: ^1.3.0
 
 
 dev_dependencies:
@@ -113,6 +114,10 @@ flutter_launcher_icons:
   image_path: "assets/icon/logo.jpg"
 
 dependency_overrides:
+  path_provider:
+    git:
+      url: "https://gitcode.com/openharmony-tpc/flutter_packages.git"
+      path: "packages/path_provider/path_provider"
   flutter_inappwebview_platform_interface:
     path: ./local_packages/flutter_inappwebview/flutter_inappwebview_platform_interface
   flutter_inappwebview_android:

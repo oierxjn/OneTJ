@@ -8,6 +8,8 @@
   (branch `br_v6.1.5_ohos`) cloned into `local_packages/flutter_inappwebview`.
 - The app pins all `flutter_inappwebview_*` subpackages to that local clone via
   `dependency_overrides` in `pubspec.yaml`.
+- For HarmonyOS, `path_provider` must be overridden to the OpenHarmony git source to
+  avoid hosted-vs-git resolver conflicts (needed by `hive_flutter`).
 
 ## Workflow
 - Do not edit generated files under `windows/flutter/ephemeral/`.
