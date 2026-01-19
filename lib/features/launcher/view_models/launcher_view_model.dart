@@ -17,21 +17,24 @@ class LauncherViewModel extends BaseModel {
   final StreamController<UiEvent> _eventController;
   Stream<UiEvent> get events => _eventController.stream;
 
+  /// 进行初始化任务和跳转路由
   Future<void> initialize() async {
     // 同步任务
     _initializeLogging();
-    await Future.wait([
+    final List<Object?> results = await Future.wait([
       // 异步任务
-      _init(),
+      _initialize(),
       // 启动延迟
       Future.delayed(const Duration(milliseconds: 1200)),
     ]);
+    final String route = results.first as String;
+    _eventController.add(NavigateEvent(route));
   }
 
-  Future<void> _init() async {
+  Future<String> _initialize() async {
     await Hive.initFlutter();
     final String route = await _resolveInitialRoute();
-    _eventController.add(NavigateEvent(route));
+    return route;
   }
 
   Future<String> _resolveInitialRoute() async {
