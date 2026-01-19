@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:onetj/models/base_model.dart';
 import 'package:onetj/features/home/models/home_model.dart';
+import 'package:onetj/repo/student_info_repository.dart';
 
 class HomeViewModel extends BaseViewModel {
   HomeViewModel({HomeModel? model})
@@ -18,8 +19,8 @@ class HomeViewModel extends BaseViewModel {
 
   Future<void> loadStudentInfo() async {
     try {
-      final String data = await _model.fetchStudentInfo();
-      _studentInfoController.add(data);
+      final StudentInfoData data = await _model.fetchStudentInfo();
+      _studentInfoController.add("姓名：${data.name}\n学号：${data.userId}");
     } catch (error) {
       _errorController.add(error);
     }

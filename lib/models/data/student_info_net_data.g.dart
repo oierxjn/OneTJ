@@ -11,7 +11,7 @@ StudentInfoNetData _$StudentInfoNetDataFromJson(Map<String, dynamic> json) =>
       campusCode: json['campusCode'] as String,
       campusName: json['campusName'] as String?,
       createTime: json['createTime'] as String,
-      currentGrade: json['currentGrade'] as String,
+      currentGrade: (json['currentGrade'] as num).toInt(),
       deptCode: json['deptCode'] as String,
       deptName: json['deptName'] as String,
       enrolDate: json['enrolDate'] as String,

@@ -9,6 +9,7 @@ import 'package:onetj/models/api_response.dart';
 import 'package:onetj/models/data/code2token.dart';
 import 'package:onetj/models/data/student_info_net_data.dart';
 import 'package:onetj/repo/token_repository.dart';
+import 'package:onetj/repo/student_info_repository.dart';
 
 class TongjiApi {
   TongjiApi._();
@@ -191,9 +192,9 @@ class TongjiApi {
     return refreshed.accessToken;
   }
 
-  Future<StudentInfoNetData> fetchStudentInfo() async {
+  Future<StudentInfoData> fetchStudentInfo() async {
     final Uri uri = Uri.https(_baseUrl, studentInfoPath);
-    return _authorizedGetData<StudentInfoNetData>(
+    final StudentInfoNetData netData = await _authorizedGetData<StudentInfoNetData>(
       uri,
       parseData: (data) {
         final List<dynamic> list = (data as List<dynamic>?) ?? const [];
@@ -203,5 +204,6 @@ class TongjiApi {
         return StudentInfoNetData.fromJson(list.first as Map<String, dynamic>);
       },
     );
+    return StudentInfoData.fromNetData(netData);
   }
 }
