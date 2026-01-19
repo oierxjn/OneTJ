@@ -45,8 +45,11 @@ class TongjiApi {
       await repo.saveFromCode2Token(data);
       return;
     }
-    // TODO: wrap with NetworkException
-    throw AppException(response.statusCode.toString(), 'Failed to get token');
+    throw NetworkException.http(
+      statusCode: response.statusCode,
+      uri: uri,
+      responseBody: response.body,
+    );
   }
 
   Future<Code2TokenData> refreshToken(String refreshToken) async {
@@ -66,6 +69,10 @@ class TongjiApi {
       _logger.info('refresh token response: ${response.body}');
       return Code2TokenData.fromJson(json.decode(response.body));
     }
-    throw AppException(response.statusCode.toString(), 'Failed to refresh token');
+    throw NetworkException.http(
+      statusCode: response.statusCode,
+      uri: uri,
+      responseBody: response.body,
+    );
   }
 }
