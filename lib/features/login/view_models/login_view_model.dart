@@ -7,7 +7,7 @@ import 'package:onetj/models/event_model.dart';
 import 'package:onetj/features/login/models/login_model.dart';
 import 'package:onetj/models/base_model.dart';
 
-class LoginViewModel extends BaseModel {
+class LoginViewModel extends BaseViewModel {
   LoginViewModel({
     LoginModel? model,
   })  : _model = model ?? LoginModel(),

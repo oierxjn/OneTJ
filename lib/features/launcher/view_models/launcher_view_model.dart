@@ -9,7 +9,7 @@ import 'package:onetj/models/event_model.dart';
 import 'package:onetj/repo/token_repository.dart';
 import 'package:onetj/services/tongji.dart';
 
-class LauncherViewModel extends BaseModel {
+class LauncherViewModel extends BaseViewModel {
   LauncherViewModel() : _eventController = StreamController<UiEvent>.broadcast();
 
   static final Logger _logger = Logger('LauncherViewModel');
