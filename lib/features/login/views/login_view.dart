@@ -3,10 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:go_router/go_router.dart';
+
 import 'package:onetj/models/event_model.dart';
+import 'package:onetj/app/exception/app_exception.dart';
 
 import '../view_models/login_view_model.dart';
-import '../../../app/exception/app_exception.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -38,6 +40,11 @@ class _LoginViewState extends State<LoginView> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(event.message ?? '')),
         );
+        return;
+      }
+      if (event is NavigateEvent) {
+        if (!mounted) return;
+        context.go(event.route);
       }
     });
   }

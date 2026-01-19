@@ -19,3 +19,13 @@
 - To silence MSVC warning C4819 (encoding mismatch), add `/utf-8` in
   `local_packages/flutter_inappwebview/flutter_inappwebview_windows/windows/CMakeLists.txt`
   via `target_compile_options(flutter_inappwebview_windows_plugin PRIVATE /utf-8)`.
+
+## Project structure
+- `lib/app/`: app-level constants and exceptions.
+- `lib/features/`: feature modules (e.g. `launcher`, `login`) with `models/`, `view_models/`, `views/`.
+- `lib/models/`: shared data models (including API response models).
+- `lib/repo/`: repositories for persistence/cache (e.g. token repo).
+- `lib/services/`: API/services layer (e.g. `TongjiApi`).
+- `lib/l10n/`: localization ARB files.
+- `assets/`: image assets referenced by the app.
+- `local_packages/`: local forks/overrides (e.g. `flutter_inappwebview` OHOS fork).

@@ -22,7 +22,12 @@ class LoginViewModel extends BaseModel {
 
   Future<NavigationActionPolicy> handleRedirectUri(InAppWebViewController controller, WebUri uri) async {
     try {
-      return await _model.handleRedirectUri(controller, uri);
+      final bool shouldNavigate = await _model.exchangeCodeIfRedirect(uri);
+      if (shouldNavigate) {
+        _eventController.add(const NavigateEvent('/home'));
+        return NavigationActionPolicy.CANCEL;
+      }
+      return NavigationActionPolicy.ALLOW;
     } on AppException catch (e) {
       _eventController.add(ShowSnackBarEvent(message: e.message, code: e.code));
       return NavigationActionPolicy.CANCEL;

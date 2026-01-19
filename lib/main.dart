@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:onetj/features/launcher/views/launcher_view.dart';
-import 'package:onetj/features/login/views/login_view.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
+import 'package:onetj/features/home/views/home_view.dart';
+import 'package:onetj/features/launcher/views/launcher_view.dart';
+import 'package:onetj/features/login/views/login_view.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,6 +27,11 @@ class OneTJApp extends StatelessWidget {
         path: '/login',
         name: 'login',
         builder: (context, state) => const LoginView(),
+      ),
+      GoRoute(
+        path: '/home',
+        name: 'home',
+        builder: (context, state) => const HomeView(),
       ),
     ],
   );

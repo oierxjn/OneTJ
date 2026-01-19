@@ -12,3 +12,8 @@ class ShowToastEvent extends UiEvent {
 class ShowSnackBarEvent extends UiEvent {
   const ShowSnackBarEvent({super.message, super.code});
 }
+
+class NavigateEvent extends UiEvent {
+  final String route;
+  const NavigateEvent(this.route);
+}

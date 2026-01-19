@@ -33,18 +33,23 @@ class LoginModel {
     );
   }
 
-  Future<NavigationActionPolicy> handleRedirectUri(InAppWebViewController controller, WebUri uri) async {
-    if (uri.toString().startsWith(_redirectUri)) {
-      final code = uri.queryParameters['code'] ?? '';
-      final state = uri.queryParameters['state'] ?? '';
-      if (state != _state) {
-        throw AuthStateMismatchException();
-      }
-      final TongjiApi api = TongjiApi();
-      await api.code2token(code);
-      return NavigationActionPolicy.CANCEL;
+  /// 处理重定向URI，提取code并交换token
+  /// 
+  /// 如果URI不是重定向URI，返回false。
+  /// 如果state不匹配，抛出[AuthStateMismatchException]。
+  /// 否则，调用[TongjiApi.code2token]交换token，并返回true。
+  Future<bool> exchangeCodeIfRedirect(WebUri uri) async {
+    if (!uri.toString().startsWith(_redirectUri)) {
+      return false;
     }
-    return NavigationActionPolicy.ALLOW;
+    final code = uri.queryParameters['code'] ?? '';
+    final state = uri.queryParameters['state'] ?? '';
+    if (state != _state) {
+      throw AuthStateMismatchException();
+    }
+    final TongjiApi api = TongjiApi();
+    await api.code2token(code);
+    return true;
   }
 
 }
