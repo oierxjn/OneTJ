@@ -11,10 +11,12 @@ class LauncherView extends StatefulWidget {
 }
 
 class _LauncherViewState extends State<LauncherView> {
+  static Future<void>? _initFuture;
+
   @override
   void initState() {
     super.initState();
-    _initializeApp();
+    _initFuture ??= _initializeApp();
   }
 
   Future<void> _initializeApp() async {
