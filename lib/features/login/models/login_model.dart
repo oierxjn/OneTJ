@@ -3,6 +3,7 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
 import 'package:onetj/app/constant/site_constant.dart';
 import 'package:onetj/app/exception/app_exception.dart';
+import 'package:onetj/services/tongji.dart';
 
 class LoginModel {
   final String _baseUrl = tongjiApiBaseUrl;
@@ -39,7 +40,8 @@ class LoginModel {
       if (state != _state) {
         throw AuthStateMismatchException();
       }
-      // TODO: 处理 code，例如发送到服务器进行交换 token
+      final TongjiApi api = TongjiApi();
+      await api.code2token(code);
       return NavigationActionPolicy.CANCEL;
     }
     return NavigationActionPolicy.ALLOW;
