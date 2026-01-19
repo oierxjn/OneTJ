@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:logging/logging.dart';
+
+import 'package:onetj/features/launcher/view_models/launcher_view_model.dart';
+import 'package:onetj/models/event_model.dart';
 
 class LauncherView extends StatefulWidget {
   const LauncherView({super.key});
@@ -13,24 +16,27 @@ class LauncherView extends StatefulWidget {
 
 class _LauncherViewState extends State<LauncherView> {
   static Future<void>? _initFuture;
+  late final LauncherViewModel _viewModel;
+  StreamSubscription<UiEvent>? _eventSub;
 
   @override
   void initState() {
     super.initState();
-    _initFuture ??= _initializeApp();
+    _viewModel = LauncherViewModel();
+    _eventSub = _viewModel.events.listen((event) {
+      if (event is NavigateEvent) {
+        if (!mounted) return;
+        context.go(event.route);
+      }
+    });
+    _initFuture ??= _viewModel.initialize();
   }
 
-  Future<void> _initializeApp() async {
-    Logger.root.level = Level.INFO;
-    Logger.root.onRecord.listen((record) {
-      // Basic log sink for logging package.
-      // ignore: avoid_print
-      print('${record.time} [${record.level.name}] ${record.loggerName}: ${record.message}');
-    });
-    await Hive.initFlutter();
-    await Future.delayed(const Duration(milliseconds: 1200));
-    if (!mounted) return;
-    context.go('/login');
+  @override
+  void dispose() {
+    _eventSub?.cancel();
+    _viewModel.dispose();
+    super.dispose();
   }
 
   @override

@@ -14,7 +14,9 @@ const List<String> oauthScope = [
   "rt_onetongji_msg_detail",
 ];
 const String tongjiApiBaseUrl = "api.tongji.edu.cn";
+
 const String loginEndpointPath = "/keycloak/realms/OpenPlatform/protocol/openid-connect/auth";
 const String code2tokenPath = "/v1/token";
+
 const String tongjiClientID = "authorization-xxb-onedottongji-yuchen";
 const String oneTJredirectUri = "onetj://fakeredir.jkljkluiouio.top";

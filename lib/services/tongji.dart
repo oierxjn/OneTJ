@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:logging/logging.dart';
 
 import 'package:onetj/app/constant/site_constant.dart';
 import 'package:onetj/app/exception/app_exception.dart';
@@ -18,6 +19,8 @@ class TongjiApi {
   static final TongjiApi _instance = TongjiApi._();
 
   final String _baseUrl = tongjiApiBaseUrl;
+
+  final Logger _logger = Logger('TongjiApi');
 
   /// Exchange auth code for token.
   ///
@@ -44,5 +47,25 @@ class TongjiApi {
     }
     // TODO: wrap with NetworkException
     throw AppException(response.statusCode.toString(), 'Failed to get token');
+  }
+
+  Future<Code2TokenData> refreshToken(String refreshToken) async {
+    final Uri uri = Uri.https(_baseUrl, code2tokenPath);
+    final response = await http.post(
+      uri,
+      body: {
+        'grant_type': 'refresh_token',
+        'client_id': tongjiClientID,
+        'refresh_token': refreshToken,
+      },
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    );
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      _logger.info('refresh token response: ${response.body}');
+      return Code2TokenData.fromJson(json.decode(response.body));
+    }
+    throw AppException(response.statusCode.toString(), 'Failed to refresh token');
   }
 }
