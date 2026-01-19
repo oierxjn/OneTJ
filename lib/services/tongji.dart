@@ -19,6 +19,7 @@ class TongjiApi {
   static final TongjiApi _instance = TongjiApi._();
 
   final String _baseUrl = tongjiApiBaseUrl;
+  static const Duration _tokenSkew = Duration(seconds: 30);
 
   final Logger _logger = Logger('TongjiApi');
 
@@ -52,6 +53,9 @@ class TongjiApi {
     );
   }
 
+  /// Token刷新
+  /// 
+  /// 返回刷新后的 [Code2TokenData]。不进行存储。
   Future<Code2TokenData> refreshToken(String refreshToken) async {
     final Uri uri = Uri.https(_baseUrl, code2tokenPath);
     final response = await http.post(
@@ -74,5 +78,50 @@ class TongjiApi {
       uri: uri,
       responseBody: response.body,
     );
+  }
+
+  Future<http.Response> _authorizedGet(Uri uri, {Map<String, String>? headers}) async {
+    final String accessToken = await _getValidAccessToken();
+    final Map<String, String> requestHeaders = {
+      'Authorization': 'Bearer $accessToken',
+      if (headers != null) ...headers,
+    };
+    return http.get(uri, headers: requestHeaders);
+  }
+
+  Future<http.Response> _authorizedPost(
+    Uri uri, {
+    Map<String, String>? headers,
+    Object? body,
+    Encoding? encoding,
+  }) async {
+    final String accessToken = await _getValidAccessToken();
+    final Map<String, String> requestHeaders = {
+      'Authorization': 'Bearer $accessToken',
+      if (headers != null) ...headers,
+    };
+    return http.post(uri, headers: requestHeaders, body: body, encoding: encoding);
+  }
+
+  Future<String> _getValidAccessToken() async {
+    final TokenRepository repo = TokenRepository.getInstance();
+    final TokenData? token = await repo.getToken(refreshFromStorage: true); 
+    if (token == null) {
+      throw AppException('AUTH_REQUIRED', 'Missing access token');
+    }
+    if (!token.isAccessTokenExpired(skew: _tokenSkew)) {
+      return token.accessToken;
+    }
+    if (token.isRefreshTokenExpired(skew: _tokenSkew)) {
+      throw AppException('AUTH_EXPIRED', 'Refresh token expired');
+    }
+    final Code2TokenData refreshed = await refreshToken(token.refreshToken);
+    await repo.saveFromCode2Token(refreshed);
+    return refreshed.accessToken;
+  }
+
+  Future<String> fetchStudentInfo() async {
+    final Uri uri = Uri.https(_baseUrl, studentInfoPath);
+    return (await _authorizedGet(uri)).body;
   }
 }

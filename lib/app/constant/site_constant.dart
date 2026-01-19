@@ -17,6 +17,8 @@ const String tongjiApiBaseUrl = "api.tongji.edu.cn";
 
 const String loginEndpointPath = "/keycloak/realms/OpenPlatform/protocol/openid-connect/auth";
 const String code2tokenPath = "/v1/token";
+const String studentInfoPath = "/v1/dc/user/student_info";
+const String currentTermCalendarPath = "/v1/rt/onetongji/school_calendar_current_term_calendar";
 
 const String tongjiClientID = "authorization-xxb-onedottongji-yuchen";
 const String oneTJredirectUri = "onetj://fakeredir.jkljkluiouio.top";
