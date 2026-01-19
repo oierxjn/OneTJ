@@ -7,6 +7,7 @@ import 'package:onetj/app/constant/site_constant.dart';
 import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/models/api_response.dart';
 import 'package:onetj/models/data/code2token.dart';
+import 'package:onetj/models/data/student_info_net_data.dart';
 import 'package:onetj/repo/token_repository.dart';
 
 class TongjiApi {
@@ -87,7 +88,15 @@ class TongjiApi {
       'Authorization': 'Bearer $accessToken',
       if (headers != null) ...headers,
     };
-    return http.get(uri, headers: requestHeaders);
+    try {
+      return await http.get(uri, headers: requestHeaders);
+    } catch (error) {
+      throw NetworkException(
+        message: 'Request failed',
+        uri: uri,
+        cause: error,
+      );
+    }
   }
 
   Future<T> _authorizedGetData<T>(
@@ -119,7 +128,15 @@ class TongjiApi {
       'Authorization': 'Bearer $accessToken',
       if (headers != null) ...headers,
     };
-    return http.post(uri, headers: requestHeaders, body: body, encoding: encoding);
+    try {
+      return await http.post(uri, headers: requestHeaders, body: body, encoding: encoding);
+    } catch (error) {
+      throw NetworkException(
+        message: 'Request failed',
+        uri: uri,
+        cause: error,
+      );
+    }
   }
 
   Future<T> _authorizedPostData<T>(
@@ -164,11 +181,17 @@ class TongjiApi {
     return refreshed.accessToken;
   }
 
-  Future<String> fetchStudentInfo() async {
+  Future<StudentInfoNetData> fetchStudentInfo() async {
     final Uri uri = Uri.https(_baseUrl, studentInfoPath);
-    return _authorizedGetData<String>(
+    return _authorizedGetData<StudentInfoNetData>(
       uri,
-      parseData: (data) => json.encode(data),
+      parseData: (data) {
+        final List<dynamic> list = (data as List<dynamic>?) ?? const [];
+        if (list.isEmpty) {
+          throw AppException('EMPTY_DATA', 'Student info is empty');
+        }
+        return StudentInfoNetData.fromJson(list.first as Map<String, dynamic>);
+      },
     );
   }
 }
