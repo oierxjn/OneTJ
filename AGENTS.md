@@ -14,6 +14,7 @@
 ## Workflow
 - Do not edit generated files under `windows/flutter/ephemeral/`.
 - Do not modify Chinese text because of perceived garbling; treat it as an encoding artifact.
+- Do not manually edit or create `*.g.dart` files; use `build_runner` instead.
 
 ## Optional: Windows warnings
 - To silence MSVC warning C4819 (encoding mismatch), add `/utf-8` in

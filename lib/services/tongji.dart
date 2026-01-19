@@ -5,6 +5,7 @@ import 'package:logging/logging.dart';
 
 import 'package:onetj/app/constant/site_constant.dart';
 import 'package:onetj/app/exception/app_exception.dart';
+import 'package:onetj/models/api_response.dart';
 import 'package:onetj/models/data/code2token.dart';
 import 'package:onetj/repo/token_repository.dart';
 
@@ -89,6 +90,24 @@ class TongjiApi {
     return http.get(uri, headers: requestHeaders);
   }
 
+  Future<T> _authorizedGetData<T>(
+    Uri uri, {
+    required T Function(Object? data) parseData,
+    Map<String, String>? headers,
+  }) async {
+    final http.Response response = await _authorizedGet(uri, headers: headers);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw NetworkException.http(
+        statusCode: response.statusCode,
+        uri: uri,
+        responseBody: response.body,
+      );
+    }
+    final Map<String, dynamic> jsonBody = json.decode(response.body) as Map<String, dynamic>;
+    final ApiResponse<T> payload = ApiResponse.fromJson(jsonBody, parseData);
+    return payload.data;
+  }
+
   Future<http.Response> _authorizedPost(
     Uri uri, {
     Map<String, String>? headers,
@@ -101,6 +120,31 @@ class TongjiApi {
       if (headers != null) ...headers,
     };
     return http.post(uri, headers: requestHeaders, body: body, encoding: encoding);
+  }
+
+  Future<T> _authorizedPostData<T>(
+    Uri uri, {
+    required T Function(Object? data) parseData,
+    Map<String, String>? headers,
+    Object? body,
+    Encoding? encoding,
+  }) async {
+    final http.Response response = await _authorizedPost(
+      uri,
+      headers: headers,
+      body: body,
+      encoding: encoding,
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw NetworkException.http(
+        statusCode: response.statusCode,
+        uri: uri,
+        responseBody: response.body,
+      );
+    }
+    final Map<String, dynamic> jsonBody = json.decode(response.body) as Map<String, dynamic>;
+    final ApiResponse<T> payload = ApiResponse.fromJson(jsonBody, parseData);
+    return payload.data;
   }
 
   Future<String> _getValidAccessToken() async {
@@ -122,6 +166,9 @@ class TongjiApi {
 
   Future<String> fetchStudentInfo() async {
     final Uri uri = Uri.https(_baseUrl, studentInfoPath);
-    return (await _authorizedGet(uri)).body;
+    return _authorizedGetData<String>(
+      uri,
+      parseData: (data) => json.encode(data),
+    );
   }
 }
