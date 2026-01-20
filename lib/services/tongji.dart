@@ -7,7 +7,9 @@ import 'package:onetj/app/constant/site_constant.dart';
 import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/models/api_response.dart';
 import 'package:onetj/models/data/code2token.dart';
+import 'package:onetj/models/data/school_calendar_net_data.dart';
 import 'package:onetj/models/data/student_info_net_data.dart';
+import 'package:onetj/repo/school_calendar_repository.dart';
 import 'package:onetj/repo/token_repository.dart';
 import 'package:onetj/repo/student_info_repository.dart';
 
@@ -73,7 +75,6 @@ class TongjiApi {
       },
     );
     if (response.statusCode >= 200 && response.statusCode < 300) {
-      _logger.info('refresh token response: ${response.body}');
       return Code2TokenData.fromJson(json.decode(response.body));
     }
     throw NetworkException.http(
@@ -114,12 +115,13 @@ class TongjiApi {
       );
     }
     final Map<String, dynamic> jsonBody;
+    final ApiResponse<T> payload;
     try {
       jsonBody = json.decode(response.body) as Map<String, dynamic>;
+      payload = ApiResponse.fromJson(jsonBody, parseData);
     } catch (error) {
-      throw JSONResolveException(message: 'Failed to parse response JSON', cause: error);
+      throw JSONResolveException(message: 'Failed to parse response JSON, origin body: ${response.body}', cause: error);
     }
-    final ApiResponse<T> payload = ApiResponse.fromJson(jsonBody, parseData);
     return payload.data;
   }
 
@@ -166,12 +168,13 @@ class TongjiApi {
       );
     }
     final Map<String, dynamic> jsonBody;
+    final ApiResponse<T> payload;
     try {
       jsonBody = json.decode(response.body) as Map<String, dynamic>;
+      payload = ApiResponse.fromJson(jsonBody, parseData);
     } catch (error) {
       throw JSONResolveException(message: 'Failed to parse response JSON', cause: error);
     }
-    final ApiResponse<T> payload = ApiResponse.fromJson(jsonBody, parseData);
     return payload.data;
   }
 
@@ -205,5 +208,14 @@ class TongjiApi {
       },
     );
     return StudentInfoData.fromNetData(netData);
+  }
+
+  Future<SchoolCalendarData> fetchSchoolCalendarCurrentTerm() async {
+    final Uri uri = Uri.https(_baseUrl, currentTermCalendarPath);
+    final SchoolCalendarNetData netData = await _authorizedGetData<SchoolCalendarNetData>(
+      uri,
+      parseData: (data) => SchoolCalendarNetData.fromJson(data as Map<String, dynamic>),
+    );
+    return SchoolCalendarData.fromNetData(netData);
   }
 }
