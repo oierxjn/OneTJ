@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:logging/logging.dart';
 
@@ -59,8 +60,8 @@ class LauncherViewModel extends BaseViewModel {
   void _initializeLogging() {
     Logger.root.level = Level.INFO;
     Logger.root.onRecord.listen((record) {
-      // ignore: avoid_print
-      print('${record.time} [${record.level.name}] ${record.loggerName}: [ONETJ] ${record.message}');
+      // print('${record.time} [${record.level.name}] ${record.loggerName}: [ONETJ] ${record.message}');
+      debugPrint('${record.time} [${record.level.name}] ${record.loggerName}: [ONETJ] ${record.message}');
     });
   }
 

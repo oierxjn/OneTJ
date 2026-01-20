@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:logging/logging.dart';
 
 import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/models/event_model.dart';
@@ -12,6 +13,9 @@ class LoginViewModel extends BaseViewModel {
     LoginModel? model,
   })  : _model = model ?? LoginModel(),
         _eventController = StreamController<UiEvent>.broadcast();
+
+  final Logger _logger = Logger('LoginViewModel');
+
 
   final LoginModel _model;
   final StreamController<UiEvent> _eventController;

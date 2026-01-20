@@ -21,4 +21,4 @@ const String studentInfoPath = "/v1/dc/user/student_info";
 const String currentTermCalendarPath = "/v1/rt/onetongji/school_calendar_current_term_calendar";
 
 const String tongjiClientID = "authorization-xxb-onedottongji-yuchen";
-const String oneTJredirectUri = "onetj://fakeredir.jkljkluiouio.top";
+const String oneTJredirectUri = "https://fakeredir.jkljkluiouio.top";
