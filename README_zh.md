@@ -1,0 +1,48 @@
+# OneTJ
+OneTJ 是一款面向同济大学服务的 Flutter 客户端。它为学生提供简洁、专注的使用体验，支持查看学生个人信息与校历相关内容。
+
+本项目的多数功能仍在持续开发中，可能存在不稳定性；欢迎各位反馈问题与建议。
+
+## 功能特性
+- 基于 WebView 实现 OAuth 风格的登录流程
+- 获取并展示学生个人信息
+- 查看当前学期校历概览（含周数、学期名称）
+- 基于 Hive 实现本地缓存，提升应用启动速度并支持离线读取数据
+
+## 技术栈
+- Flutter（Dart）
+
+## 项目结构
+- `lib/app/`：应用级常量定义、异常处理
+- `lib/features/`：功能模块（启动页、登录、首页）
+- `lib/models/`：通用数据模型（API 响应数据、本地数据模型）
+- `lib/repo/`：本地仓库与缓存逻辑（令牌、学生信息、校历）
+- `lib/services/`：API/服务层（封装同济相关接口 TongjiApi）
+- `lib/l10n/`：国际化资源文件
+- `assets/`：应用使用的静态资源
+
+## 快速开始
+
+### 推荐方案：FVM
+为保证不同开发环境下 Flutter 工具链版本一致，我们推荐使用 FVM 管理 Flutter 版本。
+
+### 运行应用
+```bash
+fvm flutter pub get
+fvm flutter run
+```
+
+## 依赖与覆盖配置
+- `flutter_inappwebview` 依赖来自 OpenHarmony 分支，路径为 `local_packages/flutter_inappwebview`（分支名：`br_v6.1.5_ohos`）。
+- 通过 `dependency_overrides` 将所有 `flutter_inappwebview_*` 子包锁定为上述本地分支版本。
+- 针对鸿蒙系统（HarmonyOS），`path_provider` 依赖会覆盖为 OpenHarmony 官方 Git 源，避免依赖解析冲突。
+
+## 应用运行流程
+1. 启动页初始化存储模块，并检查缓存的令牌有效性；
+2. 若存在有效访问令牌，直接跳转至首页；
+3. 若无有效令牌，则打开登录 WebView，通过授权码换取令牌；
+4. 首页加载并展示学生个人信息与当前学期校历。
+
+## 开发注意事项
+- 请勿修改 `windows/flutter/ephemeral/` 目录下的自动生成文件；
+- 请勿手动编辑 `*.g.dart` 生成文件，需通过 `build_runner` 工具重新生成；
