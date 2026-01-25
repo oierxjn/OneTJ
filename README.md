@@ -1,8 +1,10 @@
 # OneTJ
 
-OneTJ is a Flutter client for Tongji University services. It provides a clean, focused experience for student profile access and academic calendar information.   
+OneTJ is a third-party client for Tongji University services. It provides a clean, focused experience for student profile access and academic calendar information.   
 
 Most features in this project are still under active development and may be unstable; feedback is welcome.
+
+Original repository: FlowerBlackG/OneTJ (https://github.com/FlowerBlackG/OneTJ).
 
 ## Features
 
