@@ -8,7 +8,6 @@
 本项目的多数功能仍在持续开发中，可能存在不稳定性；欢迎各位反馈问题与建议。
 
 ## 功能特性
-- 基于 WebView 实现 OAuth 风格的登录流程
 - 获取并展示学生个人信息
 - 查看当前学期校历概览（含周数、学期名称）
 - 基于 Hive 实现本地缓存，提升应用启动速度并支持离线读取数据
@@ -25,21 +24,11 @@
 - `lib/l10n/`：国际化资源文件
 - `assets/`：应用使用的静态资源
 
-## 快速开始
+## 快速开始（开发）
 
-### 推荐方案：FVM
-为保证不同开发环境下 Flutter 工具链版本一致，我们推荐使用 FVM 管理 Flutter 版本。
+项目目前并未完成所有功能的开发，所以没有提供 release 版本用于直接运行。
 
-### 运行应用
-```bash
-fvm flutter pub get
-fvm flutter run
-```
-
-## 依赖与覆盖配置
-- `flutter_inappwebview` 依赖来自 OpenHarmony 分支，路径为 `local_packages/flutter_inappwebview`（分支名：`br_v6.1.5_ohos`）。
-- 通过 `dependency_overrides` 将所有 `flutter_inappwebview_*` 子包锁定为上述本地分支版本。
-- 针对鸿蒙系统（HarmonyOS），`path_provider` 依赖会覆盖为 OpenHarmony 官方 Git 源，避免依赖解析冲突。
+见 [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## 应用运行流程
 1. 启动页初始化存储模块，并检查缓存的令牌有效性；

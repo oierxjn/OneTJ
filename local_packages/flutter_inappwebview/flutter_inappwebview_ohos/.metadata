@@ -1,0 +1,43 @@
+# Copyright (c) 2024 Hunan OpenValley Digital Industry Development Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# This file tracks properties of this Flutter project.
+# Used by Flutter tool to assess capabilities and perform upgrades etc.
+#
+# This file should be version controlled.
+
+version:
+  revision: af6a2462773ef66c2b6f37ca8b20b194b7dd4e4a
+  channel: dev
+
+project_type: plugin
+
+# Tracks metadata for the flutter migrate command
+migration:
+  platforms:
+    - platform: root
+      create_revision: af6a2462773ef66c2b6f37ca8b20b194b7dd4e4a
+      base_revision: af6a2462773ef66c2b6f37ca8b20b194b7dd4e4a
+    - platform: ohos
+      create_revision: af6a2462773ef66c2b6f37ca8b20b194b7dd4e4a
+      base_revision: af6a2462773ef66c2b6f37ca8b20b194b7dd4e4a
+
+  # User provided section
+
+  # List of Local paths (relative to this file) that should be
+  # ignored by the migrate tool.
+  #
+  # Files that are not part of the templates will be ignored by default.
+  unmanaged_files:
+    - 'lib/main.dart'
+    - 'ios/Runner.xcodeproj/project.pbxproj'

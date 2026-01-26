@@ -26,6 +26,13 @@
 git clone -b oh-3.27.4-dev https://gitcode.com/openharmony-tpc/flutter_flutter.git
 ```
 
+将其放入 FVM 的版本文件夹中。使用 `fvm list` 查看是否已经添加，再用 `fvm use <版本名>` 切换到该版本。
+
+运行 `fvm flutter doctor` 检查环境是否配置正确。
+
+一般来说，你还需要下载鸿蒙的 [Command Line Tools](https://developer.huawei.com/consumer/cn/download/command-line-tools-for-hmos)，将${Command Line Tools解压路径}\command-line-tools\bin目录配置到系统或者用户的PATH变量中。  
+
+构建中遇到问题，请及时联系项目维护者（已经快忘记怎么配了）
 
 **安装依赖**：
 ```bash
@@ -33,9 +40,66 @@ fvm flutter pub get
 ```
 
 **生成序列化代码**：
+
+*一般来说仓库已经构建完成，可以跳过这一步*。
 ```bash
 dart run build_runner build
 ```
+
+### 2.1.1 local_packages 拉取流程
+
+项目包含 `local_packages` 目录，用于存放特殊处理的 Flutter 插件（如 `flutter_inappwebview`）。这些插件需要单独构建和测试。
+
+默认情况下，你拉取了这个项目，`local_packages` 已经构建完成，你可以直接使用，跳过这个章节。
+
+#### 2.1.1.1 flutter_inappwebview
+
+`flutter_inappwebview` 是一个 Flutter 插件，用于在应用内嵌入 WebView。
+
+**拉取**：
+```bash
+cd local_packages
+git clone -b br_v6.1.5_ohos https://gitcode.com/openharmony-sig/flutter_inappwebview.git
+```
+即拉取 `br_v6.1.5_ohos` 分支的代码到 `local_packages`。
+
+确认代码是 `br_v6.1.5_ohos` 分支的代码后，删去 `flutter_inappwebview` 目录下的 `.git` 目录，避免与主项目的 `.git` 冲突。由主项目的 `.git` 管理。
+
+**构建**：
+pubspec.yaml 中添加依赖：
+```yaml
+dependencies:
+  flutter_inappwebview:
+    path: ./local_packages/flutter_inappwebview/flutter_inappwebview
+```
+并且需要覆盖依赖：
+```yaml
+dependency_overrides:
+  flutter_inappwebview_platform_interface:
+    path: ./local_packages/flutter_inappwebview/flutter_inappwebview_platform_interface
+  flutter_inappwebview_android:
+    path: ./local_packages/flutter_inappwebview/flutter_inappwebview_android
+  flutter_inappwebview_ios:
+    path: ./local_packages/flutter_inappwebview/flutter_inappwebview_ios
+  flutter_inappwebview_macos:
+    path: ./local_packages/flutter_inappwebview/flutter_inappwebview_macos
+  flutter_inappwebview_web:
+    path: ./local_packages/flutter_inappwebview/flutter_inappwebview_web
+  flutter_inappwebview_ohos:
+    path: ./local_packages/flutter_inappwebview/flutter_inappwebview_ohos
+  flutter_inappwebview_windows:
+    path: ./local_packages/flutter_inappwebview/flutter_inappwebview_windows
+```
+
+**使用**：
+在 `pubspec.yaml` 中添加依赖后，运行 `fvm flutter pub get` 来获取插件。  
+确认插件添加成功后，即可在项目中使用 `flutter_inappwebview` 插件：
+
+```dart
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+```
+
+
 
 ### 2.2 开发工具
 

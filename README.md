@@ -8,7 +8,6 @@ Original repository: FlowerBlackG/OneTJ (https://github.com/FlowerBlackG/OneTJ).
 
 ## Features
 
-- OAuth-style login via WebView
 - Student profile fetch and display
 - Current term calendar overview (week number and term name)
 - Local caching with Hive for faster startup and offline-friendly reads
@@ -29,23 +28,9 @@ Original repository: FlowerBlackG/OneTJ (https://github.com/FlowerBlackG/OneTJ).
 
 ## Getting Started
 
-### Recommended: FVM
+The project has not yet completed the development of all functions, so no release version is available for direct running.  
 
-We recommend using FVM to ensure consistent Flutter tooling across environments.
-
-### Run
-
-```bash
-fvm flutter pub get
-fvm flutter run
-```
-
-## Dependencies and Overrides
-
-- `flutter_inappwebview` comes from the OpenHarmony fork located at
-  `local_packages/flutter_inappwebview` (branch `br_v6.1.5_ohos`).
-- `dependency_overrides` pins all `flutter_inappwebview_*` subpackages to the local fork.
-- For HarmonyOS, `path_provider` is overridden to the OpenHarmony git source to avoid resolver conflicts.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
 
 ## App Flow
 

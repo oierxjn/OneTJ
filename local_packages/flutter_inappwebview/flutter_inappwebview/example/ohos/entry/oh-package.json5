@@ -1,0 +1,15 @@
+{
+  "name": "entry",
+  "version": "1.0.0",
+  "description": "Please describe the basic information.",
+  "main": "",
+  "author": "",
+  "license": "",
+  "dependencies": {
+    "path_provider_ohos": "file:../har/path_provider_ohos.har",
+    "url_launcher_ohos": "file:../har/url_launcher_ohos.har",
+    "permission_handler_ohos": "file:../har/permission_handler_ohos.har",
+    "integration_test": "file:../har/integration_test.har",
+    "flutter_inappwebview_ohos": "file:../har/flutter_inappwebview_ohos.har"
+  }
+}
