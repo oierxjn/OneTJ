@@ -7,8 +7,10 @@ import 'package:onetj/app/constant/site_constant.dart';
 import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/models/api_response.dart';
 import 'package:onetj/models/data/code2token.dart';
+import 'package:onetj/models/data/course_schedule_net_data.dart';
 import 'package:onetj/models/data/school_calendar_net_data.dart';
 import 'package:onetj/models/data/student_info_net_data.dart';
+import 'package:onetj/repo/course_schedule_repository.dart';
 import 'package:onetj/repo/school_calendar_repository.dart';
 import 'package:onetj/repo/token_repository.dart';
 import 'package:onetj/repo/student_info_repository.dart';
@@ -217,5 +219,20 @@ class TongjiApi {
       parseData: (data) => SchoolCalendarNetData.fromJson(data as Map<String, dynamic>),
     );
     return SchoolCalendarData.fromNetData(netData);
+  }
+
+  Future<CourseScheduleData> fetchStudentTimetable() async {
+    final Uri uri = Uri.https(_baseUrl, studentTimetablePath);
+    final List<CourseScheduleItemNetData> netList =
+        await _authorizedGetData<List<CourseScheduleItemNetData>>(
+      uri,
+      parseData: (data) {
+        final List<dynamic> list = (data as List<dynamic>?) ?? const [];
+        return list
+            .map((item) => CourseScheduleItemNetData.fromJson(item as Map<String, dynamic>))
+            .toList();
+      },
+    );
+    return CourseScheduleData.fromNetDataList(netList);
   }
 }
