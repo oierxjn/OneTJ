@@ -42,35 +42,25 @@ final List<_TabConfig> _tabs = [
 class HomeView extends StatelessWidget {
   const HomeView({
     super.key,
-    required this.child,
+    required this.navigationShell,
   });
 
-  final Widget child;
-
-  int _locationToIndex(String location) {
-    final int index =
-        _tabs.indexWhere((tab) => location.startsWith(tab.route));
-    return index == -1 ? 0 : index;
-  }
+  final StatefulNavigationShell navigationShell;
 
   @override
   Widget build(BuildContext context) {
-    final String location = GoRouterState.of(context).uri.toString();
-    final int currentIndex = _locationToIndex(location);
+    final int currentIndex = navigationShell.currentIndex;
     final _TabConfig currentTab = _tabs[currentIndex];
 
     return Scaffold(
       appBar: AppBar(
         title: Text(currentTab.labelBuilder(context)),
       ),
-      body: child,
+      body: navigationShell,
       bottomNavigationBar: NavigationBar(
         selectedIndex: currentIndex,
         onDestinationSelected: (index) {
-          final String target = _tabs[index].route;
-          if (!location.startsWith(target)) {
-            context.go(target);
-          }
+          navigationShell.goBranch(index);
         },
         destinations: [
           for (final tab in _tabs)

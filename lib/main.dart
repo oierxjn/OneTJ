@@ -32,27 +32,40 @@ class OneTJApp extends StatelessWidget {
         name: 'login',
         builder: (context, state) => const LoginView(),
       ),
-      ShellRoute(
-        builder: (context, state, child) => HomeView(child: child),
-        routes: [
-          GoRoute(
-            path: RoutePaths.home,
-            redirect: (context, state) => RoutePaths.homeDashboard,
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) =>
+            HomeView(navigationShell: navigationShell),
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: RoutePaths.home,
+                redirect: (context, state) => RoutePaths.homeDashboard,
+              ),
+              GoRoute(
+                path: RoutePaths.homeDashboard,
+                name: 'home',
+                builder: (context, state) => const DashboardView(),
+              ),
+            ],
           ),
-          GoRoute(
-            path: RoutePaths.homeDashboard,
-            name: 'home',
-            builder: (context, state) => const DashboardView(),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: RoutePaths.homeTimetable,
+                name: 'timetable',
+                builder: (context, state) => const TimetableView(),
+              ),
+            ],
           ),
-          GoRoute(
-            path: RoutePaths.homeTimetable,
-            name: 'timetable',
-            builder: (context, state) => const TimetableView(),
-          ),
-          GoRoute(
-            path: RoutePaths.homeSettings,
-            name: 'settings',
-            builder: (context, state) => const SettingsView(),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: RoutePaths.homeSettings,
+                name: 'settings',
+                builder: (context, state) => const SettingsView(),
+              ),
+            ],
           ),
         ],
       ),
