@@ -1,38 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'package:onetj/app/constant/route_paths.dart';
 
 class _TabConfig {
   const _TabConfig({
     required this.route,
-    required this.label,
+    required this.labelBuilder,
     required this.icon,
     required this.selectedIcon,
   });
 
   final String route;
-  final String label;
+  final String Function(BuildContext) labelBuilder;
   final IconData icon;
   final IconData selectedIcon;
 }
 
-const List<_TabConfig> _tabs = [
+final List<_TabConfig> _tabs = [
   _TabConfig(
     route: RoutePaths.homeDashboard,
-    label: 'Dashboard',
+    labelBuilder: (context) => AppLocalizations.of(context).tabDashboard,
     icon: Icons.dashboard_outlined,
     selectedIcon: Icons.dashboard,
   ),
   _TabConfig(
     route: RoutePaths.homeTimetable,
-    label: 'Timetable',
+    labelBuilder: (context) => AppLocalizations.of(context).tabTimetable,
     icon: Icons.calendar_month_outlined,
     selectedIcon: Icons.calendar_month,
   ),
   _TabConfig(
     route: RoutePaths.homeSettings,
-    label: 'Settings',
+    labelBuilder: (context) => AppLocalizations.of(context).tabSettings,
     icon: Icons.settings_outlined,
     selectedIcon: Icons.settings,
   ),
@@ -60,7 +61,7 @@ class HomeView extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(currentTab.label),
+        title: Text(currentTab.labelBuilder(context)),
       ),
       body: child,
       bottomNavigationBar: NavigationBar(
@@ -76,7 +77,7 @@ class HomeView extends StatelessWidget {
             NavigationDestination(
               icon: Icon(tab.icon),
               selectedIcon: Icon(tab.selectedIcon),
-              label: tab.label,
+              label: tab.labelBuilder(context),
             ),
         ],
       ),

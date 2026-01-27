@@ -1,5 +1,8 @@
 {
   "@@locale": "en",
   "appTitle": "OneTJ",
-  "authStateMismatch": "Auth state mismatch, possible network attack"
+  "authStateMismatch": "Auth state mismatch, possible network attack",
+  "tabDashboard": "Dashboard",
+  "tabTimetable": "Timetable",
+  "tabSettings": "Settings"
 }

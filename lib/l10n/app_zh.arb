@@ -1,5 +1,8 @@
 {
     "@@locale": "zh",
     "appTitle": "一统同济",
-    "authStateMismatch": "认证状态不匹配，可能遭受到网络攻击"
+    "authStateMismatch": "认证状态不匹配，可能遭受到网络攻击",
+    "tabDashboard": "仪表盘",
+    "tabTimetable": "时间表",
+    "tabSettings": "设置"
 }
