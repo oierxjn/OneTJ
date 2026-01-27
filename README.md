@@ -1,10 +1,17 @@
+<div align="center">
+
+[![OneTJ Logo](assets/icon/logo.jpg)](https://github.com/oierxjn/OneTJ)
 # OneTJ
 
-OneTJ is a third-party client for Tongji University services. It provides a clean, focused experience for student profile access and academic calendar information.   
+[中文](README_zh.md) | [English](README.md)
+
+`OneTJ` is a third-party client for Tongji University services. It provides a clean, focused experience for student profile access and academic calendar information.   
+
+Original repository: [FlowerBlackG/OneTJ](https://github.com/FlowerBlackG/OneTJ).
 
 Most features in this project are still under active development and may be unstable; feedback is welcome.
 
-Original repository: FlowerBlackG/OneTJ (https://github.com/FlowerBlackG/OneTJ).
+<div>
 
 ## Features
 
@@ -39,7 +46,3 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
 3. Otherwise, it opens the login WebView and exchanges the auth code for tokens.
 4. Home fetches student profile data and the current term calendar.
 
-## Development Notes
-
-- Do not edit generated files under `windows/flutter/ephemeral/`.
-- Do not manually edit `*.g.dart` files; use `build_runner` instead.

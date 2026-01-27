@@ -1,11 +1,17 @@
-# OneTJ（一统同济）
-`一统同济` 是一款面向同济大学学生服务的第三方客户端。它为学生提供简洁、专注的使用体验，支持查看学生个人信息与校历相关内容。
+<div align="center">
 
-大多数功能仍在开发中，可能存在不稳定性；欢迎各位反馈问题与建议。
+[![OneTJ Logo](assets/icon/logo.jpg)](https://github.com/oierxjn/OneTJ)
+# OneTJ（一统同济）
+
+[中文](README_zh.md) | [English](README.md)
+
+`一统同济` 是一款面向同济大学学生服务的第三方客户端。它为学生提供简洁、专注的使用体验，支持查看学生个人信息与校历相关内容。
 
 原仓库：[FlowerBlackG/OneTJ](https://github.com/FlowerBlackG/OneTJ)
 
 本项目的多数功能仍在持续开发中，可能存在不稳定性；欢迎各位反馈问题与建议。
+<div>
+
 
 ## 功能特性
 - 获取并展示学生个人信息
@@ -36,6 +42,3 @@
 3. 若无有效令牌，则打开登录 WebView，通过授权码换取令牌；
 4. 首页加载并展示学生个人信息与当前学期校历。
 
-## 开发注意事项
-- 请勿修改 `windows/flutter/ephemeral/` 目录下的自动生成文件；
-- 请勿手动编辑 `*.g.dart` 生成文件，需通过 `build_runner` 工具重新生成；

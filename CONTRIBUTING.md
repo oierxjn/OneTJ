@@ -309,4 +309,7 @@ fvm flutter pub upgrade
 - 保持代码简洁，避免冗余
 - 适当添加注释，解释复杂逻辑
 
+- 请勿修改 `windows/flutter/ephemeral/` 目录下的自动生成文件；
+- 请勿手动编辑 `*.g.dart` 生成文件，需通过 `build_runner` 工具重新生成；
+
 感谢您的贡献！
