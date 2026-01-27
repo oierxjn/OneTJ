@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
+import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/features/home/views/home_view.dart';
 import 'package:onetj/features/launcher/views/launcher_view.dart';
 import 'package:onetj/features/login/views/login_view.dart';
@@ -19,17 +20,17 @@ class OneTJApp extends StatelessWidget {
   static final GoRouter router = GoRouter(
     routes: [
       GoRoute(
-        path: '/',
+        path: RoutePaths.launcher,
         name: 'launcher',
         builder: (context, state) => const LauncherView(),
       ),
       GoRoute(
-        path: '/login',
+        path: RoutePaths.login,
         name: 'login',
         builder: (context, state) => const LoginView(),
       ),
       GoRoute(
-        path: '/home',
+        path: RoutePaths.home,
         name: 'home',
         builder: (context, state) => const HomeView(),
       ),

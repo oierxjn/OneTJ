@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:logging/logging.dart';
 
+import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/models/base_model.dart';
 import 'package:onetj/models/data/code2token.dart';
 import 'package:onetj/models/event_model.dart';
@@ -42,19 +43,19 @@ class LauncherViewModel extends BaseViewModel {
     final TokenRepository repo = TokenRepository.getInstance();
     final TokenData? token = await repo.getToken(refreshFromStorage: true);
     if (token != null && !token.isAccessTokenExpired(skew: const Duration(seconds: 30))) {
-      return '/home';
+      return RoutePaths.home;
     }
     if (token != null && !token.isRefreshTokenExpired(skew: const Duration(seconds: 30))) {
       try {
         final TongjiApi api = TongjiApi();
         final Code2TokenData refreshed = await api.refreshToken(token.refreshToken);
         await repo.saveFromCode2Token(refreshed);
-        return '/home';
+        return RoutePaths.home;
       } catch (error, stackTrace) {
         _logger.warning('Failed to refresh token', error, stackTrace);
       }
     }
-    return '/login';
+    return RoutePaths.login;
   }
 
   void _initializeLogging() {

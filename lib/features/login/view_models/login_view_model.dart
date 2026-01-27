@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:logging/logging.dart';
 
+import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/models/event_model.dart';
 import 'package:onetj/features/login/models/login_model.dart';
@@ -28,7 +29,7 @@ class LoginViewModel extends BaseViewModel {
     try {
       final bool shouldNavigate = await _model.exchangeCodeIfRedirect(uri);
       if (shouldNavigate) {
-        _eventController.add(const NavigateEvent('/home'));
+        _eventController.add(const NavigateEvent(RoutePaths.home));
         return NavigationActionPolicy.CANCEL;
       }
       return NavigationActionPolicy.ALLOW;
