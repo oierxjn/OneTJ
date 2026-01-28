@@ -7,11 +7,11 @@
         "material": {
           "certpath": "D:/Documents/电子签名/一统同济CSR.cer",
           "keyAlias": "OneTJ",
-          "keyPassword": "00000019D4FE1069B4999EA9834FCEC3A285BB9EA99684721F622F6853739BBA95DF71F23B4C800F24",
+          "keyPassword": "000000190DA3E21545D35EA230BD7ED1171FF4F38A9048E7B82FC336067C6A63DDC8836BB88C90DDD4",
           "profile": "D:/Documents/电子签名/一统同济Release.p7b",
           "signAlg": "SHA256withECDSA",
           "storeFile": "D:/Documents/电子签名/一统同济.p12",
-          "storePassword": "00000019D21BA1BE90B5EB05421213AFCE621F12CB07B87374E1B82B3C66DFDDEBF020FEED1A0F5FFB"
+          "storePassword": "0000001948B3BBCB3568EF4396BE81210B20F271D3279921E2CB38DA8EB1489F1D62B2ADD5AA242E50"
         }
       }
     ],
