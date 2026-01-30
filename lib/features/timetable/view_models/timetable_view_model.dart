@@ -64,6 +64,11 @@ class TimetableViewModel extends BaseViewModel {
     notifyListeners();
   }
 
+  /// 获取选中周数的指定天的课表条目
+  /// 
+  /// 如果课表索引为空或选中周数为空，返回空列表。
+  /// 否则，返回指定天的课表条目列表。
+  /// 列表按开始时间升序排序。
   List<TimetableEntry> entriesForSelectedWeekDay(int day) {
     final TimetableIndex? index = _index;
     if (index == null) {

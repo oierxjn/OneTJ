@@ -24,7 +24,7 @@ class _TimetableViewState extends State<TimetableView> {
   late final TimetableViewModel _viewModel;
   late final FixedExtentScrollController _dayController;
   late final FixedExtentScrollController _weekController;
-  final ScrollController _dayScrollController = ScrollController();
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -41,7 +41,7 @@ class _TimetableViewState extends State<TimetableView> {
   void dispose() {
     _dayController.dispose();
     _weekController.dispose();
-    _dayScrollController.dispose();
+    _scrollController.dispose();
     _viewModel.dispose();
     super.dispose();
   }
@@ -203,100 +203,126 @@ class _TimetableViewState extends State<TimetableView> {
     required TimetableDisplayMode mode,
   }) {
     const double slotHeight = 64;
-    const double labelWidth = 72;
-    const double dayColumnWidth = 140;
+    const double preferredLabelWidth = 72;
+    const double minLabelWidth = 35;
     final double headerHeight =
         mode == TimetableDisplayMode.week ? _weekHeaderHeight(context) : 0;
     final double contentHeight =
         _timeSlots.length * slotHeight + headerHeight;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
-      child: SingleChildScrollView(
-        controller: _dayScrollController,
-        child: SizedBox(
-          height: contentHeight,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                width: labelWidth,
-                child: Column(
-                  children: [
-                    if (headerHeight > 0) SizedBox(height: headerHeight),
-                    for (final slot in _timeSlots)
-                      Container(
-                        height: slotHeight,
-                        alignment: Alignment.topCenter,
-                        padding: const EdgeInsets.only(top: 6),
-                        child: Text(
-                          slot.label,
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Stack(
-                  children: [
-                    Positioned.fill(
-                      child: Column(
-                        children: [
-                          if (headerHeight > 0) SizedBox(height: headerHeight),
-                          for (int i = 0; i < _timeSlots.length; i += 1)
-                            Container(
-                              height: slotHeight,
-                              decoration: BoxDecoration(
-                                border: Border(
-                                  bottom: BorderSide(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .outlineVariant,
+      padding: const EdgeInsets.fromLTRB(4, 8, 12, 4),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final double availableWidth =
+              (constraints.maxWidth - 8).clamp(0, double.infinity);
+          final double minCardWidth = 92;
+          final double maxCardWidth = double.infinity;
+          double labelWidth = preferredLabelWidth;
+          double dayColumnWidth =
+              ((availableWidth - labelWidth) / 7).clamp(0, maxCardWidth);
+
+          if (dayColumnWidth < minCardWidth) {
+            final double neededLabelWidth =
+                availableWidth - minCardWidth * 7;
+            labelWidth = neededLabelWidth.clamp(minLabelWidth, preferredLabelWidth);
+            dayColumnWidth =
+                ((availableWidth - labelWidth) / 7).clamp(0, maxCardWidth);
+          }
+          final bool isNarrowLabel = labelWidth <= minLabelWidth + 0.1;
+          final TextStyle? labelStyle = isNarrowLabel
+              ? Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.copyWith(fontSize: 11)
+              : Theme.of(context).textTheme.bodySmall;
+
+          return SingleChildScrollView(
+            controller: _scrollController,
+            child: SizedBox(
+              height: contentHeight,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: labelWidth,
+                    child: Column(
+                      children: [
+                        if (headerHeight > 0) SizedBox(height: headerHeight),
+                        for (final slot in _timeSlots)
+                          Container(
+                            height: slotHeight,
+                            alignment: Alignment.topCenter,
+                            padding: const EdgeInsets.only(top: 6),
+                            child: Text(
+                              slot.label,
+                              style: labelStyle,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        Positioned.fill(
+                          child: Column(
+                            children: [
+                              if (headerHeight > 0) SizedBox(height: headerHeight),
+                              for (int i = 0; i < _timeSlots.length; i += 1)
+                                Container(
+                                  height: slotHeight,
+                                  decoration: BoxDecoration(
+                                    border: Border(
+                                      bottom: BorderSide(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .outlineVariant,
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                    if (mode == TimetableDisplayMode.day)
-                      Positioned.fill(
-                        child: _DayTimelineContent(
-                          entries: _viewModel.entriesForSelectedWeekDay(
-                            _viewModel.selectedDay,
+                            ],
                           ),
-                          slotHeight: slotHeight,
-                          slotCount: _timeSlots.length,
-                          roomBuilder: _formatRoom,
-                          teacherBuilder: _formatTeacher,
                         ),
-                      )
-                    else if (mode == TimetableDisplayMode.week)
-                      Positioned.fill(
-                        child: _WeekTimelineContent(
-                          dayLabels: _dayLabels,
-                          dayColumnWidth: dayColumnWidth,
-                          slotHeight: slotHeight,
-                          slotCount: _timeSlots.length,
-                          entriesForDay: (day) =>
-                              _viewModel.entriesForSelectedWeekDay(day),
-                          roomBuilder: _formatRoom,
-                          teacherBuilder: _formatTeacher,
-                        ),
-                      ),
-                  ],
-                ),
+                        if (mode == TimetableDisplayMode.day)
+                          Positioned.fill(
+                            child: _DayTimelineContent(
+                              entries: _viewModel.entriesForSelectedWeekDay(
+                                _viewModel.selectedDay,
+                              ),
+                              slotHeight: slotHeight,
+                              slotCount: _timeSlots.length,
+                              roomBuilder: _formatRoom,
+                              teacherBuilder: _formatTeacher,
+                            ),
+                          )
+                        else if (mode == TimetableDisplayMode.week)
+                          Positioned.fill(
+                            child: _WeekTimelineContent(
+                              dayLabels: _dayLabels,
+                              dayColumnWidth: dayColumnWidth,
+                              slotHeight: slotHeight,
+                              slotCount: _timeSlots.length,
+                              entriesForDay: (day) =>
+                                  _viewModel.entriesForSelectedWeekDay(day),
+                              roomBuilder: _formatRoom,
+                              teacherBuilder: _formatTeacher,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
 }
-
 class _DayTimelineContent extends StatelessWidget {
   const _DayTimelineContent({
     required this.entries,
@@ -456,76 +482,58 @@ class _CourseCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 4),
-      child: Padding(
-        padding: const EdgeInsets.all(10),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final TextStyle titleStyle =
-                Theme.of(context).textTheme.titleSmall ?? const TextStyle();
-            final TextStyle bodyStyle =
-                Theme.of(context).textTheme.bodySmall ?? const TextStyle();
-            const double gap = 4;
-            final double maxHeight = constraints.maxHeight;
-            final double maxWidth = constraints.maxWidth;
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final double cardWidth = constraints.maxWidth;
+          final double pad = cardWidth <= 92 ? 2 : (cardWidth <= 120 ? 6 : 10);
+          final TextStyle titleStyle =
+              Theme.of(context).textTheme.titleSmall ?? const TextStyle();
+          final TextStyle bodyStyle =
+              Theme.of(context).textTheme.bodySmall ?? const TextStyle();
+          const double gap = 4;
+          final String titleText = entry.courseName.isNotEmpty
+              ? entry.courseName
+              : 'Unknown course';
+          final String roomText = roomBuilder(entry);
+          final String teacherText = teacherBuilder(entry);
+          final String classCodeText = entry.classCode;
 
-            final List<Widget> children = [];
-            double usedHeight = 0;
-
-            void addLine({
-              required String text,
-              required TextStyle style,
-            }) {
-              if (text.isEmpty) {
-                return;
-              }
-              final double extra = children.isEmpty ? 0 : gap;
-              final double lineHeight = _measureTextHeight(
-                text: text,
-                style: style,
-                maxWidth: maxWidth,
-              );
-              final double nextHeight = lineHeight + extra;
-              if (usedHeight + nextHeight > maxHeight) {
-                return;
-              }
-              if (children.isNotEmpty) {
-                children.add(const SizedBox(height: gap));
-              }
-              children.add(
-                Text(
-                  text,
-                  style: style,
-                ),
-              );
-              usedHeight += nextHeight;
-            }
-
-            addLine(
-              text: entry.courseName.isNotEmpty
-                  ? entry.courseName
-                  : 'Unknown course',
-              style: titleStyle,
-            );
-            addLine(
-              text: roomBuilder(entry),
-              style: bodyStyle,
-            );
-            addLine(
-              text: teacherBuilder(entry),
-              style: bodyStyle,
-            );
-            addLine(
-              text: entry.classCode,
-              style: bodyStyle,
-            );
-
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: children,
-            );
-          },
-        ),
+          return Padding(
+            padding: EdgeInsets.all(pad),
+            child: ClipRect(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    titleText,
+                    style: titleStyle,
+                  ),
+                  if (roomText.isNotEmpty) ...[
+                    const SizedBox(height: gap),
+                    Text(
+                      roomText,
+                      style: bodyStyle,
+                    ),
+                  ],
+                  if (teacherText.isNotEmpty) ...[
+                    const SizedBox(height: gap),
+                    Text(
+                      teacherText,
+                      style: bodyStyle,
+                    ),
+                  ],
+                  if (classCodeText.isNotEmpty) ...[
+                    const SizedBox(height: gap),
+                    Text(
+                      classCodeText,
+                      style: bodyStyle,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -587,18 +595,6 @@ class _CourseLayoutDelegate extends MultiChildLayoutDelegate {
 }
 
 Object _courseId(int index) => 'course_$index';
-
-double _measureTextHeight({
-  required String text,
-  required TextStyle style,
-  required double maxWidth,
-}) {
-  final TextPainter painter = TextPainter(
-    text: TextSpan(text: text, style: style),
-    textDirection: TextDirection.ltr,
-  )..layout(maxWidth: maxWidth);
-  return painter.height;
-}
 
 class _TimeSlot {
   const _TimeSlot(this.label);

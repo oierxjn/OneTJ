@@ -29,6 +29,8 @@ class TimetableIndexBuilder {
       for (final CourseTimeTableItemData timeItem in timeTableList) {
         // 将Timetable中每节课程都看作一个独立的课程，即使他们的课程代码、班级代码、班级名称相同
         final List<int> weeks = timeItem.weeks ?? const [];
+        // TODO(oierxjn): add logging/monitoring if backend returns missing
+        // dayOfWeek/timeStart/timeEnd; defaults below are a fallback only.
         final TimetableEntry entry = TimetableEntry(
           courseName: item.courseName ??
               timeItem.courseName ??
