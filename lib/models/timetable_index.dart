@@ -1,3 +1,8 @@
+import 'package:onetj/repo/course_schedule_repository.dart';
+
+/// 课程条目
+/// 
+/// 用于UI数据源，包含课程的所有信息
 class TimetableEntry {
   const TimetableEntry({
     required this.courseName,
@@ -33,7 +38,9 @@ class TimetableEntry {
   final String? weekNum;
   final int? teachingClassId;
 }
-
+/// 课程表索引
+/// 
+/// 用于UI数据源，快速查询课程
 class TimetableIndex {
   const TimetableIndex({
     required this.byDayOfWeek,
@@ -42,15 +49,15 @@ class TimetableIndex {
     required this.nonTimetableItems,
   });
 
-  /// Day of week (1-7) -> entries.
+  /// 索引：一周的第 `n` 天 -> 课程列表
   final Map<int, List<TimetableEntry>> byDayOfWeek;
 
-  /// Week number -> day of week (1-7) -> entries.
+  /// 索引：第 `m` 周 -> 一周的星期 `n` -> 课程列表
   final Map<int, Map<int, List<TimetableEntry>>> byWeekThenDay;
 
-  /// Flattened list of all timetable entries.
+  /// 扁平化的所有课程条目
   final List<TimetableEntry> allEntries;
 
-  /// Original items whose timeTableList is null.
-  final List<Object> nonTimetableItems;
+  /// 原始数据中，timeTableList 为空的项
+  final List<CourseScheduleItemData> nonTimetableItems;
 }

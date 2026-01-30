@@ -1,9 +1,6 @@
 import 'package:onetj/features/timetable/models/timetable_model.dart';
 import 'package:onetj/models/base_model.dart';
 import 'package:onetj/models/timetable_index.dart';
-import 'package:onetj/repo/course_schedule_repository.dart';
-import 'package:onetj/repo/school_calendar_repository.dart';
-import 'package:onetj/services/timetable_index_builder.dart';
 
 enum TimetableDisplayMode {
   day,
@@ -13,20 +10,9 @@ enum TimetableDisplayMode {
 class TimetableViewModel extends BaseViewModel {
   TimetableViewModel({
     TimetableModel? model,
-    TimetableIndexBuilder? indexBuilder,
-    CourseScheduleRepository? scheduleRepository,
-    SchoolCalendarRepository? calendarRepository,
-  })  : _model = model ?? TimetableModel(),
-        _indexBuilder = indexBuilder ?? const TimetableIndexBuilder(),
-        _scheduleRepository =
-            scheduleRepository ?? CourseScheduleRepository.getInstance(),
-        _calendarRepository =
-            calendarRepository ?? SchoolCalendarRepository.getInstance();
+  })  : _model = model ?? TimetableModel();
 
   final TimetableModel _model;
-  final TimetableIndexBuilder _indexBuilder;
-  final CourseScheduleRepository _scheduleRepository;
-  final SchoolCalendarRepository _calendarRepository;
 
   TimetableIndex? _index;
   Object? _error;
@@ -106,24 +92,12 @@ class TimetableViewModel extends BaseViewModel {
   }
 
   Future<void> _loadCurrentWeek() async {
-    final SchoolCalendarData? calendar =
-        await _calendarRepository.getSchoolCalendar();
-    if (calendar != null) {
-      _currentWeek = calendar.week;
-    }
+    _currentWeek = await _model.getSchoolCalendarCurrentWeek();
   }
 
   Future<void> _loadTimetable() async {
     try {
-      CourseScheduleData? data =
-          await _scheduleRepository.getCourseSchedule();
-      data ??= await _model.fetchCourseSchedule();
-      if (data == null) {
-        _error = StateError('No timetable data available');
-        return;
-      }
-      await _scheduleRepository.saveCourseSchedule(data);
-      _index = _indexBuilder.buildIndex(data);
+      _index = await _model.getTimetableIndex();
       _syncSelectedWeek();
     } catch (error) {
       _error = error;

@@ -1,23 +1,33 @@
 import 'package:onetj/models/timetable_index.dart';
 import 'package:onetj/repo/course_schedule_repository.dart';
 
+/// 课程表索引构建器
+/// 
+/// 用于构建课程表索引
 class TimetableIndexBuilder {
   const TimetableIndexBuilder();
 
   TimetableIndex buildIndex(CourseScheduleData data) {
+    /// 索引：一周的星期`n` -> 课程列表
     final Map<int, List<TimetableEntry>> byDayOfWeek = {};
+    /// 索引：第 `m` 周 -> 一周的星期 `n` -> 课程列表
     final Map<int, Map<int, List<TimetableEntry>>> byWeekThenDay = {};
+    /// 所有课程条目
     final List<TimetableEntry> allEntries = [];
-    final List<Object> nonTimetableItems = [];
+    /// 原始数据中，timeTableList为空的项
+    final List<CourseScheduleItemData> nonTimetableItems = [];
 
     for (final CourseScheduleItemData item in data.items) {
       final List<CourseTimeTableItemData>? timeTableList = item.timeTableList;
+
+      // 将没有时间表的项添加到nonTimetableItems
       if (timeTableList == null || timeTableList.isEmpty) {
         nonTimetableItems.add(item);
         continue;
       }
 
       for (final CourseTimeTableItemData timeItem in timeTableList) {
+        // 将Timetable中每节课程都看作一个独立的课程，即使他们的课程代码、班级代码、班级名称相同
         final List<int> weeks = timeItem.weeks ?? const [];
         final TimetableEntry entry = TimetableEntry(
           courseName: item.courseName ?? timeItem.courseName,
@@ -39,14 +49,17 @@ class TimetableIndexBuilder {
 
         allEntries.add(entry);
 
+        // 记录这节课是星期几的课程
         final int? day = entry.dayOfWeek;
         if (day != null) {
+          // 将这节课添加到 byDayOfWeek 索引中
           final List<TimetableEntry> dayList =
               byDayOfWeek.putIfAbsent(day, () => []);
           dayList.add(entry);
         }
 
         if (weeks.isNotEmpty && day != null) {
+          // 将这节课添加到 byWeekThenDay 索引中
           for (final int week in weeks) {
             final Map<int, List<TimetableEntry>> weekMap =
                 byWeekThenDay.putIfAbsent(week, () => {});
