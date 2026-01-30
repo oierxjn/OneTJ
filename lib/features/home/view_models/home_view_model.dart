@@ -63,18 +63,18 @@ class HomeViewModel extends BaseViewModel {
       final TimetableIndex index = const TimetableIndexBuilder().buildIndex(data);
       final List<TimetableEntry> entries = List<TimetableEntry>.from(index.allEntries)
         ..sort((a, b) {
-          final int dayA = a.dayOfWeek ?? 0;
-          final int dayB = b.dayOfWeek ?? 0;
+          final int dayA = a.dayOfWeek;
+          final int dayB = b.dayOfWeek;
           if (dayA != dayB) {
             return dayA.compareTo(dayB);
           }
-          final int startA = a.timeStart ?? 0;
-          final int startB = b.timeStart ?? 0;
+          final int startA = a.timeStart;
+          final int startB = b.timeStart;
           if (startA != startB) {
             return startA.compareTo(startB);
           }
-          final int endA = a.timeEnd ?? 0;
-          final int endB = b.timeEnd ?? 0;
+          final int endA = a.timeEnd;
+          final int endB = b.timeEnd;
           return endA.compareTo(endB);
         });
       _timetableController.add(entries);

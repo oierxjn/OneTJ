@@ -46,24 +46,12 @@ class _TimetableViewState extends State<TimetableView> {
     super.dispose();
   }
 
-  String _formatTimeRange(TimetableEntry entry) {
-    final int? start = entry.timeStart;
-    final int? end = entry.timeEnd;
-    if (start != null && end != null) {
-      return '$start-$end';
-    }
-    if (start != null) {
-      return '$start';
-    }
-    return '-';
-  }
-
   String _formatRoom(TimetableEntry entry) {
-    return entry.roomIdI18n ?? entry.roomId ?? '-';
+    return entry.roomIdI18n.isNotEmpty ? entry.roomIdI18n : entry.roomId;
   }
 
   String _formatTeacher(TimetableEntry entry) {
-    return entry.teacherName ?? '-';
+    return entry.teacherName;
   }
 
   @override
@@ -200,14 +188,18 @@ class _TimetableViewState extends State<TimetableView> {
     });
   }
 
+  /// 构建日视图
+  /// 
+  /// 显示当前选中的日期的课表。
+  /// 如果没有课，显示对应文字。
   Widget _buildDayView(BuildContext context) {
     final List<TimetableEntry> entries =
-        _viewModel.entriesForDay(_viewModel.selectedDay);
+        _viewModel.entriesForSelectedWeekDay(_viewModel.selectedDay);
     if (entries.isEmpty) {
       return const Center(child: Text('No classes today'));
     }
     /**
-     * 每个时间槽的高度
+     * 每个时间槽的高度（时间轴之间的距离）
      */
     const double slotHeight = 64;
     /**
@@ -274,9 +266,8 @@ class _TimetableViewState extends State<TimetableView> {
                               entry: entry,
                               slotHeight: slotHeight,
                               slotCount: _timeSlots.length,
-                              timeRangeBuilder: _formatTimeRange,
-                              roomBuilder: _formatRoom,
-                              teacherBuilder: _formatTeacher,
+                        roomBuilder: _formatRoom,
+                        teacherBuilder: _formatTeacher,
                             ),
                         ],
                       ),
@@ -297,7 +288,8 @@ class _TimetableViewState extends State<TimetableView> {
       itemCount: 7,
       itemBuilder: (context, i) {
         final int day = i + 1;
-        final List<TimetableEntry> entries = _viewModel.entriesForDay(day);
+        final List<TimetableEntry> entries =
+            _viewModel.entriesForSelectedWeekDay(day);
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
           child: Padding(
@@ -315,27 +307,25 @@ class _TimetableViewState extends State<TimetableView> {
                 else
                   Column(
                     children: entries
-                        .map(
-                          (entry) => Padding(
-                            padding: const EdgeInsets.only(bottom: 6),
-                            child: Row(
-                              children: [
-                                Text(
-                                  _formatTimeRange(entry),
-                                  style: Theme.of(context).textTheme.bodySmall,
-                                ),
-                                const SizedBox(width: 8),
+                      .map(
+                        (entry) => Padding(
+                          padding: const EdgeInsets.only(bottom: 6),
+                          child: Row(
+                            children: [
+                              const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
-                                    entry.courseName ?? 'Unknown course',
+                                    entry.courseName.isNotEmpty
+                                        ? entry.courseName
+                                        : 'Unknown course',
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
-                              ],
-                            ),
+                            ],
                           ),
-                        )
-                        .toList(),
+                        ),
+                      )
+                      .toList(),
                   ),
               ],
             ),
@@ -381,7 +371,6 @@ class _PositionedCourseCard extends StatelessWidget {
     required this.entry,
     required this.slotHeight,
     required this.slotCount,
-    required this.timeRangeBuilder,
     required this.roomBuilder,
     required this.teacherBuilder,
   });
@@ -389,14 +378,13 @@ class _PositionedCourseCard extends StatelessWidget {
   final TimetableEntry entry;
   final double slotHeight;
   final int slotCount;
-  final String Function(TimetableEntry) timeRangeBuilder;
   final String Function(TimetableEntry) roomBuilder;
   final String Function(TimetableEntry) teacherBuilder;
 
   @override
   Widget build(BuildContext context) {
-    final int startSlot = _clampSlot(entry.timeStart ?? 1);
-    final int endSlot = _clampSlot(entry.timeEnd ?? startSlot);
+    final int startSlot = _clampSlot(entry.timeStart);
+    final int endSlot = _clampSlot(entry.timeEnd);
     final int safeStart = startSlot <= endSlot ? startSlot : endSlot;
     final int safeEnd = startSlot <= endSlot ? endSlot : startSlot;
     final double top = (safeStart - 1) * slotHeight + 6;
@@ -416,17 +404,14 @@ class _PositionedCourseCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                entry.courseName ?? 'Unknown course',
+                entry.courseName.isNotEmpty
+                    ? entry.courseName
+                    : 'Unknown course',
                 style: Theme.of(context).textTheme.titleSmall,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 6),
-              Text(
-                timeRangeBuilder(entry),
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              const SizedBox(height: 4),
               Text(
                 roomBuilder(entry),
                 style: Theme.of(context).textTheme.bodySmall,

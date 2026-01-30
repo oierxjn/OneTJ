@@ -157,19 +157,21 @@ class _DashboardViewState extends State<DashboardView> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            entry.courseName ?? 'Unknown course',
+                            entry.courseName.isNotEmpty
+                                ? entry.courseName
+                                : 'Unknown course',
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Day ${entry.dayOfWeek ?? '-'} | '
-                            '${entry.timeStart ?? '-'}-${entry.timeEnd ?? '-'}',
+                            'Day ${entry.dayOfWeek} | '
+                            '${entry.timeStart}-${entry.timeEnd}',
                           ),
                           Text(
-                            'Room: ${entry.roomIdI18n ?? entry.roomId ?? '-'}',
+                            'Room: ${entry.roomIdI18n.isNotEmpty ? entry.roomIdI18n : (entry.roomId.isNotEmpty ? entry.roomId : '-')}',
                           ),
                           Text(
-                            'Teacher: ${entry.teacherName ?? '-'}',
+                            'Teacher: ${entry.teacherName.isNotEmpty ? entry.teacherName : '-'}',
                           ),
                         ],
                       ),

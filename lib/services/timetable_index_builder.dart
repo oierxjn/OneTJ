@@ -30,35 +30,51 @@ class TimetableIndexBuilder {
         // 将Timetable中每节课程都看作一个独立的课程，即使他们的课程代码、班级代码、班级名称相同
         final List<int> weeks = timeItem.weeks ?? const [];
         final TimetableEntry entry = TimetableEntry(
-          courseName: item.courseName ?? timeItem.courseName,
-          courseCode: item.courseCode ?? timeItem.courseCode,
-          classCode: item.classCode ?? timeItem.classCode,
-          className: item.className ?? timeItem.className,
-          teacherName: timeItem.teacherName ?? item.teacherName,
-          campus: timeItem.campus ?? item.campus,
-          campusI18n: timeItem.campusI18n ?? item.campusI18n,
-          roomId: timeItem.roomId ?? item.classRoom,
-          roomIdI18n: timeItem.roomIdI18n ?? item.classRoomI18n,
-          dayOfWeek: timeItem.dayOfWeek,
-          timeStart: timeItem.timeStart,
-          timeEnd: timeItem.timeEnd,
+          courseName: item.courseName ??
+              timeItem.courseName ??
+              '',
+          courseCode: item.courseCode ??
+              timeItem.courseCode ??
+              '',
+          classCode: item.classCode ??
+              timeItem.classCode ??
+              '',
+          className: item.className ??
+              timeItem.className ??
+              '',
+          teacherName: timeItem.teacherName ??
+              item.teacherName ??
+              '',
+          campus: timeItem.campus ??
+              item.campus ??
+              '',
+          campusI18n: timeItem.campusI18n ??
+              item.campusI18n ??
+              '',
+          roomId: timeItem.roomId ??
+              item.classRoom ??
+              '',
+          roomIdI18n: timeItem.roomIdI18n ??
+              item.classRoomI18n ??
+              '',
+          dayOfWeek: timeItem.dayOfWeek ?? 7,
+          timeStart: timeItem.timeStart ?? 1,
+          timeEnd: timeItem.timeEnd ?? timeItem.timeStart ?? 1,
           weeks: weeks,
-          weekNum: timeItem.weekNum,
+          weekNum: timeItem.weekNum ?? '',
           teachingClassId: timeItem.teachingClassId ?? item.teachingClassId,
         );
 
         allEntries.add(entry);
 
         // 记录这节课是星期几的课程
-        final int? day = entry.dayOfWeek;
-        if (day != null) {
-          // 将这节课添加到 byDayOfWeek 索引中
-          final List<TimetableEntry> dayList =
-              byDayOfWeek.putIfAbsent(day, () => []);
-          dayList.add(entry);
-        }
+        final int day = entry.dayOfWeek;
+        // 将这节课添加到 byDayOfWeek 索引中
+        final List<TimetableEntry> dayList =
+            byDayOfWeek.putIfAbsent(day, () => []);
+        dayList.add(entry);
 
-        if (weeks.isNotEmpty && day != null) {
+        if (weeks.isNotEmpty) {
           // 将这节课添加到 byWeekThenDay 索引中
           for (final int week in weeks) {
             final Map<int, List<TimetableEntry>> weekMap =

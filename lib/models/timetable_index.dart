@@ -22,20 +22,20 @@ class TimetableEntry {
     required this.teachingClassId,
   });
 
-  final String? courseName;
-  final String? courseCode;
-  final String? classCode;
-  final String? className;
-  final String? teacherName;
-  final String? campus;
-  final String? campusI18n;
-  final String? roomId;
-  final String? roomIdI18n;
-  final int? dayOfWeek;
-  final int? timeStart;
-  final int? timeEnd;
+  final String courseName;
+  final String courseCode;
+  final String classCode;
+  final String className;
+  final String teacherName;
+  final String campus;
+  final String campusI18n;
+  final String roomId;
+  final String roomIdI18n;
+  final int dayOfWeek;
+  final int timeStart;
+  final int timeEnd;
   final List<int> weeks;
-  final String? weekNum;
+  final String weekNum;
   final int? teachingClassId;
 }
 /// 课程表索引

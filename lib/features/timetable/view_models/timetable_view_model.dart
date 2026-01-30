@@ -64,28 +64,26 @@ class TimetableViewModel extends BaseViewModel {
     notifyListeners();
   }
 
-  List<TimetableEntry> entriesForDay(int day) {
+  List<TimetableEntry> entriesForSelectedWeekDay(int day) {
     final TimetableIndex? index = _index;
     if (index == null) {
       return const [];
     }
-    List<TimetableEntry> entries;
-    if (_selectedWeek != null) {
-      final Map<int, List<TimetableEntry>>? weekMap =
-          index.byWeekThenDay[_selectedWeek!];
-      entries = weekMap?[day] ?? const [];
-    } else {
-      entries = index.byDayOfWeek[day] ?? const [];
+    if (_selectedWeek == null) {
+      return const [];
     }
+    final Map<int, List<TimetableEntry>>? weekMap =
+        index.byWeekThenDay[_selectedWeek];
+    final List<TimetableEntry> entries = weekMap?[day] ?? const [];
     final List<TimetableEntry> sorted = List<TimetableEntry>.from(entries);
     sorted.sort((a, b) {
-      final int startA = a.timeStart ?? 0;
-      final int startB = b.timeStart ?? 0;
+      final int startA = a.timeStart;
+      final int startB = b.timeStart;
       if (startA != startB) {
         return startA.compareTo(startB);
       }
-      final int endA = a.timeEnd ?? 0;
-      final int endB = b.timeEnd ?? 0;
+      final int endA = a.timeEnd;
+      final int endB = b.timeEnd;
       return endA.compareTo(endB);
     });
     return sorted;
@@ -95,6 +93,9 @@ class TimetableViewModel extends BaseViewModel {
     _currentWeek = await _model.getSchoolCalendarCurrentWeek();
   }
 
+  /// 加载课表索引并同步选中的周数
+  /// 
+  /// 如果加载失败，将错误存储到 [_error] 中
   Future<void> _loadTimetable() async {
     try {
       _index = await _model.getTimetableIndex();
@@ -104,6 +105,10 @@ class TimetableViewModel extends BaseViewModel {
     }
   }
 
+  /// 同步选中的周数
+  /// 
+  /// 如果当前周数在课表索引中，将选中周数设置为当前周数。
+  /// 否则，将选中周数设置为第一周。
   void _syncSelectedWeek() {
     final List<int> weeks = _weekNumbers(_index);
     if (weeks.isEmpty) {
@@ -120,6 +125,9 @@ class TimetableViewModel extends BaseViewModel {
     _selectedWeek = weeks.first;
   }
 
+  /// 获取课表索引中的所有周数
+  /// 
+  /// 周数按升序排序。
   List<int> _weekNumbers(TimetableIndex? index) {
     if (index == null) {
       return const [];
