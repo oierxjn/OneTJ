@@ -145,9 +145,7 @@ class _TimetableViewState extends State<TimetableView> {
                 ),
               ),
             Expanded(
-              child: _viewModel.mode == TimetableDisplayMode.day
-                  ? _buildDayView(context)
-                  : _buildWeekView(context),
+              child: _buildTimetableView(context, mode: _viewModel.mode),
             ),
           ],
         );
@@ -188,150 +186,227 @@ class _TimetableViewState extends State<TimetableView> {
     });
   }
 
-  /// 构建日视图
-  /// 
-  /// 显示当前选中的日期的课表。
-  /// 如果没有课，显示对应文字。
-  Widget _buildDayView(BuildContext context) {
-    final List<TimetableEntry> entries =
-        _viewModel.entriesForSelectedWeekDay(_viewModel.selectedDay);
-    if (entries.isEmpty) {
-      return const Center(child: Text('No classes today'));
-    }
-    /**
-     * 每个时间槽的高度（时间轴之间的距离）
-     */
+  double _weekHeaderHeight(BuildContext context) {
+    final TextStyle style =
+        Theme.of(context).textTheme.bodySmall ?? const TextStyle();
+    const double padding = 8;
+    final TextPainter painter = TextPainter(
+      text: TextSpan(text: 'Mon', style: style),
+      maxLines: 1,
+      textDirection: TextDirection.ltr,
+    )..layout();
+    return painter.height + padding;
+  }
+
+  Widget _buildTimetableView(
+    BuildContext context, {
+    required TimetableDisplayMode mode,
+  }) {
     const double slotHeight = 64;
-    /**
-     * 时间槽的标签宽度
-     */
     const double labelWidth = 72;
-    final double contentHeight = _timeSlots.length * slotHeight;
+    const double dayColumnWidth = 140;
+    final double headerHeight =
+        mode == TimetableDisplayMode.week ? _weekHeaderHeight(context) : 0;
+    final double contentHeight =
+        _timeSlots.length * slotHeight + headerHeight;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              controller: _dayScrollController,
-              child: SizedBox(
-                height: contentHeight,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+      child: SingleChildScrollView(
+        controller: _dayScrollController,
+        child: SizedBox(
+          height: contentHeight,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: labelWidth,
+                child: Column(
                   children: [
-                    SizedBox(
-                      width: labelWidth,
+                    if (headerHeight > 0) SizedBox(height: headerHeight),
+                    for (final slot in _timeSlots)
+                      Container(
+                        height: slotHeight,
+                        alignment: Alignment.topCenter,
+                        padding: const EdgeInsets.only(top: 6),
+                        child: Text(
+                          slot.label,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Stack(
+                  children: [
+                    Positioned.fill(
                       child: Column(
                         children: [
-                          for (final slot in _timeSlots)
+                          if (headerHeight > 0) SizedBox(height: headerHeight),
+                          for (int i = 0; i < _timeSlots.length; i += 1)
                             Container(
                               height: slotHeight,
-                              alignment: Alignment.topCenter,
-                              padding: const EdgeInsets.only(top: 6),
-                              child: Text(
-                                slot.label,
-                                style: Theme.of(context).textTheme.bodySmall,
+                              decoration: BoxDecoration(
+                                border: Border(
+                                  bottom: BorderSide(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .outlineVariant,
+                                  ),
+                                ),
                               ),
                             ),
                         ],
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Stack(
-                        children: [
-                          Positioned.fill(
-                            child: Column(
-                              children: [
-                                for (int i = 0; i < _timeSlots.length; i += 1)
-                                  Container(
-                                    height: slotHeight,
-                                    decoration: BoxDecoration(
-                                      border: Border(
-                                        bottom: BorderSide(
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .outlineVariant,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            ),
+                    if (mode == TimetableDisplayMode.day)
+                      Positioned.fill(
+                        child: _DayTimelineContent(
+                          entries: _viewModel.entriesForSelectedWeekDay(
+                            _viewModel.selectedDay,
                           ),
-                          for (final entry in entries)
-                            _PositionedCourseCard(
-                              entry: entry,
-                              slotHeight: slotHeight,
-                              slotCount: _timeSlots.length,
-                        roomBuilder: _formatRoom,
-                        teacherBuilder: _formatTeacher,
-                            ),
-                        ],
+                          slotHeight: slotHeight,
+                          slotCount: _timeSlots.length,
+                          roomBuilder: _formatRoom,
+                          teacherBuilder: _formatTeacher,
+                        ),
+                      )
+                    else if (mode == TimetableDisplayMode.week)
+                      Positioned.fill(
+                        child: _WeekTimelineContent(
+                          dayLabels: _dayLabels,
+                          dayColumnWidth: dayColumnWidth,
+                          slotHeight: slotHeight,
+                          slotCount: _timeSlots.length,
+                          entriesForDay: (day) =>
+                              _viewModel.entriesForSelectedWeekDay(day),
+                          roomBuilder: _formatRoom,
+                          teacherBuilder: _formatTeacher,
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
+}
 
-  Widget _buildWeekView(BuildContext context) {
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-      itemCount: 7,
-      itemBuilder: (context, i) {
-        final int day = i + 1;
-        final List<TimetableEntry> entries =
-            _viewModel.entriesForSelectedWeekDay(day);
-        return Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _dayLabels[i],
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-                const SizedBox(height: 8),
-                if (entries.isEmpty)
-                  const Text('No classes')
-                else
-                  Column(
-                    children: entries
-                      .map(
-                        (entry) => Padding(
-                          padding: const EdgeInsets.only(bottom: 6),
-                          child: Row(
-                            children: [
-                              const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    entry.courseName.isNotEmpty
-                                        ? entry.courseName
-                                        : 'Unknown course',
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                      )
-                      .toList(),
-                  ),
-              ],
+class _DayTimelineContent extends StatelessWidget {
+  const _DayTimelineContent({
+    required this.entries,
+    required this.slotHeight,
+    required this.slotCount,
+    required this.roomBuilder,
+    required this.teacherBuilder,
+  });
+
+  final List<TimetableEntry> entries;
+  final double slotHeight;
+  final int slotCount;
+  final String Function(TimetableEntry) roomBuilder;
+  final String Function(TimetableEntry) teacherBuilder;
+
+  @override
+  Widget build(BuildContext context) {
+    if (entries.isEmpty) {
+      return const Center(child: Text('No classes today'));
+    }
+    return CustomMultiChildLayout(
+      delegate: _CourseLayoutDelegate(
+        entries: entries,
+        slotHeight: slotHeight,
+        slotCount: slotCount,
+      ),
+      children: [
+        for (int i = 0; i < entries.length; i += 1)
+          LayoutId(
+            id: _courseId(i),
+            child: _CourseCard(
+              entry: entries[i],
+              roomBuilder: roomBuilder,
+              teacherBuilder: teacherBuilder,
             ),
           ),
-        );
-      },
+      ],
+    );
+  }
+}
+
+class _WeekTimelineContent extends StatelessWidget {
+  const _WeekTimelineContent({
+    required this.dayLabels,
+    required this.dayColumnWidth,
+    required this.slotHeight,
+    required this.slotCount,
+    required this.entriesForDay,
+    required this.roomBuilder,
+    required this.teacherBuilder,
+  });
+
+  final List<String> dayLabels;
+  final double dayColumnWidth;
+  final double slotHeight;
+  final int slotCount;
+  final List<TimetableEntry> Function(int day) entriesForDay;
+  final String Function(TimetableEntry) roomBuilder;
+  final String Function(TimetableEntry) teacherBuilder;
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (int i = 0; i < dayLabels.length; i += 1)
+            Builder(
+              builder: (context) {
+                final List<TimetableEntry> dayEntries =
+                    entriesForDay(i + 1);
+                return SizedBox(
+                  width: dayColumnWidth,
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4, bottom: 4),
+                        child: Text(
+                          dayLabels[i],
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ),
+                      Expanded(
+                        child: CustomMultiChildLayout(
+                          delegate: _CourseLayoutDelegate(
+                            entries: dayEntries,
+                            slotHeight: slotHeight,
+                            slotCount: slotCount,
+                          ),
+                          children: [
+                            for (int j = 0; j < dayEntries.length; j += 1)
+                              LayoutId(
+                                id: _courseId(j),
+                                child: _CourseCard(
+                                  entry: dayEntries[j],
+                                  roomBuilder: roomBuilder,
+                                  teacherBuilder: teacherBuilder,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+        ],
+      ),
     );
   }
 }
@@ -366,66 +441,138 @@ class _WheelItem extends StatelessWidget {
   }
 }
 
-class _PositionedCourseCard extends StatelessWidget {
-  const _PositionedCourseCard({
+class _CourseCard extends StatelessWidget {
+  const _CourseCard({
     required this.entry,
-    required this.slotHeight,
-    required this.slotCount,
     required this.roomBuilder,
     required this.teacherBuilder,
   });
 
   final TimetableEntry entry;
-  final double slotHeight;
-  final int slotCount;
   final String Function(TimetableEntry) roomBuilder;
   final String Function(TimetableEntry) teacherBuilder;
 
   @override
   Widget build(BuildContext context) {
-    final int startSlot = _clampSlot(entry.timeStart);
-    final int endSlot = _clampSlot(entry.timeEnd);
-    final int safeStart = startSlot <= endSlot ? startSlot : endSlot;
-    final int safeEnd = startSlot <= endSlot ? endSlot : startSlot;
-    final double top = (safeStart - 1) * slotHeight + 6;
-    final double height =
-        (safeEnd - safeStart + 1) * slotHeight - 12;
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      child: Padding(
+        padding: const EdgeInsets.all(10),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final TextStyle titleStyle =
+                Theme.of(context).textTheme.titleSmall ?? const TextStyle();
+            final TextStyle bodyStyle =
+                Theme.of(context).textTheme.bodySmall ?? const TextStyle();
+            const double gap = 4;
+            final double maxHeight = constraints.maxHeight;
+            final double maxWidth = constraints.maxWidth;
 
-    return Positioned(
-      top: top,
-      left: 0,
-      right: 0,
-      height: height.clamp(40, double.infinity),
-      child: Card(
-        margin: const EdgeInsets.symmetric(horizontal: 4),
-        child: Padding(
-          padding: const EdgeInsets.all(10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                entry.courseName.isNotEmpty
-                    ? entry.courseName
-                    : 'Unknown course',
-                style: Theme.of(context).textTheme.titleSmall,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 6),
-              Text(
-                roomBuilder(entry),
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              const SizedBox(height: 2),
-              Text(
-                teacherBuilder(entry),
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ],
-          ),
+            final List<Widget> children = [];
+            double usedHeight = 0;
+
+            void addLine({
+              required String text,
+              required TextStyle style,
+            }) {
+              if (text.isEmpty) {
+                return;
+              }
+              final double extra = children.isEmpty ? 0 : gap;
+              final double lineHeight = _measureTextHeight(
+                text: text,
+                style: style,
+                maxWidth: maxWidth,
+              );
+              final double nextHeight = lineHeight + extra;
+              if (usedHeight + nextHeight > maxHeight) {
+                return;
+              }
+              if (children.isNotEmpty) {
+                children.add(const SizedBox(height: gap));
+              }
+              children.add(
+                Text(
+                  text,
+                  style: style,
+                ),
+              );
+              usedHeight += nextHeight;
+            }
+
+            addLine(
+              text: entry.courseName.isNotEmpty
+                  ? entry.courseName
+                  : 'Unknown course',
+              style: titleStyle,
+            );
+            addLine(
+              text: roomBuilder(entry),
+              style: bodyStyle,
+            );
+            addLine(
+              text: teacherBuilder(entry),
+              style: bodyStyle,
+            );
+            addLine(
+              text: entry.classCode,
+              style: bodyStyle,
+            );
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: children,
+            );
+          },
         ),
       ),
     );
+  }
+}
+
+class _CourseLayoutDelegate extends MultiChildLayoutDelegate {
+  _CourseLayoutDelegate({
+    required this.entries,
+    required this.slotHeight,
+    required this.slotCount,
+  });
+
+  final List<TimetableEntry> entries;
+  final double slotHeight;
+  final int slotCount;
+
+  @override
+  void performLayout(Size size) {
+    for (int i = 0; i < entries.length; i += 1) {
+      final TimetableEntry entry = entries[i];
+      final Object id = _courseId(i);
+      if (!hasChild(id)) {
+        continue;
+      }
+      final int startSlot = _clampSlot(entry.timeStart);
+      final int endSlot = _clampSlot(entry.timeEnd);
+      final double top = (startSlot - 1) * slotHeight + 6;
+      final double height =
+          (endSlot - startSlot + 1) * slotHeight - 12;
+      final double cardHeight = height.clamp(40, double.infinity);
+
+      layoutChild(
+        id,
+        BoxConstraints.tightFor(
+          width: size.width,
+          height: cardHeight,
+        ),
+      );
+      positionChild(id, Offset(0, top));
+    }
+  }
+
+  @override
+  bool shouldRelayout(covariant _CourseLayoutDelegate oldDelegate) {
+    return oldDelegate.entries != entries ||
+        oldDelegate.slotHeight != slotHeight ||
+        oldDelegate.slotCount != slotCount;
   }
 
   int _clampSlot(int slot) {
@@ -437,6 +584,20 @@ class _PositionedCourseCard extends StatelessWidget {
     }
     return slot;
   }
+}
+
+Object _courseId(int index) => 'course_$index';
+
+double _measureTextHeight({
+  required String text,
+  required TextStyle style,
+  required double maxWidth,
+}) {
+  final TextPainter painter = TextPainter(
+    text: TextSpan(text: text, style: style),
+    textDirection: TextDirection.ltr,
+  )..layout(maxWidth: maxWidth);
+  return painter.height;
 }
 
 class _TimeSlot {
