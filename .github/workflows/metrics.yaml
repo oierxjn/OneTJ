@@ -1,0 +1,26 @@
+name: Metrics
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * *"  # 每天 00:00 UTC
+
+permissions:
+  contents: write
+
+jobs:
+  github-metrics:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: lowlighter/metrics@latest
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+          output_action: commit
+          committer_branch: metrics-renders
+          committer_message: "Chore: update metrics"
+ 
+          filename: metrics.svg
+
+          # 下面随便按需改
+          template: classic
+          base: header, activity, repositories
