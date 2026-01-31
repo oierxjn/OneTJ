@@ -13,6 +13,7 @@ jobs:
     steps:
       - uses: lowlighter/metrics@latest
         with:
+          debug: yes
           token: ${{ secrets.GITHUB_TOKEN }}
 
           output_action: commit
@@ -21,7 +22,6 @@ jobs:
  
           filename: metrics.svg
 
-          # 下面随便按需改
           template: repository
           repo: ${{ github.repository }}
           base: header, repositories
@@ -29,3 +29,4 @@ jobs:
           plugin_lines: yes
           plugin_lines_sections: history
           plugin_lines_history_limit: 1
+          plugin_lines_delay: 30
