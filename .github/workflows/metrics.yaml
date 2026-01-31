@@ -14,9 +14,8 @@ jobs:
       - uses: lowlighter/metrics@v3.34
         with:
           debug: yes
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-          user: ${{ github.repository_owner }}
+          token: ${{ secrets.METRICS_TOKEN }}
+          repo: ${{ github.repository }}
 
           output_action: commit
           committer_branch: metrics-renders
@@ -25,7 +24,6 @@ jobs:
           filename: metrics.svg
 
           template: repository
-          repo: ${{ github.repository }}
           base: header, repositories
 
           plugin_lines: yes
