@@ -11,11 +11,11 @@ jobs:
   github-metrics:
     runs-on: ubuntu-latest
     steps:
-      - uses: lowlighter/metrics@latest
+      - uses: lowlighter/metrics@v3.34
         with:
           debug: yes
           token: ${{ secrets.GITHUB_TOKEN }}
-          
+
           user: ${{ github.repository_owner }}
 
           output_action: commit
