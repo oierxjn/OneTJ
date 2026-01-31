@@ -22,5 +22,10 @@ jobs:
           filename: metrics.svg
 
           # 下面随便按需改
-          template: classic
-          base: header, activity, repositories
+          template: repository
+          repo: ${{ github.repository }}
+          base: header, repositories
+
+          plugin_lines: yes
+          plugin_lines_sections: history
+          plugin_lines_history_limit: 1
