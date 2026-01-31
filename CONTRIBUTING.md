@@ -139,9 +139,9 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
 项目采用 MVVM 架构：
 
-- **Model**：数据模型和业务逻辑
-- **ViewModel**：连接 Model 和 View 的中间层
-- **View**：UI 组件
+- **Model**：提供数据和业务逻辑。
+- **ViewModel**：连接 Model 和 View 的中间层，继承自 `ChangeNotifier`，用于处理业务逻辑和状态管理。
+- **View**：UI 组件，用 `Listenable` 组件实现状态监听。
 
 文件结构：
 ```

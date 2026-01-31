@@ -4,7 +4,7 @@ import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/features/home/views/dashboard_view.dart';
 import 'package:onetj/features/home/views/home_view.dart';
 import 'package:onetj/features/home/views/settings_view.dart';
-import 'package:onetj/features/home/views/timetable_view.dart';
+import 'package:onetj/features/timetable/views/timetable_view.dart';
 
 final StatefulShellRoute homeShellRoute = StatefulShellRoute.indexedStack(
   builder: (context, state, navigationShell) =>
