@@ -15,11 +15,13 @@ jobs:
         with:
           debug: yes
           token: ${{ secrets.METRICS_TOKEN }}
-          repo: ${{ github.repository }}
+
+          user: ${{ github.repository_owner }}
+          repo: ${{ github.event.repository.name }}
 
           output_action: commit
           committer_branch: metrics-renders
-          committer_message: "Chore: update metrics"
+          committer_message: "Chore: update metrics [skip CI]"
  
           filename: metrics.svg
 
