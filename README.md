@@ -46,3 +46,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
 3. Otherwise, it opens the login WebView and exchanges the auth code for tokens.
 4. Home fetches student profile data and the current term calendar.
 
+![Repo Status](https://raw.githubusercontent.com/oierxjn/OneTJ/refs/heads/metrics-renders/metrics.svg)  
+
+![Code Churn](https://raw.githubusercontent.com/oierxjn/OneTJ/refs/heads/metrics-renders/daily-churn.svg)

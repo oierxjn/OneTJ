@@ -11,9 +11,8 @@ jobs:
   github-metrics:
     runs-on: ubuntu-latest
     steps:
-      - uses: lowlighter/metrics@v3.34
+      - uses: lowlighter/metrics@latest
         with:
-          debug: yes
           token: ${{ secrets.METRICS_TOKEN }}
 
           user: ${{ github.repository_owner }}

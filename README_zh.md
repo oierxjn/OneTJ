@@ -42,3 +42,6 @@
 3. 若无有效令牌，则打开登录 WebView，通过授权码换取令牌；
 4. 首页加载并展示学生个人信息与当前学期校历。
 
+![仓库状态](https://raw.githubusercontent.com/oierxjn/OneTJ/refs/heads/metrics-renders/metrics.svg)  
+
+![代码变更](https://raw.githubusercontent.com/oierxjn/OneTJ/refs/heads/metrics-renders/daily-churn.svg)
