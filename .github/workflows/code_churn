@@ -1,0 +1,23 @@
+name: daily-code-churn
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * *"  # 每天 00:00 UTC
+    
+
+permissions:
+  contents: write
+
+jobs:
+  churn:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: oierxjn/daily-code-churn@latest
+        with:
+          days: "30"
+          out: "daily-churn.svg"
+          commit_branch: "metrics-renders"
