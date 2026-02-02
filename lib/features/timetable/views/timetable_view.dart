@@ -498,38 +498,44 @@ class _CourseCard extends StatelessWidget {
           final String teacherText = teacherBuilder(entry);
           final String classCodeText = entry.classCode;
 
+          final double scrollHeight =
+              (constraints.maxHeight - pad * 2).clamp(0, double.infinity);
+
           return Padding(
             padding: EdgeInsets.all(pad),
-            child: ClipRect(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    titleText,
-                    style: titleStyle,
-                  ),
-                  if (roomText.isNotEmpty) ...[
-                    const SizedBox(height: gap),
+            child: SizedBox(
+              height: scrollHeight,
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      roomText,
-                      style: bodyStyle,
+                      titleText,
+                      style: titleStyle,
                     ),
+                    if (roomText.isNotEmpty) ...[
+                      const SizedBox(height: gap),
+                      Text(
+                        roomText,
+                        style: bodyStyle,
+                      ),
+                    ],
+                    if (teacherText.isNotEmpty) ...[
+                      const SizedBox(height: gap),
+                      Text(
+                        teacherText,
+                        style: bodyStyle,
+                      ),
+                    ],
+                    if (classCodeText.isNotEmpty) ...[
+                      const SizedBox(height: gap),
+                      Text(
+                        classCodeText,
+                        style: bodyStyle,
+                      ),
+                    ],
                   ],
-                  if (teacherText.isNotEmpty) ...[
-                    const SizedBox(height: gap),
-                    Text(
-                      teacherText,
-                      style: bodyStyle,
-                    ),
-                  ],
-                  if (classCodeText.isNotEmpty) ...[
-                    const SizedBox(height: gap),
-                    Text(
-                      classCodeText,
-                      style: bodyStyle,
-                    ),
-                  ],
-                ],
+                ),
               ),
             ),
           );
