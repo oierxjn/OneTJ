@@ -59,6 +59,9 @@ class TimetableIndexBuilder {
           roomIdI18n: timeItem.roomIdI18n ??
               item.classRoomI18n ??
               '',
+          roomLabel: timeItem.roomLabel ??
+              item.roomLabel ??
+              '',
           dayOfWeek: timeItem.dayOfWeek ?? 7,
           timeStart: timeItem.timeStart ?? 1,
           timeEnd: timeItem.timeEnd ?? timeItem.timeStart ?? 1,

@@ -48,7 +48,7 @@ class _TimetableViewState extends State<TimetableView> {
   }
 
   String _formatRoom(TimetableEntry entry) {
-    return entry.roomIdI18n.isNotEmpty ? entry.roomIdI18n : entry.roomId;
+    return entry.roomIdI18n.isNotEmpty ? entry.roomIdI18n : entry.roomLabel;
   }
 
   String _formatTeacher(TimetableEntry entry) {
