@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:onetj/features/timetable/view_models/timetable_view_model.dart';
+import 'package:onetj/features/timetable/views/widgets/timeline_content.dart';
 import 'package:onetj/models/timetable_index.dart';
 
 class TimetableView extends StatefulWidget {
@@ -288,7 +289,7 @@ class _TimetableViewState extends State<TimetableView> {
                         ),
                         if (mode == TimetableDisplayMode.day)
                           Positioned.fill(
-                            child: _DayTimelineContent(
+                            child: DayTimelineContent(
                               entries: _viewModel.entriesForSelectedWeekDay(
                                 _viewModel.selectedDay,
                               ),
@@ -300,7 +301,7 @@ class _TimetableViewState extends State<TimetableView> {
                           )
                         else if (mode == TimetableDisplayMode.week)
                           Positioned.fill(
-                            child: _WeekTimelineContent(
+                            child: WeekTimelineContent(
                               dayLabels: _dayLabels,
                               dayColumnWidth: dayColumnWidth,
                               slotHeight: slotHeight,
@@ -323,120 +324,6 @@ class _TimetableViewState extends State<TimetableView> {
     );
   }
 }
-class _DayTimelineContent extends StatelessWidget {
-  const _DayTimelineContent({
-    required this.entries,
-    required this.slotHeight,
-    required this.slotCount,
-    required this.roomBuilder,
-    required this.teacherBuilder,
-  });
-
-  final List<TimetableEntry> entries;
-  final double slotHeight;
-  final int slotCount;
-  final String Function(TimetableEntry) roomBuilder;
-  final String Function(TimetableEntry) teacherBuilder;
-
-  @override
-  Widget build(BuildContext context) {
-    if (entries.isEmpty) {
-      return const Center(child: Text('No classes today'));
-    }
-    return CustomMultiChildLayout(
-      delegate: _CourseLayoutDelegate(
-        entries: entries,
-        slotHeight: slotHeight,
-        slotCount: slotCount,
-      ),
-      children: [
-        for (int i = 0; i < entries.length; i += 1)
-          LayoutId(
-            id: _courseId(i),
-            child: _CourseCard(
-              entry: entries[i],
-              roomBuilder: roomBuilder,
-              teacherBuilder: teacherBuilder,
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-class _WeekTimelineContent extends StatelessWidget {
-  const _WeekTimelineContent({
-    required this.dayLabels,
-    required this.dayColumnWidth,
-    required this.slotHeight,
-    required this.slotCount,
-    required this.entriesForDay,
-    required this.roomBuilder,
-    required this.teacherBuilder,
-  });
-
-  final List<String> dayLabels;
-  final double dayColumnWidth;
-  final double slotHeight;
-  final int slotCount;
-  final List<TimetableEntry> Function(int day) entriesForDay;
-  final String Function(TimetableEntry) roomBuilder;
-  final String Function(TimetableEntry) teacherBuilder;
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          for (int i = 0; i < dayLabels.length; i += 1)
-            Builder(
-              builder: (context) {
-                final List<TimetableEntry> dayEntries =
-                    entriesForDay(i + 1);
-                return SizedBox(
-                  width: dayColumnWidth,
-                  child: Column(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4, bottom: 4),
-                        child: Text(
-                          dayLabels[i],
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                      ),
-                      Expanded(
-                        child: CustomMultiChildLayout(
-                          delegate: _CourseLayoutDelegate(
-                            entries: dayEntries,
-                            slotHeight: slotHeight,
-                            slotCount: slotCount,
-                          ),
-                          children: [
-                            for (int j = 0; j < dayEntries.length; j += 1)
-                              LayoutId(
-                                id: _courseId(j),
-                                child: _CourseCard(
-                                  entry: dayEntries[j],
-                                  roomBuilder: roomBuilder,
-                                  teacherBuilder: teacherBuilder,
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-        ],
-      ),
-    );
-  }
-}
-
 class _WheelItem extends StatelessWidget {
   const _WheelItem({
     required this.label,
@@ -466,141 +353,6 @@ class _WheelItem extends StatelessWidget {
     );
   }
 }
-
-class _CourseCard extends StatelessWidget {
-  const _CourseCard({
-    required this.entry,
-    required this.roomBuilder,
-    required this.teacherBuilder,
-  });
-
-  final TimetableEntry entry;
-  final String Function(TimetableEntry) roomBuilder;
-  final String Function(TimetableEntry) teacherBuilder;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final double cardWidth = constraints.maxWidth;
-          final double pad = cardWidth <= 92 ? 2 : (cardWidth <= 120 ? 6 : 10);
-          final TextStyle titleStyle =
-              Theme.of(context).textTheme.titleSmall ?? const TextStyle();
-          final TextStyle bodyStyle =
-              Theme.of(context).textTheme.bodySmall ?? const TextStyle();
-          const double gap = 4;
-          final String titleText = entry.courseName.isNotEmpty
-              ? entry.courseName
-              : 'Unknown course';
-          final String roomText = roomBuilder(entry);
-          final String teacherText = teacherBuilder(entry);
-          final String classCodeText = entry.classCode;
-
-          final double scrollHeight =
-              (constraints.maxHeight - pad * 2).clamp(0, double.infinity);
-
-          return Padding(
-            padding: EdgeInsets.all(pad),
-            child: SizedBox(
-              height: scrollHeight,
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      titleText,
-                      style: titleStyle,
-                    ),
-                    if (roomText.isNotEmpty) ...[
-                      const SizedBox(height: gap),
-                      Text(
-                        roomText,
-                        style: bodyStyle,
-                      ),
-                    ],
-                    if (teacherText.isNotEmpty) ...[
-                      const SizedBox(height: gap),
-                      Text(
-                        teacherText,
-                        style: bodyStyle,
-                      ),
-                    ],
-                    if (classCodeText.isNotEmpty) ...[
-                      const SizedBox(height: gap),
-                      Text(
-                        classCodeText,
-                        style: bodyStyle,
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _CourseLayoutDelegate extends MultiChildLayoutDelegate {
-  _CourseLayoutDelegate({
-    required this.entries,
-    required this.slotHeight,
-    required this.slotCount,
-  });
-
-  final List<TimetableEntry> entries;
-  final double slotHeight;
-  final int slotCount;
-
-  @override
-  void performLayout(Size size) {
-    for (int i = 0; i < entries.length; i += 1) {
-      final TimetableEntry entry = entries[i];
-      final Object id = _courseId(i);
-      if (!hasChild(id)) {
-        continue;
-      }
-      final int startSlot = _clampSlot(entry.timeStart);
-      final int endSlot = _clampSlot(entry.timeEnd);
-      final double top = (startSlot - 1) * slotHeight + 6;
-      final double height =
-          (endSlot - startSlot + 1) * slotHeight - 12;
-      final double cardHeight = height.clamp(40, double.infinity);
-
-      layoutChild(
-        id,
-        BoxConstraints.tightFor(
-          width: size.width,
-          height: cardHeight,
-        ),
-      );
-      positionChild(id, Offset(0, top));
-    }
-  }
-
-  @override
-  bool shouldRelayout(covariant _CourseLayoutDelegate oldDelegate) {
-    return oldDelegate.entries != entries ||
-        oldDelegate.slotHeight != slotHeight ||
-        oldDelegate.slotCount != slotCount;
-  }
-
-  int _clampSlot(int slot) {
-    if (slot < 1) {
-      return 1;
-    }
-    if (slot > slotCount) {
-      return slotCount;
-    }
-    return slot;
-  }
-}
-
-Object _courseId(int index) => 'course_$index';
 
 class _TimeSlot {
   const _TimeSlot(this.label);
