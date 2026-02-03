@@ -2,7 +2,36 @@
     "@@locale": "zh",
     "appTitle": "一统同济",
     "authStateMismatch": "认证状态不匹配，可能遭受到网络攻击",
-    "tabDashboard": "仪表盘",
+    "tabDashboard": "仪表板",
     "tabTimetable": "课程表",
-    "tabSettings": "设置"
+    "tabSettings": "设置",
+
+    "weekdayMon": "星期一",
+    "weekdayTue": "星期二",
+    "weekdayWed": "星期三",
+    "weekdayThu": "星期四",
+    "weekdayFri": "星期五",
+    "weekdaySat": "星期六",
+    "weekdaySun": "星期日",
+
+    "timetableDayView": "日视图",
+    "timetableWeekView": "周视图",
+
+    "timetableLoadFailed": "加载课程表失败: {error}",
+    "@timetableLoadFailed": {
+      "placeholders": {
+        "error": {}
+      }
+    },
+    "timetableNoData": "暂无课程表数据",
+    "emptyClassesToday": "今天没有课哦",
+    "weekLabel": "第{week}周",
+    "@weekLabel": {
+      "placeholders": {
+        "week": {
+          "type": "int"
+        }
+      }
+    }
 }
+

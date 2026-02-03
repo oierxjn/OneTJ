@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'package:onetj/features/timetable/view_models/timetable_view_model.dart';
 import 'package:onetj/features/timetable/views/widgets/timeline_content.dart';
@@ -12,16 +13,6 @@ class TimetableView extends StatefulWidget {
 }
 
 class _TimetableViewState extends State<TimetableView> {
-  static const List<String> _dayLabels = [
-    'Mon',
-    'Tue',
-    'Wed',
-    'Thu',
-    'Fri',
-    'Sat',
-    'Sun',
-  ];
-
   late final TimetableViewModel _viewModel;
   late final FixedExtentScrollController _dayController;
   late final FixedExtentScrollController _weekController;
@@ -63,17 +54,32 @@ class _TimetableViewState extends State<TimetableView> {
         if (_viewModel.isLoading) {
           return const Center(child: CircularProgressIndicator());
         }
+        
+        final l10n = AppLocalizations.of(context);
+
         if (_viewModel.error != null) {
           return Center(
-            child: Text('Failed to load timetable: ${_viewModel.error}'),
+            child: Text(
+              l10n.timetableLoadFailed(_viewModel.error.toString()),
+            ),
           );
         }
         final TimetableIndex? index = _viewModel.index;
         if (index == null || index.allEntries.isEmpty) {
-          return const Center(child: Text('No timetable data'));
+          return Center(child: Text(l10n.timetableNoData));
         }
 
         _syncWheelControllers();
+
+        final List<String> dayLabels = [
+          l10n.weekdayMon,
+          l10n.weekdayTue,
+          l10n.weekdayWed,
+          l10n.weekdayThu,
+          l10n.weekdayFri,
+          l10n.weekdaySat,
+          l10n.weekdaySun,
+        ];
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -81,14 +87,14 @@ class _TimetableViewState extends State<TimetableView> {
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               child: SegmentedButton<TimetableDisplayMode>(
-                segments: const [
+                segments: [
                   ButtonSegment(
                     value: TimetableDisplayMode.day,
-                    label: Text('Day'),
+                    label: Text(l10n.timetableDayView),
                   ),
                   ButtonSegment(
                     value: TimetableDisplayMode.week,
-                    label: Text('Week'),
+                    label: Text(l10n.timetableWeekView),
                   ),
                 ],
                 selected: {_viewModel.mode},
@@ -116,7 +122,7 @@ class _TimetableViewState extends State<TimetableView> {
                     final bool selected =
                         _viewModel.selectedWeek == week;
                     return _WheelItem(
-                      label: 'Week $week',
+                      label: l10n.weekLabel(week),
                       selected: selected,
                     );
                   },
@@ -128,9 +134,9 @@ class _TimetableViewState extends State<TimetableView> {
                 child: _HorizontalWheel(
                   controller: _dayController,
                   itemExtent: 64,
-                  itemCount: _dayLabels.length,
+                  itemCount: dayLabels.length,
                   onSelectedItemChanged: (index) {
-                    if (index < 0 || index >= _dayLabels.length) {
+                    if (index < 0 || index >= dayLabels.length) {
                       return;
                     }
                     _viewModel.selectDay(index + 1);
@@ -139,14 +145,18 @@ class _TimetableViewState extends State<TimetableView> {
                     final bool selected =
                         _viewModel.selectedDay == index + 1;
                     return _WheelItem(
-                      label: _dayLabels[index],
+                      label: dayLabels[index],
                       selected: selected,
                     );
                   },
                 ),
               ),
             Expanded(
-              child: _buildTimetableView(context, mode: _viewModel.mode),
+              child: _buildTimetableView(
+                context,
+                mode: _viewModel.mode,
+                dayLabels: dayLabels,
+              ),
             ),
           ],
         );
@@ -190,9 +200,11 @@ class _TimetableViewState extends State<TimetableView> {
   double _weekHeaderHeight(BuildContext context) {
     final TextStyle style =
         Theme.of(context).textTheme.bodySmall ?? const TextStyle();
+    final String dayLabel =
+        AppLocalizations.of(context).weekdayMon;
     const double padding = 8;
     final TextPainter painter = TextPainter(
-      text: TextSpan(text: 'Mon', style: style),
+      text: TextSpan(text: dayLabel, style: style),
       maxLines: 1,
       textDirection: TextDirection.ltr,
     )..layout();
@@ -202,6 +214,7 @@ class _TimetableViewState extends State<TimetableView> {
   Widget _buildTimetableView(
     BuildContext context, {
     required TimetableDisplayMode mode,
+    required List<String> dayLabels,
   }) {
     const double slotHeight = 64;
     const double preferredLabelWidth = 72;
@@ -302,7 +315,7 @@ class _TimetableViewState extends State<TimetableView> {
                         else if (mode == TimetableDisplayMode.week)
                           Positioned.fill(
                             child: WeekTimelineContent(
-                              dayLabels: _dayLabels,
+                              dayLabels: dayLabels,
                               dayColumnWidth: dayColumnWidth,
                               slotHeight: slotHeight,
                               slotCount: _timeSlots.length,

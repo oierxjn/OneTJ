@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'package:onetj/features/timetable/views/layouts/course_layout_delegate.dart';
 import 'package:onetj/features/timetable/views/widgets/course_card.dart';
@@ -23,7 +24,8 @@ class DayTimelineContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (entries.isEmpty) {
-      return const Center(child: Text('No classes today'));
+      final l10n = AppLocalizations.of(context);
+      return Center(child: Text(l10n.emptyClassesToday));
     }
     return CustomMultiChildLayout(
       delegate: CourseLayoutDelegate(
