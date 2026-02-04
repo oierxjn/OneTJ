@@ -45,12 +45,13 @@ class HomeViewModel extends BaseViewModel {
 
 
   Future<void> loadSchoolCalendar() async {
+    final SchoolCalendarRepository repo = SchoolCalendarRepository.getInstance();
     try {
       final SchoolCalendarData data = await _model.fetchSchoolCalendar();
-      final SchoolCalendarRepository repo = SchoolCalendarRepository.getInstance();
       await repo.saveSchoolCalendar(data);
       _schoolCalendarController.add(data);
     } catch (error) {
+      repo.markFailed(error);
       _calendarErrorController.add(error);
     }
   }

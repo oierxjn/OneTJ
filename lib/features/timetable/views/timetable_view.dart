@@ -1,7 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'package:onetj/features/timetable/view_models/timetable_view_model.dart';
+import 'package:onetj/features/timetable/views/widgets/timeline_content.dart';
+import 'package:onetj/models/event_model.dart';
 import 'package:onetj/models/timetable_index.dart';
+import 'package:onetj/models/time_slot.dart';
 
 class TimetableView extends StatefulWidget {
   const TimetableView({super.key});
@@ -11,20 +17,11 @@ class TimetableView extends StatefulWidget {
 }
 
 class _TimetableViewState extends State<TimetableView> {
-  static const List<String> _dayLabels = [
-    'Mon',
-    'Tue',
-    'Wed',
-    'Thu',
-    'Fri',
-    'Sat',
-    'Sun',
-  ];
-
   late final TimetableViewModel _viewModel;
   late final FixedExtentScrollController _dayController;
   late final FixedExtentScrollController _weekController;
   final ScrollController _scrollController = ScrollController();
+  StreamSubscription<UiEvent>? _eventSub;
 
   @override
   void initState() {
@@ -34,11 +31,20 @@ class _TimetableViewState extends State<TimetableView> {
       initialItem: _viewModel.selectedDay - 1,
     );
     _weekController = FixedExtentScrollController();
+    _eventSub = _viewModel.events.listen((event) {
+      if (event is ShowSnackBarEvent) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(event.message ?? '')),
+        );
+      }
+    });
     _viewModel.load();
   }
 
   @override
   void dispose() {
+    _eventSub?.cancel();
     _dayController.dispose();
     _weekController.dispose();
     _scrollController.dispose();
@@ -47,7 +53,7 @@ class _TimetableViewState extends State<TimetableView> {
   }
 
   String _formatRoom(TimetableEntry entry) {
-    return entry.roomIdI18n.isNotEmpty ? entry.roomIdI18n : entry.roomId;
+    return entry.roomIdI18n.isNotEmpty ? entry.roomIdI18n : entry.roomLabel;
   }
 
   String _formatTeacher(TimetableEntry entry) {
@@ -56,100 +62,130 @@ class _TimetableViewState extends State<TimetableView> {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _viewModel,
-      builder: (context, _) {
-        if (_viewModel.isLoading) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (_viewModel.error != null) {
-          return Center(
-            child: Text('Failed to load timetable: ${_viewModel.error}'),
-          );
-        }
-        final TimetableIndex? index = _viewModel.index;
-        if (index == null || index.allEntries.isEmpty) {
-          return const Center(child: Text('No timetable data'));
-        }
+    final l10n = AppLocalizations.of(context);
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(l10n.tabTimetable),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.today),
+            onPressed: _viewModel.isLoading ? null : _viewModel.jumpToToday,
+          ),
+        ],
+      ),
+      body: AnimatedBuilder(
+        animation: _viewModel,
+        builder: (context, _) => _buildBody(context),
+      ),
+    );
+  }
 
-        _syncWheelControllers();
+  Widget _buildBody(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    if (_viewModel.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_viewModel.error != null) {
+      return Center(
+        child: Text(
+          l10n.timetableLoadFailed(_viewModel.error.toString()),
+        ),
+      );
+    }
+    final TimetableIndex? index = _viewModel.index;
+    if (index == null || index.allEntries.isEmpty) {
+      return Center(child: Text(l10n.timetableNoData));
+    }
+    _syncWheelControllers();
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: SegmentedButton<TimetableDisplayMode>(
-                segments: const [
-                  ButtonSegment(
-                    value: TimetableDisplayMode.day,
-                    label: Text('Day'),
-                  ),
-                  ButtonSegment(
-                    value: TimetableDisplayMode.week,
-                    label: Text('Week'),
-                  ),
-                ],
-                selected: {_viewModel.mode},
-                onSelectionChanged: (selection) {
-                  _viewModel.setMode(selection.first);
-                },
+    final List<String> dayLabels = [
+      l10n.weekdayMon,
+      l10n.weekdayTue,
+      l10n.weekdayWed,
+      l10n.weekdayThu,
+      l10n.weekdayFri,
+      l10n.weekdaySat,
+      l10n.weekdaySun,
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: SegmentedButton<TimetableDisplayMode>(
+            segments: [
+              ButtonSegment(
+                value: TimetableDisplayMode.day,
+                label: Text(l10n.timetableDayView),
               ),
+              ButtonSegment(
+                value: TimetableDisplayMode.week,
+                label: Text(l10n.timetableWeekView),
+              ),
+            ],
+            selected: {_viewModel.mode},
+            onSelectionChanged: (selection) {
+              _viewModel.setMode(selection.first);
+            },
+          ),
+        ),
+        if (_viewModel.availableWeeks.isNotEmpty)
+          SizedBox(
+            height: 40,
+            child: _HorizontalWheel(
+              controller: _weekController,
+              itemExtent: 90,
+              itemCount: _viewModel.availableWeeks.length,
+              onSelectedItemChanged: (index) {
+                if (index < 0 ||
+                    index >= _viewModel.availableWeeks.length) {
+                  return;
+                }
+                _viewModel.selectWeek(_viewModel.availableWeeks[index]);
+              },
+              itemBuilder: (context, index) {
+                final int week = _viewModel.availableWeeks[index];
+                final bool selected =
+                    _viewModel.selectedWeek == week;
+                return _WheelItem(
+                  label: l10n.weekLabel(week),
+                  selected: selected,
+                );
+              },
             ),
-            if (_viewModel.availableWeeks.isNotEmpty)
-              SizedBox(
-                height: 56,
-                child: _HorizontalWheel(
-                  controller: _weekController,
-                  itemExtent: 90,
-                  itemCount: _viewModel.availableWeeks.length,
-                  onSelectedItemChanged: (index) {
-                    if (index < 0 ||
-                        index >= _viewModel.availableWeeks.length) {
-                      return;
-                    }
-                    _viewModel.selectWeek(_viewModel.availableWeeks[index]);
-                  },
-                  itemBuilder: (context, index) {
-                    final int week = _viewModel.availableWeeks[index];
-                    final bool selected =
-                        _viewModel.selectedWeek == week;
-                    return _WheelItem(
-                      label: 'Week $week',
-                      selected: selected,
-                    );
-                  },
-                ),
-              ),
-            if (_viewModel.mode == TimetableDisplayMode.day)
-              SizedBox(
-                height: 56,
-                child: _HorizontalWheel(
-                  controller: _dayController,
-                  itemExtent: 64,
-                  itemCount: _dayLabels.length,
-                  onSelectedItemChanged: (index) {
-                    if (index < 0 || index >= _dayLabels.length) {
-                      return;
-                    }
-                    _viewModel.selectDay(index + 1);
-                  },
-                  itemBuilder: (context, index) {
-                    final bool selected =
-                        _viewModel.selectedDay == index + 1;
-                    return _WheelItem(
-                      label: _dayLabels[index],
-                      selected: selected,
-                    );
-                  },
-                ),
-              ),
-            Expanded(
-              child: _buildTimetableView(context, mode: _viewModel.mode),
+          ),
+        if (_viewModel.mode == TimetableDisplayMode.day)
+          SizedBox(
+            height: 40,
+            child: _HorizontalWheel(
+              controller: _dayController,
+              itemExtent: 64,
+              itemCount: dayLabels.length,
+              onSelectedItemChanged: (index) {
+                if (index < 0 || index >= dayLabels.length) {
+                  return;
+                }
+                _viewModel.selectDay(index + 1);
+              },
+              itemBuilder: (context, index) {
+                final bool selected =
+                    _viewModel.selectedDay == index + 1;
+                return _WheelItem(
+                  label: dayLabels[index],
+                  selected: selected,
+                );
+              },
             ),
-          ],
-        );
-      },
+          ),
+        Expanded(
+          child: _buildTimetableView(
+            context,
+            mode: _viewModel.mode,
+            dayLabels: dayLabels,
+          ),
+        ),
+      ],
     );
   }
 
@@ -189,9 +225,11 @@ class _TimetableViewState extends State<TimetableView> {
   double _weekHeaderHeight(BuildContext context) {
     final TextStyle style =
         Theme.of(context).textTheme.bodySmall ?? const TextStyle();
+    final String dayLabel =
+        AppLocalizations.of(context).weekdayMon;
     const double padding = 8;
     final TextPainter painter = TextPainter(
-      text: TextSpan(text: 'Mon', style: style),
+      text: TextSpan(text: dayLabel, style: style),
       maxLines: 1,
       textDirection: TextDirection.ltr,
     )..layout();
@@ -201,14 +239,16 @@ class _TimetableViewState extends State<TimetableView> {
   Widget _buildTimetableView(
     BuildContext context, {
     required TimetableDisplayMode mode,
+    required List<String> dayLabels,
   }) {
     const double slotHeight = 64;
     const double preferredLabelWidth = 72;
     const double minLabelWidth = 35;
+    final List<_TimeSlot> timeSlots = _buildTimeSlots();
     final double headerHeight =
         mode == TimetableDisplayMode.week ? _weekHeaderHeight(context) : 0;
     final double contentHeight =
-        _timeSlots.length * slotHeight + headerHeight;
+        timeSlots.length * slotHeight + headerHeight;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(4, 8, 12, 4),
@@ -249,7 +289,7 @@ class _TimetableViewState extends State<TimetableView> {
                     child: Column(
                       children: [
                         if (headerHeight > 0) SizedBox(height: headerHeight),
-                        for (final slot in _timeSlots)
+                        for (final slot in timeSlots)
                           Container(
                             height: slotHeight,
                             alignment: Alignment.topCenter,
@@ -270,7 +310,7 @@ class _TimetableViewState extends State<TimetableView> {
                           child: Column(
                             children: [
                               if (headerHeight > 0) SizedBox(height: headerHeight),
-                              for (int i = 0; i < _timeSlots.length; i += 1)
+                              for (int i = 0; i < timeSlots.length; i += 1)
                                 Container(
                                   height: slotHeight,
                                   decoration: BoxDecoration(
@@ -288,23 +328,23 @@ class _TimetableViewState extends State<TimetableView> {
                         ),
                         if (mode == TimetableDisplayMode.day)
                           Positioned.fill(
-                            child: _DayTimelineContent(
+                            child: DayTimelineContent(
                               entries: _viewModel.entriesForSelectedWeekDay(
                                 _viewModel.selectedDay,
                               ),
                               slotHeight: slotHeight,
-                              slotCount: _timeSlots.length,
+                              slotCount: timeSlots.length,
                               roomBuilder: _formatRoom,
                               teacherBuilder: _formatTeacher,
                             ),
                           )
                         else if (mode == TimetableDisplayMode.week)
                           Positioned.fill(
-                            child: _WeekTimelineContent(
-                              dayLabels: _dayLabels,
+                            child: WeekTimelineContent(
+                              dayLabels: dayLabels,
                               dayColumnWidth: dayColumnWidth,
                               slotHeight: slotHeight,
-                              slotCount: _timeSlots.length,
+                              slotCount: timeSlots.length,
                               entriesForDay: (day) =>
                                   _viewModel.entriesForSelectedWeekDay(day),
                               roomBuilder: _formatRoom,
@@ -323,120 +363,6 @@ class _TimetableViewState extends State<TimetableView> {
     );
   }
 }
-class _DayTimelineContent extends StatelessWidget {
-  const _DayTimelineContent({
-    required this.entries,
-    required this.slotHeight,
-    required this.slotCount,
-    required this.roomBuilder,
-    required this.teacherBuilder,
-  });
-
-  final List<TimetableEntry> entries;
-  final double slotHeight;
-  final int slotCount;
-  final String Function(TimetableEntry) roomBuilder;
-  final String Function(TimetableEntry) teacherBuilder;
-
-  @override
-  Widget build(BuildContext context) {
-    if (entries.isEmpty) {
-      return const Center(child: Text('No classes today'));
-    }
-    return CustomMultiChildLayout(
-      delegate: _CourseLayoutDelegate(
-        entries: entries,
-        slotHeight: slotHeight,
-        slotCount: slotCount,
-      ),
-      children: [
-        for (int i = 0; i < entries.length; i += 1)
-          LayoutId(
-            id: _courseId(i),
-            child: _CourseCard(
-              entry: entries[i],
-              roomBuilder: roomBuilder,
-              teacherBuilder: teacherBuilder,
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-class _WeekTimelineContent extends StatelessWidget {
-  const _WeekTimelineContent({
-    required this.dayLabels,
-    required this.dayColumnWidth,
-    required this.slotHeight,
-    required this.slotCount,
-    required this.entriesForDay,
-    required this.roomBuilder,
-    required this.teacherBuilder,
-  });
-
-  final List<String> dayLabels;
-  final double dayColumnWidth;
-  final double slotHeight;
-  final int slotCount;
-  final List<TimetableEntry> Function(int day) entriesForDay;
-  final String Function(TimetableEntry) roomBuilder;
-  final String Function(TimetableEntry) teacherBuilder;
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          for (int i = 0; i < dayLabels.length; i += 1)
-            Builder(
-              builder: (context) {
-                final List<TimetableEntry> dayEntries =
-                    entriesForDay(i + 1);
-                return SizedBox(
-                  width: dayColumnWidth,
-                  child: Column(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4, bottom: 4),
-                        child: Text(
-                          dayLabels[i],
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                      ),
-                      Expanded(
-                        child: CustomMultiChildLayout(
-                          delegate: _CourseLayoutDelegate(
-                            entries: dayEntries,
-                            slotHeight: slotHeight,
-                            slotCount: slotCount,
-                          ),
-                          children: [
-                            for (int j = 0; j < dayEntries.length; j += 1)
-                              LayoutId(
-                                id: _courseId(j),
-                                child: _CourseCard(
-                                  entry: dayEntries[j],
-                                  roomBuilder: roomBuilder,
-                                  teacherBuilder: teacherBuilder,
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-        ],
-      ),
-    );
-  }
-}
-
 class _WheelItem extends StatelessWidget {
   const _WheelItem({
     required this.label,
@@ -467,153 +393,16 @@ class _WheelItem extends StatelessWidget {
   }
 }
 
-class _CourseCard extends StatelessWidget {
-  const _CourseCard({
-    required this.entry,
-    required this.roomBuilder,
-    required this.teacherBuilder,
-  });
-
-  final TimetableEntry entry;
-  final String Function(TimetableEntry) roomBuilder;
-  final String Function(TimetableEntry) teacherBuilder;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final double cardWidth = constraints.maxWidth;
-          final double pad = cardWidth <= 92 ? 2 : (cardWidth <= 120 ? 6 : 10);
-          final TextStyle titleStyle =
-              Theme.of(context).textTheme.titleSmall ?? const TextStyle();
-          final TextStyle bodyStyle =
-              Theme.of(context).textTheme.bodySmall ?? const TextStyle();
-          const double gap = 4;
-          final String titleText = entry.courseName.isNotEmpty
-              ? entry.courseName
-              : 'Unknown course';
-          final String roomText = roomBuilder(entry);
-          final String teacherText = teacherBuilder(entry);
-          final String classCodeText = entry.classCode;
-
-          return Padding(
-            padding: EdgeInsets.all(pad),
-            child: ClipRect(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    titleText,
-                    style: titleStyle,
-                  ),
-                  if (roomText.isNotEmpty) ...[
-                    const SizedBox(height: gap),
-                    Text(
-                      roomText,
-                      style: bodyStyle,
-                    ),
-                  ],
-                  if (teacherText.isNotEmpty) ...[
-                    const SizedBox(height: gap),
-                    Text(
-                      teacherText,
-                      style: bodyStyle,
-                    ),
-                  ],
-                  if (classCodeText.isNotEmpty) ...[
-                    const SizedBox(height: gap),
-                    Text(
-                      classCodeText,
-                      style: bodyStyle,
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _CourseLayoutDelegate extends MultiChildLayoutDelegate {
-  _CourseLayoutDelegate({
-    required this.entries,
-    required this.slotHeight,
-    required this.slotCount,
-  });
-
-  final List<TimetableEntry> entries;
-  final double slotHeight;
-  final int slotCount;
-
-  @override
-  void performLayout(Size size) {
-    for (int i = 0; i < entries.length; i += 1) {
-      final TimetableEntry entry = entries[i];
-      final Object id = _courseId(i);
-      if (!hasChild(id)) {
-        continue;
-      }
-      final int startSlot = _clampSlot(entry.timeStart);
-      final int endSlot = _clampSlot(entry.timeEnd);
-      final double top = (startSlot - 1) * slotHeight + 6;
-      final double height =
-          (endSlot - startSlot + 1) * slotHeight - 12;
-      final double cardHeight = height.clamp(40, double.infinity);
-
-      layoutChild(
-        id,
-        BoxConstraints.tightFor(
-          width: size.width,
-          height: cardHeight,
-        ),
-      );
-      positionChild(id, Offset(0, top));
-    }
-  }
-
-  @override
-  bool shouldRelayout(covariant _CourseLayoutDelegate oldDelegate) {
-    return oldDelegate.entries != entries ||
-        oldDelegate.slotHeight != slotHeight ||
-        oldDelegate.slotCount != slotCount;
-  }
-
-  int _clampSlot(int slot) {
-    if (slot < 1) {
-      return 1;
-    }
-    if (slot > slotCount) {
-      return slotCount;
-    }
-    return slot;
-  }
-}
-
-Object _courseId(int index) => 'course_$index';
-
 class _TimeSlot {
   const _TimeSlot(this.label);
 
   final String label;
 }
 
-const List<_TimeSlot> _timeSlots = [
-  _TimeSlot('08:00'),
-  _TimeSlot('08:55'),
-  _TimeSlot('10:00'),
-  _TimeSlot('10:55'),
-  _TimeSlot('13:30'),
-  _TimeSlot('14:25'),
-  _TimeSlot('15:30'),
-  _TimeSlot('16:25'),
-  _TimeSlot('18:30'),
-  _TimeSlot('19:25'),
-];
+List<_TimeSlot> _buildTimeSlots() {
+  final List<int> startMinutes = TimeSlot.defaultConfig.startMinutes;
+  return startMinutes.map((minute) => _TimeSlot(TimeSlot.formatMinutes(minute))).toList();
+}
 
 class _HorizontalWheel extends StatelessWidget {
   const _HorizontalWheel({

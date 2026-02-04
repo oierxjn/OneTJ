@@ -4,5 +4,38 @@
   "authStateMismatch": "Auth state mismatch, possible network attack",
   "tabDashboard": "Dashboard",
   "tabTimetable": "Timetable",
-  "tabSettings": "Settings"
+  "tabSettings": "Settings",
+  "weekdayMon": "Mon",
+  "weekdayTue": "Tue",
+  "weekdayWed": "Wed",
+  "weekdayThu": "Thu",
+  "weekdayFri": "Fri",
+  "weekdaySat": "Sat",
+  "weekdaySun": "Sun",
+
+  "timetableDayView": "Day View",
+  "timetableWeekView": "Week View",
+
+  "timetableLoadFailed": "Failed to load timetable: {error}",
+  "@timetableLoadFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "timetableNoData": "No timetable data available",
+  "emptyClassesToday": "No classes today",
+  "dashboardUpcomingTitle": "Upcoming Courses",
+  "dashboardUpcomingEmpty": "No upcoming courses this week",
+  "weekLabel": "Week {week}",
+  "@weekLabel": {
+    "placeholders": {
+      "week": {
+        "type": "int"
+      }
+    }
+  },
+  "logOut": "Log Out",
+  "logOutConfirmLabel": "Are you sure you want to log out?",
+  "confirmLabel": "Confirm",
+  "cancelLabel": "Cancel"
 }

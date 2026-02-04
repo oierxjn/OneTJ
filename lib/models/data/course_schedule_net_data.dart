@@ -23,7 +23,8 @@ class CourseScheduleItemNetData {
   final String? compulsory;
   final String? classType;
   final String? roomCategory;
-  final String? roomLable;
+  @JsonKey(readValue: _readRoomLabel)
+  final String? roomLabel;
   final int? courseTakeType;
   final String? teachingWay;
   final String? cloudCourseType;
@@ -55,7 +56,7 @@ class CourseScheduleItemNetData {
     this.compulsory,
     this.classType,
     this.roomCategory,
-    this.roomLable,
+    this.roomLabel,
     this.courseTakeType,
     this.teachingWay,
     this.cloudCourseType,
@@ -72,6 +73,10 @@ class CourseScheduleItemNetData {
       _$CourseScheduleItemNetDataFromJson(json);
 
   Map<String, dynamic> toJson() => _$CourseScheduleItemNetDataToJson(this);
+
+  static Object? _readRoomLabel(Map<dynamic, dynamic> json, String key) {
+    return json['roomLabel'] ?? json['roomLable'];
+  }
 }
 
 @JsonSerializable()
@@ -96,7 +101,8 @@ class CourseTimeTableItemNetData {
   final String? timeId;
   final String? popover;
   final String? roomCategory;
-  final String? roomLable;
+  @JsonKey(readValue: _readRoomLabel)
+  final String? roomLabel;
   final String? roomIdI18n;
   final String? campusI18n;
 
@@ -121,7 +127,7 @@ class CourseTimeTableItemNetData {
     this.timeId,
     this.popover,
     this.roomCategory,
-    this.roomLable,
+    this.roomLabel,
     this.roomIdI18n,
     this.campusI18n,
   });
@@ -130,4 +136,8 @@ class CourseTimeTableItemNetData {
       _$CourseTimeTableItemNetDataFromJson(json);
 
   Map<String, dynamic> toJson() => _$CourseTimeTableItemNetDataToJson(this);
+
+  static Object? _readRoomLabel(Map<dynamic, dynamic> json, String key) {
+    return json['roomLabel'] ?? json['roomLable'];
+  }
 }

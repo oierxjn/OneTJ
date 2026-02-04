@@ -26,7 +26,7 @@ class CourseTimeTableItemData {
     this.timeId,
     this.popover,
     this.roomCategory,
-    this.roomLable,
+    this.roomLabel,
     this.roomIdI18n,
     this.campusI18n,
   });
@@ -51,7 +51,7 @@ class CourseTimeTableItemData {
   final String? timeId;
   final String? popover;
   final String? roomCategory;
-  final String? roomLable;
+  final String? roomLabel;
   final String? roomIdI18n;
   final String? campusI18n;
 
@@ -77,7 +77,7 @@ class CourseTimeTableItemData {
       timeId: data.timeId,
       popover: data.popover,
       roomCategory: data.roomCategory,
-      roomLable: data.roomLable,
+      roomLabel: data.roomLabel,
       roomIdI18n: data.roomIdI18n,
       campusI18n: data.campusI18n,
     );
@@ -109,7 +109,7 @@ class CourseTimeTableItemData {
       timeId: json['timeId'] as String?,
       popover: json['popover'] as String?,
       roomCategory: json['roomCategory'] as String?,
-      roomLable: json['roomLable'] as String?,
+      roomLabel: (json['roomLabel'] ?? json['roomLable']) as String?,
       roomIdI18n: json['roomIdI18n'] as String?,
       campusI18n: json['campusI18n'] as String?,
     );
@@ -137,7 +137,7 @@ class CourseTimeTableItemData {
       'timeId': timeId,
       'popover': popover,
       'roomCategory': roomCategory,
-      'roomLable': roomLable,
+      'roomLabel': roomLabel,
       'roomIdI18n': roomIdI18n,
       'campusI18n': campusI18n,
     };
@@ -165,7 +165,7 @@ class CourseScheduleItemData {
     this.compulsory,
     this.classType,
     this.roomCategory,
-    this.roomLable,
+    this.roomLabel,
     this.courseTakeType,
     this.teachingWay,
     this.cloudCourseType,
@@ -197,7 +197,7 @@ class CourseScheduleItemData {
   final String? compulsory;
   final String? classType;
   final String? roomCategory;
-  final String? roomLable;
+  final String? roomLabel;
   final int? courseTakeType;
   final String? teachingWay;
   final String? cloudCourseType;
@@ -232,7 +232,7 @@ class CourseScheduleItemData {
       compulsory: data.compulsory,
       classType: data.classType,
       roomCategory: data.roomCategory,
-      roomLable: data.roomLable,
+      roomLabel: data.roomLabel,
       courseTakeType: data.courseTakeType,
       teachingWay: data.teachingWay,
       cloudCourseType: data.cloudCourseType,
@@ -275,7 +275,7 @@ class CourseScheduleItemData {
       compulsory: json['compulsory'] as String?,
       classType: json['classType'] as String?,
       roomCategory: json['roomCategory'] as String?,
-      roomLable: json['roomLable'] as String?,
+      roomLabel: (json['roomLabel'] ?? json['roomLable']) as String?,
       courseTakeType: json['courseTakeType'] as int?,
       teachingWay: json['teachingWay'] as String?,
       cloudCourseType: json['cloudCourseType'] as String?,
@@ -310,7 +310,7 @@ class CourseScheduleItemData {
       'compulsory': compulsory,
       'classType': classType,
       'roomCategory': roomCategory,
-      'roomLable': roomLable,
+      'roomLabel': roomLabel,
       'courseTakeType': courseTakeType,
       'teachingWay': teachingWay,
       'cloudCourseType': cloudCourseType,

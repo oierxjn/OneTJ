@@ -61,9 +61,6 @@ class _LoginViewState extends State<LoginView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(AppLocalizations.of(context).appTitle),
-      ),
       body: InAppWebView(
         initialUrlRequest: URLRequest(
           url: WebUri(viewModel.authUri.toString()),

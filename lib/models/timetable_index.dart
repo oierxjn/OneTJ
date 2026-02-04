@@ -14,6 +14,7 @@ class TimetableEntry {
     required this.campusI18n,
     required this.roomId,
     required this.roomIdI18n,
+    required this.roomLabel,
     required this.dayOfWeek,
     required this.timeStart,
     required this.timeEnd,
@@ -31,6 +32,7 @@ class TimetableEntry {
   final String campusI18n;
   final String roomId;
   final String roomIdI18n;
+  final String roomLabel;
   final int dayOfWeek;
   final int timeStart;
   final int timeEnd;

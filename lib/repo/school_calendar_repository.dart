@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 
 import 'package:hive/hive.dart';
 
@@ -202,6 +203,7 @@ class SchoolCalendarRepository {
 
   final SchoolCalendarStorage _storage;
   SchoolCalendarData? _cached;
+  Completer<void>? _readyCompleter;
 
   Future<SchoolCalendarData?> getSchoolCalendar({bool refreshFromStorage = false}) async {
     if (!refreshFromStorage && _cached != null) {
@@ -211,8 +213,45 @@ class SchoolCalendarRepository {
     return _cached;
   }
 
+  Future<void> ensureLoaded() async {
+    if (_cached != null) {
+      _completeReady();
+      return;
+    }
+    if (_readyCompleter != null) {
+      return _readyCompleter!.future;
+    }
+    _readyCompleter = Completer<void>();
+    return _readyCompleter!.future;
+  }
+
+  void markLoaded() {
+    _completeReady();
+  }
+
+  void markFailed(Object error, [StackTrace? stackTrace]) {
+    _completeError(error, stackTrace);
+  }
+
+  void _completeReady() {
+    if (_readyCompleter != null && !_readyCompleter!.isCompleted) {
+      _readyCompleter!.complete();
+    }
+  }
+
+  void _completeError(Object error, [StackTrace? stackTrace]) {
+    if (_readyCompleter != null && !_readyCompleter!.isCompleted) {
+      _readyCompleter!.completeError(error, stackTrace);
+    }
+    _readyCompleter = null;
+  }
+
+  /// 保存学校日历数据
+  /// 
+  /// 会更新 [_cached] 并调用 [markLoaded]。
   Future<void> saveSchoolCalendar(SchoolCalendarData data) async {
     _cached = data;
+    markLoaded();
     await _storage.save(data);
   }
 
@@ -222,6 +261,7 @@ class SchoolCalendarRepository {
 
   Future<void> clearSchoolCalendar() async {
     _cached = null;
+    _readyCompleter = null;
     await _storage.clear();
   }
 }

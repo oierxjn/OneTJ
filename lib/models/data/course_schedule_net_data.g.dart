@@ -31,7 +31,8 @@ CourseScheduleItemNetData _$CourseScheduleItemNetDataFromJson(
       compulsory: json['compulsory'] as String?,
       classType: json['classType'] as String?,
       roomCategory: json['roomCategory'] as String?,
-      roomLable: json['roomLable'] as String?,
+      roomLabel: CourseScheduleItemNetData._readRoomLabel(json, 'roomLabel')
+          as String?,
       courseTakeType: (json['courseTakeType'] as num?)?.toInt(),
       teachingWay: json['teachingWay'] as String?,
       cloudCourseType: json['cloudCourseType'] as String?,
@@ -66,7 +67,7 @@ Map<String, dynamic> _$CourseScheduleItemNetDataToJson(
       'compulsory': instance.compulsory,
       'classType': instance.classType,
       'roomCategory': instance.roomCategory,
-      'roomLable': instance.roomLable,
+      'roomLabel': instance.roomLabel,
       'courseTakeType': instance.courseTakeType,
       'teachingWay': instance.teachingWay,
       'cloudCourseType': instance.cloudCourseType,
@@ -104,7 +105,8 @@ CourseTimeTableItemNetData _$CourseTimeTableItemNetDataFromJson(
       timeId: json['timeId'] as String?,
       popover: json['popover'] as String?,
       roomCategory: json['roomCategory'] as String?,
-      roomLable: json['roomLable'] as String?,
+      roomLabel: CourseTimeTableItemNetData._readRoomLabel(json, 'roomLabel')
+          as String?,
       roomIdI18n: json['roomIdI18n'] as String?,
       campusI18n: json['campusI18n'] as String?,
     );
@@ -132,7 +134,7 @@ Map<String, dynamic> _$CourseTimeTableItemNetDataToJson(
       'timeId': instance.timeId,
       'popover': instance.popover,
       'roomCategory': instance.roomCategory,
-      'roomLable': instance.roomLable,
+      'roomLabel': instance.roomLabel,
       'roomIdI18n': instance.roomIdI18n,
       'campusI18n': instance.campusI18n,
     };
