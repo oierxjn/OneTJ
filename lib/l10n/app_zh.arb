@@ -25,6 +25,8 @@
     },
     "timetableNoData": "暂无课程表数据",
     "emptyClassesToday": "今天没有课哦",
+    "dashboardUpcomingTitle": "即将到来的课程",
+    "dashboardUpcomingEmpty": "本周暂无课程",
     "weekLabel": "第{week}周",
     "@weekLabel": {
       "placeholders": {

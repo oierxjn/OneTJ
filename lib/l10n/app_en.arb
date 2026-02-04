@@ -24,6 +24,8 @@
   },
   "timetableNoData": "No timetable data available",
   "emptyClassesToday": "No classes today",
+  "dashboardUpcomingTitle": "Upcoming Courses",
+  "dashboardUpcomingEmpty": "No upcoming courses this week",
   "weekLabel": "Week {week}",
   "@weekLabel": {
     "placeholders": {
