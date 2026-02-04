@@ -7,6 +7,7 @@ import 'package:onetj/features/timetable/view_models/timetable_view_model.dart';
 import 'package:onetj/features/timetable/views/widgets/timeline_content.dart';
 import 'package:onetj/models/event_model.dart';
 import 'package:onetj/models/timetable_index.dart';
+import 'package:onetj/models/time_slot.dart';
 
 class TimetableView extends StatefulWidget {
   const TimetableView({super.key});
@@ -243,10 +244,11 @@ class _TimetableViewState extends State<TimetableView> {
     const double slotHeight = 64;
     const double preferredLabelWidth = 72;
     const double minLabelWidth = 35;
+    final List<_TimeSlot> timeSlots = _buildTimeSlots();
     final double headerHeight =
         mode == TimetableDisplayMode.week ? _weekHeaderHeight(context) : 0;
     final double contentHeight =
-        _timeSlots.length * slotHeight + headerHeight;
+        timeSlots.length * slotHeight + headerHeight;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(4, 8, 12, 4),
@@ -287,7 +289,7 @@ class _TimetableViewState extends State<TimetableView> {
                     child: Column(
                       children: [
                         if (headerHeight > 0) SizedBox(height: headerHeight),
-                        for (final slot in _timeSlots)
+                        for (final slot in timeSlots)
                           Container(
                             height: slotHeight,
                             alignment: Alignment.topCenter,
@@ -308,7 +310,7 @@ class _TimetableViewState extends State<TimetableView> {
                           child: Column(
                             children: [
                               if (headerHeight > 0) SizedBox(height: headerHeight),
-                              for (int i = 0; i < _timeSlots.length; i += 1)
+                              for (int i = 0; i < timeSlots.length; i += 1)
                                 Container(
                                   height: slotHeight,
                                   decoration: BoxDecoration(
@@ -331,7 +333,7 @@ class _TimetableViewState extends State<TimetableView> {
                                 _viewModel.selectedDay,
                               ),
                               slotHeight: slotHeight,
-                              slotCount: _timeSlots.length,
+                              slotCount: timeSlots.length,
                               roomBuilder: _formatRoom,
                               teacherBuilder: _formatTeacher,
                             ),
@@ -342,7 +344,7 @@ class _TimetableViewState extends State<TimetableView> {
                               dayLabels: dayLabels,
                               dayColumnWidth: dayColumnWidth,
                               slotHeight: slotHeight,
-                              slotCount: _timeSlots.length,
+                              slotCount: timeSlots.length,
                               entriesForDay: (day) =>
                                   _viewModel.entriesForSelectedWeekDay(day),
                               roomBuilder: _formatRoom,
@@ -397,18 +399,10 @@ class _TimeSlot {
   final String label;
 }
 
-const List<_TimeSlot> _timeSlots = [
-  _TimeSlot('08:00'),
-  _TimeSlot('08:55'),
-  _TimeSlot('10:00'),
-  _TimeSlot('10:55'),
-  _TimeSlot('13:30'),
-  _TimeSlot('14:25'),
-  _TimeSlot('15:30'),
-  _TimeSlot('16:25'),
-  _TimeSlot('18:30'),
-  _TimeSlot('19:25'),
-];
+List<_TimeSlot> _buildTimeSlots() {
+  final List<int> startMinutes = TimeSlot.defaultConfig.startMinutes;
+  return startMinutes.map((minute) => _TimeSlot(TimeSlot.formatMinutes(minute))).toList();
+}
 
 class _HorizontalWheel extends StatelessWidget {
   const _HorizontalWheel({

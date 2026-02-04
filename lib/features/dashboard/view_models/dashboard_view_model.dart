@@ -1,8 +1,7 @@
-import 'dart:async';
-
 import 'package:onetj/models/base_model.dart';
 import 'package:onetj/features/dashboard/models/dashboard_model.dart';
 import 'package:onetj/models/timetable_index.dart';
+import 'package:onetj/models/time_slot.dart';
 import 'package:onetj/repo/student_info_repository.dart';
 import 'package:onetj/repo/school_calendar_repository.dart';
 import 'package:onetj/repo/course_schedule_repository.dart';
@@ -10,35 +9,103 @@ import 'package:onetj/services/timetable_index_builder.dart';
 
 class DashboardViewModel extends BaseViewModel {
   DashboardViewModel({DashboardModel? model})
-      : _model = model ?? DashboardModel(),
-        _studentInfoController = StreamController<String>.broadcast(),
-        _schoolCalendarController = StreamController<SchoolCalendarData>.broadcast(),
-        _timetableController = StreamController<List<TimetableEntry>>.broadcast(),
-        _studentErrorController = StreamController<Object>.broadcast(),
-        _calendarErrorController = StreamController<Object>.broadcast(),
-        _timetableErrorController = StreamController<Object>.broadcast();
+      : _model = model ?? DashboardModel();
 
   final DashboardModel _model;
-  final StreamController<String> _studentInfoController;
-  final StreamController<SchoolCalendarData> _schoolCalendarController;
-  final StreamController<List<TimetableEntry>> _timetableController;
-  final StreamController<Object> _studentErrorController;
-  final StreamController<Object> _calendarErrorController;
-  final StreamController<Object> _timetableErrorController;
+  String? _studentInfo;
+  SchoolCalendarData? _calendar;
+  List<TimetableEntry> _timetableEntries = const [];
+  Object? _studentError;
+  Object? _calendarError;
+  Object? _timetableError;
+  bool _studentLoading = true;
+  bool _calendarLoading = true;
+  bool _timetableLoading = true;
 
-  Stream<String> get studentInfo => _studentInfoController.stream;
-  Stream<SchoolCalendarData> get schoolCalendar => _schoolCalendarController.stream;
-  Stream<List<TimetableEntry>> get timetableEntries => _timetableController.stream;
-  Stream<Object> get studentErrors => _studentErrorController.stream;
-  Stream<Object> get calendarErrors => _calendarErrorController.stream;
-  Stream<Object> get timetableErrors => _timetableErrorController.stream;
+  String? get studentInfo => _studentInfo;
+  SchoolCalendarData? get calendar => _calendar;
+  List<TimetableEntry> get timetableEntries => _timetableEntries;
+  Object? get studentError => _studentError;
+  Object? get calendarError => _calendarError;
+  Object? get timetableError => _timetableError;
+  bool get studentLoading => _studentLoading;
+  bool get calendarLoading => _calendarLoading;
+  bool get timetableLoading => _timetableLoading;
+  List<TimetableEntry> get upcomingEntries =>
+      _upcomingEntries(now: DateTime.now(), limit: 3);
+
+  Future<void> load() async {
+    _studentLoading = true;
+    _calendarLoading = true;
+    _timetableLoading = true;
+    _studentError = null;
+    _calendarError = null;
+    _timetableError = null;
+    notifyListeners();
+    await Future.wait([
+      loadStudentInfo(),
+      loadSchoolCalendar(),
+      loadCourseSchedule(),
+    ]);
+  }
+
+  // TODO：待审查
+  List<TimetableEntry> _upcomingEntries({
+    required DateTime now,
+    int limit = 3,
+  }) {
+    final int? currentWeek = _calendar?.week;
+    if (_timetableEntries.isEmpty || currentWeek == null || limit <= 0) {
+      return const [];
+    }
+    final int today = now.weekday;
+    final List<TimetableEntry> result = [];
+    for (int day = today; day <= 7 && result.length < limit; day += 1) {
+      final List<TimetableEntry> dayEntries = _timetableEntries
+          .where((entry) => entry.dayOfWeek == day && _matchesWeek(entry, currentWeek))
+          .toList()
+        ..sort((a, b) => a.timeStart.compareTo(b.timeStart));
+      if (day == today) {
+        dayEntries.removeWhere((entry) => !_isAfterNow(entry, now));
+      }
+      for (final entry in dayEntries) {
+        result.add(entry);
+        if (result.length >= limit) {
+          break;
+        }
+      }
+    }
+    return result;
+  }
+
+  bool _matchesWeek(TimetableEntry entry, int currentWeek) {
+    if (entry.weeks.isEmpty) {
+      return true;
+    }
+    return entry.weeks.contains(currentWeek);
+  }
+
+  bool _isAfterNow(TimetableEntry entry, DateTime now) {
+    final int index = entry.timeStart - 1;
+    final List<int> startMinutes = TimeSlot.defaultConfig.startMinutes;
+    if (index < 0 || index >= startMinutes.length) {
+      return true;
+    }
+    final int startMinute = startMinutes[index];
+    final int nowMinutes = now.hour * 60 + now.minute;
+    return startMinute > nowMinutes;
+  }
 
   Future<void> loadStudentInfo() async {
     try {
       final StudentInfoData data = await _model.fetchStudentInfo();
-      _studentInfoController.add("${data.name}\n${data.userId}");
+      _studentInfo = "${data.name}\n${data.userId}";
+      _studentError = null;
     } catch (error) {
-      _studentErrorController.add(error);
+      _studentError = error;
+    } finally {
+      _studentLoading = false;
+      notifyListeners();
     }
   }
 
@@ -47,10 +114,14 @@ class DashboardViewModel extends BaseViewModel {
     try {
       final SchoolCalendarData data = await _model.fetchSchoolCalendar();
       await repo.saveSchoolCalendar(data);
-      _schoolCalendarController.add(data);
+      _calendar = data;
+      _calendarError = null;
     } catch (error) {
       repo.markFailed(error);
-      _calendarErrorController.add(error);
+      _calendarError = error;
+    } finally {
+      _calendarLoading = false;
+      notifyListeners();
     }
   }
 
@@ -76,20 +147,13 @@ class DashboardViewModel extends BaseViewModel {
           final int endB = b.timeEnd;
           return endA.compareTo(endB);
         });
-      _timetableController.add(entries);
+      _timetableEntries = entries;
+      _timetableError = null;
     } catch (error) {
-      _timetableErrorController.add(error);
+      _timetableError = error;
+    } finally {
+      _timetableLoading = false;
+      notifyListeners();
     }
-  }
-
-  @override
-  void dispose() {
-    _studentInfoController.close();
-    _schoolCalendarController.close();
-    _timetableController.close();
-    _studentErrorController.close();
-    _calendarErrorController.close();
-    _timetableErrorController.close();
-    super.dispose();
   }
 }

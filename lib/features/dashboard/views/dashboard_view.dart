@@ -1,10 +1,9 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'package:onetj/features/dashboard/view_models/dashboard_view_model.dart';
 import 'package:onetj/models/timetable_index.dart';
+import 'package:onetj/models/time_slot.dart';
 import 'package:onetj/repo/school_calendar_repository.dart';
 
 class DashboardView extends StatefulWidget {
@@ -16,113 +15,57 @@ class DashboardView extends StatefulWidget {
 
 class _DashboardViewState extends State<DashboardView> {
   late final DashboardViewModel _viewModel;
-  StreamSubscription<String>? _infoSub;
-  StreamSubscription<SchoolCalendarData>? _calendarSub;
-  StreamSubscription<List<TimetableEntry>>? _timetableSub;
-  StreamSubscription<Object>? _studentErrorSub;
-  StreamSubscription<Object>? _calendarErrorSub;
-  StreamSubscription<Object>? _timetableErrorSub;
-  String? _studentInfo;
-  SchoolCalendarData? _calendar;
-  List<TimetableEntry>? _timetableEntries;
-  Object? _studentError;
-  Object? _calendarError;
-  Object? _timetableError;
-  bool _studentLoading = true;
-  bool _calendarLoading = true;
-  bool _timetableLoading = true;
 
   @override
   void initState() {
     super.initState();
     _viewModel = DashboardViewModel();
-    _infoSub = _viewModel.studentInfo.listen((data) {
-      if (!mounted) return;
-      setState(() {
-        _studentInfo = data;
-        _studentError = null;
-        _studentLoading = false;
-      });
-    });
-    _calendarSub = _viewModel.schoolCalendar.listen((data) {
-      if (!mounted) return;
-      setState(() {
-        _calendar = data;
-        _calendarError = null;
-        _calendarLoading = false;
-      });
-    });
-    _timetableSub = _viewModel.timetableEntries.listen((data) {
-      if (!mounted) return;
-      setState(() {
-        _timetableEntries = data;
-        _timetableError = null;
-        _timetableLoading = false;
-      });
-    });
-    _studentErrorSub = _viewModel.studentErrors.listen((error) {
-      if (!mounted) return;
-      setState(() {
-        _studentError = error;
-        _studentLoading = false;
-      });
-    });
-    _calendarErrorSub = _viewModel.calendarErrors.listen((error) {
-      if (!mounted) return;
-      setState(() {
-        _calendarError = error;
-        _calendarLoading = false;
-      });
-    });
-    _timetableErrorSub = _viewModel.timetableErrors.listen((error) {
-      if (!mounted) return;
-      setState(() {
-        _timetableError = error;
-        _timetableLoading = false;
-      });
-    });
-    _viewModel.loadStudentInfo();
-    _viewModel.loadSchoolCalendar();
-    _viewModel.loadCourseSchedule();
+    _viewModel.load();
   }
 
   @override
   void dispose() {
-    _infoSub?.cancel();
-    _calendarSub?.cancel();
-    _timetableSub?.cancel();
-    _studentErrorSub?.cancel();
-    _calendarErrorSub?.cancel();
-    _timetableErrorSub?.cancel();
     _viewModel.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final String studentText = _studentInfo ?? '';
-    final SchoolCalendarData? calendar = _calendar;
     final l10n = AppLocalizations.of(context);
-    final Widget body = SingleChildScrollView(
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(AppLocalizations.of(context).tabDashboard),
+      ),
+      body: AnimatedBuilder(
+        animation: _viewModel,
+        builder: (context, _) => _buildBody(context, l10n),
+      ),
+    );
+  }
+
+  Widget _buildBody(BuildContext context, AppLocalizations l10n) {
+    final String studentText = _viewModel.studentInfo ?? '';
+    final SchoolCalendarData? calendar = _viewModel.calendar;
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text('Student Info'),
           const SizedBox(height: 8),
-          if (_studentLoading)
+          if (_viewModel.studentLoading)
             const LinearProgressIndicator()
-          else if (_studentError != null)
-            Text('Failed to load student info: $_studentError')
+          else if (_viewModel.studentError != null)
+            Text('Failed to load student info: ${_viewModel.studentError}')
           else
             SelectableText(studentText.isEmpty ? 'No data' : studentText),
           const SizedBox(height: 24),
           const Text('Calendar'),
           const SizedBox(height: 8),
-          if (_calendarLoading)
+          if (_viewModel.calendarLoading)
             const LinearProgressIndicator()
-          else if (_calendarError != null)
-            Text('Failed to load calendar: $_calendarError')
+          else if (_viewModel.calendarError != null)
+            Text('Failed to load calendar: ${_viewModel.calendarError}')
           else if (calendar == null)
             const Text('No calendar data')
           else
@@ -137,44 +80,30 @@ class _DashboardViewState extends State<DashboardView> {
           const SizedBox(height: 24),
           Text(l10n.dashboardUpcomingTitle),
           const SizedBox(height: 8),
-          if (_timetableLoading)
+          if (_viewModel.timetableLoading)
             const LinearProgressIndicator()
-          else if (_timetableError != null)
-            Text('Failed to load timetable: $_timetableError')
+          else if (_viewModel.timetableError != null)
+            Text('Failed to load timetable: ${_viewModel.timetableError}')
           else
             _buildUpcomingSection(
               context,
-              entries: _timetableEntries ?? const [],
-              currentWeek: calendar?.week,
+              entries: _viewModel.upcomingEntries,
             ),
         ],
       ),
-    );
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(AppLocalizations.of(context).tabDashboard),
-      ),
-      body: body,
     );
   }
 
   Widget _buildUpcomingSection(
     BuildContext context, {
     required List<TimetableEntry> entries,
-    required int? currentWeek,
   }) {
     final l10n = AppLocalizations.of(context);
-    final List<TimetableEntry> upcoming = _upcomingEntries(
-      entries: entries,
-      currentWeek: currentWeek,
-      now: DateTime.now(),
-      limit: 3,
-    );
-    if (upcoming.isEmpty) {
+    if (entries.isEmpty) {
       return Text(l10n.dashboardUpcomingEmpty);
     }
     return Column(
-      children: upcoming
+      children: entries
           .map(
             (entry) => Container(
               width: double.infinity,
@@ -207,52 +136,6 @@ class _DashboardViewState extends State<DashboardView> {
           )
           .toList(),
     );
-  }
-
-  List<TimetableEntry> _upcomingEntries({
-    required List<TimetableEntry> entries,
-    required int? currentWeek,
-    required DateTime now,
-    int limit = 3,
-  }) {
-    if (entries.isEmpty || currentWeek == null || limit <= 0) {
-      return const [];
-    }
-    final int today = now.weekday;
-    final List<TimetableEntry> result = [];
-    for (int day = today; day <= 7 && result.length < limit; day += 1) {
-      final List<TimetableEntry> dayEntries = entries
-          .where((entry) => entry.dayOfWeek == day && _matchesWeek(entry, currentWeek))
-          .toList()
-        ..sort((a, b) => a.timeStart.compareTo(b.timeStart));
-      if (day == today) {
-        dayEntries.removeWhere((entry) => !_isAfterNow(entry, now));
-      }
-      for (final entry in dayEntries) {
-        result.add(entry);
-        if (result.length >= limit) {
-          break;
-        }
-      }
-    }
-    return result;
-  }
-
-  bool _matchesWeek(TimetableEntry entry, int currentWeek) {
-    if (entry.weeks.isEmpty) {
-      return true;
-    }
-    return entry.weeks.contains(currentWeek);
-  }
-
-  bool _isAfterNow(TimetableEntry entry, DateTime now) {
-    final int index = entry.timeStart - 1;
-    if (index < 0 || index >= _slotStartMinutes.length) {
-      return true;
-    }
-    final int startMinutes = _slotStartMinutes[index];
-    final int nowMinutes = now.hour * 60 + now.minute;
-    return startMinutes > nowMinutes;
   }
 
   String _weekdayLabel(AppLocalizations l10n, int dayOfWeek) {
@@ -292,36 +175,11 @@ class _DashboardViewState extends State<DashboardView> {
   }
 }
 
-const List<int> _slotStartMinutes = [
-  8 * 60,
-  8 * 60 + 55,
-  10 * 60,
-  10 * 60 + 55,
-  13 * 60 + 30,
-  14 * 60 + 25,
-  15 * 60 + 30,
-  16 * 60 + 25,
-  18 * 60 + 30,
-  19 * 60 + 25,
-];
-
-const List<String> _slotStartLabels = [
-  '08:00',
-  '08:55',
-  '10:00',
-  '10:55',
-  '13:30',
-  '14:25',
-  '15:30',
-  '16:25',
-  '18:30',
-  '19:25',
-];
-
 String _slotLabel(int slot) {
   final int index = slot - 1;
-  if (index < 0 || index >= _slotStartLabels.length) {
+  final List<int> startMinutes = TimeSlot.defaultConfig.startMinutes;
+  if (index < 0 || index >= startMinutes.length) {
     return '';
   }
-  return _slotStartLabels[index];
+  return TimeSlot.formatMinutes(startMinutes[index]);
 }
