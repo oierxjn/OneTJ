@@ -16,16 +16,16 @@ class SettingsView extends StatelessWidget {
     final bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Log out'),
-        content: const Text('Clear local data and log out?'),
+        title: Text(AppLocalizations.of(context).logOut),
+        content: Text(AppLocalizations.of(context).logOutConfirmLabel),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).cancelLabel),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Log out'),
+            child: Text(AppLocalizations.of(context).confirmLabel),
           ),
         ],
       ),
@@ -64,7 +64,7 @@ class SettingsView extends StatelessWidget {
           children: [
             FilledButton(
               onPressed: () => _logout(context),
-              child: const Text('Log out'),
+              child: Text(AppLocalizations.of(context).logOut),
             ),
           ],
         ),

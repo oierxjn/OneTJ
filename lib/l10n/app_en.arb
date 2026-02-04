@@ -33,5 +33,9 @@
         "type": "int"
       }
     }
-  }
+  },
+  "logOut": "Log Out",
+  "logOutConfirmLabel": "Are you sure you want to log out?",
+  "confirmLabel": "Confirm",
+  "cancelLabel": "Cancel"
 }
