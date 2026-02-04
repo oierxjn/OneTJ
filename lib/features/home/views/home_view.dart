@@ -50,12 +50,8 @@ class HomeView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final int currentIndex = navigationShell.currentIndex;
-    final _TabConfig currentTab = _tabs[currentIndex];
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(currentTab.labelBuilder(context)),
-      ),
       body: navigationShell,
       bottomNavigationBar: NavigationBar(
         selectedIndex: currentIndex,

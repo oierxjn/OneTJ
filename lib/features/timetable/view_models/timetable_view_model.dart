@@ -14,11 +14,14 @@ enum TimetableDisplayMode {
 class TimetableViewModel extends BaseViewModel {
   TimetableViewModel({
     TimetableModel? model,
+    int maxWeek = 22,
   })  : _model = model ?? TimetableModel(),
+        _maxWeek = maxWeek,
         _eventController = StreamController<UiEvent>.broadcast();
 
   final TimetableModel _model;
   final StreamController<UiEvent> _eventController;
+  final int _maxWeek;
 
   TimetableIndex? _index;
   Object? _error;
@@ -34,7 +37,7 @@ class TimetableViewModel extends BaseViewModel {
   int get selectedDay => _selectedDay;
   int? get selectedWeek => _selectedWeek;
   TimetableDisplayMode get mode => _mode;
-  List<int> get availableWeeks => _weekNumbers(_index);
+  List<int> get availableWeeks => _availableWeeks();
   Stream<UiEvent> get events => _eventController.stream;
 
   Future<void> load() async {
@@ -68,6 +71,18 @@ class TimetableViewModel extends BaseViewModel {
       return;
     }
     _selectedWeek = week;
+    notifyListeners();
+  }
+
+  void jumpToToday() {
+    final int today = DateTime.now().weekday;
+    _selectedDay = today;
+    final List<int> weeks = _availableWeeks();
+    if (_currentWeek != null && weeks.contains(_currentWeek)) {
+      _selectedWeek = _currentWeek;
+    } else if (weeks.isNotEmpty && _selectedWeek == null) {
+      _selectedWeek = weeks.first;
+    }
     notifyListeners();
   }
 
@@ -129,7 +144,7 @@ class TimetableViewModel extends BaseViewModel {
   /// 如果当前周数在课表索引中，将选中周数设置为当前周数。
   /// 否则，将选中周数设置为第一周。
   void _syncSelectedWeek() {
-    final List<int> weeks = _weekNumbers(_index);
+    final List<int> weeks = _availableWeeks();
     if (weeks.isEmpty) {
       _selectedWeek = null;
       return;
@@ -144,16 +159,14 @@ class TimetableViewModel extends BaseViewModel {
     _selectedWeek = weeks.first;
   }
 
-  /// 获取课表索引中的所有周数
+  /// 获取渲染的所有周数
   /// 
   /// 周数按升序排序。
-  List<int> _weekNumbers(TimetableIndex? index) {
-    if (index == null) {
+  List<int> _availableWeeks() {
+    if (_maxWeek <= 0) {
       return const [];
     }
-    final List<int> weeks = index.byWeekThenDay.keys.toList();
-    weeks.sort();
-    return weeks;
+    return List<int>.generate(_maxWeek, (index) => index + 1);
   }
 
   String _formatErrorMessage(Object error) {

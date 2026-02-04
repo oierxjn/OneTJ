@@ -61,119 +61,130 @@ class _TimetableViewState extends State<TimetableView> {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _viewModel,
-      builder: (context, _) {
-        if (_viewModel.isLoading) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        
-        final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context);
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(l10n.tabTimetable),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.today),
+            onPressed: _viewModel.isLoading ? null : _viewModel.jumpToToday,
+          ),
+        ],
+      ),
+      body: AnimatedBuilder(
+        animation: _viewModel,
+        builder: (context, _) => _buildBody(context),
+      ),
+    );
+  }
 
-        if (_viewModel.error != null) {
-          return Center(
-            child: Text(
-              l10n.timetableLoadFailed(_viewModel.error.toString()),
+  Widget _buildBody(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    if (_viewModel.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_viewModel.error != null) {
+      return Center(
+        child: Text(
+          l10n.timetableLoadFailed(_viewModel.error.toString()),
+        ),
+      );
+    }
+    final TimetableIndex? index = _viewModel.index;
+    if (index == null || index.allEntries.isEmpty) {
+      return Center(child: Text(l10n.timetableNoData));
+    }
+    _syncWheelControllers();
+
+    final List<String> dayLabels = [
+      l10n.weekdayMon,
+      l10n.weekdayTue,
+      l10n.weekdayWed,
+      l10n.weekdayThu,
+      l10n.weekdayFri,
+      l10n.weekdaySat,
+      l10n.weekdaySun,
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: SegmentedButton<TimetableDisplayMode>(
+            segments: [
+              ButtonSegment(
+                value: TimetableDisplayMode.day,
+                label: Text(l10n.timetableDayView),
+              ),
+              ButtonSegment(
+                value: TimetableDisplayMode.week,
+                label: Text(l10n.timetableWeekView),
+              ),
+            ],
+            selected: {_viewModel.mode},
+            onSelectionChanged: (selection) {
+              _viewModel.setMode(selection.first);
+            },
+          ),
+        ),
+        if (_viewModel.availableWeeks.isNotEmpty)
+          SizedBox(
+            height: 40,
+            child: _HorizontalWheel(
+              controller: _weekController,
+              itemExtent: 90,
+              itemCount: _viewModel.availableWeeks.length,
+              onSelectedItemChanged: (index) {
+                if (index < 0 ||
+                    index >= _viewModel.availableWeeks.length) {
+                  return;
+                }
+                _viewModel.selectWeek(_viewModel.availableWeeks[index]);
+              },
+              itemBuilder: (context, index) {
+                final int week = _viewModel.availableWeeks[index];
+                final bool selected =
+                    _viewModel.selectedWeek == week;
+                return _WheelItem(
+                  label: l10n.weekLabel(week),
+                  selected: selected,
+                );
+              },
             ),
-          );
-        }
-        final TimetableIndex? index = _viewModel.index;
-        if (index == null || index.allEntries.isEmpty) {
-          return Center(child: Text(l10n.timetableNoData));
-        }
-
-        _syncWheelControllers();
-
-        final List<String> dayLabels = [
-          l10n.weekdayMon,
-          l10n.weekdayTue,
-          l10n.weekdayWed,
-          l10n.weekdayThu,
-          l10n.weekdayFri,
-          l10n.weekdaySat,
-          l10n.weekdaySun,
-        ];
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: SegmentedButton<TimetableDisplayMode>(
-                segments: [
-                  ButtonSegment(
-                    value: TimetableDisplayMode.day,
-                    label: Text(l10n.timetableDayView),
-                  ),
-                  ButtonSegment(
-                    value: TimetableDisplayMode.week,
-                    label: Text(l10n.timetableWeekView),
-                  ),
-                ],
-                selected: {_viewModel.mode},
-                onSelectionChanged: (selection) {
-                  _viewModel.setMode(selection.first);
-                },
-              ),
+          ),
+        if (_viewModel.mode == TimetableDisplayMode.day)
+          SizedBox(
+            height: 40,
+            child: _HorizontalWheel(
+              controller: _dayController,
+              itemExtent: 64,
+              itemCount: dayLabels.length,
+              onSelectedItemChanged: (index) {
+                if (index < 0 || index >= dayLabels.length) {
+                  return;
+                }
+                _viewModel.selectDay(index + 1);
+              },
+              itemBuilder: (context, index) {
+                final bool selected =
+                    _viewModel.selectedDay == index + 1;
+                return _WheelItem(
+                  label: dayLabels[index],
+                  selected: selected,
+                );
+              },
             ),
-            if (_viewModel.availableWeeks.isNotEmpty)
-              SizedBox(
-                height: 56,
-                child: _HorizontalWheel(
-                  controller: _weekController,
-                  itemExtent: 90,
-                  itemCount: _viewModel.availableWeeks.length,
-                  onSelectedItemChanged: (index) {
-                    if (index < 0 ||
-                        index >= _viewModel.availableWeeks.length) {
-                      return;
-                    }
-                    _viewModel.selectWeek(_viewModel.availableWeeks[index]);
-                  },
-                  itemBuilder: (context, index) {
-                    final int week = _viewModel.availableWeeks[index];
-                    final bool selected =
-                        _viewModel.selectedWeek == week;
-                    return _WheelItem(
-                      label: l10n.weekLabel(week),
-                      selected: selected,
-                    );
-                  },
-                ),
-              ),
-            if (_viewModel.mode == TimetableDisplayMode.day)
-              SizedBox(
-                height: 56,
-                child: _HorizontalWheel(
-                  controller: _dayController,
-                  itemExtent: 64,
-                  itemCount: dayLabels.length,
-                  onSelectedItemChanged: (index) {
-                    if (index < 0 || index >= dayLabels.length) {
-                      return;
-                    }
-                    _viewModel.selectDay(index + 1);
-                  },
-                  itemBuilder: (context, index) {
-                    final bool selected =
-                        _viewModel.selectedDay == index + 1;
-                    return _WheelItem(
-                      label: dayLabels[index],
-                      selected: selected,
-                    );
-                  },
-                ),
-              ),
-            Expanded(
-              child: _buildTimetableView(
-                context,
-                mode: _viewModel.mode,
-                dayLabels: dayLabels,
-              ),
-            ),
-          ],
-        );
-      },
+          ),
+        Expanded(
+          child: _buildTimetableView(
+            context,
+            mode: _viewModel.mode,
+            dayLabels: dayLabels,
+          ),
+        ),
+      ],
     );
   }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'package:onetj/features/home/view_models/home_view_model.dart';
 import 'package:onetj/models/timetable_index.dart';
@@ -182,6 +183,11 @@ class _DashboardViewState extends State<DashboardView> {
         ],
       ),
     );
-    return body;
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(AppLocalizations.of(context).tabDashboard),
+      ),
+      body: body,
+    );
   }
 }
