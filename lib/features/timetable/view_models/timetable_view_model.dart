@@ -1,5 +1,9 @@
+import 'dart:async';
+
+import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/features/timetable/models/timetable_model.dart';
 import 'package:onetj/models/base_model.dart';
+import 'package:onetj/models/event_model.dart';
 import 'package:onetj/models/timetable_index.dart';
 
 enum TimetableDisplayMode {
@@ -10,9 +14,11 @@ enum TimetableDisplayMode {
 class TimetableViewModel extends BaseViewModel {
   TimetableViewModel({
     TimetableModel? model,
-  })  : _model = model ?? TimetableModel();
+  })  : _model = model ?? TimetableModel(),
+        _eventController = StreamController<UiEvent>.broadcast();
 
   final TimetableModel _model;
+  final StreamController<UiEvent> _eventController;
 
   TimetableIndex? _index;
   Object? _error;
@@ -29,6 +35,7 @@ class TimetableViewModel extends BaseViewModel {
   int? get selectedWeek => _selectedWeek;
   TimetableDisplayMode get mode => _mode;
   List<int> get availableWeeks => _weekNumbers(_index);
+  Stream<UiEvent> get events => _eventController.stream;
 
   Future<void> load() async {
     _isLoading = true;
@@ -95,7 +102,14 @@ class TimetableViewModel extends BaseViewModel {
   }
 
   Future<void> _loadCurrentWeek() async {
-    _currentWeek = await _model.getSchoolCalendarCurrentWeek();
+    try {
+      _currentWeek = await _model.getSchoolCalendarCurrentWeek();
+    } catch (error) {
+      _currentWeek = null;
+      _eventController.add(
+        ShowSnackBarEvent(message: _formatErrorMessage(error)),
+      );
+    }
   }
 
   /// 加载课表索引并同步选中的周数
@@ -140,5 +154,18 @@ class TimetableViewModel extends BaseViewModel {
     final List<int> weeks = index.byWeekThenDay.keys.toList();
     weeks.sort();
     return weeks;
+  }
+
+  String _formatErrorMessage(Object error) {
+    if (error is AppException) {
+      return error.message;
+    }
+    return error.toString();
+  }
+
+  @override
+  void dispose() {
+    _eventController.close();
+    super.dispose();
   }
 }

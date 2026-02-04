@@ -26,6 +26,7 @@ class TimetableModel {
   /// 
   /// 如果获取失败，返回默认值1
   Future<int> getSchoolCalendarCurrentWeek() async {
+    await _calendarRepository.ensureLoaded();
     final SchoolCalendarData? data = await _calendarRepository.getSchoolCalendar();
     return data?.week ?? 1;
   }

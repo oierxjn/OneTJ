@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'package:onetj/features/timetable/view_models/timetable_view_model.dart';
 import 'package:onetj/features/timetable/views/widgets/timeline_content.dart';
+import 'package:onetj/models/event_model.dart';
 import 'package:onetj/models/timetable_index.dart';
 
 class TimetableView extends StatefulWidget {
@@ -17,6 +20,7 @@ class _TimetableViewState extends State<TimetableView> {
   late final FixedExtentScrollController _dayController;
   late final FixedExtentScrollController _weekController;
   final ScrollController _scrollController = ScrollController();
+  StreamSubscription<UiEvent>? _eventSub;
 
   @override
   void initState() {
@@ -26,11 +30,20 @@ class _TimetableViewState extends State<TimetableView> {
       initialItem: _viewModel.selectedDay - 1,
     );
     _weekController = FixedExtentScrollController();
+    _eventSub = _viewModel.events.listen((event) {
+      if (event is ShowSnackBarEvent) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(event.message ?? '')),
+        );
+      }
+    });
     _viewModel.load();
   }
 
   @override
   void dispose() {
+    _eventSub?.cancel();
     _dayController.dispose();
     _weekController.dispose();
     _scrollController.dispose();
