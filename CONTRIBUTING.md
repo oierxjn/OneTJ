@@ -67,6 +67,33 @@ git clone -b br_v6.1.5_ohos https://gitcode.com/openharmony-sig/flutter_inappweb
 
 确认代码是 `br_v6.1.5_ohos` 分支的代码后，删去 `flutter_inappwebview` 目录下的 `.git` 目录，避免与主项目的 `.git` 冲突。由主项目的 `.git` 管理。
 
+**代码修改**：
+- 文件：`flutter_inappwebview_windows/windows/types/web_resource_response.cpp`
+- 位置：第 48-56 行数据处理部分
+- 修改前：
+  ```cpp
+  if (data.has_value()) {
+    auto postData = std::string(data.value().begin(), data.value().end());
+    postDataStream = SHCreateMemStream(
+      reinterpret_cast<const BYTE*>(postData.data()), postData.length());
+  }
+  ```
+- 修改后：
+  ```cpp
+  if (data.has_value()) {
+    auto postData = std::string(data.value().begin(), data.value().end());
+    const size_t postDataSize = postData.length();
+    const UINT postDataSizeClamped = static_cast<UINT>(
+      (postDataSize > (std::numeric_limits<UINT>::max)())
+        ? (std::numeric_limits<UINT>::max)()
+        : postDataSize);
+    postDataStream = SHCreateMemStream(
+      reinterpret_cast<const BYTE*>(postData.data()), postDataSizeClamped);
+  }
+  ```
+- 修改原因：
+  解决 Windows 平台下大尺寸 post 数据的整数溢出问题
+
 **构建**：
 pubspec.yaml 中添加依赖：
 ```yaml
