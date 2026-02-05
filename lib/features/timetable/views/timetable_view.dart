@@ -72,9 +72,12 @@ class _TimetableViewState extends State<TimetableView> {
       appBar: AppBar(
         title: Text(l10n.tabTimetable),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.today),
-            onPressed: _viewModel.isLoading ? null : _viewModel.jumpToToday,
+          AnimatedBuilder(
+            animation: _viewModel,
+            builder: (context, _) => IconButton(
+              icon: const Icon(Icons.location_searching),
+              onPressed: _viewModel.isLoading ? null : _viewModel.jumpToToday,
+            ),
           ),
         ],
       ),
@@ -193,6 +196,9 @@ class _TimetableViewState extends State<TimetableView> {
     );
   }
 
+  /// 同步周数和天数的滚动控制器
+  /// 
+  /// 不推荐在 Build 过程中调用
   void _syncWheelControllers() {
     final int dayIndex = (_viewModel.selectedDay - 1).clamp(0, 6);
     _syncWheelController(_dayController, dayIndex);
@@ -210,12 +216,15 @@ class _TimetableViewState extends State<TimetableView> {
     FixedExtentScrollController controller,
     int targetIndex,
   ) {
-    if (controller.hasClients) {
-      if (controller.selectedItem != targetIndex) {
-        controller.jumpToItem(targetIndex);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (controller.hasClients) {
+        if (controller.selectedItem != targetIndex) {
+          controller.jumpToItem(targetIndex);
+        }
+        return;
       }
-      return;
-    }
+      // TODO 日志记录未同步的情况
+    });
   }
 
 

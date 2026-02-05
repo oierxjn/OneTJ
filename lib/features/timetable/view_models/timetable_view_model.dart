@@ -132,8 +132,9 @@ class TimetableViewModel extends BaseViewModel {
     }
   }
 
-  /// 加载课表索引并同步选中的周数
+  /// 加载课表索引
   /// 
+  /// 加载完成后同步选中的周数
   /// 如果加载失败，将错误存储到 [_error] 中
   Future<void> _loadTimetable() async {
     try {
@@ -141,7 +142,9 @@ class TimetableViewModel extends BaseViewModel {
       _syncSelectedWeek();
       _eventController.add(const SyncWheelEvent());
     } catch (error) {
-      _error = error;
+      _eventController.add(
+        ShowSnackBarEvent(message: _formatErrorMessage(error)),
+      );
     }
   }
 
