@@ -3,6 +3,7 @@
 #include "web_resource_response.h"
 
 #include <Shlwapi.h>
+#include <limits>
 
 namespace flutter_inappwebview_plugin
 {
@@ -45,8 +46,13 @@ namespace flutter_inappwebview_plugin
       wil::com_ptr<IStream> postDataStream = nullptr;
       if (data.has_value()) {
         auto postData = std::string(data.value().begin(), data.value().end());
+        const size_t postDataSize = postData.length();
+        const UINT postDataSizeClamped = static_cast<UINT>(
+          (postDataSize > std::numeric_limits<UINT>::max())
+            ? std::numeric_limits<UINT>::max()
+            : postDataSize);
         postDataStream = SHCreateMemStream(
-          reinterpret_cast<const BYTE*>(postData.data()), static_cast<UINT>(postData.length()));
+          reinterpret_cast<const BYTE*>(postData.data()), postDataSizeClamped);
       }
 
       webViewEnvironment->CreateWebResourceResponse(
