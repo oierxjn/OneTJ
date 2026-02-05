@@ -5,3 +5,9 @@ class SettingsSavedEvent extends UiEvent {
 
   final int maxWeek;
 }
+
+class SettingsResetEvent extends UiEvent {
+  const SettingsResetEvent({required this.maxWeek});
+
+  final int maxWeek;
+}

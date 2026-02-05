@@ -43,6 +43,13 @@
 
     "settingsMaxWeekTitle": "最大周数",
     "settingsMaxWeekSubtitle": "用于课程表显示可用周数",
+
+    "settingsAdvancedSectionTitle": "高级",
+    "settingsResetTitle": "重置设置",
+    "settingsResetSubtitle": "将所有设置恢复为默认值",
+    "settingsResetConfirmTitle": "确认重置所有设置？",
+    "settingsResetConfirmLabel": "这仅会重置应用设置，不会影响您的账户或缓存。",
+    "settingsResetDone": "设置已恢复为默认值",
     
     "settingsSaved": "设置已保存"
 }

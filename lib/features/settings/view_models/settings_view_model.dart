@@ -83,6 +83,25 @@ class SettingsViewModel extends BaseViewModel {
     }
   }
 
+  Future<void> resetSettings() async {
+    _settingsSaving = true;
+    errorMessage = null;
+    notifyListeners();
+    try {
+      final SettingsRepository repo = SettingsRepository.getInstance();
+      await repo.clearSettings();
+      _settingsData = await repo.getSettings(refreshFromStorage: true);
+      _eventController.add(SettingsResetEvent(maxWeek: _settingsData.maxWeek));
+    } catch (error) {
+      final String message = 'Failed to reset settings: $error';
+      errorMessage = message;
+      _eventController.add(ShowSnackBarEvent(message: message));
+    } finally {
+      _settingsSaving = false;
+      notifyListeners();
+    }
+  }
+
   @override
   void dispose() {
     _eventController.close();

@@ -43,5 +43,12 @@
   "settingsMaxWeekTitle": "Max Weeks",
   "settingsMaxWeekSubtitle": "Used by the timetable to display available weeks",
 
+  "settingsAdvancedSectionTitle": "Advanced",
+  "settingsResetTitle": "Reset Settings",
+  "settingsResetSubtitle": "Restore all settings to defaults",
+  "settingsResetConfirmTitle": "Reset all settings?",
+  "settingsResetConfirmLabel": "This only resets app settings and does not affect your account or cache.",
+  "settingsResetDone": "Settings reset to defaults",
+
   "settingsSaved": "Settings saved"
 }

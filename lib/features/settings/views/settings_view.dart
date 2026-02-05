@@ -49,6 +49,17 @@ class _SettingsViewState extends State<SettingsView> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(l10n.settingsSaved)),
         );
+        return;
+      }
+      if (event is SettingsResetEvent) {
+        final String maxWeekText = event.maxWeek.toString();
+        if (_maxWeekController.text != maxWeekText) {
+          _maxWeekController.text = maxWeekText;
+        }
+        final l10n = AppLocalizations.of(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.settingsResetDone)),
+        );
       }
     });
     _initSettings();
@@ -73,6 +84,7 @@ class _SettingsViewState extends State<SettingsView> {
   void _submitMaxWeek() {
     final int? value = int.tryParse(_maxWeekController.text);
     if (value == null || value <= 0) {
+      // TODO: 提示用户输入合法的最大周数
       return;
     }
     _viewModel.saveSettings(value);
@@ -100,6 +112,30 @@ class _SettingsViewState extends State<SettingsView> {
       return;
     }
     await _viewModel.logout();
+  }
+
+  Future<void> _confirmResetSettings(BuildContext context) async {
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(AppLocalizations.of(context).settingsResetConfirmTitle),
+        content: Text(AppLocalizations.of(context).settingsResetConfirmLabel),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(AppLocalizations.of(context).cancelLabel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(AppLocalizations.of(context).confirmLabel),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) {
+      return;
+    }
+    await _viewModel.resetSettings();
   }
 
   @override
@@ -147,6 +183,23 @@ class _SettingsViewState extends State<SettingsView> {
                     onSubmitted: (_) => _submitMaxWeek(),
                   ),
                 ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              AppLocalizations.of(context).settingsAdvancedSectionTitle,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.restore),
+                title: Text(AppLocalizations.of(context).settingsResetTitle),
+                subtitle:
+                    Text(AppLocalizations.of(context).settingsResetSubtitle),
+                onTap: _viewModel.settingsLoading || _viewModel.settingsSaving
+                    ? null
+                    : () => _confirmResetSettings(context),
               ),
             ),
             const SizedBox(height: 24),
