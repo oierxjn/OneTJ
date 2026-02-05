@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:onetj/app/exception/app_exception.dart';
+import 'package:onetj/features/timetable/models/event.dart';
 import 'package:onetj/features/timetable/models/timetable_model.dart';
 import 'package:onetj/models/base_model.dart';
 import 'package:onetj/models/event_model.dart';
@@ -84,6 +85,7 @@ class TimetableViewModel extends BaseViewModel {
       _selectedWeek = weeks.first;
     }
     notifyListeners();
+    _eventController.add(const SyncWheelEvent());
   }
 
   /// 获取选中周数的指定天的课表条目
@@ -116,6 +118,9 @@ class TimetableViewModel extends BaseViewModel {
     return sorted;
   }
 
+  /// 加载当前周数
+  /// 
+  /// 如果加载失败，将当前周数设置为 null 并显示错误消息。
   Future<void> _loadCurrentWeek() async {
     try {
       _currentWeek = await _model.getSchoolCalendarCurrentWeek();
@@ -134,6 +139,7 @@ class TimetableViewModel extends BaseViewModel {
     try {
       _index = await _model.getTimetableIndex();
       _syncSelectedWeek();
+      _eventController.add(const SyncWheelEvent());
     } catch (error) {
       _error = error;
     }

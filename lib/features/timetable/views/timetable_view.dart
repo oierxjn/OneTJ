@@ -5,6 +5,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'package:onetj/features/timetable/view_models/timetable_view_model.dart';
 import 'package:onetj/features/timetable/views/widgets/timeline_content.dart';
+import 'package:onetj/features/timetable/models/event.dart';
 import 'package:onetj/models/event_model.dart';
 import 'package:onetj/models/timetable_index.dart';
 import 'package:onetj/models/time_slot.dart';
@@ -37,6 +38,10 @@ class _TimetableViewState extends State<TimetableView> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(event.message ?? '')),
         );
+        return;
+      }
+      if (event is SyncWheelEvent) {
+        _syncWheelControllers();
       }
     });
     _viewModel.load();
@@ -96,7 +101,6 @@ class _TimetableViewState extends State<TimetableView> {
     if (index == null || index.allEntries.isEmpty) {
       return Center(child: Text(l10n.timetableNoData));
     }
-    _syncWheelControllers();
 
     final List<String> dayLabels = [
       l10n.weekdayMon,
@@ -212,15 +216,8 @@ class _TimetableViewState extends State<TimetableView> {
       }
       return;
     }
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || !controller.hasClients) {
-        return;
-      }
-      if (controller.selectedItem != targetIndex) {
-        controller.jumpToItem(targetIndex);
-      }
-    });
   }
+
 
   double _weekHeaderHeight(BuildContext context) {
     final TextStyle style =

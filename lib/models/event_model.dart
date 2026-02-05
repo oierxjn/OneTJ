@@ -1,7 +1,7 @@
-sealed class BaseEvent {
+class BaseEvent {
   const BaseEvent();
 }
-sealed class UiEvent extends BaseEvent {
+class UiEvent extends BaseEvent {
   final String? message;
   final String? code;
   const UiEvent({this.message, this.code});
