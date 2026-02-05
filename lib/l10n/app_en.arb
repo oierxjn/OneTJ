@@ -37,5 +37,11 @@
   "logOut": "Log Out",
   "logOutConfirmLabel": "Are you sure you want to log out?",
   "confirmLabel": "Confirm",
-  "cancelLabel": "Cancel"
+  "cancelLabel": "Cancel",
+  "saveLabel": "Save",
+
+  "settingsMaxWeekTitle": "Max Weeks",
+  "settingsMaxWeekSubtitle": "Used by the timetable to display available weeks",
+
+  "settingsSaved": "Settings saved"
 }

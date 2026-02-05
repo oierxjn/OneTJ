@@ -38,6 +38,12 @@
     "logOut": "退出登录",
     "logOutConfirmLabel": "确定退出登录吗？",
     "confirmLabel": "确认",
-    "cancelLabel": "取消"
+    "cancelLabel": "取消",
+    "saveLabel": "保存",
+
+    "settingsMaxWeekTitle": "最大周数",
+    "settingsMaxWeekSubtitle": "用于课程表显示可用周数",
+    
+    "settingsSaved": "设置已保存"
 }
 
