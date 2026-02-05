@@ -48,8 +48,8 @@ namespace flutter_inappwebview_plugin
         auto postData = std::string(data.value().begin(), data.value().end());
         const size_t postDataSize = postData.length();
         const UINT postDataSizeClamped = static_cast<UINT>(
-          (postDataSize > std::numeric_limits<UINT>::max())
-            ? std::numeric_limits<UINT>::max()
+          (postDataSize > (std::numeric_limits<UINT>::max)())
+            ? (std::numeric_limits<UINT>::max)()
             : postDataSize);
         postDataStream = SHCreateMemStream(
           reinterpret_cast<const BYTE*>(postData.data()), postDataSizeClamped);
