@@ -12,7 +12,7 @@ class DashboardViewModel extends BaseViewModel {
       : _model = model ?? DashboardModel();
 
   final DashboardModel _model;
-  String? _studentInfo;
+  String? _departmentName;
   SchoolCalendarData? _calendar;
   List<TimetableEntry> _timetableEntries = const [];
   Object? _studentError;
@@ -22,7 +22,7 @@ class DashboardViewModel extends BaseViewModel {
   bool _calendarLoading = true;
   bool _timetableLoading = true;
 
-  String? get studentInfo => _studentInfo;
+  String? get departmentName => _departmentName;
   SchoolCalendarData? get calendar => _calendar;
   List<TimetableEntry> get timetableEntries => _timetableEntries;
   Object? get studentError => _studentError;
@@ -49,13 +49,17 @@ class DashboardViewModel extends BaseViewModel {
     ]);
   }
 
-  // TODO：待审查
+  /// 获取将要到来的课程
+  /// 
+  /// [now] 相对于的时间，一般填当前时间
+  /// [limit] 最多返回的课程数量
   List<TimetableEntry> _upcomingEntries({
     required DateTime now,
     int limit = 3,
   }) {
     final int? currentWeek = _calendar?.week;
     if (_timetableEntries.isEmpty || currentWeek == null || limit <= 0) {
+      // TODO: 提示用户没有课程
       return const [];
     }
     final int today = now.weekday;
@@ -99,7 +103,7 @@ class DashboardViewModel extends BaseViewModel {
   Future<void> loadStudentInfo() async {
     try {
       final StudentInfoData data = await _model.fetchStudentInfo();
-      _studentInfo = "${data.name}\n${data.userId}";
+      _departmentName = data.deptName;
       _studentError = null;
     } catch (error) {
       _studentError = error;

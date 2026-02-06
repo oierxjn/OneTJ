@@ -5,6 +5,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'package:onetj/features/timetable/view_models/timetable_view_model.dart';
 import 'package:onetj/features/timetable/views/widgets/timeline_content.dart';
+import 'package:onetj/features/timetable/models/event.dart';
 import 'package:onetj/models/event_model.dart';
 import 'package:onetj/models/timetable_index.dart';
 import 'package:onetj/models/time_slot.dart';
@@ -37,6 +38,10 @@ class _TimetableViewState extends State<TimetableView> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(event.message ?? '')),
         );
+        return;
+      }
+      if (event is SyncWheelEvent) {
+        _syncWheelControllers();
       }
     });
     _viewModel.load();
@@ -67,9 +72,12 @@ class _TimetableViewState extends State<TimetableView> {
       appBar: AppBar(
         title: Text(l10n.tabTimetable),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.today),
-            onPressed: _viewModel.isLoading ? null : _viewModel.jumpToToday,
+          AnimatedBuilder(
+            animation: _viewModel,
+            builder: (context, _) => IconButton(
+              icon: const Icon(Icons.location_searching),
+              onPressed: _viewModel.isLoading ? null : _viewModel.jumpToToday,
+            ),
           ),
         ],
       ),
@@ -96,7 +104,6 @@ class _TimetableViewState extends State<TimetableView> {
     if (index == null || index.allEntries.isEmpty) {
       return Center(child: Text(l10n.timetableNoData));
     }
-    _syncWheelControllers();
 
     final List<String> dayLabels = [
       l10n.weekdayMon,
@@ -189,6 +196,9 @@ class _TimetableViewState extends State<TimetableView> {
     );
   }
 
+  /// 同步周数和天数的滚动控制器
+  /// 
+  /// 不推荐在 Build 过程中调用
   void _syncWheelControllers() {
     final int dayIndex = (_viewModel.selectedDay - 1).clamp(0, 6);
     _syncWheelController(_dayController, dayIndex);
@@ -206,21 +216,17 @@ class _TimetableViewState extends State<TimetableView> {
     FixedExtentScrollController controller,
     int targetIndex,
   ) {
-    if (controller.hasClients) {
-      if (controller.selectedItem != targetIndex) {
-        controller.jumpToItem(targetIndex);
-      }
-      return;
-    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || !controller.hasClients) {
+      if (controller.hasClients) {
+        if (controller.selectedItem != targetIndex) {
+          controller.jumpToItem(targetIndex);
+        }
         return;
       }
-      if (controller.selectedItem != targetIndex) {
-        controller.jumpToItem(targetIndex);
-      }
+      // TODO 日志记录未同步的情况
     });
   }
+
 
   double _weekHeaderHeight(BuildContext context) {
     final TextStyle style =

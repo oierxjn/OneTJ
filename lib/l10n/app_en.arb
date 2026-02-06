@@ -34,8 +34,31 @@
       }
     }
   },
+  "currentTeachingWeekText": "Current:Week {week}",
+  "@currentTeachingWeekText": {
+    "placeholders": {
+      "week": {
+        "type": "int"
+      }
+    }
+  },
+
+
   "logOut": "Log Out",
   "logOutConfirmLabel": "Are you sure you want to log out?",
   "confirmLabel": "Confirm",
-  "cancelLabel": "Cancel"
+  "cancelLabel": "Cancel",
+  "saveLabel": "Save",
+
+  "settingsMaxWeekTitle": "Max Weeks",
+  "settingsMaxWeekSubtitle": "Used by the timetable to display available weeks",
+
+  "settingsAdvancedSectionTitle": "Advanced",
+  "settingsResetTitle": "Reset Settings",
+  "settingsResetSubtitle": "Restore all settings to defaults",
+  "settingsResetConfirmTitle": "Reset all settings?",
+  "settingsResetConfirmLabel": "This only resets app settings and does not affect your account or cache.",
+  "settingsResetDone": "Settings reset to defaults",
+
+  "settingsSaved": "Settings saved"
 }

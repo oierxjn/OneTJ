@@ -35,9 +35,32 @@
         }
       }
     },
+    "currentTeachingWeekText": "当前教学周: 第{week}周",
+    "@currentTeachingWeekText": {
+      "placeholders": {
+        "week": {
+          "type": "int"
+        }
+      }
+    },
+
+
     "logOut": "退出登录",
     "logOutConfirmLabel": "确定退出登录吗？",
     "confirmLabel": "确认",
-    "cancelLabel": "取消"
+    "cancelLabel": "取消",
+    "saveLabel": "保存",
+
+    "settingsMaxWeekTitle": "最大周数",
+    "settingsMaxWeekSubtitle": "用于课程表显示可用周数",
+
+    "settingsAdvancedSectionTitle": "高级",
+    "settingsResetTitle": "重置设置",
+    "settingsResetSubtitle": "将所有设置恢复为默认值",
+    "settingsResetConfirmTitle": "确认重置所有设置？",
+    "settingsResetConfirmLabel": "这仅会重置应用设置，不会影响您的账户或缓存。",
+    "settingsResetDone": "设置已恢复为默认值",
+    
+    "settingsSaved": "设置已保存"
 }
 
