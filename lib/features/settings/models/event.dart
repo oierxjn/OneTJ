@@ -1,4 +1,5 @@
 import 'package:onetj/models/event_model.dart';
+import 'package:onetj/repo/settings_repository.dart';
 
 class SettingsSavedEvent extends UiEvent {
   const SettingsSavedEvent({required this.maxWeek});
@@ -7,7 +8,7 @@ class SettingsSavedEvent extends UiEvent {
 }
 
 class SettingsResetEvent extends UiEvent {
-  const SettingsResetEvent({required this.maxWeek});
+  const SettingsResetEvent({required this.settings});
 
-  final int maxWeek;
+  final SettingsData settings;
 }

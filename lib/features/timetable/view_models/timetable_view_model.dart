@@ -6,6 +6,7 @@ import 'package:onetj/features/timetable/models/timetable_model.dart';
 import 'package:onetj/models/base_model.dart';
 import 'package:onetj/models/event_model.dart';
 import 'package:onetj/models/timetable_index.dart';
+import 'package:onetj/repo/settings_repository.dart';
 
 enum TimetableDisplayMode {
   day,
@@ -16,13 +17,19 @@ class TimetableViewModel extends BaseViewModel {
   TimetableViewModel({
     TimetableModel? model,
     int maxWeek = 22,
+    SettingsRepository? settingsRepository,
   })  : _model = model ?? TimetableModel(),
+        _settingsRepository = settingsRepository ?? SettingsRepository.getInstance(),
         _maxWeek = maxWeek,
-        _eventController = StreamController<UiEvent>.broadcast();
+        _eventController = StreamController<UiEvent>.broadcast() {
+    _settingsSub = _settingsRepository.stream.listen(_handleSettingsChanged);
+  }
 
   final TimetableModel _model;
+  final SettingsRepository _settingsRepository;
+  StreamSubscription<SettingsData>? _settingsSub;
   final StreamController<UiEvent> _eventController;
-  final int _maxWeek;
+  int _maxWeek;
 
   TimetableIndex? _index;
   Object? _error;
@@ -45,6 +52,7 @@ class TimetableViewModel extends BaseViewModel {
     _isLoading = true;
     _error = null;
     notifyListeners();
+    await _loadSettings();
     await _loadCurrentWeek();
     await _loadTimetable();
     _isLoading = false;
@@ -86,6 +94,34 @@ class TimetableViewModel extends BaseViewModel {
     }
     notifyListeners();
     _eventController.add(const SyncWheelEvent());
+  }
+
+  void _handleSettingsChanged(SettingsData data) {
+    final int nextMaxWeek = data.maxWeek;
+    if (_maxWeek == nextMaxWeek) {
+      return;
+    }
+    _maxWeek = nextMaxWeek;
+    _syncSelectedWeek();
+    notifyListeners();
+    _eventController.add(const SyncWheelEvent());
+  }
+
+  /// 加载设置到内存
+  /// 
+  /// 从 [_settingsRepository] 中加载设置数据。
+  /// 如果加载失败，将显示错误消息。
+  Future<void> _loadSettings() async {
+    try {
+      final SettingsData data = await _settingsRepository.getSettings();
+      if (_maxWeek != data.maxWeek) {
+        _maxWeek = data.maxWeek;
+      }
+    } catch (error) {
+      _eventController.add(
+        ShowSnackBarEvent(message: _formatErrorMessage(error)),
+      );
+    }
   }
 
   /// 获取选中周数的指定天的课表条目
@@ -187,6 +223,7 @@ class TimetableViewModel extends BaseViewModel {
 
   @override
   void dispose() {
+    _settingsSub?.cancel();
     _eventController.close();
     super.dispose();
   }

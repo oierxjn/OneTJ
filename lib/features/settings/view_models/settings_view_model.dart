@@ -91,7 +91,7 @@ class SettingsViewModel extends BaseViewModel {
       final SettingsRepository repo = SettingsRepository.getInstance();
       await repo.clearSettings();
       _settingsData = await repo.getSettings(refreshFromStorage: true);
-      _eventController.add(SettingsResetEvent(maxWeek: _settingsData.maxWeek));
+      _eventController.add(SettingsResetEvent(settings: _settingsData));
     } catch (error) {
       final String message = 'Failed to reset settings: $error';
       errorMessage = message;

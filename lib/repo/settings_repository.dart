@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:hive/hive.dart';
@@ -85,7 +86,9 @@ class InMemorySettingsStorage implements SettingsStorage {
 }
 
 class SettingsRepository {
-  SettingsRepository._({required SettingsStorage storage}) : _storage = storage;
+  SettingsRepository._({required SettingsStorage storage})
+      : _storage = storage,
+        _controller = StreamController<SettingsData>.broadcast();
 
   static SettingsRepository? _instance;
   static const SettingsData _defaultSettings = SettingsData(maxWeek: 22);
@@ -102,7 +105,10 @@ class SettingsRepository {
   }
 
   final SettingsStorage _storage;
+  final StreamController<SettingsData> _controller;
   SettingsData? _cached;
+
+  Stream<SettingsData> get stream => _controller.stream;
 
   /// 获取设置
   /// 
@@ -119,12 +125,14 @@ class SettingsRepository {
   }
 
   Future<void> saveSettings(SettingsData data) async {
-    _cached = data;
     await _storage.save(data);
+    _cached = data;
+    _controller.add(data);
   }
 
   Future<void> clearSettings() async {
-    _cached = null;
     await _storage.clear();
+    _cached = null;
+    _controller.add(_defaultSettings);
   }
 }

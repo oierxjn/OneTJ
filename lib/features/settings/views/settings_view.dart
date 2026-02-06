@@ -52,7 +52,7 @@ class _SettingsViewState extends State<SettingsView> {
         return;
       }
       if (event is SettingsResetEvent) {
-        final String maxWeekText = event.maxWeek.toString();
+        final String maxWeekText = event.settings.maxWeek.toString();
         if (_maxWeekController.text != maxWeekText) {
           _maxWeekController.text = maxWeekText;
         }
