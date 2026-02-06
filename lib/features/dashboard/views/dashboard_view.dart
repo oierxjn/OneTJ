@@ -44,41 +44,17 @@ class _DashboardViewState extends State<DashboardView> {
   }
 
   Widget _buildBody(BuildContext context, AppLocalizations l10n) {
-    final String studentText = _viewModel.studentInfo ?? '';
-    final SchoolCalendarData? calendar = _viewModel.calendar;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Student Info'),
-          const SizedBox(height: 8),
-          if (_viewModel.studentLoading)
-            const LinearProgressIndicator()
-          else if (_viewModel.studentError != null)
-            Text('Failed to load student info: ${_viewModel.studentError}')
-          else
-            SelectableText(studentText.isEmpty ? 'No data' : studentText),
+          _buildHeroCard(context),
           const SizedBox(height: 24),
-          const Text('Calendar'),
-          const SizedBox(height: 8),
-          if (_viewModel.calendarLoading)
-            const LinearProgressIndicator()
-          else if (_viewModel.calendarError != null)
-            Text('Failed to load calendar: ${_viewModel.calendarError}')
-          else if (calendar == null)
-            const Text('No calendar data')
-          else
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Current week: ${calendar.week}'),
-                const SizedBox(height: 4),
-                Text('Term: ${calendar.simpleName}'),
-              ],
-            ),
-          const SizedBox(height: 24),
-          Text(l10n.dashboardUpcomingTitle),
+          Text(
+            l10n.dashboardUpcomingTitle,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
           const SizedBox(height: 8),
           if (_viewModel.timetableLoading)
             const LinearProgressIndicator()
@@ -94,44 +70,93 @@ class _DashboardViewState extends State<DashboardView> {
     );
   }
 
+  Widget _buildHeroCard(
+    BuildContext context,
+  ) {
+    final SchoolCalendarData? calendar = _viewModel.calendar;
+    final l10n = AppLocalizations.of(context);
+
+    final String department = _viewModel.departmentName ?? '';
+    final bool isLoading = _viewModel.studentLoading || _viewModel.calendarLoading;
+    final Object? error = _viewModel.calendarError ?? _viewModel.studentError;
+    final String termTitle = (calendar?.simpleName ?? '').isNotEmpty
+        ? calendar!.simpleName
+        : 'Term unavailable';
+    final int weekNumber = calendar?.week != null
+        ? calendar!.week
+        : 0;
+    final String departmentLabel =
+        department.isNotEmpty ? department : 'Department unavailable';
+
+    return Card(
+      elevation: 0,
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              termTitle,
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              departmentLabel,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                _InfoPill(text: l10n.currentTeachingWeekText(weekNumber)),
+              ],
+            ),
+            if (isLoading) ...[
+              const SizedBox(height: 12),
+              const LinearProgressIndicator(),
+            ] else if (error != null) ...[
+              const SizedBox(height: 12),
+              Text(
+                'Failed to load overview: $error',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildUpcomingSection(
     BuildContext context, {
     required List<TimetableEntry> entries,
   }) {
     final l10n = AppLocalizations.of(context);
     if (entries.isEmpty) {
-      return Text(l10n.dashboardUpcomingEmpty);
+      return _EmptyState(
+        icon: Icons.event_available,
+        title: l10n.dashboardUpcomingEmpty,
+      );
     }
     return Column(
       children: entries
           .map(
-            (entry) => Container(
-              width: double.infinity,
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    entry.courseName.isNotEmpty ? entry.courseName : 'Unknown course',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${_weekdayLabel(l10n, entry.dayOfWeek)} | ${_formatTimeRange(entry)}',
-                  ),
-                  Text(
-                    'Room: ${entry.roomIdI18n.isNotEmpty ? entry.roomIdI18n : (entry.roomId.isNotEmpty ? entry.roomId : '-')}',
-                  ),
-                  Text(
-                    'Teacher: ${entry.teacherName.isNotEmpty ? entry.teacherName : '-'}',
-                  ),
-                ],
-              ),
+            (entry) => _UpcomingCard(
+              title: entry.courseName.isNotEmpty
+                  ? entry.courseName
+                  : 'Unknown course',
+              timeLabel:
+                  '${_weekdayLabel(l10n, entry.dayOfWeek)} · ${_formatTimeRange(entry)}',
+              roomLabel: entry.roomIdI18n.isNotEmpty
+                  ? entry.roomIdI18n
+                  : entry.roomLabel,
+              teacherLabel:
+                  entry.teacherName.isNotEmpty ? entry.teacherName : '-',
             ),
           )
           .toList(),
@@ -182,4 +207,173 @@ String _slotLabel(int slot) {
     return '';
   }
   return TimeSlot.formatMinutes(startMinutes[index]);
+}
+
+class _InfoPill extends StatelessWidget {
+  const _InfoPill({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: colors.primaryContainer,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        text,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: colors.onPrimaryContainer,
+              fontWeight: FontWeight.w600,
+            ),
+      ),
+    );
+  }
+}
+
+class _UpcomingCard extends StatelessWidget {
+  const _UpcomingCard({
+    required this.title,
+    required this.timeLabel,
+    required this.roomLabel,
+    required this.teacherLabel,
+  });
+
+  final String title;
+  final String timeLabel;
+  final String roomLabel;
+  final String teacherLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = Theme.of(context).colorScheme;
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: colors.outlineVariant,
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _TimeBadge(label: timeLabel),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                _MetaRow(
+                  icon: Icons.room_outlined,
+                  label: roomLabel,
+                ),
+                const SizedBox(height: 4),
+                _MetaRow(
+                  icon: Icons.person_outline,
+                  label: teacherLabel,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TimeBadge extends StatelessWidget {
+  const _TimeBadge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = Theme.of(context).colorScheme;
+    return Container(
+      width: 88,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: colors.outlineVariant,
+        ),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.bodySmall,
+      ),
+    );
+  }
+}
+
+class _MetaRow extends StatelessWidget {
+  const _MetaRow({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = Theme.of(context).colorScheme;
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: colors.onSurfaceVariant),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: colors.onSurfaceVariant,
+                ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  const _EmptyState({required this.icon, required this.title});
+
+  final IconData icon;
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: colors.onSurfaceVariant),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              title,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: colors.onSurfaceVariant,
+                  ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
