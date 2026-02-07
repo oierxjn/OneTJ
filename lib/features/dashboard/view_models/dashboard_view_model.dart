@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:onetj/models/base_model.dart';
+import 'package:onetj/models/event_model.dart';
 import 'package:onetj/features/dashboard/models/dashboard_model.dart';
 import 'package:onetj/models/timetable_index.dart';
 import 'package:onetj/models/time_slot.dart';
@@ -9,9 +12,12 @@ import 'package:onetj/services/timetable_index_builder.dart';
 
 class DashboardViewModel extends BaseViewModel {
   DashboardViewModel({DashboardModel? model})
-      : _model = model ?? DashboardModel();
+      : _model = model ?? DashboardModel(),
+        _eventController = StreamController<UiEvent>.broadcast();
 
   final DashboardModel _model;
+  final StreamController<UiEvent> _eventController;
+  Stream<UiEvent> get events => _eventController.stream;
   String? _departmentName;
   SchoolCalendarData? _calendar;
   List<TimetableEntry> _timetableEntries = const [];
@@ -107,6 +113,9 @@ class DashboardViewModel extends BaseViewModel {
       _studentError = null;
     } catch (error) {
       _studentError = error;
+      _eventController.add(
+        ShowSnackBarEvent(message: 'Failed to load student info: $error'),
+      );
     } finally {
       _studentLoading = false;
       notifyListeners();
@@ -123,6 +132,9 @@ class DashboardViewModel extends BaseViewModel {
     } catch (error) {
       repo.markFailed(error);
       _calendarError = error;
+      _eventController.add(
+        ShowSnackBarEvent(message: 'Failed to load school calendar: $error'),
+      );
     } finally {
       _calendarLoading = false;
       notifyListeners();
@@ -155,9 +167,18 @@ class DashboardViewModel extends BaseViewModel {
       _timetableError = null;
     } catch (error) {
       _timetableError = error;
+      _eventController.add(
+        ShowSnackBarEvent(message: 'Failed to load timetable: $error'),
+      );
     } finally {
       _timetableLoading = false;
       notifyListeners();
     }
+  }
+
+  @override
+  void dispose() {
+    _eventController.close();
+    super.dispose();
   }
 }
