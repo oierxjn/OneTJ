@@ -143,9 +143,7 @@ class DashboardViewModel extends BaseViewModel {
 
   Future<void> loadCourseSchedule() async {
     try {
-      final CourseScheduleData data = await _model.fetchCourseSchedule();
-      final CourseScheduleRepository repo = CourseScheduleRepository.getInstance();
-      await repo.saveCourseSchedule(data);
+      final CourseScheduleData data = await _model.getCourseSchedule();
       final TimetableIndex index = const TimetableIndexBuilder().buildIndex(data);
       final List<TimetableEntry> entries = List<TimetableEntry>.from(index.allEntries)
         ..sort((a, b) {

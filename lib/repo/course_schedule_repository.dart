@@ -359,8 +359,34 @@ class CourseScheduleData {
 
 abstract class CourseScheduleStorage {
   Future<CourseScheduleData?> read();
+  Future<CourseScheduleCacheMeta?> readMeta();
   Future<void> save(CourseScheduleData data);
+  Future<void> saveMeta(CourseScheduleCacheMeta meta);
   Future<void> clear();
+}
+
+class CourseScheduleCacheMeta {
+  const CourseScheduleCacheMeta({
+    required this.lastFetchedAtMillis,
+    this.termKey,
+  });
+
+  final int lastFetchedAtMillis;
+  final String? termKey;
+
+  factory CourseScheduleCacheMeta.fromJson(Map<String, dynamic> json) {
+    return CourseScheduleCacheMeta(
+      lastFetchedAtMillis: json['lastFetchedAtMillis'] as int? ?? 0,
+      termKey: json['termKey'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'lastFetchedAtMillis': lastFetchedAtMillis,
+      'termKey': termKey,
+    };
+  }
 }
 
 class HiveCourseScheduleStorage implements CourseScheduleStorage {
@@ -368,6 +394,7 @@ class HiveCourseScheduleStorage implements CourseScheduleStorage {
 
   static const String _boxName = 'course_schedule';
   static const String _key = 'payload';
+  static const String _metaKey = 'meta';
   final HiveInterface _hive;
 
   Future<Box<String>> _openBox() async {
@@ -395,14 +422,33 @@ class HiveCourseScheduleStorage implements CourseScheduleStorage {
   }
 
   @override
+  Future<CourseScheduleCacheMeta?> readMeta() async {
+    final Box<String> box = await _openBox();
+    final String? raw = box.get(_metaKey);
+    if (raw == null || raw.isEmpty) {
+      return null;
+    }
+    final Map<String, dynamic> data = jsonDecode(raw) as Map<String, dynamic>;
+    return CourseScheduleCacheMeta.fromJson(data);
+  }
+
+  @override
+  Future<void> saveMeta(CourseScheduleCacheMeta meta) async {
+    final Box<String> box = await _openBox();
+    await box.put(_metaKey, jsonEncode(meta.toJson()));
+  }
+
+  @override
   Future<void> clear() async {
     final Box<String> box = await _openBox();
     await box.delete(_key);
+    await box.delete(_metaKey);
   }
 }
 
 class InMemoryCourseScheduleStorage implements CourseScheduleStorage {
   CourseScheduleData? _cache;
+  CourseScheduleCacheMeta? _meta;
 
   @override
   Future<CourseScheduleData?> read() async => _cache;
@@ -413,8 +459,17 @@ class InMemoryCourseScheduleStorage implements CourseScheduleStorage {
   }
 
   @override
+  Future<CourseScheduleCacheMeta?> readMeta() async => _meta;
+
+  @override
+  Future<void> saveMeta(CourseScheduleCacheMeta meta) async {
+    _meta = meta;
+  }
+
+  @override
   Future<void> clear() async {
     _cache = null;
+    _meta = null;
   }
 }
 
@@ -437,6 +492,7 @@ class CourseScheduleRepository {
 
   final CourseScheduleStorage _storage;
   CourseScheduleData? _cached;
+  CourseScheduleCacheMeta? _cachedMeta;
 
   Future<CourseScheduleData?> getCourseSchedule({
     bool refreshFromStorage = false,
@@ -446,6 +502,58 @@ class CourseScheduleRepository {
     }
     _cached = await _storage.read();
     return _cached;
+  }
+
+  Future<CourseScheduleCacheMeta?> getMeta({
+    bool refreshFromStorage = false,
+  }) async {
+    if (!refreshFromStorage && _cachedMeta != null) {
+      return _cachedMeta;
+    }
+    _cachedMeta = await _storage.readMeta();
+    return _cachedMeta;
+  }
+
+  /// 获取课程表数据（推荐）
+  /// 
+  /// 如果缓存中没有数据，或者缓存数据过期，
+  /// 则会从 [fetcher] 中获取数据，并缓存到 [_storage] 中。
+  Future<CourseScheduleData> getOrFetch({
+    required DateTime now,
+    required Future<CourseScheduleData> Function() fetcher,
+    String? termKey,
+    Duration ttl = const Duration(days: 7),
+  }) async {
+    final CourseScheduleData? cached =
+        await getCourseSchedule(refreshFromStorage: true);
+    final CourseScheduleCacheMeta? meta = await getMeta(refreshFromStorage: true);
+    bool shouldFetch = cached == null;
+    if (!shouldFetch) {
+      if (termKey != null && termKey.isNotEmpty && meta?.termKey != termKey) {
+        shouldFetch = true;
+      } else if (meta == null || meta.lastFetchedAtMillis <= 0) {
+        shouldFetch = true;
+      } else {
+        final DateTime lastFetched =
+            DateTime.fromMillisecondsSinceEpoch(meta.lastFetchedAtMillis);
+        if (now.difference(lastFetched) >= ttl) {
+          shouldFetch = true;
+        }
+      }
+    }
+    if (!shouldFetch) {
+      return cached!;
+    }
+    final CourseScheduleData fetched = await fetcher();
+    // TODO: 时间效率优化
+    await saveCourseSchedule(fetched);
+    await saveMeta(
+      CourseScheduleCacheMeta(
+        lastFetchedAtMillis: now.millisecondsSinceEpoch,
+        termKey: termKey,
+      ),
+    );
+    return fetched;
   }
 
   Future<void> saveCourseSchedule(CourseScheduleData data) async {
@@ -461,6 +569,12 @@ class CourseScheduleRepository {
 
   Future<void> clearCourseSchedule() async {
     _cached = null;
+    _cachedMeta = null;
     await _storage.clear();
+  }
+
+  Future<void> saveMeta(CourseScheduleCacheMeta meta) async {
+    _cachedMeta = meta;
+    await _storage.saveMeta(meta);
   }
 }

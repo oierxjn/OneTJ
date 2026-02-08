@@ -20,4 +20,17 @@ class DashboardModel {
   Future<CourseScheduleData> fetchCourseSchedule() {
     return _api.fetchStudentTimetable();
   }
+
+  Future<CourseScheduleData> getCourseSchedule() async {
+    final CourseScheduleRepository repo = CourseScheduleRepository.getInstance();
+    final SchoolCalendarData? calendar = await SchoolCalendarRepository.getInstance().getSchoolCalendar();
+    final String? termKey = calendar == null
+        ? null
+        : '${calendar.schoolCalendar.year}-${calendar.schoolCalendar.term}';
+    return repo.getOrFetch(
+      now: DateTime.now(),
+      termKey: termKey,
+      fetcher: fetchCourseSchedule,
+    );
+  }
 }
