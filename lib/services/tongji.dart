@@ -14,6 +14,7 @@ import 'package:onetj/models/data/undergraduate_score_net_data.dart';
 import 'package:onetj/repo/course_schedule_repository.dart';
 import 'package:onetj/repo/school_calendar_repository.dart';
 import 'package:onetj/repo/token_repository.dart';
+import 'package:onetj/repo/undergraduate_score_repository.dart';
 import 'package:onetj/repo/student_info_repository.dart';
 
 class TongjiApi {
@@ -237,12 +238,13 @@ class TongjiApi {
     return CourseScheduleData.fromNetDataList(netList);
   }
 
-  // Future<UndergraduateScoreData> fetchUndergraduateScore() async {
-  //   final Uri uri = Uri.https(_baseUrl, undergraduateScorePath);
-  //   final UndergraduateScoreNetData netData = await _authorizedGetData<UndergraduateScoreNetData>(
-  //     uri,
-  //     parseData: (data) => UndergraduateScoreNetData.fromJson(data as Map<String, dynamic>),
-  //   );
-  //   return UndergraduateScoreData.fromNetData(netData);
-  // }
+  /// 获取本科生成绩
+  Future<UndergraduateScoreData> fetchUndergraduateScore() async {
+    final Uri uri = Uri.https(_baseUrl, undergraduateScorePath);
+    final UndergraduateScoreNetData netData = await _authorizedGetData<UndergraduateScoreNetData>(
+      uri,
+      parseData: (data) => UndergraduateScoreNetData.fromJson(data as Map<String, dynamic>),
+    );
+    return UndergraduateScoreData.fromNetData(netData);
+  }
 }
