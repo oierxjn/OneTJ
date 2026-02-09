@@ -559,7 +559,7 @@ class CourseScheduleRepository {
     _readyCompleter = null;
   }
 
-  Future<CourseScheduleData> _fetchAndSave({
+  Future<CourseScheduleData> fetchAndSave({
     required DateTime now,
     required Future<CourseScheduleData> Function() fetcher,
     String? termKey,
@@ -572,19 +572,7 @@ class CourseScheduleRepository {
     _saveCache(data: fetched, meta: meta, persist: true);
     return fetched;
   }
-
-  Future<CourseScheduleData> fetchAndSave({
-    required DateTime now,
-    required Future<CourseScheduleData> Function() fetcher,
-    String? termKey,
-  }) {
-    return _fetchAndSave(
-      now: now,
-      fetcher: fetcher,
-      termKey: termKey,
-    );
-  }
-
+  
   /// 缓存数据到内存或者本地存储。
   /// 
   /// 如果 [persist] 为 `true`，则会额外将数据持久化到本地存储。
@@ -654,7 +642,7 @@ class CourseScheduleRepository {
     if (!shouldFetch) {
       return cached!;
     }
-    return _fetchAndSave(
+    return fetchAndSave(
       now: now,
       termKey: termKey,
       fetcher: fetcher,
