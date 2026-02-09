@@ -8,13 +8,12 @@ class ToolsView extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
+      appBar: AppBar(
+        title: Text(l10n.tabTools),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text(
-            l10n.tabTools,
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
           const SizedBox(height: 12),
           Text(
             'Coming soon',
