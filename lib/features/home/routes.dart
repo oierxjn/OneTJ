@@ -5,7 +5,7 @@ import 'package:onetj/features/home/views/home_view.dart';
 import 'package:onetj/features/settings/views/settings_view.dart';
 import 'package:onetj/features/dashboard/views/dashboard_view.dart';
 import 'package:onetj/features/timetable/views/timetable_view.dart';
-import 'package:onetj/features/tools/views/tools_view.dart';
+import 'package:onetj/features/tools/routes.dart';
 
 final StatefulShellRoute homeShellRoute = StatefulShellRoute.indexedStack(
   builder: (context, state, navigationShell) =>
@@ -35,11 +35,7 @@ final StatefulShellRoute homeShellRoute = StatefulShellRoute.indexedStack(
     ),
     StatefulShellBranch(
       routes: [
-        GoRoute(
-          path: RoutePaths.homeTools,
-          name: 'tools',
-          builder: (context, state) => const ToolsView(),
-        ),
+        ...toolsRoutes,
       ],
     ),
     StatefulShellBranch(

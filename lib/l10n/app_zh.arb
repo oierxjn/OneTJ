@@ -44,6 +44,10 @@
         }
       }
     },
+    "scoreInquiryTitle": "成绩查询",
+    "scoreInquirySubtitle": "查看你的成绩",
+    "scoresOverviewTitle": "概览",
+    "scoresListTitle": "课程成绩",
 
 
     "logOut": "退出登录",

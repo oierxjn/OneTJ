@@ -43,6 +43,10 @@
       }
     }
   },
+  "scoreInquiryTitle": "Score Inquiry",
+  "scoreInquirySubtitle": "View your undergraduate scores",
+  "scoresOverviewTitle": "Overview",
+  "scoresListTitle": "Course Scores",
 
 
   "logOut": "Log Out",

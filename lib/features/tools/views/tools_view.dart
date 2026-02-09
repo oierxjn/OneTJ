@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
+import 'package:onetj/app/constant/route_paths.dart';
 
 class ToolsView extends StatelessWidget {
   const ToolsView({super.key});
@@ -24,23 +27,9 @@ class ToolsView extends StatelessWidget {
           const SizedBox(height: 16),
           _ToolTile(
             icon: Icons.auto_graph_outlined,
-            title: 'Analytics',
-            subtitle: 'Usage and performance insights',
-          ),
-          _ToolTile(
-            icon: Icons.file_copy_outlined,
-            title: 'Templates',
-            subtitle: 'Manage and sync your templates',
-          ),
-          _ToolTile(
-            icon: Icons.cloud_download_outlined,
-            title: 'Data Sync',
-            subtitle: 'Refresh cached data',
-          ),
-          _ToolTile(
-            icon: Icons.help_outline,
-            title: 'Support',
-            subtitle: 'Help and feedback',
+            title: l10n.scoreInquiryTitle,
+            subtitle: l10n.scoreInquirySubtitle,
+            onTap: () => context.push(RoutePaths.homeGrades),
           ),
         ],
       ),
@@ -53,11 +42,13 @@ class _ToolTile extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.subtitle,
+    this.onTap,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -71,7 +62,7 @@ class _ToolTile extends StatelessWidget {
         title: Text(title),
         subtitle: Text(subtitle),
         trailing: const Icon(Icons.chevron_right),
-        onTap: () {},
+        onTap: onTap,
       ),
     );
   }

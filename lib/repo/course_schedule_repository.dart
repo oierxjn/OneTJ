@@ -559,6 +559,10 @@ class CourseScheduleRepository {
     _readyCompleter = null;
   }
 
+  /// 从 [fetcher] 中获取数据，并缓存到 [_storage] 中。
+  /// 
+  /// fetch后会立即缓存数据到 [_storage] 中，并且不会等待落盘IO完成，直接返回fetch到的数据。
+  /// save抛出的错误可以从 [flush] 方法中获取。
   Future<CourseScheduleData> fetchAndSave({
     required DateTime now,
     required Future<CourseScheduleData> Function() fetcher,
@@ -572,9 +576,10 @@ class CourseScheduleRepository {
     _saveCache(data: fetched, meta: meta, persist: true);
     return fetched;
   }
-  
+
   /// 缓存数据到内存或者本地存储。
   /// 
+  /// 尽量以非挂起式方式缓存数据，避免阻塞调用方。
   /// 如果 [persist] 为 `true`，则会额外将数据持久化到本地存储。
   void _saveCache({
     CourseScheduleData? data,
