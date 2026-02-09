@@ -1,16 +1,16 @@
 import 'package:json_annotation/json_annotation.dart';
 
-part 'grade_net_data.g.dart';
+part 'undergraduate_score_net_data.g.dart';
 
 @JsonSerializable(explicitToJson: true)
-class GradeNetData {
+class UndergraduateScoreNetData {
   final String? totalGradePoint;
   final String? actualCredit;
   final String? failingCredits;
   final String? failingCourseCount;
-  final List<GradeTermNetData>? term;
+  final List<UndergraduateScoreTermNetData>? term;
 
-  const GradeNetData({
+  const UndergraduateScoreNetData({
     this.totalGradePoint,
     this.actualCredit,
     this.failingCredits,
@@ -18,21 +18,21 @@ class GradeNetData {
     this.term,
   });
 
-  factory GradeNetData.fromJson(Map<String, dynamic> json) =>
-      _$GradeNetDataFromJson(json);
+  factory UndergraduateScoreNetData.fromJson(Map<String, dynamic> json) =>
+      _$UndergraduateScoreNetDataFromJson(json);
 
-  Map<String, dynamic> toJson() => _$GradeNetDataToJson(this);
+  Map<String, dynamic> toJson() => _$UndergraduateScoreNetDataToJson(this);
 }
 
 @JsonSerializable(explicitToJson: true)
-class GradeTermNetData {
+class UndergraduateScoreTermNetData {
   final int? termcode;
   final String? termName;
   final String? calName;
   final String? averagePoint;
-  final List<GradeCreditInfoNetData>? creditInfo;
+  final List<UndergraduateScoreCreditInfoNetData>? creditInfo;
 
-  const GradeTermNetData({
+  const UndergraduateScoreTermNetData({
     this.termcode,
     this.termName,
     this.calName,
@@ -40,14 +40,14 @@ class GradeTermNetData {
     this.creditInfo,
   });
 
-  factory GradeTermNetData.fromJson(Map<String, dynamic> json) =>
-      _$GradeTermNetDataFromJson(json);
+  factory UndergraduateScoreTermNetData.fromJson(Map<String, dynamic> json) =>
+      _$UndergraduateScoreTermNetDataFromJson(json);
 
-  Map<String, dynamic> toJson() => _$GradeTermNetDataToJson(this);
+  Map<String, dynamic> toJson() => _$UndergraduateScoreTermNetDataToJson(this);
 }
 
 @JsonSerializable()
-class GradeCreditInfoNetData {
+class UndergraduateScoreCreditInfoNetData {
   final int? id;
   final String? year;
   final int? term;
@@ -87,7 +87,7 @@ class GradeCreditInfoNetData {
   final String? teachingClassId;
   final int? scoreSourrce;
 
-  const GradeCreditInfoNetData({
+  const UndergraduateScoreCreditInfoNetData({
     this.id,
     this.year,
     this.term,
@@ -128,8 +128,8 @@ class GradeCreditInfoNetData {
     this.scoreSourrce,
   });
 
-  factory GradeCreditInfoNetData.fromJson(Map<String, dynamic> json) =>
-      _$GradeCreditInfoNetDataFromJson(json);
+  factory UndergraduateScoreCreditInfoNetData.fromJson(Map<String, dynamic> json) =>
+      _$UndergraduateScoreCreditInfoNetDataFromJson(json);
 
-  Map<String, dynamic> toJson() => _$GradeCreditInfoNetDataToJson(this);
+  Map<String, dynamic> toJson() => _$UndergraduateScoreCreditInfoNetDataToJson(this);
 }

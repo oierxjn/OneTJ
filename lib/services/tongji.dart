@@ -10,6 +10,7 @@ import 'package:onetj/models/data/code2token.dart';
 import 'package:onetj/models/data/course_schedule_net_data.dart';
 import 'package:onetj/models/data/school_calendar_net_data.dart';
 import 'package:onetj/models/data/student_info_net_data.dart';
+import 'package:onetj/models/data/undergraduate_score_net_data.dart';
 import 'package:onetj/repo/course_schedule_repository.dart';
 import 'package:onetj/repo/school_calendar_repository.dart';
 import 'package:onetj/repo/token_repository.dart';
@@ -235,4 +236,13 @@ class TongjiApi {
     );
     return CourseScheduleData.fromNetDataList(netList);
   }
+
+  // Future<UndergraduateScoreData> fetchUndergraduateScore() async {
+  //   final Uri uri = Uri.https(_baseUrl, undergraduateScorePath);
+  //   final UndergraduateScoreNetData netData = await _authorizedGetData<UndergraduateScoreNetData>(
+  //     uri,
+  //     parseData: (data) => UndergraduateScoreNetData.fromJson(data as Map<String, dynamic>),
+  //   );
+  //   return UndergraduateScoreData.fromNetData(netData);
+  // }
 }
