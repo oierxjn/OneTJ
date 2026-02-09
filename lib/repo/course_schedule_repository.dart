@@ -532,7 +532,9 @@ class CourseScheduleRepository {
     }
   }
 
-  // 内存中已有或已从本地加载
+  /// 确保缓存数据已加载。
+  /// 
+  /// 如果缓存数据未加载，则会保持挂起状态，直到数据加载完成或出错。
   Future<void> ensureLoaded() async{
     if (_cached != null && _cachedMeta != null) {
       return;

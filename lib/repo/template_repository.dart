@@ -149,7 +149,7 @@ class TemplateRepository {
     }
   }
 
-  /// Waits until cache is ready (from local warm-up or save paths).
+  /// Waits until cache is ready
   Future<void> ensureLoaded() async {
     if (_cached != null && _cachedMeta != null) {
       return;
