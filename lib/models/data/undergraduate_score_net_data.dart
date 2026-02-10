@@ -2,7 +2,7 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'undergraduate_score_net_data.g.dart';
 
-@JsonSerializable(explicitToJson: true)
+@JsonSerializable(explicitToJson: true, checked: true)
 class UndergraduateScoreNetData {
   final String? totalGradePoint;
   final String? actualCredit;
@@ -24,9 +24,9 @@ class UndergraduateScoreNetData {
   Map<String, dynamic> toJson() => _$UndergraduateScoreNetDataToJson(this);
 }
 
-@JsonSerializable(explicitToJson: true)
+@JsonSerializable(explicitToJson: true, checked: true)
 class UndergraduateScoreTermNetData {
-  final int? termcode;
+  final String? termcode;
   final String? termName;
   final String? calName;
   final String? averagePoint;
@@ -46,7 +46,7 @@ class UndergraduateScoreTermNetData {
   Map<String, dynamic> toJson() => _$UndergraduateScoreTermNetDataToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(checked: true)
 class UndergraduateScoreCreditInfoNetData {
   final int? id;
   final String? year;
@@ -81,7 +81,7 @@ class UndergraduateScoreCreditInfoNetData {
   final String? createdTime;
   final String? importUserCode;
   final String? keepField;
-  final String? oldData;
+  final int? oldData;
   final String? scoreLabel;
   final String? realAgainExamScore;
   final String? teachingClassId;

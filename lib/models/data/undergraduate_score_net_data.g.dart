@@ -8,15 +8,27 @@ part of 'undergraduate_score_net_data.dart';
 
 UndergraduateScoreNetData _$UndergraduateScoreNetDataFromJson(
         Map<String, dynamic> json) =>
-    UndergraduateScoreNetData(
-      totalGradePoint: json['totalGradePoint'] as String?,
-      actualCredit: json['actualCredit'] as String?,
-      failingCredits: json['failingCredits'] as String?,
-      failingCourseCount: json['failingCourseCount'] as String?,
-      term: (json['term'] as List<dynamic>?)
-          ?.map((e) =>
-              UndergraduateScoreTermNetData.fromJson(e as Map<String, dynamic>))
-          .toList(),
+    $checkedCreate(
+      'UndergraduateScoreNetData',
+      json,
+      ($checkedConvert) {
+        final val = UndergraduateScoreNetData(
+          totalGradePoint:
+              $checkedConvert('totalGradePoint', (v) => v as String?),
+          actualCredit: $checkedConvert('actualCredit', (v) => v as String?),
+          failingCredits:
+              $checkedConvert('failingCredits', (v) => v as String?),
+          failingCourseCount:
+              $checkedConvert('failingCourseCount', (v) => v as String?),
+          term: $checkedConvert(
+              'term',
+              (v) => (v as List<dynamic>?)
+                  ?.map((e) => UndergraduateScoreTermNetData.fromJson(
+                      e as Map<String, dynamic>))
+                  .toList()),
+        );
+        return val;
+      },
     );
 
 Map<String, dynamic> _$UndergraduateScoreNetDataToJson(
@@ -31,15 +43,24 @@ Map<String, dynamic> _$UndergraduateScoreNetDataToJson(
 
 UndergraduateScoreTermNetData _$UndergraduateScoreTermNetDataFromJson(
         Map<String, dynamic> json) =>
-    UndergraduateScoreTermNetData(
-      termcode: (json['termcode'] as num?)?.toInt(),
-      termName: json['termName'] as String?,
-      calName: json['calName'] as String?,
-      averagePoint: json['averagePoint'] as String?,
-      creditInfo: (json['creditInfo'] as List<dynamic>?)
-          ?.map((e) => UndergraduateScoreCreditInfoNetData.fromJson(
-              e as Map<String, dynamic>))
-          .toList(),
+    $checkedCreate(
+      'UndergraduateScoreTermNetData',
+      json,
+      ($checkedConvert) {
+        final val = UndergraduateScoreTermNetData(
+          termcode: $checkedConvert('termcode', (v) => v as String?),
+          termName: $checkedConvert('termName', (v) => v as String?),
+          calName: $checkedConvert('calName', (v) => v as String?),
+          averagePoint: $checkedConvert('averagePoint', (v) => v as String?),
+          creditInfo: $checkedConvert(
+              'creditInfo',
+              (v) => (v as List<dynamic>?)
+                  ?.map((e) => UndergraduateScoreCreditInfoNetData.fromJson(
+                      e as Map<String, dynamic>))
+                  .toList()),
+        );
+        return val;
+      },
     );
 
 Map<String, dynamic> _$UndergraduateScoreTermNetDataToJson(
@@ -54,45 +75,67 @@ Map<String, dynamic> _$UndergraduateScoreTermNetDataToJson(
 
 UndergraduateScoreCreditInfoNetData
     _$UndergraduateScoreCreditInfoNetDataFromJson(Map<String, dynamic> json) =>
-        UndergraduateScoreCreditInfoNetData(
-          id: (json['id'] as num?)?.toInt(),
-          year: json['year'] as String?,
-          term: (json['term'] as num?)?.toInt(),
-          calName: json['calName'] as String?,
-          calendarId: (json['calendarId'] as num?)?.toInt(),
-          studentId: json['studentId'] as String?,
-          studentName: json['studentName'] as String?,
-          courseNum: json['courseNum'] as String?,
-          courseCode: json['courseCode'] as String?,
-          courseName: json['courseName'] as String?,
-          scoreName: json['scoreName'] as String?,
-          scoreRecordType: (json['scoreRecordType'] as num?)?.toInt(),
-          scoreEaxmType: (json['scoreEaxmType'] as num?)?.toInt(),
-          score: json['score'] as String?,
-          gradePoint: (json['gradePoint'] as num?)?.toInt(),
-          isPass: (json['isPass'] as num?)?.toInt(),
-          isPassName: json['isPassName'] as String?,
-          scoreNatureName: json['scoreNatureName'] as String?,
-          scoreEaxmTypeI18n: json['scoreEaxmTypeI18n'] as String?,
-          courseNature: json['courseNature'] as String?,
-          courseLabel: json['courseLabel'] as String?,
-          courseLabName: json['courseLabName'] as String?,
-          courseType: json['courseType'] as String?,
-          credit: (json['credit'] as num?)?.toInt(),
-          couresType: json['couresType'] as String?,
-          examMode: json['examMode'] as String?,
-          publicCoursesType: json['publicCoursesType'] as String?,
-          publicCoursesName: json['publicCoursesName'] as String?,
-          updateTime: json['updateTime'] as String?,
-          createdPerson: json['createdPerson'] as String?,
-          createdTime: json['createdTime'] as String?,
-          importUserCode: json['importUserCode'] as String?,
-          keepField: json['keepField'] as String?,
-          oldData: json['oldData'] as String?,
-          scoreLabel: json['scoreLabel'] as String?,
-          realAgainExamScore: json['realAgainExamScore'] as String?,
-          teachingClassId: json['teachingClassId'] as String?,
-          scoreSourrce: (json['scoreSourrce'] as num?)?.toInt(),
+        $checkedCreate(
+          'UndergraduateScoreCreditInfoNetData',
+          json,
+          ($checkedConvert) {
+            final val = UndergraduateScoreCreditInfoNetData(
+              id: $checkedConvert('id', (v) => (v as num?)?.toInt()),
+              year: $checkedConvert('year', (v) => v as String?),
+              term: $checkedConvert('term', (v) => (v as num?)?.toInt()),
+              calName: $checkedConvert('calName', (v) => v as String?),
+              calendarId:
+                  $checkedConvert('calendarId', (v) => (v as num?)?.toInt()),
+              studentId: $checkedConvert('studentId', (v) => v as String?),
+              studentName: $checkedConvert('studentName', (v) => v as String?),
+              courseNum: $checkedConvert('courseNum', (v) => v as String?),
+              courseCode: $checkedConvert('courseCode', (v) => v as String?),
+              courseName: $checkedConvert('courseName', (v) => v as String?),
+              scoreName: $checkedConvert('scoreName', (v) => v as String?),
+              scoreRecordType: $checkedConvert(
+                  'scoreRecordType', (v) => (v as num?)?.toInt()),
+              scoreEaxmType:
+                  $checkedConvert('scoreEaxmType', (v) => (v as num?)?.toInt()),
+              score: $checkedConvert('score', (v) => v as String?),
+              gradePoint:
+                  $checkedConvert('gradePoint', (v) => (v as num?)?.toInt()),
+              isPass: $checkedConvert('isPass', (v) => (v as num?)?.toInt()),
+              isPassName: $checkedConvert('isPassName', (v) => v as String?),
+              scoreNatureName:
+                  $checkedConvert('scoreNatureName', (v) => v as String?),
+              scoreEaxmTypeI18n:
+                  $checkedConvert('scoreEaxmTypeI18n', (v) => v as String?),
+              courseNature:
+                  $checkedConvert('courseNature', (v) => v as String?),
+              courseLabel: $checkedConvert('courseLabel', (v) => v as String?),
+              courseLabName:
+                  $checkedConvert('courseLabName', (v) => v as String?),
+              courseType: $checkedConvert('courseType', (v) => v as String?),
+              credit: $checkedConvert('credit', (v) => (v as num?)?.toInt()),
+              couresType: $checkedConvert('couresType', (v) => v as String?),
+              examMode: $checkedConvert('examMode', (v) => v as String?),
+              publicCoursesType:
+                  $checkedConvert('publicCoursesType', (v) => v as String?),
+              publicCoursesName:
+                  $checkedConvert('publicCoursesName', (v) => v as String?),
+              updateTime: $checkedConvert('updateTime', (v) => v as String?),
+              createdPerson:
+                  $checkedConvert('createdPerson', (v) => v as String?),
+              createdTime: $checkedConvert('createdTime', (v) => v as String?),
+              importUserCode:
+                  $checkedConvert('importUserCode', (v) => v as String?),
+              keepField: $checkedConvert('keepField', (v) => v as String?),
+              oldData: $checkedConvert('oldData', (v) => (v as num?)?.toInt()),
+              scoreLabel: $checkedConvert('scoreLabel', (v) => v as String?),
+              realAgainExamScore:
+                  $checkedConvert('realAgainExamScore', (v) => v as String?),
+              teachingClassId:
+                  $checkedConvert('teachingClassId', (v) => v as String?),
+              scoreSourrce:
+                  $checkedConvert('scoreSourrce', (v) => (v as num?)?.toInt()),
+            );
+            return val;
+          },
         );
 
 Map<String, dynamic> _$UndergraduateScoreCreditInfoNetDataToJson(

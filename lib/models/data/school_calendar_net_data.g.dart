@@ -8,13 +8,22 @@ part of 'school_calendar_net_data.dart';
 
 SchoolCalendarNetData _$SchoolCalendarNetDataFromJson(
         Map<String, dynamic> json) =>
-    SchoolCalendarNetData(
-      schoolCalendar: SchoolCalendarItemNetData.fromJson(
-          json['schoolCalendar'] as Map<String, dynamic>),
-      week: (json['week'] as num).toInt(),
-      simpleName: json['simpleName'] as String,
-      now: json['now'] as String,
-      name: json['name'] as String,
+    $checkedCreate(
+      'SchoolCalendarNetData',
+      json,
+      ($checkedConvert) {
+        final val = SchoolCalendarNetData(
+          schoolCalendar: $checkedConvert(
+              'schoolCalendar',
+              (v) => SchoolCalendarItemNetData.fromJson(
+                  v as Map<String, dynamic>)),
+          week: $checkedConvert('week', (v) => (v as num).toInt()),
+          simpleName: $checkedConvert('simpleName', (v) => v as String),
+          now: $checkedConvert('now', (v) => v as String),
+          name: $checkedConvert('name', (v) => v as String),
+        );
+        return val;
+      },
     );
 
 Map<String, dynamic> _$SchoolCalendarNetDataToJson(
@@ -29,17 +38,27 @@ Map<String, dynamic> _$SchoolCalendarNetDataToJson(
 
 SchoolCalendarItemNetData _$SchoolCalendarItemNetDataFromJson(
         Map<String, dynamic> json) =>
-    SchoolCalendarItemNetData(
-      id: (json['id'] as num).toInt(),
-      year: (json['year'] as num).toInt(),
-      term: (json['term'] as num).toInt(),
-      beginDay: (json['beginDay'] as num).toInt(),
-      endDay: (json['endDay'] as num).toInt(),
-      weekNum: (json['weekNum'] as num).toInt(),
-      weekBeginDay: (json['weekBenginDay'] as num).toInt(),
-      createdAt: json['createdAt'] as String?,
-      updatedAt: json['updatedAt'] as String?,
-      deleteFlag: (json['deleteFlag'] as num?)?.toInt(),
+    $checkedCreate(
+      'SchoolCalendarItemNetData',
+      json,
+      ($checkedConvert) {
+        final val = SchoolCalendarItemNetData(
+          id: $checkedConvert('id', (v) => (v as num).toInt()),
+          year: $checkedConvert('year', (v) => (v as num).toInt()),
+          term: $checkedConvert('term', (v) => (v as num).toInt()),
+          beginDay: $checkedConvert('beginDay', (v) => (v as num).toInt()),
+          endDay: $checkedConvert('endDay', (v) => (v as num).toInt()),
+          weekNum: $checkedConvert('weekNum', (v) => (v as num).toInt()),
+          weekBeginDay:
+              $checkedConvert('weekBenginDay', (v) => (v as num).toInt()),
+          createdAt: $checkedConvert('createdAt', (v) => v as String?),
+          updatedAt: $checkedConvert('updatedAt', (v) => v as String?),
+          deleteFlag:
+              $checkedConvert('deleteFlag', (v) => (v as num?)?.toInt()),
+        );
+        return val;
+      },
+      fieldKeyMap: const {'weekBeginDay': 'weekBenginDay'},
     );
 
 Map<String, dynamic> _$SchoolCalendarItemNetDataToJson(

@@ -47,6 +47,17 @@
   "scoreInquirySubtitle": "View your undergraduate scores",
   "scoresOverviewTitle": "Overview",
   "scoresListTitle": "Course Scores",
+  "scoresSummaryGpa": "GPA",
+  "scoresSummaryCredits": "Credits",
+  "scoresSummaryFailed": "Failed",
+  "scoresEmpty": "No grades available",
+  "scoresLoadFailed": "Failed to load grades: {error}",
+  "@scoresLoadFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "retryLabel": "Retry",
 
 
   "logOut": "Log Out",

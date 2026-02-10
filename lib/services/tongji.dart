@@ -123,8 +123,9 @@ class TongjiApi {
     try {
       jsonBody = json.decode(response.body) as Map<String, dynamic>;
       payload = ApiResponse.fromJson(jsonBody, parseData);
-    } catch (error) {
-      throw JSONResolveException(message: 'Failed to parse response JSON, origin body: ${response.body}', cause: error);
+    } catch (error, stackTrace) {
+      final exception = JSONResolveException(message: 'Failed to parse response JSON, origin body: ${response.body}', cause: error);
+      Error.throwWithStackTrace(exception, stackTrace);
     }
     return payload.data;
   }

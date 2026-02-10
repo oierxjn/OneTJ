@@ -80,7 +80,7 @@ class UndergraduateScoreCreditInfoData {
   final String? createdTime;
   final String? importUserCode;
   final String? keepField;
-  final String? oldData;
+  final int? oldData;
   final String? scoreLabel;
   final String? realAgainExamScore;
   final String? teachingClassId;
@@ -166,7 +166,7 @@ class UndergraduateScoreCreditInfoData {
       createdTime: json['createdTime'] as String?,
       importUserCode: json['importUserCode'] as String?,
       keepField: json['keepField'] as String?,
-      oldData: json['oldData'] as String?,
+      oldData: json['oldData'] as int?,
       scoreLabel: json['scoreLabel'] as String?,
       realAgainExamScore: json['realAgainExamScore'] as String?,
       teachingClassId: json['teachingClassId'] as String?,
@@ -227,7 +227,7 @@ class UndergraduateScoreTermData {
     this.creditInfo,
   });
 
-  final int? termcode;
+  final String? termcode;
   final String? termName;
   final String? calName;
   final String? averagePoint;
@@ -258,7 +258,7 @@ class UndergraduateScoreTermData {
                 .toList()
             : null;
     return UndergraduateScoreTermData(
-      termcode: json['termcode'] as int?,
+      termcode: json['termcode'] as String?,
       termName: json['termName'] as String?,
       calName: json['calName'] as String?,
       averagePoint: json['averagePoint'] as String?,

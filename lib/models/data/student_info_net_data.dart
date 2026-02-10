@@ -2,7 +2,7 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'student_info_net_data.g.dart';
 
-@JsonSerializable()
+@JsonSerializable(checked: true)
 class StudentInfoNetData {
   final String campusCode;
   final String? campusName;

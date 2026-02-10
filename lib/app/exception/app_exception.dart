@@ -6,7 +6,7 @@ class AppException implements Exception {
   AppException(this.code, this.message, {this.cause});
 
   @override
-  String toString() => '$code: $message';
+  String toString() => '$code: $message\n cause: ${cause?.toString()}';
 }
 
 class AuthStateMismatchException extends AppException {
