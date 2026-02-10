@@ -75,7 +75,6 @@ class GradesCourse {
     required this.gradePoint,
     required this.credit,
     required this.courseType,
-    required this.isPassLabel,
   });
 
   final String courseName;
@@ -83,7 +82,6 @@ class GradesCourse {
   final String gradePoint;
   final String credit;
   final String courseType;
-  final String isPassLabel;
 
   factory GradesCourse.fromScoreCourse(UndergraduateScoreCreditInfoData data) {
     return GradesCourse(
@@ -92,7 +90,6 @@ class GradesCourse {
       gradePoint: data.gradePoint?.toString() ?? '--',
       credit: data.credit?.toString() ?? '--',
       courseType: data.publicCoursesName ?? '--',
-      isPassLabel: data.isPassName ?? '--',
     );
   }
 }

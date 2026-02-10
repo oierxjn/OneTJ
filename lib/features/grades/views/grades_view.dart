@@ -111,7 +111,6 @@ class _GradesViewState extends State<GradesView> {
                 credit: course.credit,
                 gradePoint: course.gradePoint,
                 courseType: course.courseType,
-                isPassLabel: course.isPassLabel,
               ),
             ),
         ],
@@ -217,7 +216,6 @@ class _GradeRow extends StatelessWidget {
     required this.credit,
     required this.gradePoint,
     required this.courseType,
-    required this.isPassLabel,
   });
 
   final String courseName;
@@ -225,7 +223,6 @@ class _GradeRow extends StatelessWidget {
   final String credit;
   final String gradePoint;
   final String courseType;
-  final String isPassLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -258,7 +255,7 @@ class _GradeRow extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-              'GPA $gradePoint · $credit · $courseType · $isPassLabel',
+              'GPA $gradePoint · $credit · $courseType',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: colors.onSurfaceVariant,
                     ),
