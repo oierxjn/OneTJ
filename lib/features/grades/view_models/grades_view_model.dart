@@ -62,7 +62,7 @@ class GradesViewModel extends BaseViewModel {
       _selectedTermIndex = 0;
     } catch (error) {
       _eventController.add(
-        ShowSnackBarEvent(message: 'Failed to refresh grades: $error'),
+        ShowSnackBarEvent(message: 'Failed to refresh grades: ${error.toString()}'),
       );
     } finally {
       loading = false;

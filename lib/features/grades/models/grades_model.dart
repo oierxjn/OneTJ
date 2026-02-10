@@ -6,8 +6,8 @@ class GradesModel {
 
   final TongjiApi _api;
 
-  Future<UndergraduateScoreData> fetchUndergraduateScore() {
-    return _api.fetchUndergraduateScore();
+  Future<UndergraduateScoreData> fetchUndergraduateScore({int? calendarId}) {
+    return _api.fetchUndergraduateScore(calendarId: calendarId);
   }
 
   Future<UndergraduateScoreData> getUndergraduateScore() async {
@@ -15,7 +15,8 @@ class GradesModel {
         UndergraduateScoreRepository.getInstance();
     return repo.getOrFetch(
       now: DateTime.now(),
-      fetcher: fetchUndergraduateScore,
+      fetcher: () => fetchUndergraduateScore(calendarId: -1),
+      ttl: const Duration(hours: 0),
     );
   }
 
@@ -30,7 +31,7 @@ class GradesModel {
         UndergraduateScoreRepository.getInstance();
     return repo.fetchAndSave(
       now: DateTime.now(),
-      fetcher: fetchUndergraduateScore,
+      fetcher: () => fetchUndergraduateScore(calendarId: -1),
     );
   }
 }

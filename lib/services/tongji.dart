@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:json_annotation/json_annotation.dart';
 import 'package:logging/logging.dart';
 
 import 'package:onetj/app/constant/site_constant.dart';
@@ -240,8 +241,18 @@ class TongjiApi {
   }
 
   /// 获取本科生成绩
-  Future<UndergraduateScoreData> fetchUndergraduateScore() async {
-    final Uri uri = Uri.https(_baseUrl, undergraduateScorePath);
+  /// 
+  /// [calendarId] 可选，指定查询的学期，默认查询当前学期。-1 返回所有学期。
+  Future<UndergraduateScoreData> fetchUndergraduateScore({int? calendarId}) async {
+    final Uri uri = Uri.https(
+      _baseUrl,
+      undergraduateScorePath,
+      calendarId == null
+          ? null
+          : <String, String>{
+              'calendarId': calendarId.toString(),
+            },
+    );
     final UndergraduateScoreNetData netData = await _authorizedGetData<UndergraduateScoreNetData>(
       uri,
       parseData: (data) => UndergraduateScoreNetData.fromJson(data as Map<String, dynamic>),

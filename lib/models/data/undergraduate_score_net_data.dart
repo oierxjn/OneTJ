@@ -26,6 +26,7 @@ class UndergraduateScoreNetData {
 
 @JsonSerializable(explicitToJson: true, checked: true)
 class UndergraduateScoreTermNetData {
+  @JsonKey(fromJson: _termcodeFromJson)
   final String? termcode;
   final String? termName;
   final String? calName;
@@ -141,3 +142,19 @@ Object? _readScoreExamType(Map json, String key) =>
 
 Object? _readScoreExamTypeI18n(Map json, String key) =>
     json['scoreExamTypeI18n'] ?? json['scoreEaxmTypeI18n'];
+
+String? _termcodeFromJson(Object? value) {
+  if (value == null) {
+    return null;
+  }
+  if (value is String) {
+    return value;
+  }
+  if (value is int) {
+    return value.toString();
+  }
+  if (value is num) {
+    return value.toString();
+  }
+  throw FormatException('Invalid termcode type: ${value.runtimeType}');
+}

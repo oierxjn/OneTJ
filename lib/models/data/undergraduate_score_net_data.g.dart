@@ -48,7 +48,7 @@ UndergraduateScoreTermNetData _$UndergraduateScoreTermNetDataFromJson(
       json,
       ($checkedConvert) {
         final val = UndergraduateScoreTermNetData(
-          termcode: $checkedConvert('termcode', (v) => v as String?),
+          termcode: $checkedConvert('termcode', (v) => _termcodeFromJson(v)),
           termName: $checkedConvert('termName', (v) => v as String?),
           calName: $checkedConvert('calName', (v) => v as String?),
           averagePoint: $checkedConvert('averagePoint', (v) => v as String?),

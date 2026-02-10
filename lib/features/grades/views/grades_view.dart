@@ -46,9 +46,12 @@ class _GradesViewState extends State<GradesView> {
       appBar: AppBar(
         title: Text(l10n.scoreInquiryTitle),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _viewModel.loading ? null : _viewModel.refresh,
+          AnimatedBuilder(
+            animation: _viewModel,
+            builder: (context, _) => IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: _viewModel.loading ? null : _viewModel.refresh,
+            ),
           ),
         ],
       ),
