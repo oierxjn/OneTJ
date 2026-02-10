@@ -94,8 +94,11 @@ UndergraduateScoreCreditInfoNetData
               scoreName: $checkedConvert('scoreName', (v) => v as String?),
               scoreRecordType: $checkedConvert(
                   'scoreRecordType', (v) => (v as num?)?.toInt()),
-              scoreEaxmType:
-                  $checkedConvert('scoreEaxmType', (v) => (v as num?)?.toInt()),
+              scoreExamType: $checkedConvert(
+                'scoreExamType',
+                (v) => (v as num?)?.toInt(),
+                readValue: _readScoreExamType,
+              ),
               score: $checkedConvert('score', (v) => v as String?),
               gradePoint:
                   $checkedConvert('gradePoint', (v) => (v as num?)?.toInt()),
@@ -103,8 +106,11 @@ UndergraduateScoreCreditInfoNetData
               isPassName: $checkedConvert('isPassName', (v) => v as String?),
               scoreNatureName:
                   $checkedConvert('scoreNatureName', (v) => v as String?),
-              scoreEaxmTypeI18n:
-                  $checkedConvert('scoreEaxmTypeI18n', (v) => v as String?),
+              scoreExamTypeI18n: $checkedConvert(
+                'scoreExamTypeI18n',
+                (v) => v as String?,
+                readValue: _readScoreExamTypeI18n,
+              ),
               courseNature:
                   $checkedConvert('courseNature', (v) => v as String?),
               courseLabel: $checkedConvert('courseLabel', (v) => v as String?),
@@ -153,13 +159,13 @@ Map<String, dynamic> _$UndergraduateScoreCreditInfoNetDataToJson(
       'courseName': instance.courseName,
       'scoreName': instance.scoreName,
       'scoreRecordType': instance.scoreRecordType,
-      'scoreEaxmType': instance.scoreEaxmType,
+      'scoreExamType': instance.scoreExamType,
       'score': instance.score,
       'gradePoint': instance.gradePoint,
       'isPass': instance.isPass,
       'isPassName': instance.isPassName,
       'scoreNatureName': instance.scoreNatureName,
-      'scoreEaxmTypeI18n': instance.scoreEaxmTypeI18n,
+      'scoreExamTypeI18n': instance.scoreExamTypeI18n,
       'courseNature': instance.courseNature,
       'courseLabel': instance.courseLabel,
       'courseLabName': instance.courseLabName,

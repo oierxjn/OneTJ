@@ -60,13 +60,15 @@ class UndergraduateScoreCreditInfoNetData {
   final String? courseName;
   final String? scoreName;
   final int? scoreRecordType;
-  final int? scoreEaxmType;
+  @JsonKey(readValue: _readScoreExamType)
+  final int? scoreExamType;
   final String? score;
   final int? gradePoint;
   final int? isPass;
   final String? isPassName;
   final String? scoreNatureName;
-  final String? scoreEaxmTypeI18n;
+  @JsonKey(readValue: _readScoreExamTypeI18n)
+  final String? scoreExamTypeI18n;
   final String? courseNature;
   final String? courseLabel;
   final String? courseLabName;
@@ -100,13 +102,13 @@ class UndergraduateScoreCreditInfoNetData {
     this.courseName,
     this.scoreName,
     this.scoreRecordType,
-    this.scoreEaxmType,
+    this.scoreExamType,
     this.score,
     this.gradePoint,
     this.isPass,
     this.isPassName,
     this.scoreNatureName,
-    this.scoreEaxmTypeI18n,
+    this.scoreExamTypeI18n,
     this.courseNature,
     this.courseLabel,
     this.courseLabName,
@@ -133,3 +135,9 @@ class UndergraduateScoreCreditInfoNetData {
 
   Map<String, dynamic> toJson() => _$UndergraduateScoreCreditInfoNetDataToJson(this);
 }
+
+Object? _readScoreExamType(Map json, String key) =>
+    json['scoreExamType'] ?? json['scoreEaxmType'];
+
+Object? _readScoreExamTypeI18n(Map json, String key) =>
+    json['scoreExamTypeI18n'] ?? json['scoreEaxmTypeI18n'];

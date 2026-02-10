@@ -19,13 +19,13 @@ class UndergraduateScoreCreditInfoData {
     this.courseName,
     this.scoreName,
     this.scoreRecordType,
-    this.scoreEaxmType,
+    this.scoreExamType,
     this.score,
     this.gradePoint,
     this.isPass,
     this.isPassName,
     this.scoreNatureName,
-    this.scoreEaxmTypeI18n,
+    this.scoreExamTypeI18n,
     this.courseNature,
     this.courseLabel,
     this.courseLabName,
@@ -59,13 +59,13 @@ class UndergraduateScoreCreditInfoData {
   final String? courseName;
   final String? scoreName;
   final int? scoreRecordType;
-  final int? scoreEaxmType;
+  final int? scoreExamType;
   final String? score;
   final int? gradePoint;
   final int? isPass;
   final String? isPassName;
   final String? scoreNatureName;
-  final String? scoreEaxmTypeI18n;
+  final String? scoreExamTypeI18n;
   final String? courseNature;
   final String? courseLabel;
   final String? courseLabName;
@@ -102,13 +102,13 @@ class UndergraduateScoreCreditInfoData {
       courseName: data.courseName,
       scoreName: data.scoreName,
       scoreRecordType: data.scoreRecordType,
-      scoreEaxmType: data.scoreEaxmType,
+      scoreExamType: data.scoreExamType,
       score: data.score,
       gradePoint: data.gradePoint,
       isPass: data.isPass,
       isPassName: data.isPassName,
       scoreNatureName: data.scoreNatureName,
-      scoreEaxmTypeI18n: data.scoreEaxmTypeI18n,
+      scoreExamTypeI18n: data.scoreExamTypeI18n,
       courseNature: data.courseNature,
       courseLabel: data.courseLabel,
       courseLabName: data.courseLabName,
@@ -145,13 +145,13 @@ class UndergraduateScoreCreditInfoData {
       courseName: json['courseName'] as String?,
       scoreName: json['scoreName'] as String?,
       scoreRecordType: json['scoreRecordType'] as int?,
-      scoreEaxmType: json['scoreEaxmType'] as int?,
+      scoreExamType: json['scoreExamType'] as int?,
       score: json['score'] as String?,
       gradePoint: json['gradePoint'] as int?,
       isPass: json['isPass'] as int?,
       isPassName: json['isPassName'] as String?,
       scoreNatureName: json['scoreNatureName'] as String?,
-      scoreEaxmTypeI18n: json['scoreEaxmTypeI18n'] as String?,
+      scoreExamTypeI18n: json['scoreExamTypeI18n'] as String?,
       courseNature: json['courseNature'] as String?,
       courseLabel: json['courseLabel'] as String?,
       courseLabName: json['courseLabName'] as String?,
@@ -188,13 +188,13 @@ class UndergraduateScoreCreditInfoData {
       'courseName': courseName,
       'scoreName': scoreName,
       'scoreRecordType': scoreRecordType,
-      'scoreEaxmType': scoreEaxmType,
+      'scoreExamType': scoreExamType,
       'score': score,
       'gradePoint': gradePoint,
       'isPass': isPass,
       'isPassName': isPassName,
       'scoreNatureName': scoreNatureName,
-      'scoreEaxmTypeI18n': scoreEaxmTypeI18n,
+      'scoreExamTypeI18n': scoreExamTypeI18n,
       'courseNature': courseNature,
       'courseLabel': courseLabel,
       'courseLabName': courseLabName,
