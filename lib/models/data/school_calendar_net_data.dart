@@ -2,7 +2,7 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'school_calendar_net_data.g.dart';
 
-@JsonSerializable()
+@JsonSerializable(checked: true)
 class SchoolCalendarNetData {
   final SchoolCalendarItemNetData schoolCalendar;
 
@@ -26,7 +26,7 @@ class SchoolCalendarNetData {
   Map<String, dynamic> toJson() => _$SchoolCalendarNetDataToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(checked: true)
 class SchoolCalendarItemNetData {
   final int id;
   final int year;

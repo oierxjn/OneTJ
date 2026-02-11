@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:json_annotation/json_annotation.dart';
 import 'package:logging/logging.dart';
 
 import 'package:onetj/app/constant/site_constant.dart';
@@ -10,9 +11,11 @@ import 'package:onetj/models/data/code2token.dart';
 import 'package:onetj/models/data/course_schedule_net_data.dart';
 import 'package:onetj/models/data/school_calendar_net_data.dart';
 import 'package:onetj/models/data/student_info_net_data.dart';
+import 'package:onetj/models/data/undergraduate_score_net_data.dart';
 import 'package:onetj/repo/course_schedule_repository.dart';
 import 'package:onetj/repo/school_calendar_repository.dart';
 import 'package:onetj/repo/token_repository.dart';
+import 'package:onetj/repo/undergraduate_score_repository.dart';
 import 'package:onetj/repo/student_info_repository.dart';
 
 class TongjiApi {
@@ -121,8 +124,9 @@ class TongjiApi {
     try {
       jsonBody = json.decode(response.body) as Map<String, dynamic>;
       payload = ApiResponse.fromJson(jsonBody, parseData);
-    } catch (error) {
-      throw JSONResolveException(message: 'Failed to parse response JSON, origin body: ${response.body}', cause: error);
+    } catch (error, stackTrace) {
+      final exception = JSONResolveException(message: 'Failed to parse response JSON, origin body: ${response.body}', cause: error);
+      Error.throwWithStackTrace(exception, stackTrace);
     }
     return payload.data;
   }
@@ -234,5 +238,25 @@ class TongjiApi {
       },
     );
     return CourseScheduleData.fromNetDataList(netList);
+  }
+
+  /// 获取本科生成绩
+  /// 
+  /// [calendarId] 可选，指定查询的学期，默认查询当前学期。-1 返回所有学期。
+  Future<UndergraduateScoreData> fetchUndergraduateScore({int? calendarId}) async {
+    final Uri uri = Uri.https(
+      _baseUrl,
+      undergraduateScorePath,
+      calendarId == null
+          ? null
+          : <String, String>{
+              'calendarId': calendarId.toString(),
+            },
+    );
+    final UndergraduateScoreNetData netData = await _authorizedGetData<UndergraduateScoreNetData>(
+      uri,
+      parseData: (data) => UndergraduateScoreNetData.fromJson(data as Map<String, dynamic>),
+    );
+    return UndergraduateScoreData.fromNetData(netData);
   }
 }

@@ -7,50 +7,76 @@ part of 'student_info_net_data.dart';
 // **************************************************************************
 
 StudentInfoNetData _$StudentInfoNetDataFromJson(Map<String, dynamic> json) =>
-    StudentInfoNetData(
-      campusCode: json['campusCode'] as String,
-      campusName: json['campusName'] as String?,
-      createTime: json['createTime'] as String,
-      currentGrade: (json['currentGrade'] as num).toInt(),
-      deptCode: json['deptCode'] as String,
-      deptName: json['deptName'] as String,
-      enrolDate: json['enrolDate'] as String,
-      expGraduationDate: json['expGraduationDate'] as String,
-      isIncumbencyCode: json['isIncumbencyCode'] as String?,
-      isIncumbencyName: json['isIncumbencyName'] as String?,
-      isMembershipCode: json['isMembershipCode'] as String,
-      isMembershipName: json['isMembershipName'] as String,
-      isOverseasCode: json['isOverseasCode'] as String,
-      isOverseasName: json['isOverseasName'] as String,
-      leaveSchoolCode: json['leaveSchoolCode'] as String,
-      leaveSchoolName: json['leaveSchoolName'] as String,
-      lengthSchooling: json['lengthSchooling'] as String,
-      managementCollege2Code: json['managementCollege2Code'] as String?,
-      managementCollege2Name: json['managementCollege2Name'] as String?,
-      name: json['name'] as String,
-      offSchool: json['offSchool'] as String?,
-      politicalStatusCode: json['politicalStatusCode'] as String,
-      politicalStatusName: json['politicalStatusName'] as String,
-      registrationStatusCode: json['registrationStatusCode'] as String,
-      registrationStatusName: json['registrationStatusName'] as String,
-      schoolCode: json['schoolCode'] as String,
-      schoolName: json['schoolName'] as String,
-      secondDeptCode: json['secondDeptCode'] as String,
-      secondDeptName: json['secondDeptName'] as String,
-      sexCode: json['sexCode'] as String,
-      sexName: json['sexName'] as String,
-      statusCode: json['statusCode'] as String,
-      statusName: json['statusName'] as String,
-      teacherId: json['teacherId'] as String,
-      trainingCategoryCode: json['trainingCategoryCode'] as String,
-      trainingCategoryName: json['trainingCategoryName'] as String,
-      trainingLevelCode: json['trainingLevelCode'] as String,
-      trainingLevelName: json['trainingLevelName'] as String,
-      updateTime: json['updateTime'] as String,
-      userId: json['userId'] as String,
-      userTypeCode: json['userTypeCode'] as String,
-      userTypeName: json['userTypeName'] as String,
-      viceTeacherId: json['viceTeacherId'] as String?,
+    $checkedCreate(
+      'StudentInfoNetData',
+      json,
+      ($checkedConvert) {
+        final val = StudentInfoNetData(
+          campusCode: $checkedConvert('campusCode', (v) => v as String),
+          campusName: $checkedConvert('campusName', (v) => v as String?),
+          createTime: $checkedConvert('createTime', (v) => v as String),
+          currentGrade:
+              $checkedConvert('currentGrade', (v) => (v as num).toInt()),
+          deptCode: $checkedConvert('deptCode', (v) => v as String),
+          deptName: $checkedConvert('deptName', (v) => v as String),
+          enrolDate: $checkedConvert('enrolDate', (v) => v as String),
+          expGraduationDate:
+              $checkedConvert('expGraduationDate', (v) => v as String),
+          isIncumbencyCode:
+              $checkedConvert('isIncumbencyCode', (v) => v as String?),
+          isIncumbencyName:
+              $checkedConvert('isIncumbencyName', (v) => v as String?),
+          isMembershipCode:
+              $checkedConvert('isMembershipCode', (v) => v as String),
+          isMembershipName:
+              $checkedConvert('isMembershipName', (v) => v as String),
+          isOverseasCode: $checkedConvert('isOverseasCode', (v) => v as String),
+          isOverseasName: $checkedConvert('isOverseasName', (v) => v as String),
+          leaveSchoolCode:
+              $checkedConvert('leaveSchoolCode', (v) => v as String),
+          leaveSchoolName:
+              $checkedConvert('leaveSchoolName', (v) => v as String),
+          lengthSchooling:
+              $checkedConvert('lengthSchooling', (v) => v as String),
+          managementCollege2Code:
+              $checkedConvert('managementCollege2Code', (v) => v as String?),
+          managementCollege2Name:
+              $checkedConvert('managementCollege2Name', (v) => v as String?),
+          name: $checkedConvert('name', (v) => v as String),
+          offSchool: $checkedConvert('offSchool', (v) => v as String?),
+          politicalStatusCode:
+              $checkedConvert('politicalStatusCode', (v) => v as String),
+          politicalStatusName:
+              $checkedConvert('politicalStatusName', (v) => v as String),
+          registrationStatusCode:
+              $checkedConvert('registrationStatusCode', (v) => v as String),
+          registrationStatusName:
+              $checkedConvert('registrationStatusName', (v) => v as String),
+          schoolCode: $checkedConvert('schoolCode', (v) => v as String),
+          schoolName: $checkedConvert('schoolName', (v) => v as String),
+          secondDeptCode: $checkedConvert('secondDeptCode', (v) => v as String),
+          secondDeptName: $checkedConvert('secondDeptName', (v) => v as String),
+          sexCode: $checkedConvert('sexCode', (v) => v as String),
+          sexName: $checkedConvert('sexName', (v) => v as String),
+          statusCode: $checkedConvert('statusCode', (v) => v as String),
+          statusName: $checkedConvert('statusName', (v) => v as String),
+          teacherId: $checkedConvert('teacherId', (v) => v as String),
+          trainingCategoryCode:
+              $checkedConvert('trainingCategoryCode', (v) => v as String),
+          trainingCategoryName:
+              $checkedConvert('trainingCategoryName', (v) => v as String),
+          trainingLevelCode:
+              $checkedConvert('trainingLevelCode', (v) => v as String),
+          trainingLevelName:
+              $checkedConvert('trainingLevelName', (v) => v as String),
+          updateTime: $checkedConvert('updateTime', (v) => v as String),
+          userId: $checkedConvert('userId', (v) => v as String),
+          userTypeCode: $checkedConvert('userTypeCode', (v) => v as String),
+          userTypeName: $checkedConvert('userTypeName', (v) => v as String),
+          viceTeacherId: $checkedConvert('viceTeacherId', (v) => v as String?),
+        );
+        return val;
+      },
     );
 
 Map<String, dynamic> _$StudentInfoNetDataToJson(StudentInfoNetData instance) =>

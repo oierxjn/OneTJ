@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'package:onetj/features/dashboard/view_models/dashboard_view_model.dart';
+import 'package:onetj/models/event_model.dart';
 import 'package:onetj/models/timetable_index.dart';
 import 'package:onetj/models/time_slot.dart';
 import 'package:onetj/repo/school_calendar_repository.dart';
@@ -15,16 +18,27 @@ class DashboardView extends StatefulWidget {
 
 class _DashboardViewState extends State<DashboardView> {
   late final DashboardViewModel _viewModel;
+  StreamSubscription<UiEvent>? _eventSub;
 
   @override
   void initState() {
     super.initState();
     _viewModel = DashboardViewModel();
+    _eventSub = _viewModel.events.listen((event) {
+      if (event is ShowSnackBarEvent) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(event.message ?? '')),
+        );
+        return;
+      }
+    });
     _viewModel.load();
   }
 
   @override
   void dispose() {
+    _eventSub?.cancel();
     _viewModel.dispose();
     super.dispose();
   }
@@ -58,8 +72,6 @@ class _DashboardViewState extends State<DashboardView> {
           const SizedBox(height: 8),
           if (_viewModel.timetableLoading)
             const LinearProgressIndicator()
-          else if (_viewModel.timetableError != null)
-            Text('Failed to load timetable: ${_viewModel.timetableError}')
           else
             _buildUpcomingSection(
               context,
@@ -78,7 +90,6 @@ class _DashboardViewState extends State<DashboardView> {
 
     final String department = _viewModel.departmentName ?? '';
     final bool isLoading = _viewModel.studentLoading || _viewModel.calendarLoading;
-    final Object? error = _viewModel.calendarError ?? _viewModel.studentError;
     final String termTitle = (calendar?.simpleName ?? '').isNotEmpty
         ? calendar!.simpleName
         : 'Term unavailable';
@@ -117,14 +128,6 @@ class _DashboardViewState extends State<DashboardView> {
             if (isLoading) ...[
               const SizedBox(height: 12),
               const LinearProgressIndicator(),
-            ] else if (error != null) ...[
-              const SizedBox(height: 12),
-              Text(
-                'Failed to load overview: $error',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-              ),
             ],
           ],
         ),

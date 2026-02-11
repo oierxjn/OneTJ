@@ -2,7 +2,7 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'course_schedule_net_data.g.dart';
 
-@JsonSerializable(explicitToJson: true)
+@JsonSerializable(explicitToJson: true, checked: true)
 class CourseScheduleItemNetData {
   final int? teachingClassId;
   final String? classCode;
@@ -79,7 +79,7 @@ class CourseScheduleItemNetData {
   }
 }
 
-@JsonSerializable()
+@JsonSerializable(checked: true)
 class CourseTimeTableItemNetData {
   final int? dayOfWeek;
   final int? timeStart;

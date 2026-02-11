@@ -8,41 +8,62 @@ part of 'course_schedule_net_data.dart';
 
 CourseScheduleItemNetData _$CourseScheduleItemNetDataFromJson(
         Map<String, dynamic> json) =>
-    CourseScheduleItemNetData(
-      teachingClassId: (json['teachingClassId'] as num?)?.toInt(),
-      classCode: json['classCode'] as String?,
-      className: json['className'] as String?,
-      campus: json['campus'] as String?,
-      courseCode: json['courseCode'] as String?,
-      courseName: json['courseName'] as String?,
-      assessmentMode: json['assessmentMode'] as String?,
-      isExemptionCourse: json['isExemptionCourse'] as String?,
-      credits: json['credits'] as num?,
-      teacherName: json['teacherName'] as String?,
-      classTime: json['classTime'] as String?,
-      classRoom: json['classRoom'] as String?,
-      classRoomName: json['classRoomName'] as String?,
-      classRoomPractice: json['classRoomPractice'] as String?,
-      remark: json['remark'] as String?,
-      timeTableList: (json['timeTableList'] as List<dynamic>?)
-          ?.map((e) =>
-              CourseTimeTableItemNetData.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      compulsory: json['compulsory'] as String?,
-      classType: json['classType'] as String?,
-      roomCategory: json['roomCategory'] as String?,
-      roomLabel: CourseScheduleItemNetData._readRoomLabel(json, 'roomLabel')
-          as String?,
-      courseTakeType: (json['courseTakeType'] as num?)?.toInt(),
-      teachingWay: json['teachingWay'] as String?,
-      cloudCourseType: json['cloudCourseType'] as String?,
-      nonpubCloudCourseAddr: json['nonpubCloudCourseAddr'] as String?,
-      teachMode: json['teachMode'] as String?,
-      campusI18n: json['campusI18n'] as String?,
-      assessmentModeI18n: json['assessmentModeI18n'] as String?,
-      classRoomI18n: json['classRoomI18n'] as String?,
-      teachingWayI18n: json['teachingWayI18n'] as String?,
-      teachModeI18n: json['teachModeI18n'] as String?,
+    $checkedCreate(
+      'CourseScheduleItemNetData',
+      json,
+      ($checkedConvert) {
+        final val = CourseScheduleItemNetData(
+          teachingClassId:
+              $checkedConvert('teachingClassId', (v) => (v as num?)?.toInt()),
+          classCode: $checkedConvert('classCode', (v) => v as String?),
+          className: $checkedConvert('className', (v) => v as String?),
+          campus: $checkedConvert('campus', (v) => v as String?),
+          courseCode: $checkedConvert('courseCode', (v) => v as String?),
+          courseName: $checkedConvert('courseName', (v) => v as String?),
+          assessmentMode:
+              $checkedConvert('assessmentMode', (v) => v as String?),
+          isExemptionCourse:
+              $checkedConvert('isExemptionCourse', (v) => v as String?),
+          credits: $checkedConvert('credits', (v) => v as num?),
+          teacherName: $checkedConvert('teacherName', (v) => v as String?),
+          classTime: $checkedConvert('classTime', (v) => v as String?),
+          classRoom: $checkedConvert('classRoom', (v) => v as String?),
+          classRoomName: $checkedConvert('classRoomName', (v) => v as String?),
+          classRoomPractice:
+              $checkedConvert('classRoomPractice', (v) => v as String?),
+          remark: $checkedConvert('remark', (v) => v as String?),
+          timeTableList: $checkedConvert(
+              'timeTableList',
+              (v) => (v as List<dynamic>?)
+                  ?.map((e) => CourseTimeTableItemNetData.fromJson(
+                      e as Map<String, dynamic>))
+                  .toList()),
+          compulsory: $checkedConvert('compulsory', (v) => v as String?),
+          classType: $checkedConvert('classType', (v) => v as String?),
+          roomCategory: $checkedConvert('roomCategory', (v) => v as String?),
+          roomLabel: $checkedConvert(
+            'roomLabel',
+            (v) => v as String?,
+            readValue: CourseScheduleItemNetData._readRoomLabel,
+          ),
+          courseTakeType:
+              $checkedConvert('courseTakeType', (v) => (v as num?)?.toInt()),
+          teachingWay: $checkedConvert('teachingWay', (v) => v as String?),
+          cloudCourseType:
+              $checkedConvert('cloudCourseType', (v) => v as String?),
+          nonpubCloudCourseAddr:
+              $checkedConvert('nonpubCloudCourseAddr', (v) => v as String?),
+          teachMode: $checkedConvert('teachMode', (v) => v as String?),
+          campusI18n: $checkedConvert('campusI18n', (v) => v as String?),
+          assessmentModeI18n:
+              $checkedConvert('assessmentModeI18n', (v) => v as String?),
+          classRoomI18n: $checkedConvert('classRoomI18n', (v) => v as String?),
+          teachingWayI18n:
+              $checkedConvert('teachingWayI18n', (v) => v as String?),
+          teachModeI18n: $checkedConvert('teachModeI18n', (v) => v as String?),
+        );
+        return val;
+      },
     );
 
 Map<String, dynamic> _$CourseScheduleItemNetDataToJson(
@@ -82,33 +103,46 @@ Map<String, dynamic> _$CourseScheduleItemNetDataToJson(
 
 CourseTimeTableItemNetData _$CourseTimeTableItemNetDataFromJson(
         Map<String, dynamic> json) =>
-    CourseTimeTableItemNetData(
-      dayOfWeek: (json['dayOfWeek'] as num?)?.toInt(),
-      timeStart: (json['timeStart'] as num?)?.toInt(),
-      timeEnd: (json['timeEnd'] as num?)?.toInt(),
-      roomId: json['roomId'] as String?,
-      teacherCode: json['teacherCode'] as String?,
-      weekNum: json['weekNum'] as String?,
-      weekstr: json['weekstr'] as String?,
-      teacherName: json['teacherName'] as String?,
-      timeAndRoom: json['timeAndRoom'] as String?,
-      timeTab: json['timeTab'] as String?,
-      className: json['className'] as String?,
-      classCode: json['classCode'] as String?,
-      courseName: json['courseName'] as String?,
-      courseCode: json['courseCode'] as String?,
-      teachingClassId: (json['teachingClassId'] as num?)?.toInt(),
-      campus: json['campus'] as String?,
-      weeks: (json['weeks'] as List<dynamic>?)
-          ?.map((e) => (e as num).toInt())
-          .toList(),
-      timeId: json['timeId'] as String?,
-      popover: json['popover'] as String?,
-      roomCategory: json['roomCategory'] as String?,
-      roomLabel: CourseTimeTableItemNetData._readRoomLabel(json, 'roomLabel')
-          as String?,
-      roomIdI18n: json['roomIdI18n'] as String?,
-      campusI18n: json['campusI18n'] as String?,
+    $checkedCreate(
+      'CourseTimeTableItemNetData',
+      json,
+      ($checkedConvert) {
+        final val = CourseTimeTableItemNetData(
+          dayOfWeek: $checkedConvert('dayOfWeek', (v) => (v as num?)?.toInt()),
+          timeStart: $checkedConvert('timeStart', (v) => (v as num?)?.toInt()),
+          timeEnd: $checkedConvert('timeEnd', (v) => (v as num?)?.toInt()),
+          roomId: $checkedConvert('roomId', (v) => v as String?),
+          teacherCode: $checkedConvert('teacherCode', (v) => v as String?),
+          weekNum: $checkedConvert('weekNum', (v) => v as String?),
+          weekstr: $checkedConvert('weekstr', (v) => v as String?),
+          teacherName: $checkedConvert('teacherName', (v) => v as String?),
+          timeAndRoom: $checkedConvert('timeAndRoom', (v) => v as String?),
+          timeTab: $checkedConvert('timeTab', (v) => v as String?),
+          className: $checkedConvert('className', (v) => v as String?),
+          classCode: $checkedConvert('classCode', (v) => v as String?),
+          courseName: $checkedConvert('courseName', (v) => v as String?),
+          courseCode: $checkedConvert('courseCode', (v) => v as String?),
+          teachingClassId:
+              $checkedConvert('teachingClassId', (v) => (v as num?)?.toInt()),
+          campus: $checkedConvert('campus', (v) => v as String?),
+          weeks: $checkedConvert(
+              'weeks',
+              (v) => (v as List<dynamic>?)
+                  ?.map((e) => (e as num).toInt())
+                  .toList()),
+          timeId: $checkedConvert('timeId', (v) => v as String?),
+          popover: $checkedConvert('popover', (v) => v as String?),
+          roomCategory: $checkedConvert('roomCategory', (v) => v as String?),
+          roomLabel: $checkedConvert(
+            'roomLabel',
+            (v) => v as String?,
+            readValue: CourseTimeTableItemNetData._readRoomLabel,
+          ),
+          roomIdI18n: $checkedConvert('roomIdI18n', (v) => v as String?),
+          campusI18n: $checkedConvert('campusI18n', (v) => v as String?),
+        );
+        return val;
+      },
     );
 
 Map<String, dynamic> _$CourseTimeTableItemNetDataToJson(

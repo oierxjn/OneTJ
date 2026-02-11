@@ -32,6 +32,12 @@ final List<_TabConfig> _tabs = [
     selectedIcon: Icons.calendar_month,
   ),
   _TabConfig(
+    route: RoutePaths.homeTools,
+    labelBuilder: (context) => AppLocalizations.of(context).tabTools,
+    icon: Icons.build_outlined,
+    selectedIcon: Icons.build,
+  ),
+  _TabConfig(
     route: RoutePaths.homeSettings,
     labelBuilder: (context) => AppLocalizations.of(context).tabSettings,
     icon: Icons.settings_outlined,
