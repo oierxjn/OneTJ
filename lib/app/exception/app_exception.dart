@@ -45,3 +45,9 @@ class JSONResolveException extends AppException {
   static const String _code = 'JSON_RESOLVE_ERROR';
   JSONResolveException({required String message, Object? cause}) : super(_code, message, cause: cause);
 }
+
+class SettingsResolveException extends AppException {
+  static const String _code = 'SETTINGS_RESOLVE_ERROR';
+  SettingsResolveException({required String message, Object? cause})
+      : super(_code, message, cause: cause);
+}
