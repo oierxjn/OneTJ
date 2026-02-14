@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:onetj/app/exception/app_exception.dart';
+import 'package:onetj/models/settings_defaults.dart';
 import 'package:hive/hive.dart';
-import 'package:onetj/models/time_slot.dart';
+import 'package:onetj/app/exception/app_exception.dart';
 
 class SettingsData {
   const SettingsData({
@@ -11,16 +11,13 @@ class SettingsData {
     required this.timeSlotStartMinutes,
   });
 
-  /// 一个学期的最大周数
   final int maxWeek;
   final List<int> timeSlotStartMinutes;
 
   factory SettingsData.fromJson(Map<String, dynamic> json) {
-    final Object? rawMaxWeek = json['maxWeek'];
-    final int maxWeek = _validateMaxWeek(rawMaxWeek);
-    
-    final Object? rawTimeSlotStartMinutes = json['timeSlotStartMinutes'];
-    final List<int> timeSlotStartMinutes = _validateTimeSlotStartMinutes(rawTimeSlotStartMinutes);
+    final int maxWeek = _readMaxWeekWithFallback(json);
+    final List<int> timeSlotStartMinutes =
+        _readTimeSlotStartMinutesWithFallback(json);
     return SettingsData(
       maxWeek: maxWeek,
       timeSlotStartMinutes: timeSlotStartMinutes,
@@ -34,50 +31,51 @@ class SettingsData {
     };
   }
 
-  void validate() {
-    _validateMaxWeek(maxWeek);
-    _validateTimeSlotStartMinutes(timeSlotStartMinutes);
+  static int _readMaxWeekWithFallback(Map<String, dynamic> json) {
+    if (!json.containsKey('maxWeek')) {
+      return kDefaultMaxWeek;
+    }
+    try {
+      return _parseMaxWeek(json['maxWeek']);
+    } on SettingsResolveException {
+      return kDefaultMaxWeek;
+    }
   }
 
-  static int _validateMaxWeek(Object? value) {
+  static List<int> _readTimeSlotStartMinutesWithFallback(
+    Map<String, dynamic> json,
+  ) {
+    if (!json.containsKey('timeSlotStartMinutes')) {
+      return List<int>.from(kDefaultTimeSlotStartMinutes);
+    }
+    try {
+      return _parseTimeSlotStartMinutes(json['timeSlotStartMinutes']);
+    } on SettingsResolveException {
+      return List<int>.from(kDefaultTimeSlotStartMinutes);
+    }
+  }
+
+  static int _parseMaxWeek(Object? value) {
     if (value is! int) {
       throw SettingsResolveException(message: 'maxWeek must be int');
-    }
-    if (value < 1 || value > 52) {
-      throw SettingsResolveException(message: 'maxWeek out of range');
     }
     return value;
   }
 
-  /// 验证时间槽开始时间是否合法
-  /// 
-  /// 时间槽为列表，开始时间不为空，必须在 00:00 到 23:59 之间，且必须严格递增
-  static List<int> _validateTimeSlotStartMinutes(Object? values) {
+  static List<int> _parseTimeSlotStartMinutes(Object? values) {
     if (values is! List) {
-      throw SettingsResolveException(message: 'timeSlotStartMinutes must be a list');
+      throw SettingsResolveException(message: 'timeSlotStartMinutes(${values.runtimeType}) must be a list');
     }
-    final List<int> timeSlotStartMinutes = values.map<int>((item) {
+    return values
+        .map<int>((item) {
           if (item is! int) {
-            throw SettingsResolveException(message: 'timeSlotStartMinutes item must be int');
+            throw SettingsResolveException(
+              message: 'timeSlotStartMinutes item must be int',
+            );
           }
           return item;
         })
         .toList(growable: false);
-    if (timeSlotStartMinutes.isEmpty) {
-      throw SettingsResolveException(message: 'timeSlotStartMinutes must not be empty');
-    }
-    for (int i = 0; i < timeSlotStartMinutes.length; i += 1) {
-      final int minute = timeSlotStartMinutes[i];
-      // 时间槽开始时间必须在 00:00 到 23:59 之间
-      if (minute < 0 || minute > 24 * 60 - 1) {
-        throw SettingsResolveException(message: 'timeSlotStartMinutes item out of range');
-      }
-      // 时间槽开始时间必须严格递增
-      if (i > 0 && minute <= timeSlotStartMinutes[i - 1]) {
-        throw SettingsResolveException(message: 'timeSlotStartMinutes must be strictly increasing');
-      }
-    }
-    return timeSlotStartMinutes;
   }
 }
 
@@ -149,8 +147,8 @@ class SettingsRepository {
 
   static SettingsRepository? _instance;
   static const SettingsData _defaultSettings = SettingsData(
-    maxWeek: 22,
-    timeSlotStartMinutes: TimeSlot.defaultStartMinutes,
+    maxWeek: kDefaultMaxWeek,
+    timeSlotStartMinutes: kDefaultTimeSlotStartMinutes,
   );
 
   static SettingsRepository getInstance() {
@@ -185,7 +183,6 @@ class SettingsRepository {
   }
 
   Future<void> saveSettings(SettingsData data) async {
-    data.validate();
     await _storage.save(data);
     _cached = data;
     _controller.add(data);

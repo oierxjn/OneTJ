@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
 import 'package:onetj/app/constant/route_paths.dart';
+import 'package:onetj/models/settings_defaults.dart';
 import 'package:onetj/features/settings/models/event.dart';
+import 'package:onetj/features/settings/models/settings_model.dart';
 import 'package:onetj/models/base_model.dart';
 import 'package:onetj/models/event_model.dart';
 import 'package:onetj/repo/course_schedule_repository.dart';
@@ -18,11 +20,15 @@ class SettingsViewModel extends BaseViewModel {
   final StreamController<UiEvent> _eventController;
   Stream<UiEvent> get events => _eventController.stream;
   // 初值一般不会被使用
-  SettingsData _settingsData = SettingsData(maxWeek: 22);
+  SettingsData _settingsData = const SettingsData(
+    maxWeek: kDefaultMaxWeek,
+    timeSlotStartMinutes: kDefaultTimeSlotStartMinutes,
+  );
   bool _settingsLoading = true;
   bool _settingsSaving = false;
 
   int get maxWeek => _settingsData.maxWeek;
+  List<int> get timeSlotStartMinutes => _settingsData.timeSlotStartMinutes;
   bool get settingsLoading => _settingsLoading;
   bool get settingsSaving => _settingsSaving;
 
@@ -63,18 +69,23 @@ class SettingsViewModel extends BaseViewModel {
     }
   }
 
-  Future<void> saveSettings(int maxWeek) async {
+  Future<void> saveSettings({
+    required int maxWeek,
+    required List<int> timeSlotStartMinutes,
+  }) async {
     _settingsSaving = true;
     errorMessage = null;
-    _settingsData = SettingsData(maxWeek: maxWeek);
+    _settingsData = SettingsData(
+      maxWeek: maxWeek,
+      timeSlotStartMinutes: List<int>.from(timeSlotStartMinutes),
+    );
     notifyListeners();
     try {
-      await SettingsRepository.getInstance().saveSettings(
-        SettingsData(maxWeek: maxWeek),
-      );
-      _eventController.add(SettingsSavedEvent(maxWeek: maxWeek));
+      SettingsModel.validateSettings(_settingsData);
+      await SettingsRepository.getInstance().saveSettings(_settingsData);
+      _eventController.add(SettingsSavedEvent(settings: _settingsData));
     } catch (error) {
-      final String message = 'Failed to save settings: $error';
+      final String message = 'Failed to save settings: ${error.toString()}';
       errorMessage = message;
       _eventController.add(ShowSnackBarEvent(message: message));
     } finally {

@@ -8,6 +8,8 @@ import 'package:go_router/go_router.dart';
 import 'package:onetj/features/settings/models/event.dart';
 import 'package:onetj/features/settings/view_models/settings_view_model.dart';
 import 'package:onetj/models/event_model.dart';
+import 'package:onetj/models/time_slot.dart';
+import 'package:onetj/repo/settings_repository.dart';
 
 class SettingsView extends StatefulWidget {
   const SettingsView({super.key});
@@ -17,15 +19,26 @@ class SettingsView extends StatefulWidget {
 }
 
 class _SettingsViewState extends State<SettingsView> {
+  static const int _hourMinutes = 60;
   late final SettingsViewModel _viewModel;
   StreamSubscription<UiEvent>? _eventSub;
   late final TextEditingController _maxWeekController;
+  late final List<TextEditingController> _slotHourControllers;
+  late final List<TextEditingController> _slotMinuteControllers;
 
   @override
   void initState() {
     super.initState();
     _viewModel = SettingsViewModel();
     _maxWeekController = TextEditingController();
+    _slotHourControllers = List<TextEditingController>.generate(
+      TimeSlot.defaultStartMinutes.length,
+      (_) => TextEditingController(),
+    );
+    _slotMinuteControllers = List<TextEditingController>.generate(
+      TimeSlot.defaultStartMinutes.length,
+      (_) => TextEditingController(),
+    );
     _eventSub = _viewModel.events.listen((event) {
       if (!mounted) {
         return;
@@ -41,10 +54,7 @@ class _SettingsViewState extends State<SettingsView> {
         return;
       }
       if (event is SettingsSavedEvent) {
-        final String maxWeekText = event.maxWeek.toString();
-        if (_maxWeekController.text != maxWeekText) {
-          _maxWeekController.text = maxWeekText;
-        }
+        _applySettingsToControllers(event.settings);
         final l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(l10n.settingsSaved)),
@@ -52,10 +62,7 @@ class _SettingsViewState extends State<SettingsView> {
         return;
       }
       if (event is SettingsResetEvent) {
-        final String maxWeekText = event.settings.maxWeek.toString();
-        if (_maxWeekController.text != maxWeekText) {
-          _maxWeekController.text = maxWeekText;
-        }
+        _applySettingsToControllers(event.settings);
         final l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(l10n.settingsResetDone)),
@@ -69,6 +76,12 @@ class _SettingsViewState extends State<SettingsView> {
   void dispose() {
     _eventSub?.cancel();
     _maxWeekController.dispose();
+    for (final TextEditingController controller in _slotHourControllers) {
+      controller.dispose();
+    }
+    for (final TextEditingController controller in _slotMinuteControllers) {
+      controller.dispose();
+    }
     _viewModel.dispose();
     super.dispose();
   }
@@ -78,7 +91,12 @@ class _SettingsViewState extends State<SettingsView> {
     if (!mounted) {
       return;
     }
-    _maxWeekController.text = _viewModel.maxWeek.toString();
+    _applySettingsToControllers(
+      SettingsData(
+        maxWeek: _viewModel.maxWeek,
+        timeSlotStartMinutes: _viewModel.timeSlotStartMinutes,
+      ),
+    );
   }
 
   void _submitMaxWeek() {
@@ -87,7 +105,47 @@ class _SettingsViewState extends State<SettingsView> {
       // TODO: 提示用户输入合法的最大周数
       return;
     }
-    _viewModel.saveSettings(value);
+    _submitSettings();
+  }
+
+  void _applySettingsToControllers(SettingsData settings) {
+    _maxWeekController.text = settings.maxWeek.toString();
+    for (int i = 0; i < _slotHourControllers.length; i += 1) {
+      if (i >= settings.timeSlotStartMinutes.length) {
+        _slotHourControllers[i].text = '';
+        _slotMinuteControllers[i].text = '';
+        continue;
+      }
+      final int minutes = settings.timeSlotStartMinutes[i];
+      _slotHourControllers[i].text = (minutes ~/ _hourMinutes).toString();
+      _slotMinuteControllers[i].text =
+          (minutes % _hourMinutes).toString().padLeft(2, '0');
+    }
+  }
+
+  Future<void> _submitSettings() async {
+    try {
+      final int maxWeek = int.parse(_maxWeekController.text);
+      final List<int> timeSlotStartMinutes = List<int>.generate(
+        _slotHourControllers.length,
+        (index) {
+          final int hour = int.parse(_slotHourControllers[index].text);
+          final int minute = int.parse(_slotMinuteControllers[index].text);
+          return hour * _hourMinutes + minute;
+        },
+      );
+      await _viewModel.saveSettings(
+        maxWeek: maxWeek,
+        timeSlotStartMinutes: timeSlotStartMinutes,
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.toString())),
+      );
+    }
   }
 
   Future<void> _logout(BuildContext context) async {
@@ -182,6 +240,63 @@ class _SettingsViewState extends State<SettingsView> {
                     ),
                     onSubmitted: (_) => _submitMaxWeek(),
                   ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Column(
+                  children: [
+                    for (int i = 0; i < _slotHourControllers.length; i += 1)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        child: Row(
+                          children: [
+                            SizedBox(
+                              width: 56,
+                              child: Text('S${i + 1}'),
+                            ),
+                            Expanded(
+                              child: TextField(
+                                controller: _slotHourControllers[i],
+                                keyboardType: TextInputType.number,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                  LengthLimitingTextInputFormatter(2),
+                                ],
+                                enabled: !_viewModel.settingsLoading &&
+                                    !_viewModel.settingsSaving,
+                                decoration: const InputDecoration(
+                                  isDense: true,
+                                  border: OutlineInputBorder(),
+                                  hintText: 'HH',
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: TextField(
+                                controller: _slotMinuteControllers[i],
+                                keyboardType: TextInputType.number,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                  LengthLimitingTextInputFormatter(2),
+                                ],
+                                enabled: !_viewModel.settingsLoading &&
+                                    !_viewModel.settingsSaving,
+                                decoration: const InputDecoration(
+                                  isDense: true,
+                                  border: OutlineInputBorder(),
+                                  hintText: 'MM',
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
                 ),
               ),
             ),
