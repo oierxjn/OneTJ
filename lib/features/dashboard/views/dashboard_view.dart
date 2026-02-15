@@ -89,13 +89,12 @@ class _DashboardViewState extends State<DashboardView> {
     final l10n = AppLocalizations.of(context);
 
     final String department = _viewModel.departmentName ?? '';
-    final bool isLoading = _viewModel.studentLoading || _viewModel.calendarLoading;
+    final bool isLoading =
+        _viewModel.studentLoading || _viewModel.calendarLoading;
     final String termTitle = (calendar?.simpleName ?? '').isNotEmpty
         ? calendar!.simpleName
         : 'Term unavailable';
-    final int weekNumber = calendar?.week != null
-        ? calendar!.week
-        : 0;
+    final int weekNumber = calendar?.week != null ? calendar!.week : 0;
     final String departmentLabel =
         department.isNotEmpty ? department : 'Department unavailable';
 
@@ -154,7 +153,7 @@ class _DashboardViewState extends State<DashboardView> {
                   ? entry.courseName
                   : 'Unknown course',
               timeLabel:
-                  '${_weekdayLabel(l10n, entry.dayOfWeek)} · ${_formatTimeRange(entry)}',
+                  '${_weekdayLabel(l10n, entry.dayOfWeek)} · ${_formatTimeRange(entry, _viewModel.timeSlotStartMinutes)}',
               roomLabel: entry.roomIdI18n.isNotEmpty
                   ? entry.roomIdI18n
                   : entry.roomLabel,
@@ -187,9 +186,9 @@ class _DashboardViewState extends State<DashboardView> {
     }
   }
 
-  String _formatTimeRange(TimetableEntry entry) {
-    final String start = _slotLabel(entry.timeStart);
-    final String end = _slotLabel(entry.timeEnd);
+  String _formatTimeRange(TimetableEntry entry, List<int> startMinutes) {
+    final String start = _slotLabel(entry.timeStart, startMinutes);
+    final String end = _slotLabel(entry.timeEnd, startMinutes);
     if (start.isEmpty && end.isEmpty) {
       return '${entry.timeStart}-${entry.timeEnd}';
     }
@@ -203,9 +202,8 @@ class _DashboardViewState extends State<DashboardView> {
   }
 }
 
-String _slotLabel(int slot) {
+String _slotLabel(int slot, List<int> startMinutes) {
   final int index = slot - 1;
-  final List<int> startMinutes = TimeSlot.defaultConfig.startMinutes;
   if (index < 0 || index >= startMinutes.length) {
     return '';
   }

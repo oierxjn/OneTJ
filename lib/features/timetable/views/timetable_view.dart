@@ -145,16 +145,14 @@ class _TimetableViewState extends State<TimetableView> {
               itemExtent: 90,
               itemCount: _viewModel.availableWeeks.length,
               onSelectedItemChanged: (index) {
-                if (index < 0 ||
-                    index >= _viewModel.availableWeeks.length) {
+                if (index < 0 || index >= _viewModel.availableWeeks.length) {
                   return;
                 }
                 _viewModel.selectWeek(_viewModel.availableWeeks[index]);
               },
               itemBuilder: (context, index) {
                 final int week = _viewModel.availableWeeks[index];
-                final bool selected =
-                    _viewModel.selectedWeek == week;
+                final bool selected = _viewModel.selectedWeek == week;
                 return _WheelItem(
                   label: l10n.weekLabel(week),
                   selected: selected,
@@ -176,8 +174,7 @@ class _TimetableViewState extends State<TimetableView> {
                 _viewModel.selectDay(index + 1);
               },
               itemBuilder: (context, index) {
-                final bool selected =
-                    _viewModel.selectedDay == index + 1;
+                final bool selected = _viewModel.selectedDay == index + 1;
                 return _WheelItem(
                   label: dayLabels[index],
                   selected: selected,
@@ -197,7 +194,7 @@ class _TimetableViewState extends State<TimetableView> {
   }
 
   /// 同步周数和天数的滚动控制器
-  /// 
+  ///
   /// 不推荐在 Build 过程中调用
   void _syncWheelControllers() {
     final int dayIndex = (_viewModel.selectedDay - 1).clamp(0, 6);
@@ -227,12 +224,10 @@ class _TimetableViewState extends State<TimetableView> {
     });
   }
 
-
   double _weekHeaderHeight(BuildContext context) {
     final TextStyle style =
         Theme.of(context).textTheme.bodySmall ?? const TextStyle();
-    final String dayLabel =
-        AppLocalizations.of(context).weekdayMon;
+    final String dayLabel = AppLocalizations.of(context).weekdayMon;
     const double padding = 8;
     final TextPainter painter = TextPainter(
       text: TextSpan(text: dayLabel, style: style),
@@ -250,11 +245,12 @@ class _TimetableViewState extends State<TimetableView> {
     const double slotHeight = 64;
     const double preferredLabelWidth = 72;
     const double minLabelWidth = 35;
-    final List<_TimeSlot> timeSlots = _buildTimeSlots();
+    final List<_TimeSlot> timeSlots = _buildTimeSlots(
+      _viewModel.timeSlotStartMinutes,
+    );
     final double headerHeight =
         mode == TimetableDisplayMode.week ? _weekHeaderHeight(context) : 0;
-    final double contentHeight =
-        timeSlots.length * slotHeight + headerHeight;
+    final double contentHeight = timeSlots.length * slotHeight + headerHeight;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(4, 8, 12, 4),
@@ -269,18 +265,15 @@ class _TimetableViewState extends State<TimetableView> {
               ((availableWidth - labelWidth) / 7).clamp(0, maxCardWidth);
 
           if (dayColumnWidth < minCardWidth) {
-            final double neededLabelWidth =
-                availableWidth - minCardWidth * 7;
-            labelWidth = neededLabelWidth.clamp(minLabelWidth, preferredLabelWidth);
+            final double neededLabelWidth = availableWidth - minCardWidth * 7;
+            labelWidth =
+                neededLabelWidth.clamp(minLabelWidth, preferredLabelWidth);
             dayColumnWidth =
                 ((availableWidth - labelWidth) / 7).clamp(0, maxCardWidth);
           }
           final bool isNarrowLabel = labelWidth <= minLabelWidth + 0.1;
           final TextStyle? labelStyle = isNarrowLabel
-              ? Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(fontSize: 11)
+              ? Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 11)
               : Theme.of(context).textTheme.bodySmall;
 
           return SingleChildScrollView(
@@ -315,7 +308,8 @@ class _TimetableViewState extends State<TimetableView> {
                         Positioned.fill(
                           child: Column(
                             children: [
-                              if (headerHeight > 0) SizedBox(height: headerHeight),
+                              if (headerHeight > 0)
+                                SizedBox(height: headerHeight),
                               for (int i = 0; i < timeSlots.length; i += 1)
                                 Container(
                                   height: slotHeight,
@@ -369,6 +363,7 @@ class _TimetableViewState extends State<TimetableView> {
     );
   }
 }
+
 class _WheelItem extends StatelessWidget {
   const _WheelItem({
     required this.label,
@@ -405,9 +400,10 @@ class _TimeSlot {
   final String label;
 }
 
-List<_TimeSlot> _buildTimeSlots() {
-  final List<int> startMinutes = TimeSlot.defaultConfig.startMinutes;
-  return startMinutes.map((minute) => _TimeSlot(TimeSlot.formatMinutes(minute))).toList();
+List<_TimeSlot> _buildTimeSlots(List<int> startMinutes) {
+  return startMinutes
+      .map((minute) => _TimeSlot(TimeSlot.formatMinutes(minute)))
+      .toList();
 }
 
 class _HorizontalWheel extends StatelessWidget {

@@ -5,6 +5,7 @@ import 'package:onetj/features/timetable/models/event.dart';
 import 'package:onetj/features/timetable/models/timetable_model.dart';
 import 'package:onetj/models/base_model.dart';
 import 'package:onetj/models/event_model.dart';
+import 'package:onetj/models/settings_defaults.dart';
 import 'package:onetj/models/timetable_index.dart';
 import 'package:onetj/repo/settings_repository.dart';
 
@@ -19,7 +20,8 @@ class TimetableViewModel extends BaseViewModel {
     int maxWeek = 22,
     SettingsRepository? settingsRepository,
   })  : _model = model ?? TimetableModel(),
-        _settingsRepository = settingsRepository ?? SettingsRepository.getInstance(),
+        _settingsRepository =
+            settingsRepository ?? SettingsRepository.getInstance(),
         _maxWeek = maxWeek,
         _eventController = StreamController<UiEvent>.broadcast() {
     _settingsSub = _settingsRepository.stream.listen(_handleSettingsChanged);
@@ -34,6 +36,8 @@ class TimetableViewModel extends BaseViewModel {
   TimetableIndex? _index;
   Object? _error;
   bool _isLoading = true;
+  List<int> _timeSlotStartMinutes =
+      List<int>.from(kDefaultTimeSlotStartMinutes);
   int _selectedDay = DateTime.now().weekday;
   int? _currentWeek;
   int? _selectedWeek;
@@ -42,6 +46,7 @@ class TimetableViewModel extends BaseViewModel {
   TimetableIndex? get index => _index;
   Object? get error => _error;
   bool get isLoading => _isLoading;
+  List<int> get timeSlotStartMinutes => _timeSlotStartMinutes;
   int get selectedDay => _selectedDay;
   int? get selectedWeek => _selectedWeek;
   TimetableDisplayMode get mode => _mode;
@@ -98,17 +103,30 @@ class TimetableViewModel extends BaseViewModel {
 
   void _handleSettingsChanged(SettingsData data) {
     final int nextMaxWeek = data.maxWeek;
-    if (_maxWeek == nextMaxWeek) {
+    final List<int> nextTimeSlotStartMinutes = List<int>.from(
+      data.timeSlotStartMinutes,
+    );
+    final bool maxWeekChanged = _maxWeek != nextMaxWeek;
+    final bool timeSlotChanged = !_sameTimeSlots(
+      _timeSlotStartMinutes,
+      nextTimeSlotStartMinutes,
+    );
+    if (!maxWeekChanged && !timeSlotChanged) {
       return;
     }
-    _maxWeek = nextMaxWeek;
-    _syncSelectedWeek();
+    if (maxWeekChanged) {
+      _maxWeek = nextMaxWeek;
+      _syncSelectedWeek();
+      _eventController.add(const SyncWheelEvent());
+    }
+    if (timeSlotChanged) {
+      _timeSlotStartMinutes = nextTimeSlotStartMinutes;
+    }
     notifyListeners();
-    _eventController.add(const SyncWheelEvent());
   }
 
   /// 加载设置到内存
-  /// 
+  ///
   /// 从 [_settingsRepository] 中加载设置数据。
   /// 如果加载失败，将显示错误消息。
   Future<void> _loadSettings() async {
@@ -117,6 +135,7 @@ class TimetableViewModel extends BaseViewModel {
       if (_maxWeek != data.maxWeek) {
         _maxWeek = data.maxWeek;
       }
+      _timeSlotStartMinutes = List<int>.from(data.timeSlotStartMinutes);
     } catch (error) {
       _eventController.add(
         ShowSnackBarEvent(message: _formatErrorMessage(error)),
@@ -124,8 +143,20 @@ class TimetableViewModel extends BaseViewModel {
     }
   }
 
+  bool _sameTimeSlots(List<int> a, List<int> b) {
+    if (a.length != b.length) {
+      return false;
+    }
+    for (int i = 0; i < a.length; i += 1) {
+      if (a[i] != b[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   /// 获取选中周数的指定天的课表条目
-  /// 
+  ///
   /// 如果课表索引为空或选中周数为空，返回空列表。
   /// 否则，返回指定天的课表条目列表。
   /// 列表按开始时间升序排序。
@@ -155,7 +186,7 @@ class TimetableViewModel extends BaseViewModel {
   }
 
   /// 加载当前周数
-  /// 
+  ///
   /// 如果加载失败，将当前周数设置为 null 并显示错误消息。
   Future<void> _loadCurrentWeek() async {
     try {
@@ -169,7 +200,7 @@ class TimetableViewModel extends BaseViewModel {
   }
 
   /// 加载课表索引
-  /// 
+  ///
   /// 加载完成后同步选中的周数
   /// 如果加载失败，将错误存储到 [_error] 中
   Future<void> _loadTimetable() async {
@@ -185,7 +216,7 @@ class TimetableViewModel extends BaseViewModel {
   }
 
   /// 同步选中的周数
-  /// 
+  ///
   /// 如果当前周数在课表索引中，将选中周数设置为当前周数。
   /// 否则，将选中周数设置为第一周。
   void _syncSelectedWeek() {
@@ -205,7 +236,7 @@ class TimetableViewModel extends BaseViewModel {
   }
 
   /// 获取渲染的所有周数
-  /// 
+  ///
   /// 周数按升序排序。
   List<int> _availableWeeks() {
     if (_maxWeek <= 0) {
