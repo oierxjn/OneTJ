@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/features/settings/models/event.dart';
 import 'package:onetj/features/settings/view_models/settings_view_model.dart';
 import 'package:onetj/models/event_model.dart';
@@ -19,26 +20,17 @@ class SettingsView extends StatefulWidget {
 }
 
 class _SettingsViewState extends State<SettingsView> {
-  static const int _hourMinutes = 60;
   late final SettingsViewModel _viewModel;
   StreamSubscription<UiEvent>? _eventSub;
   late final TextEditingController _maxWeekController;
-  late final List<TextEditingController> _slotHourControllers;
-  late final List<TextEditingController> _slotMinuteControllers;
+  List<int> _draftTimeSlotStartMinutes =
+      List<int>.from(TimeSlot.defaultStartMinutes);
 
   @override
   void initState() {
     super.initState();
     _viewModel = SettingsViewModel();
     _maxWeekController = TextEditingController();
-    _slotHourControllers = List<TextEditingController>.generate(
-      TimeSlot.defaultStartMinutes.length,
-      (_) => TextEditingController(),
-    );
-    _slotMinuteControllers = List<TextEditingController>.generate(
-      TimeSlot.defaultStartMinutes.length,
-      (_) => TextEditingController(),
-    );
     _eventSub = _viewModel.events.listen((event) {
       if (!mounted) {
         return;
@@ -76,12 +68,6 @@ class _SettingsViewState extends State<SettingsView> {
   void dispose() {
     _eventSub?.cancel();
     _maxWeekController.dispose();
-    for (final TextEditingController controller in _slotHourControllers) {
-      controller.dispose();
-    }
-    for (final TextEditingController controller in _slotMinuteControllers) {
-      controller.dispose();
-    }
     _viewModel.dispose();
     super.dispose();
   }
@@ -110,33 +96,15 @@ class _SettingsViewState extends State<SettingsView> {
 
   void _applySettingsToControllers(SettingsData settings) {
     _maxWeekController.text = settings.maxWeek.toString();
-    for (int i = 0; i < _slotHourControllers.length; i += 1) {
-      if (i >= settings.timeSlotStartMinutes.length) {
-        _slotHourControllers[i].text = '';
-        _slotMinuteControllers[i].text = '';
-        continue;
-      }
-      final int minutes = settings.timeSlotStartMinutes[i];
-      _slotHourControllers[i].text = (minutes ~/ _hourMinutes).toString();
-      _slotMinuteControllers[i].text =
-          (minutes % _hourMinutes).toString().padLeft(2, '0');
-    }
+    _draftTimeSlotStartMinutes = List<int>.from(settings.timeSlotStartMinutes);
   }
 
   Future<void> _submitSettings() async {
     try {
       final int maxWeek = int.parse(_maxWeekController.text);
-      final List<int> timeSlotStartMinutes = List<int>.generate(
-        _slotHourControllers.length,
-        (index) {
-          final int hour = int.parse(_slotHourControllers[index].text);
-          final int minute = int.parse(_slotMinuteControllers[index].text);
-          return hour * _hourMinutes + minute;
-        },
-      );
       await _viewModel.saveSettings(
         maxWeek: maxWeek,
-        timeSlotStartMinutes: timeSlotStartMinutes,
+        timeSlotStartMinutes: _draftTimeSlotStartMinutes,
       );
     } catch (error) {
       if (!mounted) {
@@ -196,6 +164,33 @@ class _SettingsViewState extends State<SettingsView> {
     await _viewModel.resetSettings();
   }
 
+  Future<void> _openTimeSlotEditor() async {
+    final List<int>? next = await context.push<List<int>>(
+      RoutePaths.homeSettingsTimeSlots,
+      extra: List<int>.from(_draftTimeSlotStartMinutes),
+    );
+    if (next == null || !mounted) {
+      return;
+    }
+    setState(() {
+      _draftTimeSlotStartMinutes = List<int>.from(next);
+    });
+  }
+
+  String _timeSlotSummary(AppLocalizations l10n) {
+    if (_draftTimeSlotStartMinutes.isEmpty) {
+      return l10n.settingsTimeSlotsEmpty;
+    }
+    final String first =
+        TimeSlot.formatMinutes(_draftTimeSlotStartMinutes.first);
+    final String last = TimeSlot.formatMinutes(_draftTimeSlotStartMinutes.last);
+    return l10n.settingsTimeSlotsSummary(
+      _draftTimeSlotStartMinutes.length,
+      first,
+      last,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -245,59 +240,15 @@ class _SettingsViewState extends State<SettingsView> {
             ),
             const SizedBox(height: 12),
             Card(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Column(
-                  children: [
-                    for (int i = 0; i < _slotHourControllers.length; i += 1)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 6),
-                        child: Row(
-                          children: [
-                            SizedBox(
-                              width: 56,
-                              child: Text('S${i + 1}'),
-                            ),
-                            Expanded(
-                              child: TextField(
-                                controller: _slotHourControllers[i],
-                                keyboardType: TextInputType.number,
-                                inputFormatters: [
-                                  FilteringTextInputFormatter.digitsOnly,
-                                  LengthLimitingTextInputFormatter(2),
-                                ],
-                                enabled: !_viewModel.settingsLoading &&
-                                    !_viewModel.settingsSaving,
-                                decoration: const InputDecoration(
-                                  isDense: true,
-                                  border: OutlineInputBorder(),
-                                  hintText: 'HH',
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: TextField(
-                                controller: _slotMinuteControllers[i],
-                                keyboardType: TextInputType.number,
-                                inputFormatters: [
-                                  FilteringTextInputFormatter.digitsOnly,
-                                  LengthLimitingTextInputFormatter(2),
-                                ],
-                                enabled: !_viewModel.settingsLoading &&
-                                    !_viewModel.settingsSaving,
-                                decoration: const InputDecoration(
-                                  isDense: true,
-                                  border: OutlineInputBorder(),
-                                  hintText: 'MM',
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                  ],
-                ),
+              child: ListTile(
+                leading: const Icon(Icons.schedule),
+                title:
+                    Text(AppLocalizations.of(context).settingsTimeSlotsTitle),
+                subtitle: Text(_timeSlotSummary(AppLocalizations.of(context))),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: _viewModel.settingsLoading || _viewModel.settingsSaving
+                    ? null
+                    : _openTimeSlotEditor,
               ),
             ),
             const SizedBox(height: 24),

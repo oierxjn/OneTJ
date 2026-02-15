@@ -69,6 +69,22 @@
 
     "settingsMaxWeekTitle": "最大周数",
     "settingsMaxWeekSubtitle": "用于课程表显示可用周数",
+    "settingsTimeSlotsTitle": "时间槽",
+    "settingsTimeSlotsEmpty": "未配置时间槽",
+    "settingsTimeSlotsSummary": "{count} 个时间槽 - {first} 到 {last}",
+    "@settingsTimeSlotsSummary": {
+      "placeholders": {
+        "count": {
+          "type": "int"
+        },
+        "first": {},
+        "last": {}
+      }
+    },
+    "settingsTimeSlotsEditorTitle": "编辑时间槽",
+    "settingsTimeSlotsEditorHint": "点击时间槽选择开始时间。",
+    "settingsTimeSlotsInvalidOrder": "时间槽必须严格递增。",
+    "settingsTimeSlotsResetToDefault": "重置为默认值",
 
     "settingsAdvancedSectionTitle": "高级",
     "settingsResetTitle": "重置设置",

@@ -68,6 +68,22 @@
 
   "settingsMaxWeekTitle": "Max Weeks",
   "settingsMaxWeekSubtitle": "Used by the timetable to display available weeks",
+  "settingsTimeSlotsTitle": "Time Slots",
+  "settingsTimeSlotsEmpty": "No time slots configured",
+  "settingsTimeSlotsSummary": "{count} slots - {first} to {last}",
+  "@settingsTimeSlotsSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "first": {},
+      "last": {}
+    }
+  },
+  "settingsTimeSlotsEditorTitle": "Edit Time Slots",
+  "settingsTimeSlotsEditorHint": "Tap a slot to pick a start time. Keep slots in chronological order.",
+  "settingsTimeSlotsInvalidOrder": "Time slots must be strictly increasing.",
+  "settingsTimeSlotsResetToDefault": "Reset to defaults",
 
   "settingsAdvancedSectionTitle": "Advanced",
   "settingsResetTitle": "Reset Settings",
