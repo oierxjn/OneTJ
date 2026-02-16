@@ -69,9 +69,9 @@
 
     "settingsMaxWeekTitle": "最大周数",
     "settingsMaxWeekSubtitle": "用于课程表显示可用周数",
-    "settingsTimeSlotsTitle": "时间槽",
-    "settingsTimeSlotsEmpty": "未配置时间槽",
-    "settingsTimeSlotsSummary": "{count} 个时间槽 - {first} 到 {last}",
+    "settingsTimeSlotsTitle": "课程表时间设置",
+    "settingsTimeSlotsEmpty": "未配置课程表时间",
+    "settingsTimeSlotsSummary": "{count} 个节次 - {first} 到 {last}",
     "@settingsTimeSlotsSummary": {
       "placeholders": {
         "count": {
@@ -81,9 +81,9 @@
         "last": {}
       }
     },
-    "settingsTimeSlotsEditorTitle": "编辑时间槽",
-    "settingsTimeSlotsEditorHint": "点击时间槽选择开始时间。",
-    "settingsTimeSlotsInvalidOrder": "时间槽必须严格递增。",
+    "settingsTimeSlotsEditorTitle": "编辑课程表时间",
+    "settingsTimeSlotsEditorHint": "点击节次选择开始时间。",
+    "settingsTimeSlotsInvalidOrder": "节次时间必须严格递增。",
     "settingsTimeSlotsResetToDefault": "重置为默认值",
 
     "settingsAdvancedSectionTitle": "高级",

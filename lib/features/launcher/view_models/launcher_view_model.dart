@@ -39,6 +39,9 @@ class LauncherViewModel extends BaseViewModel {
     return route;
   }
 
+  /// 通过判断 token 状态来确定初始路由
+  /// 
+  /// 如果 token 有效，则返回 [RoutePaths.home]，否则返回 [RoutePaths.login]。
   Future<String> _resolveInitialRoute() async {
     final TokenRepository repo = TokenRepository.getInstance();
     final TokenData? token = await repo.getToken(refreshFromStorage: true);
@@ -58,6 +61,10 @@ class LauncherViewModel extends BaseViewModel {
     return RoutePaths.login;
   }
 
+  /// 初始化日志记录
+  /// 
+  /// 设置日志级别为 [Level.INFO]，并监听日志记录事件。
+  /// 日志记录事件会打印到控制台。
   void _initializeLogging() {
     Logger.root.level = Level.INFO;
     Logger.root.onRecord.listen((record) {
