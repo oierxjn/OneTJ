@@ -2,6 +2,8 @@ import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/models/settings_defaults.dart';
 import 'package:onetj/models/time_period_range.dart';
 
+const int kDayLastMinute = 24 * 60 - 1;
+
 void validateTimeSlotRanges(List<TimePeriodRangeData> ranges) {
   if (ranges.isEmpty) {
     throw SettingsResolveException(
@@ -11,12 +13,12 @@ void validateTimeSlotRanges(List<TimePeriodRangeData> ranges) {
   for (int i = 0; i < ranges.length; i += 1) {
     final int start = ranges[i].startMinutes;
     final int end = ranges[i].endMinutes;
-    if (start < 0 || start > 24 * 60) {
+    if (start < 0 || start > kDayLastMinute) {
       throw SettingsResolveException(
         message: 'timeSlotRanges.startMinutes out of range',
       );
     }
-    if (end < 0 || end > 24 * 60) {
+    if (end < 0 || end > kDayLastMinute) {
       throw SettingsResolveException(
         message: 'timeSlotRanges.endMinutes out of range',
       );
@@ -50,7 +52,7 @@ void validateTimeSlotStartMinutes(List<int> values) {
   }
   for (int i = 0; i < values.length; i += 1) {
     final int minute = values[i];
-    if (minute < 0 || minute > 24 * 60 - 1) {
+    if (minute < 0 || minute > kDayLastMinute) {
       throw SettingsResolveException(
         message: 'timeSlotStartMinutes item out of range',
       );
@@ -73,7 +75,7 @@ List<TimePeriodRangeData> buildTimeSlotRangesFromStartMinutes(
     final int start = starts[i];
     final int end = i + 1 < starts.length
         ? starts[i + 1]
-        : (start + lastDurationMinutes).clamp(0, 24 * 60);
+        : (start + lastDurationMinutes).clamp(0, kDayLastMinute);
     ranges.add(TimePeriodRangeData(startMinutes: start, endMinutes: end));
   }
   validateTimeSlotRanges(ranges);

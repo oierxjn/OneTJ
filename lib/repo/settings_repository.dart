@@ -76,18 +76,18 @@ class SettingsData {
 
   static List<int> _parseTimeSlotStartMinutes(Object? values) {
     if (values is! List) {
-      throw SettingsResolveException(message: 'timeSlotStartMinutes(${values.runtimeType}) must be a list');
+      throw SettingsResolveException(
+          message:
+              'timeSlotStartMinutes(${values.runtimeType}) must be a list');
     }
-    return values
-        .map<int>((item) {
-          if (item is! int) {
-            throw SettingsResolveException(
-              message: 'timeSlotStartMinutes item must be int',
-            );
-          }
-          return item;
-        })
-        .toList(growable: false);
+    return values.map<int>((item) {
+      if (item is! int) {
+        throw SettingsResolveException(
+          message: 'timeSlotStartMinutes item must be int',
+        );
+      }
+      return item;
+    }).toList(growable: false);
   }
 
   static List<TimePeriodRangeData> _parseTimeSlotRanges(Object? values) {
@@ -96,16 +96,15 @@ class SettingsData {
         message: 'timeSlotRanges(${values.runtimeType}) must be a list',
       );
     }
-    final List<TimePeriodRangeData> ranges = values
-        .map<TimePeriodRangeData>((item) {
-          if (item is! Map<String, dynamic>) {
-            throw SettingsResolveException(
-              message: 'timeSlotRanges item must be Map<String, dynamic>',
-            );
-          }
-          return TimePeriodRangeData.fromJson(item);
-        })
-        .toList(growable: false);
+    final List<TimePeriodRangeData> ranges =
+        values.map<TimePeriodRangeData>((item) {
+      if (item is! Map<String, dynamic>) {
+        throw SettingsResolveException(
+          message: 'timeSlotRanges item must be Map<String, dynamic>',
+        );
+      }
+      return TimePeriodRangeData.fromJson(item);
+    }).toList(growable: false);
     settings_validation.validateTimeSlotRanges(ranges);
     return ranges;
   }
@@ -117,7 +116,6 @@ class SettingsData {
   static List<TimePeriodRangeData> _defaultTimeSlotRanges() {
     return kDefaultTimeSlotRanges;
   }
-
 }
 
 abstract class SettingsStorage {
@@ -230,4 +228,3 @@ class SettingsRepository {
     _controller.add(_defaultSettings);
   }
 }
-

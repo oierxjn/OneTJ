@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'package:onetj/models/settings_defaults.dart';
+import 'package:onetj/models/settings_validation.dart' as settings_validation;
 import 'package:onetj/models/time_period_range.dart';
 import 'package:onetj/models/time_slot.dart';
 
@@ -47,7 +48,7 @@ class _TimeSlotEditorViewState extends State<TimeSlotEditorView> {
         .toList(growable: false);
   }
 
-  /// 验证时间槽是否有效
+  /// 验证目前的草稿时间槽是否有效
   ///
   /// 返回错误信息和错误对应的索引
   _ValidationIssue? _validationIssue(AppLocalizations l10n) {
@@ -143,7 +144,8 @@ class _TimeSlotEditorViewState extends State<TimeSlotEditorView> {
   }) async {
     final TimePeriodRangeData currentRange = _draftTimeSlotRanges[index];
     final int currentMinutes =
-        isStart ? currentRange.startMinutes : currentRange.endMinutes;
+        (isStart ? currentRange.startMinutes : currentRange.endMinutes)
+            .clamp(0, settings_validation.kDayLastMinute);
 
     final TimeOfDay? picked = await showTimePicker(
       context: context,
