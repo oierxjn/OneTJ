@@ -9,6 +9,7 @@ import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/features/settings/models/event.dart';
 import 'package:onetj/features/settings/view_models/settings_view_model.dart';
 import 'package:onetj/models/event_model.dart';
+import 'package:onetj/models/time_period_range.dart';
 import 'package:onetj/models/time_slot.dart';
 import 'package:onetj/repo/settings_repository.dart';
 
@@ -23,8 +24,7 @@ class _SettingsViewState extends State<SettingsView> {
   late final SettingsViewModel _viewModel;
   StreamSubscription<UiEvent>? _eventSub;
   late final TextEditingController _maxWeekController;
-  List<int> _draftTimeSlotStartMinutes =
-      List<int>.from(TimeSlot.defaultStartMinutes);
+  List<TimePeriodRangeData> _draftTimeSlotRanges = <TimePeriodRangeData>[];
 
   @override
   void initState() {
@@ -91,8 +91,13 @@ class _SettingsViewState extends State<SettingsView> {
 
   void _applySettingsToControllers(SettingsData settings) {
     _maxWeekController.text = settings.maxWeek.toString();
-    _draftTimeSlotStartMinutes = settings.timeSlotRanges
-        .map((item) => item.startMinutes)
+    _draftTimeSlotRanges = settings.timeSlotRanges
+        .map(
+          (item) => TimePeriodRangeData(
+            startMinutes: item.startMinutes,
+            endMinutes: item.endMinutes,
+          ),
+        )
         .toList(growable: false);
   }
 
@@ -101,7 +106,7 @@ class _SettingsViewState extends State<SettingsView> {
       final int maxWeek = int.parse(_maxWeekController.text);
       await _viewModel.saveSettings(
         maxWeek: maxWeek,
-        editedStartMinutes: _draftTimeSlotStartMinutes,
+        editedTimeSlotRanges: _draftTimeSlotRanges,
       );
     } catch (error) {
       if (!mounted) {
@@ -162,27 +167,38 @@ class _SettingsViewState extends State<SettingsView> {
   }
 
   Future<void> _openTimeSlotEditor() async {
-    final List<int>? next = await context.push<List<int>>(
+    final List<TimePeriodRangeData>? next =
+        await context.push<List<TimePeriodRangeData>>(
       RoutePaths.homeSettingsTimeSlots,
-      extra: List<int>.from(_draftTimeSlotStartMinutes),
+      extra: _draftTimeSlotRanges
+          .map(
+            (item) => TimePeriodRangeData(
+              startMinutes: item.startMinutes,
+              endMinutes: item.endMinutes,
+            ),
+          )
+          .toList(growable: false),
     );
     if (next == null || !mounted) {
       return;
     }
     setState(() {
-      _draftTimeSlotStartMinutes = List<int>.from(next);
+      _draftTimeSlotRanges = next;
     });
   }
 
   String _timeSlotSummary(AppLocalizations l10n) {
-    if (_draftTimeSlotStartMinutes.isEmpty) {
+    if (_draftTimeSlotRanges.isEmpty) {
       return l10n.settingsTimeSlotsEmpty;
     }
-    final String first =
-        TimeSlot.formatMinutes(_draftTimeSlotStartMinutes.first);
-    final String last = TimeSlot.formatMinutes(_draftTimeSlotStartMinutes.last);
+    final String first = TimeSlot.formatMinutes(
+      _draftTimeSlotRanges.first.startMinutes,
+    );
+    final String last = TimeSlot.formatMinutes(
+      _draftTimeSlotRanges.last.endMinutes,
+    );
     return l10n.settingsTimeSlotsSummary(
-      _draftTimeSlotStartMinutes.length,
+      _draftTimeSlotRanges.length,
       first,
       last,
     );

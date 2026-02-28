@@ -1,58 +1,127 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
-import 'package:onetj/features/settings/models/settings_model.dart';
+import 'package:onetj/models/settings_defaults.dart';
+import 'package:onetj/models/time_period_range.dart';
 import 'package:onetj/models/time_slot.dart';
 
 class TimeSlotEditorView extends StatefulWidget {
   const TimeSlotEditorView({
-    required this.initialTimeSlotStartMinutes,
+    required this.initialTimeSlotRanges,
     super.key,
   });
 
-  final List<int> initialTimeSlotStartMinutes;
+  final List<TimePeriodRangeData> initialTimeSlotRanges;
 
   @override
   State<TimeSlotEditorView> createState() => _TimeSlotEditorViewState();
 }
 
 class _TimeSlotEditorViewState extends State<TimeSlotEditorView> {
-  late List<int> _draftTimeSlots;
+  late List<TimePeriodRangeData> _draftTimeSlotRanges;
   bool _allowPop = false;
+  _ValidationIssue? _lastValidationIssue;
 
   @override
   void initState() {
     super.initState();
-    _draftTimeSlots = List<int>.from(widget.initialTimeSlotStartMinutes);
+    _draftTimeSlotRanges = _cloneRanges(widget.initialTimeSlotRanges);
   }
 
-  String? _validationMessage(AppLocalizations l10n) {
-    try {
-      SettingsModel.validateTimeSlotStartMinutes(_draftTimeSlots);
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    _lastValidationIssue = _validationIssueFor(_draftTimeSlotRanges, l10n);
+  }
+
+  /// 深度复制时间槽
+  List<TimePeriodRangeData> _cloneRanges(List<TimePeriodRangeData> source) {
+    return source
+        .map(
+          (item) => TimePeriodRangeData(
+            startMinutes: item.startMinutes,
+            endMinutes: item.endMinutes,
+          ),
+        )
+        .toList(growable: false);
+  }
+
+  /// 验证时间槽是否有效
+  ///
+  /// 返回错误信息和错误对应的索引
+  _ValidationIssue? _validationIssue(AppLocalizations l10n) {
+    return _validationIssueFor(_draftTimeSlotRanges, l10n);
+  }
+
+  _ValidationIssue? _validationIssueFor(
+    List<TimePeriodRangeData> ranges,
+    AppLocalizations l10n,
+  ) {
+    if (ranges.isEmpty) {
+      return _ValidationIssue(
+        message: l10n.settingsTimeSlotsInvalidEmpty,
+        invalidIndices: const <int>{},
+      );
+    }
+
+    final Set<int> invalidIndices = <int>{};
+    String? firstMessage;
+
+    for (int i = 0; i < ranges.length; i += 1) {
+      final TimePeriodRangeData current = ranges[i];
+      final int start = current.startMinutes;
+      final int end = current.endMinutes;
+
+      if (start >= end) {
+        invalidIndices.add(i);
+        firstMessage ??= l10n.settingsTimeSlotsInvalidRange;
+      }
+
+      if (i > 0) {
+        final TimePeriodRangeData previous = ranges[i - 1];
+
+        if (previous.startMinutes >= start) {
+          invalidIndices.add(i - 1);
+          invalidIndices.add(i);
+          firstMessage ??= l10n.settingsTimeSlotsInvalidOrder;
+        }
+
+        if (previous.endMinutes > start) {
+          invalidIndices.add(i - 1);
+          invalidIndices.add(i);
+          firstMessage ??= l10n.settingsTimeSlotsInvalidOverlap;
+        }
+      }
+    }
+
+    if (invalidIndices.isEmpty) {
       return null;
-    } catch (_) {
-      return l10n.settingsTimeSlotsInvalidOrder;
     }
+
+    return _ValidationIssue(
+      message: firstMessage ?? l10n.settingsTimeSlotsInvalidOrder,
+      invalidIndices: invalidIndices,
+    );
   }
 
-  bool _isDraftValid() {
-    try {
-      SettingsModel.validateTimeSlotStartMinutes(_draftTimeSlots);
-      return true;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  List<int>? _buildResultOrNull() {
-    if (!_isDraftValid()) {
+  List<TimePeriodRangeData>? _buildResultOrNull(AppLocalizations l10n) {
+    final _ValidationIssue? issue = _validationIssue(l10n);
+    if (issue != null) {
+      setState(() {
+        _lastValidationIssue = issue;
+      });
       return null;
     }
-    return List<int>.from(_draftTimeSlots);
+    return _cloneRanges(_draftTimeSlotRanges);
   }
 
   void _popWithDraftResult() {
-    final List<int>? result = _buildResultOrNull();
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    final List<TimePeriodRangeData>? result = _buildResultOrNull(l10n);
+    if (result == null) {
+      return;
+    }
     if (_allowPop) {
       Navigator.of(context).pop(result);
       return;
@@ -68,45 +137,73 @@ class _TimeSlotEditorViewState extends State<TimeSlotEditorView> {
     });
   }
 
-  Future<void> _pickTime(int index) async {
-    final int current = _draftTimeSlots[index];
+  Future<void> _pickTime({
+    required int index,
+    required bool isStart,
+  }) async {
+    final TimePeriodRangeData currentRange = _draftTimeSlotRanges[index];
+    final int currentMinutes =
+        isStart ? currentRange.startMinutes : currentRange.endMinutes;
+
     final TimeOfDay? picked = await showTimePicker(
       context: context,
       initialTime: TimeOfDay(
-        hour: current ~/ 60,
-        minute: current % 60,
+        hour: currentMinutes ~/ 60,
+        minute: currentMinutes % 60,
       ),
       builder: (context, child) => MediaQuery(
         data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
         child: child ?? const SizedBox.shrink(),
       ),
     );
-    if (picked == null) {
+
+    if (picked == null || !mounted) {
       return;
     }
-    if (!mounted) {
-      return;
-    }
+
+    final int nextMinutes = picked.hour * 60 + picked.minute;
+    final AppLocalizations l10n = AppLocalizations.of(context);
+
+    late final List<TimePeriodRangeData> nextRanges;
     setState(() {
-      _draftTimeSlots[index] = picked.hour * 60 + picked.minute;
+      nextRanges = List<TimePeriodRangeData>.generate(
+        _draftTimeSlotRanges.length,
+        (int itemIndex) {
+          final TimePeriodRangeData item = _draftTimeSlotRanges[itemIndex];
+          if (itemIndex != index) {
+            return item;
+          }
+          return TimePeriodRangeData(
+            startMinutes: isStart ? nextMinutes : item.startMinutes,
+            endMinutes: isStart ? item.endMinutes : nextMinutes,
+          );
+        },
+        growable: false,
+      );
+      _draftTimeSlotRanges = nextRanges;
+      _lastValidationIssue = _validationIssueFor(nextRanges, l10n);
     });
   }
 
   void _restoreDefaults() {
+    final AppLocalizations l10n = AppLocalizations.of(context);
     setState(() {
-      _draftTimeSlots = List<int>.from(TimeSlot.defaultStartMinutes);
+      _draftTimeSlotRanges = _cloneRanges(kDefaultTimeSlotRanges);
+      _lastValidationIssue = _validationIssueFor(_draftTimeSlotRanges, l10n);
     });
   }
-
 
   @override
   Widget build(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context);
-    final String? errorText = _validationMessage(l10n);
+    final _ValidationIssue? issue = _lastValidationIssue;
 
-    return PopScope<List<int>?>(
+    return PopScope<List<TimePeriodRangeData>?>(
       canPop: _allowPop,
-      onPopInvokedWithResult: (bool didPop, List<int>? result) {
+      onPopInvokedWithResult: (
+        bool didPop,
+        List<TimePeriodRangeData>? result,
+      ) {
         if (didPop) {
           return;
         }
@@ -125,7 +222,7 @@ class _TimeSlotEditorViewState extends State<TimeSlotEditorView> {
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
             ),
-            if (errorText != null) ...[
+            if (issue != null) ...[
               const SizedBox(height: 12),
               Container(
                 decoration: BoxDecoration(
@@ -144,7 +241,7 @@ class _TimeSlotEditorViewState extends State<TimeSlotEditorView> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        errorText,
+                        issue.message,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: Theme.of(context)
                                   .colorScheme
@@ -157,16 +254,56 @@ class _TimeSlotEditorViewState extends State<TimeSlotEditorView> {
               ),
             ],
             const SizedBox(height: 12),
-            for (int i = 0; i < _draftTimeSlots.length; i += 1) ...[
+            for (int i = 0; i < _draftTimeSlotRanges.length; i += 1) ...[
               Card(
                 elevation: 0,
-                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                color: issue?.invalidIndices.contains(i) == true
+                    ? Theme.of(context).colorScheme.errorContainer
+                    : Theme.of(context).colorScheme.surfaceContainerHighest,
                 margin: EdgeInsets.zero,
-                child: ListTile(
-                  title: Text('S${i + 1}'),
-                  subtitle: Text(TimeSlot.formatMinutes(_draftTimeSlots[i])),
-                  trailing: const Icon(Icons.schedule),
-                  onTap: () => _pickTime(i),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('S${i + 1}'),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () => _pickTime(
+                                index: i,
+                                isStart: true,
+                              ),
+                              icon: const Icon(Icons.login),
+                              label: Text(
+                                '${l10n.settingsTimeSlotsStartLabel}: '
+                                '${TimeSlot.formatMinutes(_draftTimeSlotRanges[i].startMinutes)}',
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () => _pickTime(
+                                index: i,
+                                isStart: false,
+                              ),
+                              icon: const Icon(Icons.logout),
+                              label: Text(
+                                '${l10n.settingsTimeSlotsEndLabel}: '
+                                '${TimeSlot.formatMinutes(_draftTimeSlotRanges[i].endMinutes)}',
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 8),
@@ -187,4 +324,14 @@ class _TimeSlotEditorViewState extends State<TimeSlotEditorView> {
       ),
     );
   }
+}
+
+class _ValidationIssue {
+  const _ValidationIssue({
+    required this.message,
+    required this.invalidIndices,
+  });
+
+  final String message;
+  final Set<int> invalidIndices;
 }

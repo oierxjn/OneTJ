@@ -3,7 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/features/settings/views/settings_view.dart';
 import 'package:onetj/features/settings/views/time_slot_editor_view.dart';
-import 'package:onetj/models/time_slot.dart';
+import 'package:onetj/models/settings_defaults.dart';
+import 'package:onetj/models/time_period_range.dart';
 
 final List<GoRoute> settingsRoutes = [
   GoRoute(
@@ -16,12 +17,23 @@ final List<GoRoute> settingsRoutes = [
         name: 'settings-time-slots',
         builder: (context, state) {
           final Object? extra = state.extra;
-          final List<int> initialTimeSlots = switch (extra) {
-            List<dynamic> list => list.whereType<int>().toList(growable: false),
-            _ => List<int>.from(TimeSlot.defaultStartMinutes),
+          final List<TimePeriodRangeData> parsed = switch (extra) {
+            List<dynamic> list => list
+                .whereType<TimePeriodRangeData>()
+                .map(
+                  (item) => TimePeriodRangeData(
+                    startMinutes: item.startMinutes,
+                    endMinutes: item.endMinutes,
+                  ),
+                )
+                .toList(growable: false),
+            _ => <TimePeriodRangeData>[],
           };
+          final List<TimePeriodRangeData> initialTimeSlots = parsed.isEmpty
+              ? List<TimePeriodRangeData>.from(kDefaultTimeSlotRanges)
+              : parsed;
           return TimeSlotEditorView(
-            initialTimeSlotStartMinutes: initialTimeSlots,
+            initialTimeSlotRanges: initialTimeSlots,
           );
         },
       ),

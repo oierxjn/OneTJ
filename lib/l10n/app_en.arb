@@ -81,7 +81,12 @@
     }
   },
   "settingsTimeSlotsEditorTitle": "Edit Time Slots",
-  "settingsTimeSlotsEditorHint": "Tap a slot to pick a start time. Keep slots in chronological order.",
+  "settingsTimeSlotsEditorHint": "Tap each slot to edit start and end time. Slots must stay in chronological order and cannot overlap.",
+  "settingsTimeSlotsStartLabel": "Start",
+  "settingsTimeSlotsEndLabel": "End",
+  "settingsTimeSlotsInvalidEmpty": "At least one slot is required.",
+  "settingsTimeSlotsInvalidRange": "Start time must be earlier than end time.",
+  "settingsTimeSlotsInvalidOverlap": "Adjacent slots must not overlap.",
   "settingsTimeSlotsInvalidOrder": "Time slots must be strictly increasing.",
   "settingsTimeSlotsResetToDefault": "Reset to defaults",
 

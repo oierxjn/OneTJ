@@ -8,6 +8,7 @@ import 'package:onetj/features/settings/models/event.dart';
 import 'package:onetj/features/settings/models/settings_model.dart';
 import 'package:onetj/models/base_model.dart';
 import 'package:onetj/models/event_model.dart';
+import 'package:onetj/models/time_period_range.dart';
 import 'package:onetj/repo/course_schedule_repository.dart';
 import 'package:onetj/repo/school_calendar_repository.dart';
 import 'package:onetj/repo/settings_repository.dart';
@@ -15,7 +16,8 @@ import 'package:onetj/repo/student_info_repository.dart';
 import 'package:onetj/repo/token_repository.dart';
 
 class SettingsViewModel extends BaseViewModel {
-  SettingsViewModel() : _eventController = StreamController<UiEvent>.broadcast();
+  SettingsViewModel()
+      : _eventController = StreamController<UiEvent>.broadcast();
 
   final StreamController<UiEvent> _eventController;
   Stream<UiEvent> get events => _eventController.stream;
@@ -29,9 +31,6 @@ class SettingsViewModel extends BaseViewModel {
 
   int get maxWeek => _settingsData.maxWeek;
   SettingsData get settingsData => _settingsData;
-  List<int> get timeSlotStartMinutesForEditor => _settingsData.timeSlotRanges
-      .map((item) => item.startMinutes)
-      .toList(growable: false);
   bool get settingsLoading => _settingsLoading;
   bool get settingsSaving => _settingsSaving;
 
@@ -60,7 +59,8 @@ class SettingsViewModel extends BaseViewModel {
     _settingsLoading = true;
     notifyListeners();
     try {
-      final SettingsData data = await SettingsRepository.getInstance().getSettings();
+      final SettingsData data =
+          await SettingsRepository.getInstance().getSettings();
       _settingsData = data;
     } catch (error) {
       _eventController.add(
@@ -74,16 +74,17 @@ class SettingsViewModel extends BaseViewModel {
 
   Future<void> saveSettings({
     required int maxWeek,
-    required List<int> editedStartMinutes,
+    required List<TimePeriodRangeData> editedTimeSlotRanges,
   }) async {
     _settingsSaving = true;
     errorMessage = null;
     SettingsModel.validateMaxWeek(maxWeek);
-    final timeSlotRanges =
-        SettingsModel.buildTimeSlotRangesFromStartMinutes(editedStartMinutes);
+    SettingsModel.validateTimeSlotRanges(editedTimeSlotRanges);
     _settingsData = SettingsData(
       maxWeek: maxWeek,
-      timeSlotRanges: timeSlotRanges,
+      timeSlotRanges: List<TimePeriodRangeData>.unmodifiable(
+        editedTimeSlotRanges
+      ),
     );
     notifyListeners();
     try {

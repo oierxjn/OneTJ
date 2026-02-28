@@ -82,7 +82,12 @@
       }
     },
     "settingsTimeSlotsEditorTitle": "编辑课程表时间",
-    "settingsTimeSlotsEditorHint": "点击节次选择开始时间。",
+    "settingsTimeSlotsEditorHint": "点击节次可分别设置开始和结束时间。",
+    "settingsTimeSlotsStartLabel": "开始",
+    "settingsTimeSlotsEndLabel": "结束",
+    "settingsTimeSlotsInvalidEmpty": "至少需要一个节次。",
+    "settingsTimeSlotsInvalidRange": "开始时间必须早于结束时间。",
+    "settingsTimeSlotsInvalidOverlap": "相邻节次不能重叠。",
     "settingsTimeSlotsInvalidOrder": "节次时间必须严格递增。",
     "settingsTimeSlotsResetToDefault": "重置为默认值",
 
