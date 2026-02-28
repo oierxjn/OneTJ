@@ -6,6 +6,7 @@ import 'package:onetj/features/timetable/models/timetable_model.dart';
 import 'package:onetj/models/base_model.dart';
 import 'package:onetj/models/event_model.dart';
 import 'package:onetj/models/settings_defaults.dart';
+import 'package:onetj/models/time_period_range.dart';
 import 'package:onetj/models/timetable_index.dart';
 import 'package:onetj/repo/settings_repository.dart';
 
@@ -36,8 +37,7 @@ class TimetableViewModel extends BaseViewModel {
   TimetableIndex? _index;
   Object? _error;
   bool _isLoading = true;
-  List<int> _timeSlotStartMinutes =
-      List<int>.from(kDefaultTimeSlotStartMinutes);
+  List<TimePeriodRangeData> _timeSlotRanges = kDefaultTimeSlotRanges;
   int _selectedDay = DateTime.now().weekday;
   int? _currentWeek;
   int? _selectedWeek;
@@ -46,7 +46,10 @@ class TimetableViewModel extends BaseViewModel {
   TimetableIndex? get index => _index;
   Object? get error => _error;
   bool get isLoading => _isLoading;
-  List<int> get timeSlotStartMinutes => _timeSlotStartMinutes;
+  List<int> get timeSlotStartMinutes => _timeSlotRanges
+      .map((item) => item.startMinutes)
+      .toList(growable: false);
+  List<TimePeriodRangeData> get timeSlotRanges => _timeSlotRanges;
   int get selectedDay => _selectedDay;
   int? get selectedWeek => _selectedWeek;
   TimetableDisplayMode get mode => _mode;
@@ -103,14 +106,13 @@ class TimetableViewModel extends BaseViewModel {
 
   void _handleSettingsChanged(SettingsData data) {
     final int nextMaxWeek = data.maxWeek;
-    final List<int> nextTimeSlotStartMinutes = List<int>.from(
-      data.timeSlotStartMinutes,
+    final List<TimePeriodRangeData> nextTimeSlotRanges =
+        List<TimePeriodRangeData>.from(
+      data.timeSlotRanges,
     );
     final bool maxWeekChanged = _maxWeek != nextMaxWeek;
-    final bool timeSlotChanged = !_sameTimeSlots(
-      _timeSlotStartMinutes,
-      nextTimeSlotStartMinutes,
-    );
+    final bool timeSlotChanged =
+        !_sameTimeSlotRanges(_timeSlotRanges, nextTimeSlotRanges);
     if (!maxWeekChanged && !timeSlotChanged) {
       return;
     }
@@ -120,7 +122,7 @@ class TimetableViewModel extends BaseViewModel {
       _eventController.add(const SyncWheelEvent());
     }
     if (timeSlotChanged) {
-      _timeSlotStartMinutes = nextTimeSlotStartMinutes;
+      _timeSlotRanges = nextTimeSlotRanges;
     }
     notifyListeners();
   }
@@ -135,7 +137,7 @@ class TimetableViewModel extends BaseViewModel {
       if (_maxWeek != data.maxWeek) {
         _maxWeek = data.maxWeek;
       }
-      _timeSlotStartMinutes = List<int>.from(data.timeSlotStartMinutes);
+      _timeSlotRanges = List<TimePeriodRangeData>.from(data.timeSlotRanges);
     } catch (error) {
       _eventController.add(
         ShowSnackBarEvent(message: _formatErrorMessage(error)),
@@ -143,12 +145,13 @@ class TimetableViewModel extends BaseViewModel {
     }
   }
 
-  bool _sameTimeSlots(List<int> a, List<int> b) {
+  bool _sameTimeSlotRanges(List<TimePeriodRangeData> a, List<TimePeriodRangeData> b) {
     if (a.length != b.length) {
       return false;
     }
     for (int i = 0; i < a.length; i += 1) {
-      if (a[i] != b[i]) {
+      if (a[i].startMinutes != b[i].startMinutes ||
+          a[i].endMinutes != b[i].endMinutes) {
         return false;
       }
     }

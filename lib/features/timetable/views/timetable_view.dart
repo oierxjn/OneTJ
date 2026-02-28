@@ -7,6 +7,7 @@ import 'package:onetj/features/timetable/view_models/timetable_view_model.dart';
 import 'package:onetj/features/timetable/views/widgets/timeline_content.dart';
 import 'package:onetj/features/timetable/models/event.dart';
 import 'package:onetj/models/event_model.dart';
+import 'package:onetj/models/time_period_range.dart';
 import 'package:onetj/models/timetable_index.dart';
 import 'package:onetj/models/time_slot.dart';
 
@@ -245,9 +246,7 @@ class _TimetableViewState extends State<TimetableView> {
     const double slotHeight = 64;
     const double preferredLabelWidth = 72;
     const double minLabelWidth = 35;
-    final List<_TimeSlot> timeSlots = _buildTimeSlots(
-      _viewModel.timeSlotStartMinutes,
-    );
+    final List<_TimeSlot> timeSlots = _buildTimeSlots(_viewModel.timeSlotRanges);
     final double headerHeight =
         mode == TimetableDisplayMode.week ? _weekHeaderHeight(context) : 0;
     final double contentHeight = timeSlots.length * slotHeight + headerHeight;
@@ -400,9 +399,9 @@ class _TimeSlot {
   final String label;
 }
 
-List<_TimeSlot> _buildTimeSlots(List<int> startMinutes) {
-  return startMinutes
-      .map((minute) => _TimeSlot(TimeSlot.formatMinutes(minute)))
+List<_TimeSlot> _buildTimeSlots(List<TimePeriodRangeData> ranges) {
+  return ranges
+      .map((range) => _TimeSlot(TimeSlot.formatMinutes(range.startMinutes)))
       .toList();
 }
 

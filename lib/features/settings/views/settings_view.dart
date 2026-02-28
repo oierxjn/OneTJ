@@ -77,12 +77,7 @@ class _SettingsViewState extends State<SettingsView> {
     if (!mounted) {
       return;
     }
-    _applySettingsToControllers(
-      SettingsData(
-        maxWeek: _viewModel.maxWeek,
-        timeSlotStartMinutes: _viewModel.timeSlotStartMinutes,
-      ),
-    );
+    _applySettingsToControllers(_viewModel.settingsData);
   }
 
   void _submitMaxWeek() {
@@ -96,7 +91,9 @@ class _SettingsViewState extends State<SettingsView> {
 
   void _applySettingsToControllers(SettingsData settings) {
     _maxWeekController.text = settings.maxWeek.toString();
-    _draftTimeSlotStartMinutes = List<int>.from(settings.timeSlotStartMinutes);
+    _draftTimeSlotStartMinutes = settings.timeSlotRanges
+        .map((item) => item.startMinutes)
+        .toList(growable: false);
   }
 
   Future<void> _submitSettings() async {
@@ -104,7 +101,7 @@ class _SettingsViewState extends State<SettingsView> {
       final int maxWeek = int.parse(_maxWeekController.text);
       await _viewModel.saveSettings(
         maxWeek: maxWeek,
-        timeSlotStartMinutes: _draftTimeSlotStartMinutes,
+        editedStartMinutes: _draftTimeSlotStartMinutes,
       );
     } catch (error) {
       if (!mounted) {

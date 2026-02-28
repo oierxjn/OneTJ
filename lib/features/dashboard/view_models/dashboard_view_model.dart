@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:onetj/models/base_model.dart';
 import 'package:onetj/models/event_model.dart';
+import 'package:onetj/models/time_period_range.dart';
 import 'package:onetj/features/dashboard/models/dashboard_model.dart';
 import 'package:onetj/models/timetable_index.dart';
 import 'package:onetj/models/settings_defaults.dart';
@@ -30,8 +31,7 @@ class DashboardViewModel extends BaseViewModel {
   String? _departmentName;
   SchoolCalendarData? _calendar;
   List<TimetableEntry> _timetableEntries = const [];
-  List<int> _timeSlotStartMinutes =
-      List<int>.from(kDefaultTimeSlotStartMinutes);
+  List<TimePeriodRangeData> _timeSlotRanges = kDefaultTimeSlotRanges;
   Object? _studentError;
   Object? _calendarError;
   Object? _timetableError;
@@ -48,7 +48,7 @@ class DashboardViewModel extends BaseViewModel {
   bool get studentLoading => _studentLoading;
   bool get calendarLoading => _calendarLoading;
   bool get timetableLoading => _timetableLoading;
-  List<int> get timeSlotStartMinutes => _timeSlotStartMinutes;
+  List<TimePeriodRangeData> get timeSlotRanges => _timeSlotRanges;
   List<TimetableEntry> get upcomingEntries =>
       _upcomingEntries(now: DateTime.now(), limit: 3);
 
@@ -111,10 +111,10 @@ class DashboardViewModel extends BaseViewModel {
 
   bool _isAfterNow(TimetableEntry entry, DateTime now) {
     final int index = entry.timeStart - 1;
-    if (index < 0 || index >= _timeSlotStartMinutes.length) {
+    if (index < 0 || index >= _timeSlotRanges.length) {
       return true;
     }
-    final int startMinute = _timeSlotStartMinutes[index];
+    final int startMinute = _timeSlotRanges[index].startMinutes;
     final int nowMinutes = now.hour * 60 + now.minute;
     return startMinute > nowMinutes;
   }
@@ -122,14 +122,7 @@ class DashboardViewModel extends BaseViewModel {
   Future<void> loadSettings() async {
     try {
       final SettingsData data = await _settingsRepository.getSettings();
-      final List<int> nextTimeSlotStartMinutes = List<int>.from(
-        data.timeSlotStartMinutes,
-      );
-      if (_sameTimeSlots(_timeSlotStartMinutes, nextTimeSlotStartMinutes)) {
-        return;
-      }
-      _timeSlotStartMinutes = nextTimeSlotStartMinutes;
-      notifyListeners();
+      _handleSettingsChanged(data);
     } catch (error) {
       _eventController.add(
         ShowSnackBarEvent(message: 'Failed to load settings: $error'),
@@ -138,22 +131,24 @@ class DashboardViewModel extends BaseViewModel {
   }
 
   void _handleSettingsChanged(SettingsData data) {
-    final List<int> nextTimeSlotStartMinutes = List<int>.from(
-      data.timeSlotStartMinutes,
+    final List<TimePeriodRangeData> nextTimeSlotRanges =
+        List<TimePeriodRangeData>.from(
+      data.timeSlotRanges,
     );
-    if (_sameTimeSlots(_timeSlotStartMinutes, nextTimeSlotStartMinutes)) {
+    if (_sameTimeSlotRanges(_timeSlotRanges, nextTimeSlotRanges)) {
       return;
     }
-    _timeSlotStartMinutes = nextTimeSlotStartMinutes;
+    _timeSlotRanges = nextTimeSlotRanges;
     notifyListeners();
   }
 
-  bool _sameTimeSlots(List<int> a, List<int> b) {
+  bool _sameTimeSlotRanges(List<TimePeriodRangeData> a, List<TimePeriodRangeData> b) {
     if (a.length != b.length) {
       return false;
     }
     for (int i = 0; i < a.length; i += 1) {
-      if (a[i] != b[i]) {
+      if (a[i].startMinutes != b[i].startMinutes ||
+          a[i].endMinutes != b[i].endMinutes) {
         return false;
       }
     }

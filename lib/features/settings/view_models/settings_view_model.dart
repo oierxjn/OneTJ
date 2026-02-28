@@ -20,15 +20,18 @@ class SettingsViewModel extends BaseViewModel {
   final StreamController<UiEvent> _eventController;
   Stream<UiEvent> get events => _eventController.stream;
   // 初值一般不会被使用
-  SettingsData _settingsData = const SettingsData(
+  SettingsData _settingsData = SettingsData(
     maxWeek: kDefaultMaxWeek,
-    timeSlotStartMinutes: kDefaultTimeSlotStartMinutes,
+    timeSlotRanges: kDefaultTimeSlotRanges,
   );
   bool _settingsLoading = true;
   bool _settingsSaving = false;
 
   int get maxWeek => _settingsData.maxWeek;
-  List<int> get timeSlotStartMinutes => _settingsData.timeSlotStartMinutes;
+  SettingsData get settingsData => _settingsData;
+  List<int> get timeSlotStartMinutesForEditor => _settingsData.timeSlotRanges
+      .map((item) => item.startMinutes)
+      .toList(growable: false);
   bool get settingsLoading => _settingsLoading;
   bool get settingsSaving => _settingsSaving;
 
@@ -71,17 +74,19 @@ class SettingsViewModel extends BaseViewModel {
 
   Future<void> saveSettings({
     required int maxWeek,
-    required List<int> timeSlotStartMinutes,
+    required List<int> editedStartMinutes,
   }) async {
     _settingsSaving = true;
     errorMessage = null;
+    SettingsModel.validateMaxWeek(maxWeek);
+    final timeSlotRanges =
+        SettingsModel.buildTimeSlotRangesFromStartMinutes(editedStartMinutes);
     _settingsData = SettingsData(
       maxWeek: maxWeek,
-      timeSlotStartMinutes: List<int>.from(timeSlotStartMinutes),
+      timeSlotRanges: timeSlotRanges,
     );
     notifyListeners();
     try {
-      SettingsModel.validateSettings(_settingsData);
       await SettingsRepository.getInstance().saveSettings(_settingsData);
       _eventController.add(SettingsSavedEvent(settings: _settingsData));
     } catch (error) {
