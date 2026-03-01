@@ -117,7 +117,7 @@ class _SettingsViewState extends State<SettingsView> {
 
   void _applySettingsToControllers(SettingsData settings) {
     _maxWeekController.text = settings.maxWeek.toString();
-    _draftTimeSlotRanges = settings.timeSlotRanges
+    final List<TimePeriodRangeData> nextRanges = settings.timeSlotRanges
         .map(
           (item) => TimePeriodRangeData(
             startMinutes: item.startMinutes,
@@ -125,6 +125,13 @@ class _SettingsViewState extends State<SettingsView> {
           ),
         )
         .toList(growable: false);
+    if (mounted) {
+      setState(() {
+        _draftTimeSlotRanges = nextRanges;
+      });
+      return;
+    }
+    _draftTimeSlotRanges = nextRanges;
   }
 
   Future<void> _submitSettings() async {
