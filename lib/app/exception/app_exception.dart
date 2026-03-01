@@ -1,9 +1,21 @@
+import 'package:onetj/app/logging/app_logger.dart';
+
 class AppException implements Exception {
   final String code;
   final String message;
   final Object? cause;
 
-  AppException(this.code, this.message, {this.cause});
+  AppException(this.code, this.message, {this.cause}) {
+    try {
+      AppLogger.logExceptionCreated(
+        code: code,
+        message: message,
+        cause: cause,
+      );
+    } catch (_) {
+      // Keep exception construction side-effect safe.
+    }
+  }
 
   @override
   String toString() => '$code: $message\n cause: ${cause?.toString()}';
