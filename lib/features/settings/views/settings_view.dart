@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/features/settings/models/event.dart';
 import 'package:onetj/features/settings/view_models/settings_view_model.dart';
@@ -36,8 +37,9 @@ class _SettingsViewState extends State<SettingsView> {
         return;
       }
       if (event is ShowSnackBarEvent) {
+        final AppLocalizations l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(event.message ?? '')),
+          SnackBar(content: Text(_resolveSettingsErrorMessage(l10n, event))),
         );
         return;
       }
@@ -72,6 +74,30 @@ class _SettingsViewState extends State<SettingsView> {
     super.dispose();
   }
 
+  String _resolveSettingsErrorMessage(
+    AppLocalizations l10n,
+    ShowSnackBarEvent event,
+  ) {
+    switch (event.code) {
+      case SettingsValidationException.maxWeekOutOfRange:
+        return l10n.settingsMaxWeekInvalidRange;
+      case SettingsValidationException.timeSlotEmpty:
+        return l10n.settingsTimeSlotsInvalidEmpty;
+      case SettingsValidationException.timeSlotStartOutOfRange:
+      case SettingsValidationException.timeSlotEndOutOfRange:
+      case SettingsValidationException.timeSlotRangeInvalid:
+      case SettingsValidationException.timeSlotStartMinutesItemOutOfRange:
+        return l10n.settingsTimeSlotsInvalidRange;
+      case SettingsValidationException.timeSlotOrderInvalid:
+      case SettingsValidationException.timeSlotStartMinutesNotIncreasing:
+        return l10n.settingsTimeSlotsInvalidOrder;
+      case SettingsValidationException.timeSlotOverlap:
+        return l10n.settingsTimeSlotsInvalidOverlap;
+      default:
+        return event.message ?? '';
+    }
+  }
+
   Future<void> _initSettings() async {
     await _viewModel.loadSettings();
     if (!mounted) {
@@ -102,20 +128,11 @@ class _SettingsViewState extends State<SettingsView> {
   }
 
   Future<void> _submitSettings() async {
-    try {
-      final int maxWeek = int.parse(_maxWeekController.text);
-      await _viewModel.saveSettings(
-        maxWeek: maxWeek,
-        editedTimeSlotRanges: _draftTimeSlotRanges,
-      );
-    } catch (error) {
-      if (!mounted) {
-        return;
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.toString())),
-      );
-    }
+    final int maxWeek = int.parse(_maxWeekController.text);
+    await _viewModel.saveSettings(
+      maxWeek: maxWeek,
+      editedTimeSlotRanges: _draftTimeSlotRanges,
+    );
   }
 
   Future<void> _logout(BuildContext context) async {

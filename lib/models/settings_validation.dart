@@ -6,7 +6,8 @@ const int kDayLastMinute = 24 * 60 - 1;
 
 void validateTimeSlotRanges(List<TimePeriodRangeData> ranges) {
   if (ranges.isEmpty) {
-    throw SettingsResolveException(
+    throw SettingsValidationException(
+      code: SettingsValidationException.timeSlotEmpty,
       message: 'timeSlotRanges must not be empty',
     );
   }
@@ -14,29 +15,34 @@ void validateTimeSlotRanges(List<TimePeriodRangeData> ranges) {
     final int start = ranges[i].startMinutes;
     final int end = ranges[i].endMinutes;
     if (start < 0 || start > kDayLastMinute) {
-      throw SettingsResolveException(
-        message: 'timeSlotRanges.startMinutes out of range',
+      throw SettingsValidationException(
+        code: SettingsValidationException.timeSlotStartOutOfRange,
+        message: 'timeSlotRanges.startMinutes out of range: $start',
       );
     }
     if (end < 0 || end > kDayLastMinute) {
-      throw SettingsResolveException(
-        message: 'timeSlotRanges.endMinutes out of range',
+      throw SettingsValidationException(
+        code: SettingsValidationException.timeSlotEndOutOfRange,
+        message: 'timeSlotRanges.endMinutes out of range: $end',
       );
     }
     if (start >= end) {
-      throw SettingsResolveException(
+      throw SettingsValidationException(
+        code: SettingsValidationException.timeSlotRangeInvalid,
         message: 'timeSlotRanges.startMinutes must be less than endMinutes',
       );
     }
     if (i > 0) {
       final TimePeriodRangeData prev = ranges[i - 1];
       if (prev.startMinutes >= start) {
-        throw SettingsResolveException(
+        throw SettingsValidationException(
+          code: SettingsValidationException.timeSlotOrderInvalid,
           message: 'timeSlotRanges.startMinutes must be strictly increasing',
         );
       }
       if (prev.endMinutes > start) {
-        throw SettingsResolveException(
+        throw SettingsValidationException(
+          code: SettingsValidationException.timeSlotOverlap,
           message: 'timeSlotRanges must not overlap',
         );
       }
@@ -46,19 +52,22 @@ void validateTimeSlotRanges(List<TimePeriodRangeData> ranges) {
 
 void validateTimeSlotStartMinutes(List<int> values) {
   if (values.isEmpty) {
-    throw SettingsResolveException(
+    throw SettingsValidationException(
+      code: SettingsValidationException.timeSlotEmpty,
       message: 'timeSlotStartMinutes must not be empty',
     );
   }
   for (int i = 0; i < values.length; i += 1) {
     final int minute = values[i];
     if (minute < 0 || minute > kDayLastMinute) {
-      throw SettingsResolveException(
+      throw SettingsValidationException(
+        code: SettingsValidationException.timeSlotStartMinutesItemOutOfRange,
         message: 'timeSlotStartMinutes item out of range',
       );
     }
     if (i > 0 && minute <= values[i - 1]) {
-      throw SettingsResolveException(
+      throw SettingsValidationException(
+        code: SettingsValidationException.timeSlotStartMinutesNotIncreasing,
         message: 'timeSlotStartMinutes must be strictly increasing',
       );
     }

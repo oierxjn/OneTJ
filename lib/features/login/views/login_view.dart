@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
-import 'package:logging/logging.dart';
 
 
 import 'package:onetj/models/event_model.dart';
@@ -32,7 +31,7 @@ class _LoginViewState extends State<LoginView> {
     _eventSub = viewModel.events.listen((event) {
       if (event is ShowSnackBarEvent) {
         if(!mounted)return;
-        if(event.code == AuthStateMismatchException().code){
+        if(event.code == AuthStateMismatchException.errorCode){
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(AppLocalizations.of(context).authStateMismatch)),
           );
@@ -66,7 +65,6 @@ class _LoginViewState extends State<LoginView> {
           url: WebUri(viewModel.authUri.toString()),
         ),
         shouldOverrideUrlLoading: (controller, navigationAction) async {
-          print('shouldOverrideUrlLoading: ${navigationAction.request.url}');
           if (navigationAction.request.url == null) {
             return NavigationActionPolicy.ALLOW;
           }

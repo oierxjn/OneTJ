@@ -52,6 +52,8 @@ class SettingsData {
         return _parseTimeSlotRanges(json['timeSlotRanges']);
       } on SettingsResolveException {
         return _defaultTimeSlotRanges();
+      } on SettingsValidationException {
+        return _defaultTimeSlotRanges();
       }
     }
     if (json.containsKey('timeSlotStartMinutes')) {
@@ -61,6 +63,8 @@ class SettingsData {
         );
         return _deriveRangesFromStarts(starts);
       } on SettingsResolveException {
+        return _defaultTimeSlotRanges();
+      } on SettingsValidationException {
         return _defaultTimeSlotRanges();
       }
     }

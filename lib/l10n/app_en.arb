@@ -68,6 +68,7 @@
 
   "settingsMaxWeekTitle": "Max Weeks",
   "settingsMaxWeekSubtitle": "Used by the timetable to display available weeks",
+  "settingsMaxWeekInvalidRange": "Max week must be between 1 and 52.",
   "settingsTimeSlotsTitle": "Time Slots",
   "settingsTimeSlotsEmpty": "No time slots configured",
   "settingsTimeSlotsSummary": "{count} slots - {first} to {last}",

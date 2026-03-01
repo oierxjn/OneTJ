@@ -9,9 +9,17 @@ class SettingsModel {
     validateTimeSlotRanges(settings.timeSlotRanges);
   }
 
+  /// 校验是否符合最大周数范围
+  /// 
+  /// 最大周数范围为1-52
+  /// 
+  /// throw [SettingsValidationException]
   static void validateMaxWeek(int value) {
     if (value < 1 || value > 52) {
-      throw SettingsResolveException(message: 'maxWeek out of range');
+      throw SettingsValidationException(
+        code: SettingsValidationException.maxWeekOutOfRange,
+        message: 'maxWeek out of range',
+      );
     }
   }
 
@@ -24,7 +32,9 @@ class SettingsModel {
   ) {
     return settings_validation.buildTimeSlotRangesFromStartMinutes(starts);
   }
-
+  /// 校验时间槽范围是否符合要求
+  /// 
+  /// throw [SettingsValidationException]
   static void validateTimeSlotRanges(List<TimePeriodRangeData> values) {
     settings_validation.validateTimeSlotRanges(values);
   }

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
+import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/models/settings_defaults.dart';
 import 'package:onetj/features/settings/models/event.dart';
@@ -78,18 +79,25 @@ class SettingsViewModel extends BaseViewModel {
   }) async {
     _settingsSaving = true;
     errorMessage = null;
-    SettingsModel.validateMaxWeek(maxWeek);
-    SettingsModel.validateTimeSlotRanges(editedTimeSlotRanges);
-    _settingsData = SettingsData(
-      maxWeek: maxWeek,
-      timeSlotRanges: List<TimePeriodRangeData>.unmodifiable(
-        editedTimeSlotRanges
-      ),
-    );
     notifyListeners();
     try {
-      await SettingsRepository.getInstance().saveSettings(_settingsData);
-      _eventController.add(SettingsSavedEvent(settings: _settingsData));
+      SettingsModel.validateMaxWeek(maxWeek);
+      SettingsModel.validateTimeSlotRanges(editedTimeSlotRanges);
+      final SettingsData next = SettingsData(
+        maxWeek: maxWeek,
+        timeSlotRanges: List<TimePeriodRangeData>.unmodifiable(
+          editedTimeSlotRanges,
+        ),
+      );
+      await SettingsRepository.getInstance().saveSettings(next);
+      _settingsData = next;
+      notifyListeners();
+      _eventController.add(SettingsSavedEvent(settings: next));
+    } on SettingsValidationException catch (error) {
+      errorMessage = error.message;
+      _eventController.add(
+        ShowSnackBarEvent(message: error.message, code: error.code),
+      );
     } catch (error) {
       final String message = 'Failed to save settings: ${error.toString()}';
       errorMessage = message;

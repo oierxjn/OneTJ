@@ -97,7 +97,7 @@
     "settingsResetConfirmTitle": "确认重置所有设置？",
     "settingsResetConfirmLabel": "这仅会重置应用设置，不会影响您的账户或缓存。",
     "settingsResetDone": "设置已恢复为默认值",
-    
+    "settingsMaxWeekInvalidRange": "最大周数必须在1到52之间",
     "settingsSaved": "设置已保存"
 }
 
