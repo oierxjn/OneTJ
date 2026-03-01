@@ -3,6 +3,7 @@ import 'package:logging/logging.dart';
 
 import 'package:onetj/app/logging/app_log_buffer.dart';
 import 'package:onetj/app/logging/app_log_entry.dart';
+import 'package:onetj/app/logging/app_log_formatter.dart';
 import 'package:onetj/app/logging/app_log_level.dart';
 
 class AppLogger {
@@ -227,11 +228,7 @@ class AppLogger {
     );
     _buffer.add(entry);
     if (kDebugMode) {
-      final String base = '${entry.time.toIso8601String()} [${entry.level.name}] ${entry.loggerName}: ${entry.message}';
-      final String withCode = entry.code == null ? base : '$base (code=${entry.code})';
-      final String withContext = safeContext.isEmpty ? withCode : '$withCode context=$safeContext';
-      final String withError = entry.error == null ? withContext : '$withContext error=${entry.error}';
-      debugPrint('[ONETJ] $withError');
+      debugPrint('[ONETJ] ${AppLogFormatter.toPlainText(entry)}');
       if (entry.stackTrace != null && entry.stackTrace!.isNotEmpty) {
         debugPrint(entry.stackTrace);
       }

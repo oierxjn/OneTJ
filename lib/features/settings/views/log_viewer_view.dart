@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'package:onetj/app/logging/app_log_entry.dart';
+import 'package:onetj/app/logging/app_log_formatter.dart';
 import 'package:onetj/app/logging/app_logger.dart';
 
 class LogViewerView extends StatelessWidget {
@@ -27,7 +28,7 @@ class LogViewerView extends StatelessWidget {
               itemBuilder: (context, index) {
                 final AppLogEntry entry = logs[index];
                 return SelectableText(
-                  _formatEntry(entry),
+                  entry.toPlainText(),
                   style: const TextStyle(
                     fontFamily: 'monospace',
                     fontSize: 12,
@@ -37,33 +38,5 @@ class LogViewerView extends StatelessWidget {
               },
             ),
     );
-  }
-
-  String _formatEntry(AppLogEntry entry) {
-    final StringBuffer buffer = StringBuffer()
-      ..write(entry.time.toIso8601String())
-      ..write(' [')
-      ..write(entry.level.name)
-      ..write('] ')
-      ..write(entry.loggerName)
-      ..write(': ')
-      ..write(entry.message);
-    if (entry.code != null) {
-      buffer
-        ..write(' (code=')
-        ..write(entry.code)
-        ..write(')');
-    }
-    if (entry.context.isNotEmpty) {
-      buffer
-        ..write(' context=')
-        ..write(entry.context);
-    }
-    if (entry.error != null && entry.error!.isNotEmpty) {
-      buffer
-        ..write(' error=')
-        ..write(entry.error);
-    }
-    return buffer.toString();
   }
 }
