@@ -92,6 +92,12 @@
   "settingsTimeSlotsResetToDefault": "Reset to defaults",
 
   "settingsAdvancedSectionTitle": "Advanced",
+  "settingsDeveloperTitle": "Developer Mode",
+  "settingsDeveloperSubtitle": "Diagnostics and logs",
+  "settingsDeveloperPageTitle": "Developer Mode",
+  "settingsLogsTitle": "Logs",
+  "settingsLogsSubtitle": "View recent application logs",
+  "settingsLogsEmpty": "No logs yet",
   "settingsResetTitle": "Reset Settings",
   "settingsResetSubtitle": "Restore all settings to defaults",
   "settingsResetConfirmTitle": "Reset all settings?",

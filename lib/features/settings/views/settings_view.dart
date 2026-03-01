@@ -305,6 +305,19 @@ class _SettingsViewState extends State<SettingsView> {
                     : () => _confirmResetSettings(context),
               ),
             ),
+            const SizedBox(height: 12),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.developer_mode),
+                title:
+                    Text(AppLocalizations.of(context).settingsDeveloperTitle),
+                subtitle: Text(
+                  AppLocalizations.of(context).settingsDeveloperSubtitle,
+                ),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push(RoutePaths.homeSettingsDeveloper),
+              ),
+            ),
             const SizedBox(height: 24),
             Center(
               child: FilledButton(

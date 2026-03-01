@@ -1,6 +1,8 @@
 import 'package:go_router/go_router.dart';
 
 import 'package:onetj/app/constant/route_paths.dart';
+import 'package:onetj/features/settings/views/developer_settings_view.dart';
+import 'package:onetj/features/settings/views/log_viewer_view.dart';
 import 'package:onetj/features/settings/views/settings_view.dart';
 import 'package:onetj/features/settings/views/time_slot_editor_view.dart';
 import 'package:onetj/models/settings_defaults.dart';
@@ -36,6 +38,18 @@ final List<GoRoute> settingsRoutes = [
             initialTimeSlotRanges: initialTimeSlots,
           );
         },
+      ),
+      GoRoute(
+        path: 'developer',
+        name: 'settings-developer',
+        builder: (context, state) => const DeveloperSettingsView(),
+        routes: [
+          GoRoute(
+            path: 'logs',
+            name: 'settings-developer-logs',
+            builder: (context, state) => const LogViewerView(),
+          ),
+        ],
       ),
     ],
   ),
