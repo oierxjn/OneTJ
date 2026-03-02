@@ -289,35 +289,33 @@ class _UpcomingCard extends StatelessWidget {
           color: colors.outlineVariant,
         ),
       ),
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _TimeBadge(label: timeLabel),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 8),
-                  _MetaRow(
-                    icon: Icons.room_outlined,
-                    label: roomLabel,
-                  ),
-                  const SizedBox(height: 4),
-                  _MetaRow(
-                    icon: Icons.person_outline,
-                    label: teacherLabel,
-                  ),
-                ],
-              ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _TimeBadge(label: timeLabel),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                _MetaRow(
+                  icon: Icons.room_outlined,
+                  label: roomLabel,
+                ),
+                const SizedBox(height: 4),
+                _MetaRow(
+                  icon: Icons.person_outline,
+                  label: teacherLabel,
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
