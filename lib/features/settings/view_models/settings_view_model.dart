@@ -119,10 +119,10 @@ class SettingsViewModel extends BaseViewModel {
       final int maxWeek = SettingsModel.parseMaxWeekText(maxWeekText);
       final int dashboardUpcomingCount =
           dashboardUpcomingMode == DashboardUpcomingMode.count
-          ? SettingsModel.parseDashboardUpcomingCountText(
-              dashboardUpcomingCountText,
-            )
-          : _settingsData.dashboardUpcomingCount;
+              ? SettingsModel.parseDashboardUpcomingCountText(
+                  dashboardUpcomingCountText,
+                )
+              : _settingsData.dashboardUpcomingCount;
       SettingsModel.validateMaxWeek(maxWeek);
       SettingsModel.validateTimeSlotRanges(editedTimeSlotRanges);
       SettingsModel.validateDashboardUpcomingCount(dashboardUpcomingCount);
