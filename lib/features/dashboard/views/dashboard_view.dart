@@ -155,7 +155,7 @@ class _DashboardViewState extends State<DashboardView> {
                   ? entry.courseName
                   : 'Unknown course',
               timeLabel:
-                  '${_weekdayLabel(l10n, entry.dayOfWeek)} · ${_formatTimeRange(entry, _viewModel.timeSlotRanges)}',
+                  '${_weekdayLabel(l10n, entry.dayOfWeek)}\n${_formatTimeRange(entry, _viewModel.timeSlotRanges)}',
               roomLabel: entry.roomIdI18n.isNotEmpty
                   ? entry.roomIdI18n
                   : entry.roomLabel,
@@ -289,33 +289,35 @@ class _UpcomingCard extends StatelessWidget {
           color: colors.outlineVariant,
         ),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _TimeBadge(label: timeLabel),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 8),
-                _MetaRow(
-                  icon: Icons.room_outlined,
-                  label: roomLabel,
-                ),
-                const SizedBox(height: 4),
-                _MetaRow(
-                  icon: Icons.person_outline,
-                  label: teacherLabel,
-                ),
-              ],
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _TimeBadge(label: timeLabel),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  _MetaRow(
+                    icon: Icons.room_outlined,
+                    label: roomLabel,
+                  ),
+                  const SizedBox(height: 4),
+                  _MetaRow(
+                    icon: Icons.person_outline,
+                    label: teacherLabel,
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -330,8 +332,10 @@ class _TimeBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final ColorScheme colors = Theme.of(context).colorScheme;
     return Container(
-      width: 88,
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+      width: 95,
+      height: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      alignment: Alignment.centerLeft,
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: BorderRadius.circular(12),
