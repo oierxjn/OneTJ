@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'package:onetj/features/timetable/view_models/timetable_view_model.dart';
@@ -108,7 +108,7 @@ class TimetableTimelinePanel extends StatelessWidget {
     final TextPainter painter = TextPainter(
       text: TextSpan(text: dayLabel, style: style),
       maxLines: 1,
-      textDirection: TextDirection.ltr,
+      textDirection: Directionality.of(context),
     )..layout();
     return painter.height + padding;
   }

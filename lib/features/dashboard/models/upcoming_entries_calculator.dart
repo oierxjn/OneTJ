@@ -10,7 +10,7 @@ import 'package:onetj/models/timetable_index.dart';
 /// [currentWeek] 当前周数
 /// [maxWeek] 最大周数
 /// [mode] 显示模式
-/// [count] 最多显示课程数
+/// [count] 最多显示课程数，仅在 [DashboardUpcomingMode.count] 模式下生效
 class UpcomingEntriesQuery {
   const UpcomingEntriesQuery({
     required this.now,

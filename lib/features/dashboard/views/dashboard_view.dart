@@ -289,35 +289,37 @@ class _UpcomingCard extends StatelessWidget {
           color: colors.outlineVariant,
         ),
       ),
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _TimeBadge(label: timeLabel),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 8),
-                  _MetaRow(
-                    icon: Icons.room_outlined,
-                    label: roomLabel,
-                  ),
-                  const SizedBox(height: 4),
-                  _MetaRow(
-                    icon: Icons.person_outline,
-                    label: teacherLabel,
-                  ),
-                ],
-              ),
+      child: Stack(
+        children: [
+          Positioned(
+            top: 0,
+            bottom: 0,
+            left: 0,
+            child: _TimeBadge(label: timeLabel),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 107),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                _MetaRow(
+                  icon: Icons.room_outlined,
+                  label: roomLabel,
+                ),
+                const SizedBox(height: 4),
+                _MetaRow(
+                  icon: Icons.person_outline,
+                  label: teacherLabel,
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -331,21 +333,23 @@ class _TimeBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = Theme.of(context).colorScheme;
-    return Container(
-      width: 95,
-      height: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      alignment: Alignment.centerLeft,
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: colors.outlineVariant,
+    return Padding(
+      padding: const EdgeInsets.only(right: 12),
+      child: Container(
+        width: 95,
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        alignment: Alignment.centerLeft,
+        decoration: BoxDecoration(
+          color: colors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: colors.outlineVariant,
+          ),
         ),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.bodySmall,
+        child: Text(
+          label,
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
       ),
     );
   }
