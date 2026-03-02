@@ -248,20 +248,175 @@ class _SettingsViewState extends State<SettingsView> {
     }
   }
 
+  bool get _settingsBusy =>
+      _viewModel.settingsLoading || _viewModel.settingsSaving;
+
+  void _onUpcomingModeChanged(DashboardUpcomingMode? value) {
+    if (value == null) {
+      return;
+    }
+    setState(() {
+      _draftUpcomingMode = value;
+    });
+  }
+
+  Widget _buildMaxWeekCard(AppLocalizations l10n) {
+    return Card(
+      child: ListTile(
+        title: Text(l10n.settingsMaxWeekTitle),
+        subtitle: Text(l10n.settingsMaxWeekSubtitle),
+        trailing: SizedBox(
+          width: 100,
+          child: TextField(
+            controller: _maxWeekController,
+            keyboardType: TextInputType.number,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+            ],
+            enabled: !_settingsBusy,
+            decoration: const InputDecoration(
+              isDense: true,
+              border: OutlineInputBorder(),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTimeSlotCard(AppLocalizations l10n) {
+    return Card(
+      child: ListTile(
+        leading: const Icon(Icons.schedule),
+        title: Text(l10n.settingsTimeSlotsTitle),
+        subtitle: Text(_timeSlotSummary(l10n)),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: _settingsBusy ? null : _openTimeSlotEditor,
+      ),
+    );
+  }
+
+  Widget _buildUpcomingModeOption({
+    required DashboardUpcomingMode value,
+    required String title,
+  }) {
+    return RadioListTile<DashboardUpcomingMode>(
+      contentPadding: EdgeInsets.zero,
+      value: value,
+      groupValue: _draftUpcomingMode,
+      onChanged: _settingsBusy ? null : _onUpcomingModeChanged,
+      title: Text(title),
+    );
+  }
+
+  Widget _buildDashboardCountField(AppLocalizations l10n) {
+    return TextField(
+      controller: _dashboardCountController,
+      keyboardType: TextInputType.number,
+      inputFormatters: [
+        FilteringTextInputFormatter.digitsOnly,
+      ],
+      enabled: !_settingsBusy,
+      decoration: InputDecoration(
+        isDense: true,
+        border: const OutlineInputBorder(),
+        labelText: l10n.settingsDashboardUpcomingCountLabel,
+        helperText: l10n.settingsDashboardUpcomingCountHint,
+      ),
+    );
+  }
+
+  Widget _buildDashboardUpcomingCard(AppLocalizations l10n) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.settingsDashboardUpcomingTitle,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              _dashboardUpcomingSummary(l10n),
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 8),
+            _buildUpcomingModeOption(
+              value: DashboardUpcomingMode.thisWeek,
+              title: l10n.settingsDashboardUpcomingModeThisWeek,
+            ),
+            _buildUpcomingModeOption(
+              value: DashboardUpcomingMode.today,
+              title: l10n.settingsDashboardUpcomingModeToday,
+            ),
+            _buildUpcomingModeOption(
+              value: DashboardUpcomingMode.count,
+              title: l10n.settingsDashboardUpcomingModeCount,
+            ),
+            if (_draftUpcomingMode == DashboardUpcomingMode.count) ...[
+              const SizedBox(height: 8),
+              _buildDashboardCountField(l10n),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAdvancedSectionTitle(AppLocalizations l10n) {
+    return Text(
+      l10n.settingsAdvancedSectionTitle,
+      style: Theme.of(context).textTheme.titleMedium,
+    );
+  }
+
+  Widget _buildResetCard(AppLocalizations l10n) {
+    return Card(
+      child: ListTile(
+        leading: const Icon(Icons.restore),
+        title: Text(l10n.settingsResetTitle),
+        subtitle: Text(l10n.settingsResetSubtitle),
+        onTap: _settingsBusy ? null : () => _confirmResetSettings(context),
+      ),
+    );
+  }
+
+  Widget _buildDeveloperCard(AppLocalizations l10n) {
+    return Card(
+      child: ListTile(
+        leading: const Icon(Icons.developer_mode),
+        title: Text(l10n.settingsDeveloperTitle),
+        subtitle: Text(l10n.settingsDeveloperSubtitle),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () => context.push(RoutePaths.homeSettingsDeveloper),
+      ),
+    );
+  }
+
+  Widget _buildLogoutButton(AppLocalizations l10n) {
+    return Center(
+      child: FilledButton(
+        onPressed: _viewModel.loading ? null : () => _logout(context),
+        child: Text(l10n.logOut),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context).tabSettings),
+        title: Text(l10n.tabSettings),
         actions: [
           AnimatedBuilder(
             animation: _viewModel,
             builder: (context, _) => IconButton(
-              tooltip: AppLocalizations.of(context).saveLabel,
+              tooltip: l10n.saveLabel,
               icon: const Icon(Icons.save),
-              onPressed: _viewModel.settingsLoading || _viewModel.settingsSaving
-                  ? null
-                  : _submitSettings,
+              onPressed: _settingsBusy ? null : _submitSettings,
             ),
           ),
         ],
@@ -271,181 +426,19 @@ class _SettingsViewState extends State<SettingsView> {
         builder: (context, _) => ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            Card(
-              child: ListTile(
-                title: Text(AppLocalizations.of(context).settingsMaxWeekTitle),
-                subtitle:
-                    Text(AppLocalizations.of(context).settingsMaxWeekSubtitle),
-                trailing: SizedBox(
-                  width: 100,
-                  child: TextField(
-                    controller: _maxWeekController,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                    ],
-                    enabled: !_viewModel.settingsLoading &&
-                        !_viewModel.settingsSaving,
-                    decoration: const InputDecoration(
-                      isDense: true,
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                ),
-              ),
-            ),
+            _buildMaxWeekCard(l10n),
             const SizedBox(height: 12),
-            Card(
-              child: ListTile(
-                leading: const Icon(Icons.schedule),
-                title:
-                    Text(AppLocalizations.of(context).settingsTimeSlotsTitle),
-                subtitle: Text(_timeSlotSummary(AppLocalizations.of(context))),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: _viewModel.settingsLoading || _viewModel.settingsSaving
-                    ? null
-                    : _openTimeSlotEditor,
-              ),
-            ),
+            _buildTimeSlotCard(l10n),
             const SizedBox(height: 12),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      AppLocalizations.of(context)
-                          .settingsDashboardUpcomingTitle,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _dashboardUpcomingSummary(AppLocalizations.of(context)),
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                    const SizedBox(height: 8),
-                    RadioListTile<DashboardUpcomingMode>(
-                      contentPadding: EdgeInsets.zero,
-                      value: DashboardUpcomingMode.thisWeek,
-                      groupValue: _draftUpcomingMode,
-                      onChanged: _viewModel.settingsLoading ||
-                              _viewModel.settingsSaving
-                          ? null
-                          : (value) {
-                              if (value == null) {
-                                return;
-                              }
-                              setState(() {
-                                _draftUpcomingMode = value;
-                              });
-                            },
-                      title: Text(
-                        AppLocalizations.of(context)
-                            .settingsDashboardUpcomingModeThisWeek,
-                      ),
-                    ),
-                    RadioListTile<DashboardUpcomingMode>(
-                      contentPadding: EdgeInsets.zero,
-                      value: DashboardUpcomingMode.today,
-                      groupValue: _draftUpcomingMode,
-                      onChanged: _viewModel.settingsLoading ||
-                              _viewModel.settingsSaving
-                          ? null
-                          : (value) {
-                              if (value == null) {
-                                return;
-                              }
-                              setState(() {
-                                _draftUpcomingMode = value;
-                              });
-                            },
-                      title: Text(
-                        AppLocalizations.of(context)
-                            .settingsDashboardUpcomingModeToday,
-                      ),
-                    ),
-                    RadioListTile<DashboardUpcomingMode>(
-                      contentPadding: EdgeInsets.zero,
-                      value: DashboardUpcomingMode.count,
-                      groupValue: _draftUpcomingMode,
-                      onChanged: _viewModel.settingsLoading ||
-                              _viewModel.settingsSaving
-                          ? null
-                          : (value) {
-                              if (value == null) {
-                                return;
-                              }
-                              setState(() {
-                                _draftUpcomingMode = value;
-                              });
-                            },
-                      title: Text(
-                        AppLocalizations.of(context)
-                            .settingsDashboardUpcomingModeCount,
-                      ),
-                    ),
-                    if (_draftUpcomingMode == DashboardUpcomingMode.count) ...[
-                      const SizedBox(height: 8),
-                      TextField(
-                        controller: _dashboardCountController,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                        ],
-                        enabled: !_viewModel.settingsLoading &&
-                            !_viewModel.settingsSaving,
-                        decoration: InputDecoration(
-                          isDense: true,
-                          border: const OutlineInputBorder(),
-                          labelText: AppLocalizations.of(context)
-                              .settingsDashboardUpcomingCountLabel,
-                          helperText: AppLocalizations.of(context)
-                              .settingsDashboardUpcomingCountHint,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
+            _buildDashboardUpcomingCard(l10n),
             const SizedBox(height: 24),
-            Text(
-              AppLocalizations.of(context).settingsAdvancedSectionTitle,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
+            _buildAdvancedSectionTitle(l10n),
             const SizedBox(height: 8),
-            Card(
-              child: ListTile(
-                leading: const Icon(Icons.restore),
-                title: Text(AppLocalizations.of(context).settingsResetTitle),
-                subtitle:
-                    Text(AppLocalizations.of(context).settingsResetSubtitle),
-                onTap: _viewModel.settingsLoading || _viewModel.settingsSaving
-                    ? null
-                    : () => _confirmResetSettings(context),
-              ),
-            ),
+            _buildResetCard(l10n),
             const SizedBox(height: 12),
-            Card(
-              child: ListTile(
-                leading: const Icon(Icons.developer_mode),
-                title:
-                    Text(AppLocalizations.of(context).settingsDeveloperTitle),
-                subtitle: Text(
-                  AppLocalizations.of(context).settingsDeveloperSubtitle,
-                ),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => context.push(RoutePaths.homeSettingsDeveloper),
-              ),
-            ),
+            _buildDeveloperCard(l10n),
             const SizedBox(height: 24),
-            Center(
-              child: FilledButton(
-                onPressed: _viewModel.loading ? null : () => _logout(context),
-                child: Text(AppLocalizations.of(context).logOut),
-              ),
-            ),
+            _buildLogoutButton(l10n),
           ],
         ),
       ),
