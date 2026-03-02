@@ -12,6 +12,7 @@ class UpcomingCoursesCard extends StatefulWidget {
     required this.enabled,
     required this.summaryText,
     required this.onModeChanged,
+    required this.onCountChanged,
     super.key,
   });
 
@@ -21,6 +22,7 @@ class UpcomingCoursesCard extends StatefulWidget {
   final bool enabled;
   final String summaryText;
   final ValueChanged<DashboardUpcomingMode> onModeChanged;
+  final ValueChanged<String> onCountChanged;
 
   @override
   State<UpcomingCoursesCard> createState() => _UpcomingCoursesCardState();
@@ -85,6 +87,7 @@ class _UpcomingCoursesCardState extends State<UpcomingCoursesCard>
   Widget _buildCountField() {
     return TextField(
       controller: widget.countController,
+      onChanged: widget.onCountChanged,
       keyboardType: TextInputType.number,
       inputFormatters: [
         FilteringTextInputFormatter.digitsOnly,

@@ -258,6 +258,13 @@ class _SettingsViewState extends State<SettingsView> {
     });
   }
 
+  void _onDashboardCountChanged(String _) {
+    if (_draftUpcomingMode != DashboardUpcomingMode.count) {
+      return;
+    }
+    setState(() {});
+  }
+
   Widget _buildMaxWeekCard(AppLocalizations l10n) {
     return Card(
       child: ListTile(
@@ -302,6 +309,7 @@ class _SettingsViewState extends State<SettingsView> {
       enabled: !_settingsBusy,
       summaryText: _dashboardUpcomingSummary(l10n),
       onModeChanged: _onUpcomingModeChanged,
+      onCountChanged: _onDashboardCountChanged,
     );
   }
 

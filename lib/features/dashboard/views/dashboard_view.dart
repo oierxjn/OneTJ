@@ -11,6 +11,11 @@ import 'package:onetj/models/timetable_index.dart';
 import 'package:onetj/models/time_slot.dart';
 import 'package:onetj/repo/school_calendar_repository.dart';
 
+const double _kUpcomingTimeBadgeWidth = 95;
+const double _kUpcomingTimeBadgeGap = 12;
+const double _kUpcomingContentLeftInset =
+    _kUpcomingTimeBadgeWidth + _kUpcomingTimeBadgeGap;
+
 class DashboardView extends StatefulWidget {
   const DashboardView({super.key});
 
@@ -298,7 +303,7 @@ class _UpcomingCard extends StatelessWidget {
             child: _TimeBadge(label: timeLabel),
           ),
           Padding(
-            padding: const EdgeInsets.only(left: 107),
+            padding: const EdgeInsets.only(left: _kUpcomingContentLeftInset),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -334,9 +339,9 @@ class _TimeBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final ColorScheme colors = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.only(right: 12),
+      padding: const EdgeInsets.only(right: _kUpcomingTimeBadgeGap),
       child: Container(
-        width: 95,
+        width: _kUpcomingTimeBadgeWidth,
         padding: const EdgeInsets.symmetric(horizontal: 8),
         alignment: Alignment.centerLeft,
         decoration: BoxDecoration(
