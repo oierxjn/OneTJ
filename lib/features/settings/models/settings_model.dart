@@ -33,7 +33,7 @@ class SettingsModel {
   ///
   /// throw [SettingsValidationException] 解析非数值
   static int parseMaxWeekText(String text) {
-    return _parsePositiveInt(
+    return _parseInt(
       text: text,
       code: SettingsValidationException.maxWeekInvalidFormat,
       fieldName: 'maxWeek',
@@ -44,7 +44,7 @@ class SettingsModel {
   ///
   /// throw [SettingsValidationException] 解析非数值
   static int parseDashboardUpcomingCountText(String text) {
-    return _parsePositiveInt(
+    return _parseInt(
       text: text,
       code: SettingsValidationException.dashboardUpcomingCountInvalidFormat,
       fieldName: 'dashboardUpcomingCount',
@@ -74,10 +74,10 @@ class SettingsModel {
     settings_validation.validateTimeSlotRanges(values);
   }
 
-  /// 从文本中解析正整数
+  /// 从文本中解析整数
   ///
   /// throw [SettingsValidationException] 解析非数值
-  static int _parsePositiveInt({
+  static int _parseInt({
     required String text,
     required String code,
     required String fieldName,
