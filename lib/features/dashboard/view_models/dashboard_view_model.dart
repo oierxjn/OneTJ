@@ -1,15 +1,17 @@
 import 'dart:async';
 
-import 'package:onetj/models/base_model.dart';
-import 'package:onetj/models/event_model.dart';
-import 'package:onetj/models/time_period_range.dart';
 import 'package:onetj/features/dashboard/models/dashboard_model.dart';
-import 'package:onetj/models/timetable_index.dart';
+import 'package:onetj/features/dashboard/models/upcoming_entries_calculator.dart';
+import 'package:onetj/models/base_model.dart';
+import 'package:onetj/models/dashboard_upcoming_mode.dart';
+import 'package:onetj/models/event_model.dart';
 import 'package:onetj/models/settings_defaults.dart';
-import 'package:onetj/repo/student_info_repository.dart';
-import 'package:onetj/repo/school_calendar_repository.dart';
+import 'package:onetj/models/time_period_range.dart';
+import 'package:onetj/models/timetable_index.dart';
 import 'package:onetj/repo/course_schedule_repository.dart';
+import 'package:onetj/repo/school_calendar_repository.dart';
 import 'package:onetj/repo/settings_repository.dart';
+import 'package:onetj/repo/student_info_repository.dart';
 import 'package:onetj/services/timetable_index_builder.dart';
 
 class DashboardViewModel extends BaseViewModel {
@@ -28,10 +30,15 @@ class DashboardViewModel extends BaseViewModel {
   final StreamController<UiEvent> _eventController;
   StreamSubscription<SettingsData>? _settingsSub;
   Stream<UiEvent> get events => _eventController.stream;
+
   String? _departmentName;
   SchoolCalendarData? _calendar;
   List<TimetableEntry> _timetableEntries = const [];
   List<TimePeriodRangeData> _timeSlotRanges = kDefaultTimeSlotRanges;
+  DashboardUpcomingMode _upcomingMode = kDefaultDashboardUpcomingMode;
+  int _upcomingCount = kDefaultDashboardUpcomingCount;
+  int _maxWeek = kDefaultMaxWeek;
+
   Object? _studentError;
   Object? _calendarError;
   Object? _timetableError;
@@ -49,8 +56,25 @@ class DashboardViewModel extends BaseViewModel {
   bool get calendarLoading => _calendarLoading;
   bool get timetableLoading => _timetableLoading;
   List<TimePeriodRangeData> get timeSlotRanges => _timeSlotRanges;
-  List<TimetableEntry> get upcomingEntries =>
-      _upcomingEntries(now: DateTime.now(), limit: 3);
+  DashboardUpcomingMode get upcomingMode => _upcomingMode;
+  List<TimetableEntry> buildUpcomingEntries({DateTime? now}) {
+    final int? currentWeek = _calendar?.week;
+    if (currentWeek == null || _timetableEntries.isEmpty) {
+      return const [];
+    }
+    final DateTime clock = now ?? DateTime.now();
+    return UpcomingEntriesCalculator.calculate(
+      UpcomingEntriesQuery(
+        now: clock,
+        entries: _timetableEntries,
+        timeSlotRanges: _timeSlotRanges,
+        currentWeek: currentWeek,
+        maxWeek: _maxWeek,
+        mode: _upcomingMode,
+        count: _upcomingCount,
+      ),
+    );
+  }
 
   Future<void> load() async {
     _studentLoading = true;
@@ -68,57 +92,6 @@ class DashboardViewModel extends BaseViewModel {
     ]);
   }
 
-  /// 获取将要到来的课程
-  ///
-  /// [now] 相对于的时间，一般填当前时间
-  /// [limit] 最多返回的课程数量
-  List<TimetableEntry> _upcomingEntries({
-    required DateTime now,
-    int limit = 3,
-  }) {
-    final int? currentWeek = _calendar?.week;
-    if (_timetableEntries.isEmpty || currentWeek == null || limit <= 0) {
-      // TODO: 提示用户没有课程
-      return const [];
-    }
-    final int today = now.weekday;
-    final List<TimetableEntry> result = [];
-    for (int day = today; day <= 7 && result.length < limit; day += 1) {
-      final List<TimetableEntry> dayEntries = _timetableEntries
-          .where((entry) =>
-              entry.dayOfWeek == day && _matchesWeek(entry, currentWeek))
-          .toList()
-        ..sort((a, b) => a.timeStart.compareTo(b.timeStart));
-      if (day == today) {
-        dayEntries.removeWhere((entry) => !_isAfterNow(entry, now));
-      }
-      for (final entry in dayEntries) {
-        result.add(entry);
-        if (result.length >= limit) {
-          break;
-        }
-      }
-    }
-    return result;
-  }
-
-  bool _matchesWeek(TimetableEntry entry, int currentWeek) {
-    if (entry.weeks.isEmpty) {
-      return true;
-    }
-    return entry.weeks.contains(currentWeek);
-  }
-
-  bool _isAfterNow(TimetableEntry entry, DateTime now) {
-    final int index = entry.timeStart - 1;
-    if (index < 0 || index >= _timeSlotRanges.length) {
-      return true;
-    }
-    final int startMinute = _timeSlotRanges[index].startMinutes;
-    final int nowMinutes = now.hour * 60 + now.minute;
-    return startMinute > nowMinutes;
-  }
-
   Future<void> loadSettings() async {
     try {
       final SettingsData data = await _settingsRepository.getSettings();
@@ -132,17 +105,33 @@ class DashboardViewModel extends BaseViewModel {
 
   void _handleSettingsChanged(SettingsData data) {
     final List<TimePeriodRangeData> nextTimeSlotRanges =
-        List<TimePeriodRangeData>.from(
-      data.timeSlotRanges,
-    );
-    if (_sameTimeSlotRanges(_timeSlotRanges, nextTimeSlotRanges)) {
+        List<TimePeriodRangeData>.from(data.timeSlotRanges);
+    final bool timeSlotChanged =
+        !_sameTimeSlotRanges(_timeSlotRanges, nextTimeSlotRanges);
+    final bool modeChanged = _upcomingMode != data.dashboardUpcomingMode;
+    final bool countChanged = _upcomingCount != data.dashboardUpcomingCount;
+    final bool maxWeekChanged = _maxWeek != data.maxWeek;
+
+    if (!timeSlotChanged && !modeChanged && !countChanged && !maxWeekChanged) {
       return;
     }
-    _timeSlotRanges = nextTimeSlotRanges;
+    if (timeSlotChanged) {
+      _timeSlotRanges = nextTimeSlotRanges;
+    }
+    if (modeChanged) {
+      _upcomingMode = data.dashboardUpcomingMode;
+    }
+    if (countChanged) {
+      _upcomingCount = data.dashboardUpcomingCount;
+    }
+    if (maxWeekChanged) {
+      _maxWeek = data.maxWeek;
+    }
     notifyListeners();
   }
 
-  bool _sameTimeSlotRanges(List<TimePeriodRangeData> a, List<TimePeriodRangeData> b) {
+  bool _sameTimeSlotRanges(
+      List<TimePeriodRangeData> a, List<TimePeriodRangeData> b) {
     if (a.length != b.length) {
       return false;
     }

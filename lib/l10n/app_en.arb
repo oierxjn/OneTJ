@@ -27,6 +27,9 @@
   "emptyClassesToday": "No classes today",
   "dashboardUpcomingTitle": "Upcoming Courses",
   "dashboardUpcomingEmpty": "No upcoming courses this week",
+  "dashboardUpcomingEmptyThisWeek": "No upcoming courses this week",
+  "dashboardUpcomingEmptyToday": "No upcoming courses today",
+  "dashboardUpcomingEmptyByCount": "No upcoming courses",
   "weekLabel": "Week {week}",
   "@weekLabel": {
     "placeholders": {

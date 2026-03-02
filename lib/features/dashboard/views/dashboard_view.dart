@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'package:onetj/features/dashboard/view_models/dashboard_view_model.dart';
+import 'package:onetj/models/dashboard_upcoming_mode.dart';
 import 'package:onetj/models/event_model.dart';
 import 'package:onetj/models/time_period_range.dart';
 import 'package:onetj/models/timetable_index.dart';
@@ -71,12 +72,12 @@ class _DashboardViewState extends State<DashboardView> {
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
-          if (_viewModel.timetableLoading)
+          if (_viewModel.timetableLoading || _viewModel.calendarLoading)
             const LinearProgressIndicator()
           else
             _buildUpcomingSection(
               context,
-              entries: _viewModel.upcomingEntries,
+              entries: _viewModel.buildUpcomingEntries(),
             ),
         ],
       ),
@@ -143,7 +144,7 @@ class _DashboardViewState extends State<DashboardView> {
     if (entries.isEmpty) {
       return _EmptyState(
         icon: Icons.event_available,
-        title: l10n.dashboardUpcomingEmpty,
+        title: _dashboardUpcomingEmptyText(l10n, _viewModel.upcomingMode),
       );
     }
     return Column(
@@ -164,6 +165,20 @@ class _DashboardViewState extends State<DashboardView> {
           )
           .toList(),
     );
+  }
+
+  String _dashboardUpcomingEmptyText(
+    AppLocalizations l10n,
+    DashboardUpcomingMode mode,
+  ) {
+    switch (mode) {
+      case DashboardUpcomingMode.thisWeek:
+        return l10n.dashboardUpcomingEmptyThisWeek;
+      case DashboardUpcomingMode.today:
+        return l10n.dashboardUpcomingEmptyToday;
+      case DashboardUpcomingMode.count:
+        return l10n.dashboardUpcomingEmptyByCount;
+    }
   }
 
   String _weekdayLabel(AppLocalizations l10n, int dayOfWeek) {
