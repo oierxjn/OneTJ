@@ -91,7 +91,7 @@
     "settingsTimeSlotsInvalidOverlap": "相邻节次不能重叠。",
     "settingsTimeSlotsInvalidOrder": "节次时间必须严格递增。",
     "settingsTimeSlotsResetToDefault": "重置为默认值",
-    "settingsDashboardUpcomingTitle": "仪表板课程显示策略",
+    "settingsDashboardUpcomingTitle": "即将到来的课程",
     "settingsDashboardUpcomingModeThisWeek": "本周",
     "settingsDashboardUpcomingModeToday": "本日",
     "settingsDashboardUpcomingModeCount": "按节数",

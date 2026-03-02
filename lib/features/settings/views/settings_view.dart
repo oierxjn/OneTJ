@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,6 +9,7 @@ import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/features/settings/models/event.dart';
 import 'package:onetj/features/settings/view_models/settings_view_model.dart';
+import 'package:onetj/features/settings/views/widgets/upcoming_courses_card.dart';
 import 'package:onetj/models/dashboard_upcoming_mode.dart';
 import 'package:onetj/models/settings_defaults.dart';
 import 'package:onetj/models/event_model.dart';
@@ -251,10 +252,7 @@ class _SettingsViewState extends State<SettingsView> {
   bool get _settingsBusy =>
       _viewModel.settingsLoading || _viewModel.settingsSaving;
 
-  void _onUpcomingModeChanged(DashboardUpcomingMode? value) {
-    if (value == null) {
-      return;
-    }
+  void _onUpcomingModeChanged(DashboardUpcomingMode value) {
     setState(() {
       _draftUpcomingMode = value;
     });
@@ -296,72 +294,14 @@ class _SettingsViewState extends State<SettingsView> {
     );
   }
 
-  Widget _buildUpcomingModeOption({
-    required DashboardUpcomingMode value,
-    required String title,
-  }) {
-    return RadioListTile<DashboardUpcomingMode>(
-      contentPadding: EdgeInsets.zero,
-      value: value,
-      groupValue: _draftUpcomingMode,
-      onChanged: _settingsBusy ? null : _onUpcomingModeChanged,
-      title: Text(title),
-    );
-  }
-
-  Widget _buildDashboardCountField(AppLocalizations l10n) {
-    return TextField(
-      controller: _dashboardCountController,
-      keyboardType: TextInputType.number,
-      inputFormatters: [
-        FilteringTextInputFormatter.digitsOnly,
-      ],
-      enabled: !_settingsBusy,
-      decoration: InputDecoration(
-        isDense: true,
-        border: const OutlineInputBorder(),
-        labelText: l10n.settingsDashboardUpcomingCountLabel,
-        helperText: l10n.settingsDashboardUpcomingCountHint,
-      ),
-    );
-  }
-
   Widget _buildDashboardUpcomingCard(AppLocalizations l10n) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.settingsDashboardUpcomingTitle,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              _dashboardUpcomingSummary(l10n),
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 8),
-            _buildUpcomingModeOption(
-              value: DashboardUpcomingMode.thisWeek,
-              title: l10n.settingsDashboardUpcomingModeThisWeek,
-            ),
-            _buildUpcomingModeOption(
-              value: DashboardUpcomingMode.today,
-              title: l10n.settingsDashboardUpcomingModeToday,
-            ),
-            _buildUpcomingModeOption(
-              value: DashboardUpcomingMode.count,
-              title: l10n.settingsDashboardUpcomingModeCount,
-            ),
-            if (_draftUpcomingMode == DashboardUpcomingMode.count) ...[
-              const SizedBox(height: 8),
-              _buildDashboardCountField(l10n),
-            ],
-          ],
-        ),
-      ),
+    return UpcomingCoursesCard(
+      l10n: l10n,
+      mode: _draftUpcomingMode,
+      countController: _dashboardCountController,
+      enabled: !_settingsBusy,
+      summaryText: _dashboardUpcomingSummary(l10n),
+      onModeChanged: _onUpcomingModeChanged,
     );
   }
 
