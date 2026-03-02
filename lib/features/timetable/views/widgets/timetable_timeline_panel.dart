@@ -187,11 +187,27 @@ class _TimelineTimeLabels extends StatelessWidget {
         children: [
           SizedBox(height: headerHeight),
           for (final slot in timeSlots)
-            Container(
+            SizedBox(
               height: slotHeight,
-              alignment: Alignment.topCenter,
-              padding: const EdgeInsets.only(top: 6),
-              child: Text(slot.label, style: labelStyle),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Align(
+                    alignment: Alignment.topCenter,
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 6),
+                      child: Text(slot.startLabel, style: labelStyle),
+                    ),
+                  ),
+                  Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 3),
+                      child: Text(slot.endLabel, style: labelStyle),
+                    ),
+                  ),
+                ],
+              ),
             ),
         ],
       ),
@@ -329,13 +345,22 @@ class _ModeContentSwitcher extends StatelessWidget {
 }
 
 class _TimeSlot {
-  const _TimeSlot(this.label);
+  const _TimeSlot({
+    required this.startLabel,
+    required this.endLabel,
+  });
 
-  final String label;
+  final String startLabel;
+  final String endLabel;
 }
 
 List<_TimeSlot> _buildTimeSlots(List<TimePeriodRangeData> ranges) {
   return ranges
-      .map((range) => _TimeSlot(TimeSlot.formatMinutes(range.startMinutes)))
+      .map(
+        (range) => _TimeSlot(
+          startLabel: TimeSlot.formatMinutes(range.startMinutes),
+          endLabel: TimeSlot.formatMinutes(range.endMinutes),
+        ),
+      )
       .toList();
 }
