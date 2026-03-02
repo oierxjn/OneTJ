@@ -4,12 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'package:onetj/features/timetable/view_models/timetable_view_model.dart';
-import 'package:onetj/features/timetable/views/widgets/timeline_content.dart';
+import 'package:onetj/features/timetable/views/widgets/timetable_timeline_panel.dart';
 import 'package:onetj/features/timetable/models/event.dart';
 import 'package:onetj/models/event_model.dart';
-import 'package:onetj/models/time_period_range.dart';
 import 'package:onetj/models/timetable_index.dart';
-import 'package:onetj/models/time_slot.dart';
 
 class TimetableView extends StatefulWidget {
   const TimetableView({super.key});
@@ -171,12 +169,17 @@ class _TimetableViewState extends State<TimetableView> {
           duration: animationDuration,
         ),
         Expanded(
-          child: _buildTimetableView(
-            context,
+          child: TimetableTimelinePanel(
             mode: _viewModel.mode,
             dayLabels: dayLabels,
+            timeSlotRanges: _viewModel.timeSlotRanges,
+            selectedDay: _viewModel.selectedDay,
             duration: animationDuration,
             disableAnimations: disableAnimations,
+            scrollController: _scrollController,
+            roomBuilder: _formatRoom,
+            teacherBuilder: _formatTeacher,
+            entriesForDay: _viewModel.entriesForSelectedWeekDay,
           ),
         ),
       ],
@@ -212,183 +215,6 @@ class _TimetableViewState extends State<TimetableView> {
       }
       // TODO 日志记录未同步的情况
     });
-  }
-
-  double _weekHeaderHeight(BuildContext context) {
-    final TextStyle style =
-        Theme.of(context).textTheme.bodySmall ?? const TextStyle();
-    final String dayLabel = AppLocalizations.of(context).weekdayMon;
-    const double padding = 8;
-    final TextPainter painter = TextPainter(
-      text: TextSpan(text: dayLabel, style: style),
-      maxLines: 1,
-      textDirection: TextDirection.ltr,
-    )..layout();
-    return painter.height + padding;
-  }
-
-  Widget _buildTimetableView(
-    BuildContext context, {
-    required TimetableDisplayMode mode,
-    required List<String> dayLabels,
-    required Duration duration,
-    required bool disableAnimations,
-  }) {
-    const double slotHeight = 64;
-    const double preferredLabelWidth = 72;
-    const double minLabelWidth = 35;
-    final List<_TimeSlot> timeSlots = _buildTimeSlots(_viewModel.timeSlotRanges);
-    final double targetHeaderHeight =
-        mode == TimetableDisplayMode.week ? _weekHeaderHeight(context) : 0;
-
-    return TweenAnimationBuilder<double>(
-      duration: duration,
-      curve: mode == TimetableDisplayMode.week
-          ? Curves.easeOutCubic
-          : Curves.easeInCubic,
-      tween: Tween<double>(begin: 0, end: targetHeaderHeight),
-      builder: (context, animatedHeaderHeight, _) {
-        final double contentHeight =
-            timeSlots.length * slotHeight + animatedHeaderHeight;
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(4, 8, 12, 4),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final double availableWidth =
-                  (constraints.maxWidth - 8).clamp(0, double.infinity);
-              final double minCardWidth = 92;
-              final double maxCardWidth = double.infinity;
-              double labelWidth = preferredLabelWidth;
-              double dayColumnWidth =
-                  ((availableWidth - labelWidth) / 7).clamp(0, maxCardWidth);
-
-              if (dayColumnWidth < minCardWidth) {
-                final double neededLabelWidth = availableWidth - minCardWidth * 7;
-                labelWidth =
-                    neededLabelWidth.clamp(minLabelWidth, preferredLabelWidth);
-                dayColumnWidth =
-                    ((availableWidth - labelWidth) / 7).clamp(0, maxCardWidth);
-              }
-              final bool isNarrowLabel = labelWidth <= minLabelWidth + 0.1;
-              final TextStyle? labelStyle = isNarrowLabel
-                  ? Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 11)
-                  : Theme.of(context).textTheme.bodySmall;
-
-              return SingleChildScrollView(
-                controller: _scrollController,
-                child: SizedBox(
-                  height: contentHeight,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                        width: labelWidth,
-                        child: Column(
-                          children: [
-                            SizedBox(height: animatedHeaderHeight),
-                            for (final slot in timeSlots)
-                              Container(
-                                height: slotHeight,
-                                alignment: Alignment.topCenter,
-                                padding: const EdgeInsets.only(top: 6),
-                                child: Text(
-                                  slot.label,
-                                  style: labelStyle,
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Stack(
-                          children: [
-                            Positioned.fill(
-                              child: Column(
-                                children: [
-                                  SizedBox(height: animatedHeaderHeight),
-                                  for (int i = 0; i < timeSlots.length; i += 1)
-                                    Container(
-                                      height: slotHeight,
-                                      decoration: BoxDecoration(
-                                        border: Border(
-                                          bottom: BorderSide(
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .outlineVariant,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                            Positioned.fill(
-                              child: AnimatedSwitcher(
-                                duration: duration,
-                                switchInCurve: Curves.easeOut,
-                                switchOutCurve: Curves.easeOut,
-                                transitionBuilder: (child, animation) {
-                                  if (disableAnimations) {
-                                    return child;
-                                  }
-                                  return FadeTransition(
-                                    opacity: animation,
-                                    child: child,
-                                  );
-                                },
-                                layoutBuilder: (currentChild, previousChildren) {
-                                  return Stack(
-                                    fit: StackFit.expand,
-                                    children: [
-                                      ...previousChildren,
-                                      if (currentChild != null) currentChild,
-                                    ],
-                                  );
-                                },
-                                child: mode == TimetableDisplayMode.day
-                                    ? KeyedSubtree(
-                                        key: const ValueKey<String>('day-content'),
-                                        child: DayTimelineContent(
-                                          entries:
-                                              _viewModel.entriesForSelectedWeekDay(
-                                            _viewModel.selectedDay,
-                                          ),
-                                          slotHeight: slotHeight,
-                                          slotCount: timeSlots.length,
-                                          roomBuilder: _formatRoom,
-                                          teacherBuilder: _formatTeacher,
-                                        ),
-                                      )
-                                    : KeyedSubtree(
-                                        key: const ValueKey<String>('week-content'),
-                                        child: WeekTimelineContent(
-                                          dayLabels: dayLabels,
-                                          dayColumnWidth: dayColumnWidth,
-                                          slotHeight: slotHeight,
-                                          slotCount: timeSlots.length,
-                                          entriesForDay: (day) =>
-                                              _viewModel.entriesForSelectedWeekDay(
-                                            day,
-                                          ),
-                                          roomBuilder: _formatRoom,
-                                          teacherBuilder: _formatTeacher,
-                                        ),
-                                      ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        );
-      },
-    );
   }
 
   Widget _buildAnimatedDayWheel({
@@ -527,18 +353,6 @@ class _WheelItem extends StatelessWidget {
       ),
     );
   }
-}
-
-class _TimeSlot {
-  const _TimeSlot(this.label);
-
-  final String label;
-}
-
-List<_TimeSlot> _buildTimeSlots(List<TimePeriodRangeData> ranges) {
-  return ranges
-      .map((range) => _TimeSlot(TimeSlot.formatMinutes(range.startMinutes)))
-      .toList();
 }
 
 class _HorizontalWheel extends StatelessWidget {
