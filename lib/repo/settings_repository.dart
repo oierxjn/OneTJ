@@ -86,7 +86,10 @@ class SettingsData {
     if (!json.containsKey('dashboardUpcomingMode')) {
       return kDefaultDashboardUpcomingMode;
     }
-    return DashboardUpcomingMode.fromJsonValue(json['dashboardUpcomingMode']);
+    return DashboardUpcomingMode.fromJsonValue(
+      json['dashboardUpcomingMode'],
+      defaultValue: kDefaultDashboardUpcomingMode,
+    );
   }
 
   static int _readDashboardUpcomingCountWithFallback(

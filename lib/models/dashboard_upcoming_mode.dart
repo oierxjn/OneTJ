@@ -7,15 +7,18 @@ enum DashboardUpcomingMode {
 
   final String jsonValue;
 
-  static DashboardUpcomingMode fromJsonValue(Object? value) {
+  static DashboardUpcomingMode fromJsonValue(
+    Object? value, {
+    DashboardUpcomingMode defaultValue = DashboardUpcomingMode.thisWeek,
+  }) {
     if (value is! String) {
-      return DashboardUpcomingMode.thisWeek;
+      return defaultValue;
     }
     for (final DashboardUpcomingMode mode in DashboardUpcomingMode.values) {
       if (mode.jsonValue == value) {
         return mode;
       }
     }
-    return DashboardUpcomingMode.thisWeek;
+    return defaultValue;
   }
 }
