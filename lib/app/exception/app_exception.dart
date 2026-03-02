@@ -54,9 +54,11 @@ class NetworkException extends AppException {
     );
   }
 }
+
 class JSONResolveException extends AppException {
   static const String _code = 'JSON_RESOLVE_ERROR';
-  JSONResolveException({required String message, Object? cause}) : super(_code, message, cause: cause);
+  JSONResolveException({required String message, Object? cause})
+      : super(_code, message, cause: cause);
 }
 
 class SettingsResolveException extends AppException {
@@ -67,6 +69,7 @@ class SettingsResolveException extends AppException {
 
 class SettingsValidationException extends AppException {
   static const String errorCode = 'SETTINGS_VALIDATION_ERROR';
+  static const String maxWeekInvalidFormat = 'SETTINGS_MAX_WEEK_INVALID_FORMAT';
   static const String maxWeekOutOfRange = 'SETTINGS_MAX_WEEK_OUT_OF_RANGE';
   static const String timeSlotEmpty = 'SETTINGS_TIME_SLOT_EMPTY';
   static const String timeSlotStartOutOfRange =
@@ -80,6 +83,10 @@ class SettingsValidationException extends AppException {
       'SETTINGS_TIME_SLOT_START_MINUTES_ITEM_OUT_OF_RANGE';
   static const String timeSlotStartMinutesNotIncreasing =
       'SETTINGS_TIME_SLOT_START_MINUTES_NOT_INCREASING';
+  static const String dashboardUpcomingCountOutOfRange =
+      'SETTINGS_DASHBOARD_UPCOMING_COUNT_OUT_OF_RANGE';
+  static const String dashboardUpcomingCountInvalidFormat =
+      'SETTINGS_DASHBOARD_UPCOMING_COUNT_INVALID_FORMAT';
 
   SettingsValidationException({
     required String code,

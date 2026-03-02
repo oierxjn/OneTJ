@@ -68,6 +68,7 @@
 
   "settingsMaxWeekTitle": "Max Weeks",
   "settingsMaxWeekSubtitle": "Used by the timetable to display available weeks",
+  "settingsMaxWeekInvalidFormat": "Max week must be a number.",
   "settingsMaxWeekInvalidRange": "Max week must be between 1 and 52.",
   "settingsTimeSlotsTitle": "Time Slots",
   "settingsTimeSlotsEmpty": "No time slots configured",
@@ -90,11 +91,27 @@
   "settingsTimeSlotsInvalidOverlap": "Adjacent slots must not overlap.",
   "settingsTimeSlotsInvalidOrder": "Time slots must be strictly increasing.",
   "settingsTimeSlotsResetToDefault": "Reset to defaults",
+  "settingsDashboardUpcomingTitle": "Dashboard Upcoming Courses",
+  "settingsDashboardUpcomingModeThisWeek": "This week",
+  "settingsDashboardUpcomingModeToday": "Today",
+  "settingsDashboardUpcomingModeCount": "By count",
+  "settingsDashboardUpcomingModeCountSummary": "Show up to {count} courses",
+  "@settingsDashboardUpcomingModeCountSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsDashboardUpcomingCountLabel": "Course count",
+  "settingsDashboardUpcomingCountHint": "Valid range: 1 to 20",
+  "settingsDashboardUpcomingCountInvalidFormat": "Course count must be a number.",
+  "settingsDashboardUpcomingCountInvalidRange": "Course count must be between 1 and 20.",
 
   "settingsAdvancedSectionTitle": "Advanced",
-  "settingsDeveloperTitle": "Developer Mode",
+  "settingsDeveloperTitle": "Developer Options",
   "settingsDeveloperSubtitle": "Diagnostics and logs",
-  "settingsDeveloperPageTitle": "Developer Mode",
+  "settingsDeveloperPageTitle": "Developer Options",
   "settingsLogsTitle": "Logs",
   "settingsLogsSubtitle": "View recent application logs",
   "settingsLogsEmpty": "No logs yet",

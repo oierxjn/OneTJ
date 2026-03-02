@@ -9,6 +9,8 @@ import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/features/settings/models/event.dart';
 import 'package:onetj/features/settings/view_models/settings_view_model.dart';
+import 'package:onetj/models/dashboard_upcoming_mode.dart';
+import 'package:onetj/models/settings_defaults.dart';
 import 'package:onetj/models/event_model.dart';
 import 'package:onetj/models/time_period_range.dart';
 import 'package:onetj/models/time_slot.dart';
@@ -25,13 +27,16 @@ class _SettingsViewState extends State<SettingsView> {
   late final SettingsViewModel _viewModel;
   StreamSubscription<UiEvent>? _eventSub;
   late final TextEditingController _maxWeekController;
+  late final TextEditingController _dashboardCountController;
   List<TimePeriodRangeData> _draftTimeSlotRanges = <TimePeriodRangeData>[];
+  DashboardUpcomingMode _draftUpcomingMode = kDefaultDashboardUpcomingMode;
 
   @override
   void initState() {
     super.initState();
     _viewModel = SettingsViewModel();
     _maxWeekController = TextEditingController();
+    _dashboardCountController = TextEditingController();
     _eventSub = _viewModel.events.listen((event) {
       if (!mounted) {
         return;
@@ -70,6 +75,7 @@ class _SettingsViewState extends State<SettingsView> {
   void dispose() {
     _eventSub?.cancel();
     _maxWeekController.dispose();
+    _dashboardCountController.dispose();
     _viewModel.dispose();
     super.dispose();
   }
@@ -79,6 +85,8 @@ class _SettingsViewState extends State<SettingsView> {
     ShowSnackBarEvent event,
   ) {
     switch (event.code) {
+      case SettingsValidationException.maxWeekInvalidFormat:
+        return l10n.settingsMaxWeekInvalidFormat;
       case SettingsValidationException.maxWeekOutOfRange:
         return l10n.settingsMaxWeekInvalidRange;
       case SettingsValidationException.timeSlotEmpty:
@@ -93,6 +101,10 @@ class _SettingsViewState extends State<SettingsView> {
         return l10n.settingsTimeSlotsInvalidOrder;
       case SettingsValidationException.timeSlotOverlap:
         return l10n.settingsTimeSlotsInvalidOverlap;
+      case SettingsValidationException.dashboardUpcomingCountInvalidFormat:
+        return l10n.settingsDashboardUpcomingCountInvalidFormat;
+      case SettingsValidationException.dashboardUpcomingCountOutOfRange:
+        return l10n.settingsDashboardUpcomingCountInvalidRange;
       default:
         return event.message ?? '';
     }
@@ -106,17 +118,9 @@ class _SettingsViewState extends State<SettingsView> {
     _applySettingsToControllers(_viewModel.settingsData);
   }
 
-  void _submitMaxWeek() {
-    final int? value = int.tryParse(_maxWeekController.text);
-    if (value == null || value <= 0) {
-      // TODO: 提示用户输入合法的最大周数
-      return;
-    }
-    _submitSettings();
-  }
-
   void _applySettingsToControllers(SettingsData settings) {
     _maxWeekController.text = settings.maxWeek.toString();
+    _dashboardCountController.text = settings.dashboardUpcomingCount.toString();
     final List<TimePeriodRangeData> nextRanges = settings.timeSlotRanges
         .map(
           (item) => TimePeriodRangeData(
@@ -128,17 +132,20 @@ class _SettingsViewState extends State<SettingsView> {
     if (mounted) {
       setState(() {
         _draftTimeSlotRanges = nextRanges;
+        _draftUpcomingMode = settings.dashboardUpcomingMode;
       });
       return;
     }
     _draftTimeSlotRanges = nextRanges;
+    _draftUpcomingMode = settings.dashboardUpcomingMode;
   }
 
   Future<void> _submitSettings() async {
-    final int maxWeek = int.parse(_maxWeekController.text);
     await _viewModel.saveSettings(
-      maxWeek: maxWeek,
+      maxWeekText: _maxWeekController.text,
       editedTimeSlotRanges: _draftTimeSlotRanges,
+      dashboardUpcomingMode: _draftUpcomingMode,
+      dashboardUpcomingCountText: _dashboardCountController.text,
     );
   }
 
@@ -228,6 +235,19 @@ class _SettingsViewState extends State<SettingsView> {
     );
   }
 
+  String _dashboardUpcomingSummary(AppLocalizations l10n) {
+    switch (_draftUpcomingMode) {
+      case DashboardUpcomingMode.thisWeek:
+        return l10n.settingsDashboardUpcomingModeThisWeek;
+      case DashboardUpcomingMode.today:
+        return l10n.settingsDashboardUpcomingModeToday;
+      case DashboardUpcomingMode.count:
+        final int count = int.tryParse(_dashboardCountController.text) ??
+            kDefaultDashboardUpcomingCount;
+        return l10n.settingsDashboardUpcomingModeCountSummary(count);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -241,7 +261,7 @@ class _SettingsViewState extends State<SettingsView> {
               icon: const Icon(Icons.save),
               onPressed: _viewModel.settingsLoading || _viewModel.settingsSaving
                   ? null
-                  : _submitMaxWeek,
+                  : _submitSettings,
             ),
           ),
         ],
@@ -270,7 +290,6 @@ class _SettingsViewState extends State<SettingsView> {
                       isDense: true,
                       border: OutlineInputBorder(),
                     ),
-                    onSubmitted: (_) => _submitMaxWeek(),
                   ),
                 ),
               ),
@@ -286,6 +305,108 @@ class _SettingsViewState extends State<SettingsView> {
                 onTap: _viewModel.settingsLoading || _viewModel.settingsSaving
                     ? null
                     : _openTimeSlotEditor,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      AppLocalizations.of(context)
+                          .settingsDashboardUpcomingTitle,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _dashboardUpcomingSummary(AppLocalizations.of(context)),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 8),
+                    RadioListTile<DashboardUpcomingMode>(
+                      contentPadding: EdgeInsets.zero,
+                      value: DashboardUpcomingMode.thisWeek,
+                      groupValue: _draftUpcomingMode,
+                      onChanged: _viewModel.settingsLoading ||
+                              _viewModel.settingsSaving
+                          ? null
+                          : (value) {
+                              if (value == null) {
+                                return;
+                              }
+                              setState(() {
+                                _draftUpcomingMode = value;
+                              });
+                            },
+                      title: Text(
+                        AppLocalizations.of(context)
+                            .settingsDashboardUpcomingModeThisWeek,
+                      ),
+                    ),
+                    RadioListTile<DashboardUpcomingMode>(
+                      contentPadding: EdgeInsets.zero,
+                      value: DashboardUpcomingMode.today,
+                      groupValue: _draftUpcomingMode,
+                      onChanged: _viewModel.settingsLoading ||
+                              _viewModel.settingsSaving
+                          ? null
+                          : (value) {
+                              if (value == null) {
+                                return;
+                              }
+                              setState(() {
+                                _draftUpcomingMode = value;
+                              });
+                            },
+                      title: Text(
+                        AppLocalizations.of(context)
+                            .settingsDashboardUpcomingModeToday,
+                      ),
+                    ),
+                    RadioListTile<DashboardUpcomingMode>(
+                      contentPadding: EdgeInsets.zero,
+                      value: DashboardUpcomingMode.count,
+                      groupValue: _draftUpcomingMode,
+                      onChanged: _viewModel.settingsLoading ||
+                              _viewModel.settingsSaving
+                          ? null
+                          : (value) {
+                              if (value == null) {
+                                return;
+                              }
+                              setState(() {
+                                _draftUpcomingMode = value;
+                              });
+                            },
+                      title: Text(
+                        AppLocalizations.of(context)
+                            .settingsDashboardUpcomingModeCount,
+                      ),
+                    ),
+                    if (_draftUpcomingMode == DashboardUpcomingMode.count) ...[
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _dashboardCountController,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
+                        enabled: !_viewModel.settingsLoading &&
+                            !_viewModel.settingsSaving,
+                        decoration: InputDecoration(
+                          isDense: true,
+                          border: const OutlineInputBorder(),
+                          labelText: AppLocalizations.of(context)
+                              .settingsDashboardUpcomingCountLabel,
+                          helperText: AppLocalizations.of(context)
+                              .settingsDashboardUpcomingCountHint,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 24),

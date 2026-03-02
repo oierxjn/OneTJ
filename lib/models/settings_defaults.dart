@@ -1,6 +1,12 @@
+import 'package:onetj/models/dashboard_upcoming_mode.dart';
 import 'package:onetj/models/time_period_range.dart';
 
 const int kDefaultMaxWeek = 22;
+const DashboardUpcomingMode kDefaultDashboardUpcomingMode =
+    DashboardUpcomingMode.today;
+const int kDefaultDashboardUpcomingCount = 3;
+const int kMinDashboardUpcomingCount = 1;
+const int kMaxDashboardUpcomingCount = 20;
 
 const int kLegacyTimeSlotLastDurationMinutes = 45;
 
