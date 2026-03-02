@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:onetj/models/dashboard_upcoming_mode.dart';
 import 'package:onetj/models/settings_defaults.dart';
 import 'package:onetj/models/settings_validation.dart' as settings_validation;
 import 'package:onetj/models/time_period_range.dart';
@@ -11,10 +12,14 @@ class SettingsData {
   const SettingsData({
     required this.maxWeek,
     required this.timeSlotRanges,
+    required this.dashboardUpcomingMode,
+    required this.dashboardUpcomingCount,
   });
 
   final int maxWeek;
   final List<TimePeriodRangeData> timeSlotRanges;
+  final DashboardUpcomingMode dashboardUpcomingMode;
+  final int dashboardUpcomingCount;
 
   factory SettingsData.fromJson(Map<String, dynamic> json) {
     final int maxWeek = _readMaxWeekWithFallback(json);
@@ -23,6 +28,8 @@ class SettingsData {
     return SettingsData(
       maxWeek: maxWeek,
       timeSlotRanges: timeSlotRanges,
+      dashboardUpcomingMode: _readDashboardUpcomingModeWithFallback(json),
+      dashboardUpcomingCount: _readDashboardUpcomingCountWithFallback(json),
     );
   }
 
@@ -30,6 +37,8 @@ class SettingsData {
     return {
       'maxWeek': maxWeek,
       'timeSlotRanges': timeSlotRanges.map((item) => item.toJson()).toList(),
+      'dashboardUpcomingMode': dashboardUpcomingMode.jsonValue,
+      'dashboardUpcomingCount': dashboardUpcomingCount,
     };
   }
 
@@ -69,6 +78,35 @@ class SettingsData {
       }
     }
     return _defaultTimeSlotRanges();
+  }
+
+  static DashboardUpcomingMode _readDashboardUpcomingModeWithFallback(
+    Map<String, dynamic> json,
+  ) {
+    if (!json.containsKey('dashboardUpcomingMode')) {
+      return kDefaultDashboardUpcomingMode;
+    }
+    return DashboardUpcomingMode.fromJsonValue(
+      json['dashboardUpcomingMode'],
+      defaultValue: kDefaultDashboardUpcomingMode,
+    );
+  }
+
+  static int _readDashboardUpcomingCountWithFallback(
+    Map<String, dynamic> json,
+  ) {
+    if (!json.containsKey('dashboardUpcomingCount')) {
+      return kDefaultDashboardUpcomingCount;
+    }
+    final Object? value = json['dashboardUpcomingCount'];
+    if (value is! int) {
+      return kDefaultDashboardUpcomingCount;
+    }
+    if (value < kMinDashboardUpcomingCount ||
+        value > kMaxDashboardUpcomingCount) {
+      return kDefaultDashboardUpcomingCount;
+    }
+    return value;
   }
 
   static int _parseMaxWeek(Object? value) {
@@ -192,6 +230,8 @@ class SettingsRepository {
   static final SettingsData _defaultSettings = SettingsData(
     maxWeek: kDefaultMaxWeek,
     timeSlotRanges: kDefaultTimeSlotRanges,
+    dashboardUpcomingMode: kDefaultDashboardUpcomingMode,
+    dashboardUpcomingCount: kDefaultDashboardUpcomingCount,
   );
 
   static SettingsRepository getInstance() {

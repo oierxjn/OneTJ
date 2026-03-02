@@ -5,6 +5,7 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/app/logging/app_logger.dart';
+import 'package:onetj/models/dashboard_upcoming_mode.dart';
 import 'package:onetj/models/settings_defaults.dart';
 import 'package:onetj/features/settings/models/event.dart';
 import 'package:onetj/features/settings/models/settings_model.dart';
@@ -27,6 +28,8 @@ class SettingsViewModel extends BaseViewModel {
   SettingsData _settingsData = SettingsData(
     maxWeek: kDefaultMaxWeek,
     timeSlotRanges: kDefaultTimeSlotRanges,
+    dashboardUpcomingMode: kDefaultDashboardUpcomingMode,
+    dashboardUpcomingCount: kDefaultDashboardUpcomingCount,
   );
   bool _settingsLoading = true;
   bool _settingsSaving = false;
@@ -103,21 +106,33 @@ class SettingsViewModel extends BaseViewModel {
   }
 
   Future<void> saveSettings({
-    required int maxWeek,
+    required String maxWeekText,
     required List<TimePeriodRangeData> editedTimeSlotRanges,
+    required DashboardUpcomingMode dashboardUpcomingMode,
+    required String dashboardUpcomingCountText,
   }) async {
     AppLogger.logUiAction(feature: 'Settings', action: 'save_started');
     _settingsSaving = true;
     errorMessage = null;
     notifyListeners();
     try {
+      final int maxWeek = SettingsModel.parseMaxWeekText(maxWeekText);
+      final int dashboardUpcomingCount =
+          dashboardUpcomingMode == DashboardUpcomingMode.count
+              ? SettingsModel.parseDashboardUpcomingCountText(
+                  dashboardUpcomingCountText,
+                )
+              : _settingsData.dashboardUpcomingCount;
       SettingsModel.validateMaxWeek(maxWeek);
       SettingsModel.validateTimeSlotRanges(editedTimeSlotRanges);
+      SettingsModel.validateDashboardUpcomingCount(dashboardUpcomingCount);
       final SettingsData next = SettingsData(
         maxWeek: maxWeek,
         timeSlotRanges: List<TimePeriodRangeData>.unmodifiable(
           editedTimeSlotRanges,
         ),
+        dashboardUpcomingMode: dashboardUpcomingMode,
+        dashboardUpcomingCount: dashboardUpcomingCount,
       );
       await SettingsRepository.getInstance().saveSettings(next);
       _settingsData = next;
@@ -127,6 +142,8 @@ class SettingsViewModel extends BaseViewModel {
         context: <String, Object?>{
           'maxWeek': maxWeek,
           'timeSlotCount': editedTimeSlotRanges.length,
+          'dashboardUpcomingMode': dashboardUpcomingMode.jsonValue,
+          'dashboardUpcomingCount': dashboardUpcomingCount,
         },
       );
       notifyListeners();

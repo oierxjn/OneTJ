@@ -4,11 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'package:onetj/features/dashboard/view_models/dashboard_view_model.dart';
+import 'package:onetj/models/dashboard_upcoming_mode.dart';
 import 'package:onetj/models/event_model.dart';
 import 'package:onetj/models/time_period_range.dart';
 import 'package:onetj/models/timetable_index.dart';
 import 'package:onetj/models/time_slot.dart';
 import 'package:onetj/repo/school_calendar_repository.dart';
+
+const double _kUpcomingTimeBadgeWidth = 95;
+const double _kUpcomingTimeBadgeGap = 12;
+const double _kUpcomingContentLeftInset =
+    _kUpcomingTimeBadgeWidth + _kUpcomingTimeBadgeGap;
 
 class DashboardView extends StatefulWidget {
   const DashboardView({super.key});
@@ -71,12 +77,12 @@ class _DashboardViewState extends State<DashboardView> {
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
-          if (_viewModel.timetableLoading)
+          if (_viewModel.timetableLoading || _viewModel.calendarLoading)
             const LinearProgressIndicator()
           else
             _buildUpcomingSection(
               context,
-              entries: _viewModel.upcomingEntries,
+              entries: _viewModel.buildUpcomingEntries(),
             ),
         ],
       ),
@@ -143,7 +149,7 @@ class _DashboardViewState extends State<DashboardView> {
     if (entries.isEmpty) {
       return _EmptyState(
         icon: Icons.event_available,
-        title: l10n.dashboardUpcomingEmpty,
+        title: _dashboardUpcomingEmptyText(l10n, _viewModel.upcomingMode),
       );
     }
     return Column(
@@ -154,7 +160,7 @@ class _DashboardViewState extends State<DashboardView> {
                   ? entry.courseName
                   : 'Unknown course',
               timeLabel:
-                  '${_weekdayLabel(l10n, entry.dayOfWeek)} · ${_formatTimeRange(entry, _viewModel.timeSlotRanges)}',
+                  '${_weekdayLabel(l10n, entry.dayOfWeek)}\n${_formatTimeRange(entry, _viewModel.timeSlotRanges)}',
               roomLabel: entry.roomIdI18n.isNotEmpty
                   ? entry.roomIdI18n
                   : entry.roomLabel,
@@ -164,6 +170,20 @@ class _DashboardViewState extends State<DashboardView> {
           )
           .toList(),
     );
+  }
+
+  String _dashboardUpcomingEmptyText(
+    AppLocalizations l10n,
+    DashboardUpcomingMode mode,
+  ) {
+    switch (mode) {
+      case DashboardUpcomingMode.thisWeek:
+        return l10n.dashboardUpcomingEmptyThisWeek;
+      case DashboardUpcomingMode.today:
+        return l10n.dashboardUpcomingEmptyToday;
+      case DashboardUpcomingMode.count:
+        return l10n.dashboardUpcomingEmptyByCount;
+    }
   }
 
   String _weekdayLabel(AppLocalizations l10n, int dayOfWeek) {
@@ -274,12 +294,16 @@ class _UpcomingCard extends StatelessWidget {
           color: colors.outlineVariant,
         ),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
-          _TimeBadge(label: timeLabel),
-          const SizedBox(width: 12),
-          Expanded(
+          Positioned(
+            top: 0,
+            bottom: 0,
+            left: 0,
+            child: _TimeBadge(label: timeLabel),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: _kUpcomingContentLeftInset),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -314,19 +338,23 @@ class _TimeBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = Theme.of(context).colorScheme;
-    return Container(
-      width: 88,
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: colors.outlineVariant,
+    return Padding(
+      padding: const EdgeInsets.only(right: _kUpcomingTimeBadgeGap),
+      child: Container(
+        width: _kUpcomingTimeBadgeWidth,
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        alignment: Alignment.centerLeft,
+        decoration: BoxDecoration(
+          color: colors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: colors.outlineVariant,
+          ),
         ),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.bodySmall,
+        child: Text(
+          label,
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
       ),
     );
   }

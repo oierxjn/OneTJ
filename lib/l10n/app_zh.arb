@@ -28,6 +28,9 @@
     "emptyClassesToday": "今天没有课哦",
     "dashboardUpcomingTitle": "即将到来的课程",
     "dashboardUpcomingEmpty": "本周暂无课程",
+    "dashboardUpcomingEmptyThisWeek": "本周暂无课程",
+    "dashboardUpcomingEmptyToday": "今日暂无课程",
+    "dashboardUpcomingEmptyByCount": "暂无即将到来的课程",
     "weekLabel": "第{week}周",
     "@weekLabel": {
       "placeholders": {
@@ -69,6 +72,7 @@
 
     "settingsMaxWeekTitle": "最大周数",
     "settingsMaxWeekSubtitle": "用于课程表显示可用周数",
+    "settingsMaxWeekInvalidFormat": "最大周数必须为数字",
     "settingsTimeSlotsTitle": "课程表时间设置",
     "settingsTimeSlotsEmpty": "未配置课程表时间",
     "settingsTimeSlotsSummary": "{count} 个节次 - {first} 到 {last}",
@@ -90,11 +94,27 @@
     "settingsTimeSlotsInvalidOverlap": "相邻节次不能重叠。",
     "settingsTimeSlotsInvalidOrder": "节次时间必须严格递增。",
     "settingsTimeSlotsResetToDefault": "重置为默认值",
+    "settingsDashboardUpcomingTitle": "即将到来的课程",
+    "settingsDashboardUpcomingModeThisWeek": "本周",
+    "settingsDashboardUpcomingModeToday": "本日",
+    "settingsDashboardUpcomingModeCount": "按节数",
+    "settingsDashboardUpcomingModeCountSummary": "最多显示 {count} 节课",
+    "@settingsDashboardUpcomingModeCountSummary": {
+      "placeholders": {
+        "count": {
+          "type": "int"
+        }
+      }
+    },
+    "settingsDashboardUpcomingCountLabel": "课程节数",
+    "settingsDashboardUpcomingCountHint": "可设置范围：1 到 20",
+    "settingsDashboardUpcomingCountInvalidFormat": "课程节数必须为数字",
+    "settingsDashboardUpcomingCountInvalidRange": "课程节数必须在1到20之间",
 
     "settingsAdvancedSectionTitle": "高级",
-    "settingsDeveloperTitle": "开发者模式",
+    "settingsDeveloperTitle": "开发者选项",
     "settingsDeveloperSubtitle": "诊断与日志",
-    "settingsDeveloperPageTitle": "开发者模式",
+    "settingsDeveloperPageTitle": "开发者选项",
     "settingsLogsTitle": "日志",
     "settingsLogsSubtitle": "查看最近应用日志",
     "settingsLogsEmpty": "暂无日志",
