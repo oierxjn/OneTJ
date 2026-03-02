@@ -1,26 +1,124 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:onetj/models/settings_defaults.dart';
+import 'package:onetj/models/settings_validation.dart' as settings_validation;
+import 'package:onetj/models/time_period_range.dart';
 import 'package:hive/hive.dart';
+import 'package:onetj/app/exception/app_exception.dart';
 
 class SettingsData {
   const SettingsData({
     required this.maxWeek,
+    required this.timeSlotRanges,
   });
 
-  /// 一个学期的最大周数
   final int maxWeek;
+  final List<TimePeriodRangeData> timeSlotRanges;
 
   factory SettingsData.fromJson(Map<String, dynamic> json) {
-    final Object? rawMaxWeek = json['maxWeek'];
-    final int maxWeek = rawMaxWeek is int ? rawMaxWeek : int.parse(rawMaxWeek as String);
-    return SettingsData(maxWeek: maxWeek);
+    final int maxWeek = _readMaxWeekWithFallback(json);
+    final List<TimePeriodRangeData> timeSlotRanges =
+        _readTimeSlotRangesWithFallback(json);
+    return SettingsData(
+      maxWeek: maxWeek,
+      timeSlotRanges: timeSlotRanges,
+    );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'maxWeek': maxWeek,
+      'timeSlotRanges': timeSlotRanges.map((item) => item.toJson()).toList(),
     };
+  }
+
+  static int _readMaxWeekWithFallback(Map<String, dynamic> json) {
+    if (!json.containsKey('maxWeek')) {
+      return kDefaultMaxWeek;
+    }
+    try {
+      return _parseMaxWeek(json['maxWeek']);
+    } on SettingsResolveException {
+      return kDefaultMaxWeek;
+    }
+  }
+
+  static List<TimePeriodRangeData> _readTimeSlotRangesWithFallback(
+    Map<String, dynamic> json,
+  ) {
+    if (json.containsKey('timeSlotRanges')) {
+      try {
+        return _parseTimeSlotRanges(json['timeSlotRanges']);
+      } on SettingsResolveException {
+        return _defaultTimeSlotRanges();
+      } on SettingsValidationException {
+        return _defaultTimeSlotRanges();
+      }
+    }
+    if (json.containsKey('timeSlotStartMinutes')) {
+      try {
+        final List<int> starts = _parseTimeSlotStartMinutes(
+          json['timeSlotStartMinutes'],
+        );
+        return _deriveRangesFromStarts(starts);
+      } on SettingsResolveException {
+        return _defaultTimeSlotRanges();
+      } on SettingsValidationException {
+        return _defaultTimeSlotRanges();
+      }
+    }
+    return _defaultTimeSlotRanges();
+  }
+
+  static int _parseMaxWeek(Object? value) {
+    if (value is! int) {
+      throw SettingsResolveException(message: 'maxWeek must be int');
+    }
+    return value;
+  }
+
+  static List<int> _parseTimeSlotStartMinutes(Object? values) {
+    if (values is! List) {
+      throw SettingsResolveException(
+          message:
+              'timeSlotStartMinutes(${values.runtimeType}) must be a list');
+    }
+    return values.map<int>((item) {
+      if (item is! int) {
+        throw SettingsResolveException(
+          message: 'timeSlotStartMinutes item must be int',
+        );
+      }
+      return item;
+    }).toList(growable: false);
+  }
+
+  static List<TimePeriodRangeData> _parseTimeSlotRanges(Object? values) {
+    if (values is! List) {
+      throw SettingsResolveException(
+        message: 'timeSlotRanges(${values.runtimeType}) must be a list',
+      );
+    }
+    final List<TimePeriodRangeData> ranges =
+        values.map<TimePeriodRangeData>((item) {
+      if (item is! Map<String, dynamic>) {
+        throw SettingsResolveException(
+          message: 'timeSlotRanges item must be Map<String, dynamic>',
+        );
+      }
+      return TimePeriodRangeData.fromJson(item);
+    }).toList(growable: false);
+    settings_validation.validateTimeSlotRanges(ranges);
+    return ranges;
+  }
+
+  static List<TimePeriodRangeData> _deriveRangesFromStarts(List<int> starts) {
+    return settings_validation.buildTimeSlotRangesFromStartMinutes(starts);
+  }
+
+  static List<TimePeriodRangeData> _defaultTimeSlotRanges() {
+    return kDefaultTimeSlotRanges;
   }
 }
 
@@ -91,7 +189,10 @@ class SettingsRepository {
         _controller = StreamController<SettingsData>.broadcast();
 
   static SettingsRepository? _instance;
-  static const SettingsData _defaultSettings = SettingsData(maxWeek: 22);
+  static final SettingsData _defaultSettings = SettingsData(
+    maxWeek: kDefaultMaxWeek,
+    timeSlotRanges: kDefaultTimeSlotRanges,
+  );
 
   static SettingsRepository getInstance() {
     if (_instance != null) {
@@ -110,11 +211,6 @@ class SettingsRepository {
 
   Stream<SettingsData> get stream => _controller.stream;
 
-  /// 获取设置
-  /// 
-  /// [refreshFromStorage] 是否从存储中刷新数据
-  /// 
-  /// 返回一定不为null的设置数据。读取不到本地数据时返回默认值。
   Future<SettingsData> getSettings({bool refreshFromStorage = false}) async {
     if (!refreshFromStorage && _cached != null) {
       return _cached!;

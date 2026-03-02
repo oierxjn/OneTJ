@@ -1,11 +1,10 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
-import 'package:json_annotation/json_annotation.dart';
-import 'package:logging/logging.dart';
 
 import 'package:onetj/app/constant/site_constant.dart';
 import 'package:onetj/app/exception/app_exception.dart';
+import 'package:onetj/app/logging/app_logger.dart';
 import 'package:onetj/models/api_response.dart';
 import 'package:onetj/models/data/code2token.dart';
 import 'package:onetj/models/data/course_schedule_net_data.dart';
@@ -14,15 +13,15 @@ import 'package:onetj/models/data/student_info_net_data.dart';
 import 'package:onetj/models/data/undergraduate_score_net_data.dart';
 import 'package:onetj/repo/course_schedule_repository.dart';
 import 'package:onetj/repo/school_calendar_repository.dart';
+import 'package:onetj/repo/student_info_repository.dart';
 import 'package:onetj/repo/token_repository.dart';
 import 'package:onetj/repo/undergraduate_score_repository.dart';
-import 'package:onetj/repo/student_info_repository.dart';
 
 class TongjiApi {
   TongjiApi._();
 
   /// 获取 [TongjiApi] 实例。
-  /// 
+  ///
   /// 这是一个单例模式，确保在整个应用程序中只有一个实例。
   factory TongjiApi() => _instance;
 
@@ -31,27 +30,26 @@ class TongjiApi {
   final String _baseUrl = tongjiApiBaseUrl;
   static const Duration _tokenSkew = Duration(seconds: 30);
 
-  final Logger _logger = Logger('TongjiApi');
-
   /// Exchange auth code for token.
   ///
   /// Saves the token into [TokenRepository] on success.
   Future<void> code2token(String code) async {
     final Uri uri = Uri.https(_baseUrl, code2tokenPath);
-    final response = await http.post(
+    final http.Response response = await _postWithLogs(
       uri,
-      body: {
+      body: <String, String>{
         'grant_type': 'authorization_code',
         'client_id': tongjiClientID,
         'code': code,
         'redirect_uri': oneTJredirectUri,
       },
-      headers: {
+      headers: const <String, String>{
         'Content-Type': 'application/x-www-form-urlencoded',
       },
     );
     if (response.statusCode >= 200 && response.statusCode < 300) {
-      final Code2TokenData data = Code2TokenData.fromJson(json.decode(response.body));
+      final Code2TokenData data =
+          Code2TokenData.fromJson(json.decode(response.body));
       final TokenRepository repo = TokenRepository.getInstance();
       await repo.saveFromCode2Token(data);
       return;
@@ -64,18 +62,18 @@ class TongjiApi {
   }
 
   /// Token刷新
-  /// 
+  ///
   /// 返回刷新后的 [Code2TokenData]。不进行存储。
   Future<Code2TokenData> refreshToken(String refreshToken) async {
     final Uri uri = Uri.https(_baseUrl, code2tokenPath);
-    final response = await http.post(
+    final http.Response response = await _postWithLogs(
       uri,
-      body: {
+      body: <String, String>{
         'grant_type': 'refresh_token',
         'client_id': tongjiClientID,
         'refresh_token': refreshToken,
       },
-      headers: {
+      headers: const <String, String>{
         'Content-Type': 'application/x-www-form-urlencoded',
       },
     );
@@ -89,15 +87,25 @@ class TongjiApi {
     );
   }
 
-  Future<http.Response> _authorizedGet(Uri uri, {Map<String, String>? headers}) async {
+  Future<http.Response> _authorizedGet(
+    Uri uri, {
+    Map<String, String>? headers,
+  }) async {
     final String accessToken = await _getValidAccessToken();
-    final Map<String, String> requestHeaders = {
+    final Map<String, String> requestHeaders = <String, String>{
       'Authorization': 'Bearer $accessToken',
       if (headers != null) ...headers,
     };
     try {
-      return await http.get(uri, headers: requestHeaders);
-    } catch (error) {
+      return await _getWithLogs(uri, headers: requestHeaders);
+    } catch (error, stackTrace) {
+      AppLogger.error(
+        'Authorized GET failed',
+        loggerName: 'TongjiApi',
+        error: error,
+        stackTrace: stackTrace,
+        context: <String, Object?>{'path': uri.path},
+      );
       throw NetworkException(
         message: 'Request failed',
         uri: uri,
@@ -125,7 +133,10 @@ class TongjiApi {
       jsonBody = json.decode(response.body) as Map<String, dynamic>;
       payload = ApiResponse.fromJson(jsonBody, parseData);
     } catch (error, stackTrace) {
-      final exception = JSONResolveException(message: 'Failed to parse response JSON, origin body: ${response.body}', cause: error);
+      final exception = JSONResolveException(
+        message: 'Failed to parse response JSON, origin body: ${response.body}',
+        cause: error,
+      );
       Error.throwWithStackTrace(exception, stackTrace);
     }
     return payload.data;
@@ -138,13 +149,25 @@ class TongjiApi {
     Encoding? encoding,
   }) async {
     final String accessToken = await _getValidAccessToken();
-    final Map<String, String> requestHeaders = {
+    final Map<String, String> requestHeaders = <String, String>{
       'Authorization': 'Bearer $accessToken',
       if (headers != null) ...headers,
     };
     try {
-      return await http.post(uri, headers: requestHeaders, body: body, encoding: encoding);
-    } catch (error) {
+      return await _postWithLogs(
+        uri,
+        headers: requestHeaders,
+        body: body,
+        encoding: encoding,
+      );
+    } catch (error, stackTrace) {
+      AppLogger.error(
+        'Authorized POST failed',
+        loggerName: 'TongjiApi',
+        error: error,
+        stackTrace: stackTrace,
+        context: <String, Object?>{'path': uri.path},
+      );
       throw NetworkException(
         message: 'Request failed',
         uri: uri,
@@ -153,6 +176,7 @@ class TongjiApi {
     }
   }
 
+  // ignore: unused_element
   Future<T> _authorizedPostData<T>(
     Uri uri, {
     required T Function(Object? data) parseData,
@@ -186,7 +210,7 @@ class TongjiApi {
 
   Future<String> _getValidAccessToken() async {
     final TokenRepository repo = TokenRepository.getInstance();
-    final TokenData? token = await repo.getToken(refreshFromStorage: true); 
+    final TokenData? token = await repo.getToken(refreshFromStorage: true);
     if (token == null) {
       throw AppException('AUTH_REQUIRED', 'Missing access token');
     }
@@ -205,8 +229,8 @@ class TongjiApi {
     final Uri uri = Uri.https(_baseUrl, studentInfoPath);
     final StudentInfoNetData netData = await _authorizedGetData<StudentInfoNetData>(
       uri,
-      parseData: (data) {
-        final List<dynamic> list = (data as List<dynamic>?) ?? const [];
+      parseData: (Object? data) {
+        final List<dynamic> list = (data as List<dynamic>?) ?? const <dynamic>[];
         if (list.isEmpty) {
           throw AppException('EMPTY_DATA', 'Student info is empty');
         }
@@ -218,9 +242,11 @@ class TongjiApi {
 
   Future<SchoolCalendarData> fetchSchoolCalendarCurrentTerm() async {
     final Uri uri = Uri.https(_baseUrl, currentTermCalendarPath);
-    final SchoolCalendarNetData netData = await _authorizedGetData<SchoolCalendarNetData>(
+    final SchoolCalendarNetData netData =
+        await _authorizedGetData<SchoolCalendarNetData>(
       uri,
-      parseData: (data) => SchoolCalendarNetData.fromJson(data as Map<String, dynamic>),
+      parseData: (Object? data) =>
+          SchoolCalendarNetData.fromJson(data as Map<String, dynamic>),
     );
     return SchoolCalendarData.fromNetData(netData);
   }
@@ -230,10 +256,14 @@ class TongjiApi {
     final List<CourseScheduleItemNetData> netList =
         await _authorizedGetData<List<CourseScheduleItemNetData>>(
       uri,
-      parseData: (data) {
-        final List<dynamic> list = (data as List<dynamic>?) ?? const [];
+      parseData: (Object? data) {
+        final List<dynamic> list = (data as List<dynamic>?) ?? const <dynamic>[];
         return list
-            .map((item) => CourseScheduleItemNetData.fromJson(item as Map<String, dynamic>))
+            .map(
+              (dynamic item) => CourseScheduleItemNetData.fromJson(
+                item as Map<String, dynamic>,
+              ),
+            )
             .toList();
       },
     );
@@ -241,7 +271,7 @@ class TongjiApi {
   }
 
   /// 获取本科生成绩
-  /// 
+  ///
   /// [calendarId] 可选，指定查询的学期，默认查询当前学期。-1 返回所有学期。
   Future<UndergraduateScoreData> fetchUndergraduateScore({int? calendarId}) async {
     final Uri uri = Uri.https(
@@ -253,10 +283,81 @@ class TongjiApi {
               'calendarId': calendarId.toString(),
             },
     );
-    final UndergraduateScoreNetData netData = await _authorizedGetData<UndergraduateScoreNetData>(
+    final UndergraduateScoreNetData netData =
+        await _authorizedGetData<UndergraduateScoreNetData>(
       uri,
-      parseData: (data) => UndergraduateScoreNetData.fromJson(data as Map<String, dynamic>),
+      parseData: (Object? data) =>
+          UndergraduateScoreNetData.fromJson(data as Map<String, dynamic>),
     );
     return UndergraduateScoreData.fromNetData(netData);
+  }
+
+  Future<http.Response> _getWithLogs(
+    Uri uri, {
+    Map<String, String>? headers,
+  }) async {
+    AppLogger.logNetworkRequest(method: 'GET', uri: uri);
+    final Stopwatch stopwatch = Stopwatch()..start();
+    try {
+      final http.Response response = await http.get(uri, headers: headers);
+      AppLogger.logNetworkResponse(
+        method: 'GET',
+        uri: uri,
+        statusCode: response.statusCode,
+        elapsedMs: stopwatch.elapsedMilliseconds,
+      );
+      return response;
+    } catch (error, stackTrace) {
+      AppLogger.error(
+        'GET request failed',
+        loggerName: 'TongjiApi',
+        error: error,
+        stackTrace: stackTrace,
+        context: <String, Object?>{
+          'method': 'GET',
+          'path': uri.path,
+          'elapsedMs': stopwatch.elapsedMilliseconds,
+        },
+      );
+      rethrow;
+    }
+  }
+
+  Future<http.Response> _postWithLogs(
+    Uri uri, {
+    Map<String, String>? headers,
+    Object? body,
+    Encoding? encoding,
+  }) async {
+    AppLogger.logNetworkRequest(method: 'POST', uri: uri);
+    final Stopwatch stopwatch = Stopwatch()..start();
+    try {
+      final http.Response response = await http.post(
+        uri,
+        headers: headers,
+        body: body,
+        encoding: encoding,
+      );
+      AppLogger.logNetworkResponse(
+        method: 'POST',
+        uri: uri,
+        statusCode: response.statusCode,
+        elapsedMs: stopwatch.elapsedMilliseconds,
+      );
+      return response;
+    } catch (error, stackTrace) {
+      AppLogger.error(
+        'POST request failed',
+        loggerName: 'TongjiApi',
+        error: error,
+        stackTrace: stackTrace,
+        context: <String, Object?>{
+          'method': 'POST',
+          'path': uri.path,
+          'elapsedMs': stopwatch.elapsedMilliseconds,
+        },
+      );
+      rethrow;
+    }
   }
 }

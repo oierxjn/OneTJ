@@ -1,4 +1,4 @@
-{
+﻿{
     "@@locale": "zh",
     "appTitle": "一统同济",
     "authStateMismatch": "认证状态不匹配，可能遭受到网络攻击",
@@ -69,14 +69,41 @@
 
     "settingsMaxWeekTitle": "最大周数",
     "settingsMaxWeekSubtitle": "用于课程表显示可用周数",
+    "settingsTimeSlotsTitle": "课程表时间设置",
+    "settingsTimeSlotsEmpty": "未配置课程表时间",
+    "settingsTimeSlotsSummary": "{count} 个节次 - {first} 到 {last}",
+    "@settingsTimeSlotsSummary": {
+      "placeholders": {
+        "count": {
+          "type": "int"
+        },
+        "first": {},
+        "last": {}
+      }
+    },
+    "settingsTimeSlotsEditorTitle": "编辑课程表时间",
+    "settingsTimeSlotsEditorHint": "点击节次可分别设置开始和结束时间。",
+    "settingsTimeSlotsStartLabel": "开始",
+    "settingsTimeSlotsEndLabel": "结束",
+    "settingsTimeSlotsInvalidEmpty": "至少需要一个节次。",
+    "settingsTimeSlotsInvalidRange": "开始时间必须早于结束时间。",
+    "settingsTimeSlotsInvalidOverlap": "相邻节次不能重叠。",
+    "settingsTimeSlotsInvalidOrder": "节次时间必须严格递增。",
+    "settingsTimeSlotsResetToDefault": "重置为默认值",
 
     "settingsAdvancedSectionTitle": "高级",
+    "settingsDeveloperTitle": "开发者模式",
+    "settingsDeveloperSubtitle": "诊断与日志",
+    "settingsDeveloperPageTitle": "开发者模式",
+    "settingsLogsTitle": "日志",
+    "settingsLogsSubtitle": "查看最近应用日志",
+    "settingsLogsEmpty": "暂无日志",
     "settingsResetTitle": "重置设置",
     "settingsResetSubtitle": "将所有设置恢复为默认值",
     "settingsResetConfirmTitle": "确认重置所有设置？",
     "settingsResetConfirmLabel": "这仅会重置应用设置，不会影响您的账户或缓存。",
     "settingsResetDone": "设置已恢复为默认值",
-    
+    "settingsMaxWeekInvalidRange": "最大周数必须在1到52之间",
     "settingsSaved": "设置已保存"
 }
 

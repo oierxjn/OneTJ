@@ -68,8 +68,36 @@
 
   "settingsMaxWeekTitle": "Max Weeks",
   "settingsMaxWeekSubtitle": "Used by the timetable to display available weeks",
+  "settingsMaxWeekInvalidRange": "Max week must be between 1 and 52.",
+  "settingsTimeSlotsTitle": "Time Slots",
+  "settingsTimeSlotsEmpty": "No time slots configured",
+  "settingsTimeSlotsSummary": "{count} slots - {first} to {last}",
+  "@settingsTimeSlotsSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "first": {},
+      "last": {}
+    }
+  },
+  "settingsTimeSlotsEditorTitle": "Edit Time Slots",
+  "settingsTimeSlotsEditorHint": "Tap each slot to edit start and end time. Slots must stay in chronological order and cannot overlap.",
+  "settingsTimeSlotsStartLabel": "Start",
+  "settingsTimeSlotsEndLabel": "End",
+  "settingsTimeSlotsInvalidEmpty": "At least one slot is required.",
+  "settingsTimeSlotsInvalidRange": "Start time must be earlier than end time.",
+  "settingsTimeSlotsInvalidOverlap": "Adjacent slots must not overlap.",
+  "settingsTimeSlotsInvalidOrder": "Time slots must be strictly increasing.",
+  "settingsTimeSlotsResetToDefault": "Reset to defaults",
 
   "settingsAdvancedSectionTitle": "Advanced",
+  "settingsDeveloperTitle": "Developer Mode",
+  "settingsDeveloperSubtitle": "Diagnostics and logs",
+  "settingsDeveloperPageTitle": "Developer Mode",
+  "settingsLogsTitle": "Logs",
+  "settingsLogsSubtitle": "View recent application logs",
+  "settingsLogsEmpty": "No logs yet",
   "settingsResetTitle": "Reset Settings",
   "settingsResetSubtitle": "Restore all settings to defaults",
   "settingsResetConfirmTitle": "Reset all settings?",

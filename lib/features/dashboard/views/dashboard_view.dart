@@ -5,6 +5,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'package:onetj/features/dashboard/view_models/dashboard_view_model.dart';
 import 'package:onetj/models/event_model.dart';
+import 'package:onetj/models/time_period_range.dart';
 import 'package:onetj/models/timetable_index.dart';
 import 'package:onetj/models/time_slot.dart';
 import 'package:onetj/repo/school_calendar_repository.dart';
@@ -89,13 +90,12 @@ class _DashboardViewState extends State<DashboardView> {
     final l10n = AppLocalizations.of(context);
 
     final String department = _viewModel.departmentName ?? '';
-    final bool isLoading = _viewModel.studentLoading || _viewModel.calendarLoading;
+    final bool isLoading =
+        _viewModel.studentLoading || _viewModel.calendarLoading;
     final String termTitle = (calendar?.simpleName ?? '').isNotEmpty
         ? calendar!.simpleName
         : 'Term unavailable';
-    final int weekNumber = calendar?.week != null
-        ? calendar!.week
-        : 0;
+    final int weekNumber = calendar?.week != null ? calendar!.week : 0;
     final String departmentLabel =
         department.isNotEmpty ? department : 'Department unavailable';
 
@@ -154,7 +154,7 @@ class _DashboardViewState extends State<DashboardView> {
                   ? entry.courseName
                   : 'Unknown course',
               timeLabel:
-                  '${_weekdayLabel(l10n, entry.dayOfWeek)} · ${_formatTimeRange(entry)}',
+                  '${_weekdayLabel(l10n, entry.dayOfWeek)} · ${_formatTimeRange(entry, _viewModel.timeSlotRanges)}',
               roomLabel: entry.roomIdI18n.isNotEmpty
                   ? entry.roomIdI18n
                   : entry.roomLabel,
@@ -187,9 +187,12 @@ class _DashboardViewState extends State<DashboardView> {
     }
   }
 
-  String _formatTimeRange(TimetableEntry entry) {
-    final String start = _slotLabel(entry.timeStart);
-    final String end = _slotLabel(entry.timeEnd);
+  String _formatTimeRange(
+    TimetableEntry entry,
+    List<TimePeriodRangeData> ranges,
+  ) {
+    final String start = _slotStartLabel(entry.timeStart, ranges);
+    final String end = _slotEndLabel(entry.timeEnd, ranges);
     if (start.isEmpty && end.isEmpty) {
       return '${entry.timeStart}-${entry.timeEnd}';
     }
@@ -203,13 +206,20 @@ class _DashboardViewState extends State<DashboardView> {
   }
 }
 
-String _slotLabel(int slot) {
+String _slotStartLabel(int slot, List<TimePeriodRangeData> ranges) {
   final int index = slot - 1;
-  final List<int> startMinutes = TimeSlot.defaultConfig.startMinutes;
-  if (index < 0 || index >= startMinutes.length) {
+  if (index < 0 || index >= ranges.length) {
     return '';
   }
-  return TimeSlot.formatMinutes(startMinutes[index]);
+  return TimeSlot.formatMinutes(ranges[index].startMinutes);
+}
+
+String _slotEndLabel(int slot, List<TimePeriodRangeData> ranges) {
+  final int index = slot - 1;
+  if (index < 0 || index >= ranges.length) {
+    return '';
+  }
+  return TimeSlot.formatMinutes(ranges[index].endMinutes);
 }
 
 class _InfoPill extends StatelessWidget {

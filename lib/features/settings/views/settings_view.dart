@@ -5,9 +5,14 @@ import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:onetj/app/exception/app_exception.dart';
+import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/features/settings/models/event.dart';
 import 'package:onetj/features/settings/view_models/settings_view_model.dart';
 import 'package:onetj/models/event_model.dart';
+import 'package:onetj/models/time_period_range.dart';
+import 'package:onetj/models/time_slot.dart';
+import 'package:onetj/repo/settings_repository.dart';
 
 class SettingsView extends StatefulWidget {
   const SettingsView({super.key});
@@ -20,6 +25,7 @@ class _SettingsViewState extends State<SettingsView> {
   late final SettingsViewModel _viewModel;
   StreamSubscription<UiEvent>? _eventSub;
   late final TextEditingController _maxWeekController;
+  List<TimePeriodRangeData> _draftTimeSlotRanges = <TimePeriodRangeData>[];
 
   @override
   void initState() {
@@ -31,8 +37,9 @@ class _SettingsViewState extends State<SettingsView> {
         return;
       }
       if (event is ShowSnackBarEvent) {
+        final AppLocalizations l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(event.message ?? '')),
+          SnackBar(content: Text(_resolveSettingsErrorMessage(l10n, event))),
         );
         return;
       }
@@ -41,10 +48,7 @@ class _SettingsViewState extends State<SettingsView> {
         return;
       }
       if (event is SettingsSavedEvent) {
-        final String maxWeekText = event.maxWeek.toString();
-        if (_maxWeekController.text != maxWeekText) {
-          _maxWeekController.text = maxWeekText;
-        }
+        _applySettingsToControllers(event.settings);
         final l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(l10n.settingsSaved)),
@@ -52,10 +56,7 @@ class _SettingsViewState extends State<SettingsView> {
         return;
       }
       if (event is SettingsResetEvent) {
-        final String maxWeekText = event.settings.maxWeek.toString();
-        if (_maxWeekController.text != maxWeekText) {
-          _maxWeekController.text = maxWeekText;
-        }
+        _applySettingsToControllers(event.settings);
         final l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(l10n.settingsResetDone)),
@@ -73,12 +74,36 @@ class _SettingsViewState extends State<SettingsView> {
     super.dispose();
   }
 
+  String _resolveSettingsErrorMessage(
+    AppLocalizations l10n,
+    ShowSnackBarEvent event,
+  ) {
+    switch (event.code) {
+      case SettingsValidationException.maxWeekOutOfRange:
+        return l10n.settingsMaxWeekInvalidRange;
+      case SettingsValidationException.timeSlotEmpty:
+        return l10n.settingsTimeSlotsInvalidEmpty;
+      case SettingsValidationException.timeSlotStartOutOfRange:
+      case SettingsValidationException.timeSlotEndOutOfRange:
+      case SettingsValidationException.timeSlotRangeInvalid:
+      case SettingsValidationException.timeSlotStartMinutesItemOutOfRange:
+        return l10n.settingsTimeSlotsInvalidRange;
+      case SettingsValidationException.timeSlotOrderInvalid:
+      case SettingsValidationException.timeSlotStartMinutesNotIncreasing:
+        return l10n.settingsTimeSlotsInvalidOrder;
+      case SettingsValidationException.timeSlotOverlap:
+        return l10n.settingsTimeSlotsInvalidOverlap;
+      default:
+        return event.message ?? '';
+    }
+  }
+
   Future<void> _initSettings() async {
     await _viewModel.loadSettings();
     if (!mounted) {
       return;
     }
-    _maxWeekController.text = _viewModel.maxWeek.toString();
+    _applySettingsToControllers(_viewModel.settingsData);
   }
 
   void _submitMaxWeek() {
@@ -87,7 +112,34 @@ class _SettingsViewState extends State<SettingsView> {
       // TODO: 提示用户输入合法的最大周数
       return;
     }
-    _viewModel.saveSettings(value);
+    _submitSettings();
+  }
+
+  void _applySettingsToControllers(SettingsData settings) {
+    _maxWeekController.text = settings.maxWeek.toString();
+    final List<TimePeriodRangeData> nextRanges = settings.timeSlotRanges
+        .map(
+          (item) => TimePeriodRangeData(
+            startMinutes: item.startMinutes,
+            endMinutes: item.endMinutes,
+          ),
+        )
+        .toList(growable: false);
+    if (mounted) {
+      setState(() {
+        _draftTimeSlotRanges = nextRanges;
+      });
+      return;
+    }
+    _draftTimeSlotRanges = nextRanges;
+  }
+
+  Future<void> _submitSettings() async {
+    final int maxWeek = int.parse(_maxWeekController.text);
+    await _viewModel.saveSettings(
+      maxWeek: maxWeek,
+      editedTimeSlotRanges: _draftTimeSlotRanges,
+    );
   }
 
   Future<void> _logout(BuildContext context) async {
@@ -138,6 +190,44 @@ class _SettingsViewState extends State<SettingsView> {
     await _viewModel.resetSettings();
   }
 
+  Future<void> _openTimeSlotEditor() async {
+    final List<TimePeriodRangeData>? next =
+        await context.push<List<TimePeriodRangeData>>(
+      RoutePaths.homeSettingsTimeSlots,
+      extra: _draftTimeSlotRanges
+          .map(
+            (item) => TimePeriodRangeData(
+              startMinutes: item.startMinutes,
+              endMinutes: item.endMinutes,
+            ),
+          )
+          .toList(growable: false),
+    );
+    if (next == null || !mounted) {
+      return;
+    }
+    setState(() {
+      _draftTimeSlotRanges = next;
+    });
+  }
+
+  String _timeSlotSummary(AppLocalizations l10n) {
+    if (_draftTimeSlotRanges.isEmpty) {
+      return l10n.settingsTimeSlotsEmpty;
+    }
+    final String first = TimeSlot.formatMinutes(
+      _draftTimeSlotRanges.first.startMinutes,
+    );
+    final String last = TimeSlot.formatMinutes(
+      _draftTimeSlotRanges.last.endMinutes,
+    );
+    return l10n.settingsTimeSlotsSummary(
+      _draftTimeSlotRanges.length,
+      first,
+      last,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -185,6 +275,19 @@ class _SettingsViewState extends State<SettingsView> {
                 ),
               ),
             ),
+            const SizedBox(height: 12),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.schedule),
+                title:
+                    Text(AppLocalizations.of(context).settingsTimeSlotsTitle),
+                subtitle: Text(_timeSlotSummary(AppLocalizations.of(context))),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: _viewModel.settingsLoading || _viewModel.settingsSaving
+                    ? null
+                    : _openTimeSlotEditor,
+              ),
+            ),
             const SizedBox(height: 24),
             Text(
               AppLocalizations.of(context).settingsAdvancedSectionTitle,
@@ -200,6 +303,19 @@ class _SettingsViewState extends State<SettingsView> {
                 onTap: _viewModel.settingsLoading || _viewModel.settingsSaving
                     ? null
                     : () => _confirmResetSettings(context),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.developer_mode),
+                title:
+                    Text(AppLocalizations.of(context).settingsDeveloperTitle),
+                subtitle: Text(
+                  AppLocalizations.of(context).settingsDeveloperSubtitle,
+                ),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push(RoutePaths.homeSettingsDeveloper),
               ),
             ),
             const SizedBox(height: 24),
