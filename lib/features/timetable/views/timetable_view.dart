@@ -91,6 +91,11 @@ class _TimetableViewState extends State<TimetableView> {
 
   Widget _buildBody(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final bool disableAnimations =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    const Duration defaultDuration = Duration(milliseconds: 220);
+    final Duration animationDuration =
+        disableAnimations ? Duration.zero : defaultDuration;
     if (_viewModel.isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -161,33 +166,17 @@ class _TimetableViewState extends State<TimetableView> {
               },
             ),
           ),
-        if (_viewModel.mode == TimetableDisplayMode.day)
-          SizedBox(
-            height: 40,
-            child: _HorizontalWheel(
-              controller: _dayController,
-              itemExtent: 64,
-              itemCount: dayLabels.length,
-              onSelectedItemChanged: (index) {
-                if (index < 0 || index >= dayLabels.length) {
-                  return;
-                }
-                _viewModel.selectDay(index + 1);
-              },
-              itemBuilder: (context, index) {
-                final bool selected = _viewModel.selectedDay == index + 1;
-                return _WheelItem(
-                  label: dayLabels[index],
-                  selected: selected,
-                );
-              },
-            ),
-          ),
+        _buildAnimatedDayWheel(
+          dayLabels: dayLabels,
+          duration: animationDuration,
+        ),
         Expanded(
           child: _buildTimetableView(
             context,
             mode: _viewModel.mode,
             dayLabels: dayLabels,
+            duration: animationDuration,
+            disableAnimations: disableAnimations,
           ),
         ),
       ],
@@ -242,122 +231,269 @@ class _TimetableViewState extends State<TimetableView> {
     BuildContext context, {
     required TimetableDisplayMode mode,
     required List<String> dayLabels,
+    required Duration duration,
+    required bool disableAnimations,
   }) {
     const double slotHeight = 64;
     const double preferredLabelWidth = 72;
     const double minLabelWidth = 35;
     final List<_TimeSlot> timeSlots = _buildTimeSlots(_viewModel.timeSlotRanges);
-    final double headerHeight =
+    final double targetHeaderHeight =
         mode == TimetableDisplayMode.week ? _weekHeaderHeight(context) : 0;
-    final double contentHeight = timeSlots.length * slotHeight + headerHeight;
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(4, 8, 12, 4),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final double availableWidth =
-              (constraints.maxWidth - 8).clamp(0, double.infinity);
-          final double minCardWidth = 92;
-          final double maxCardWidth = double.infinity;
-          double labelWidth = preferredLabelWidth;
-          double dayColumnWidth =
-              ((availableWidth - labelWidth) / 7).clamp(0, maxCardWidth);
+    return TweenAnimationBuilder<double>(
+      duration: duration,
+      curve: mode == TimetableDisplayMode.week
+          ? Curves.easeOutCubic
+          : Curves.easeInCubic,
+      tween: Tween<double>(begin: 0, end: targetHeaderHeight),
+      builder: (context, animatedHeaderHeight, _) {
+        final double contentHeight =
+            timeSlots.length * slotHeight + animatedHeaderHeight;
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(4, 8, 12, 4),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final double availableWidth =
+                  (constraints.maxWidth - 8).clamp(0, double.infinity);
+              final double minCardWidth = 92;
+              final double maxCardWidth = double.infinity;
+              double labelWidth = preferredLabelWidth;
+              double dayColumnWidth =
+                  ((availableWidth - labelWidth) / 7).clamp(0, maxCardWidth);
 
-          if (dayColumnWidth < minCardWidth) {
-            final double neededLabelWidth = availableWidth - minCardWidth * 7;
-            labelWidth =
-                neededLabelWidth.clamp(minLabelWidth, preferredLabelWidth);
-            dayColumnWidth =
-                ((availableWidth - labelWidth) / 7).clamp(0, maxCardWidth);
-          }
-          final bool isNarrowLabel = labelWidth <= minLabelWidth + 0.1;
-          final TextStyle? labelStyle = isNarrowLabel
-              ? Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 11)
-              : Theme.of(context).textTheme.bodySmall;
+              if (dayColumnWidth < minCardWidth) {
+                final double neededLabelWidth = availableWidth - minCardWidth * 7;
+                labelWidth =
+                    neededLabelWidth.clamp(minLabelWidth, preferredLabelWidth);
+                dayColumnWidth =
+                    ((availableWidth - labelWidth) / 7).clamp(0, maxCardWidth);
+              }
+              final bool isNarrowLabel = labelWidth <= minLabelWidth + 0.1;
+              final TextStyle? labelStyle = isNarrowLabel
+                  ? Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 11)
+                  : Theme.of(context).textTheme.bodySmall;
 
-          return SingleChildScrollView(
-            controller: _scrollController,
-            child: SizedBox(
-              height: contentHeight,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(
-                    width: labelWidth,
-                    child: Column(
-                      children: [
-                        if (headerHeight > 0) SizedBox(height: headerHeight),
-                        for (final slot in timeSlots)
-                          Container(
-                            height: slotHeight,
-                            alignment: Alignment.topCenter,
-                            padding: const EdgeInsets.only(top: 6),
-                            child: Text(
-                              slot.label,
-                              style: labelStyle,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Stack(
-                      children: [
-                        Positioned.fill(
-                          child: Column(
-                            children: [
-                              if (headerHeight > 0)
-                                SizedBox(height: headerHeight),
-                              for (int i = 0; i < timeSlots.length; i += 1)
-                                Container(
-                                  height: slotHeight,
-                                  decoration: BoxDecoration(
-                                    border: Border(
-                                      bottom: BorderSide(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .outlineVariant,
+              return SingleChildScrollView(
+                controller: _scrollController,
+                child: SizedBox(
+                  height: contentHeight,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        width: labelWidth,
+                        child: Column(
+                          children: [
+                            SizedBox(height: animatedHeaderHeight),
+                            for (final slot in timeSlots)
+                              Container(
+                                height: slotHeight,
+                                alignment: Alignment.topCenter,
+                                padding: const EdgeInsets.only(top: 6),
+                                child: Text(
+                                  slot.label,
+                                  style: labelStyle,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Stack(
+                          children: [
+                            Positioned.fill(
+                              child: Column(
+                                children: [
+                                  SizedBox(height: animatedHeaderHeight),
+                                  for (int i = 0; i < timeSlots.length; i += 1)
+                                    Container(
+                                      height: slotHeight,
+                                      decoration: BoxDecoration(
+                                        border: Border(
+                                          bottom: BorderSide(
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .outlineVariant,
+                                          ),
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                        if (mode == TimetableDisplayMode.day)
-                          Positioned.fill(
-                            child: DayTimelineContent(
-                              entries: _viewModel.entriesForSelectedWeekDay(
-                                _viewModel.selectedDay,
+                                ],
                               ),
-                              slotHeight: slotHeight,
-                              slotCount: timeSlots.length,
-                              roomBuilder: _formatRoom,
-                              teacherBuilder: _formatTeacher,
                             ),
-                          )
-                        else if (mode == TimetableDisplayMode.week)
-                          Positioned.fill(
-                            child: WeekTimelineContent(
-                              dayLabels: dayLabels,
-                              dayColumnWidth: dayColumnWidth,
-                              slotHeight: slotHeight,
-                              slotCount: timeSlots.length,
-                              entriesForDay: (day) =>
-                                  _viewModel.entriesForSelectedWeekDay(day),
-                              roomBuilder: _formatRoom,
-                              teacherBuilder: _formatTeacher,
+                            Positioned.fill(
+                              child: AnimatedSwitcher(
+                                duration: duration,
+                                switchInCurve: Curves.easeOut,
+                                switchOutCurve: Curves.easeOut,
+                                transitionBuilder: (child, animation) {
+                                  if (disableAnimations) {
+                                    return child;
+                                  }
+                                  return FadeTransition(
+                                    opacity: animation,
+                                    child: child,
+                                  );
+                                },
+                                layoutBuilder: (currentChild, previousChildren) {
+                                  return Stack(
+                                    fit: StackFit.expand,
+                                    children: [
+                                      ...previousChildren,
+                                      if (currentChild != null) currentChild,
+                                    ],
+                                  );
+                                },
+                                child: mode == TimetableDisplayMode.day
+                                    ? KeyedSubtree(
+                                        key: const ValueKey<String>('day-content'),
+                                        child: DayTimelineContent(
+                                          entries:
+                                              _viewModel.entriesForSelectedWeekDay(
+                                            _viewModel.selectedDay,
+                                          ),
+                                          slotHeight: slotHeight,
+                                          slotCount: timeSlots.length,
+                                          roomBuilder: _formatRoom,
+                                          teacherBuilder: _formatTeacher,
+                                        ),
+                                      )
+                                    : KeyedSubtree(
+                                        key: const ValueKey<String>('week-content'),
+                                        child: WeekTimelineContent(
+                                          dayLabels: dayLabels,
+                                          dayColumnWidth: dayColumnWidth,
+                                          slotHeight: slotHeight,
+                                          slotCount: timeSlots.length,
+                                          entriesForDay: (day) =>
+                                              _viewModel.entriesForSelectedWeekDay(
+                                            day,
+                                          ),
+                                          roomBuilder: _formatRoom,
+                                          teacherBuilder: _formatTeacher,
+                                        ),
+                                      ),
+                              ),
                             ),
-                          ),
-                      ],
-                    ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ),
-          );
-        },
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAnimatedDayWheel({
+    required List<String> dayLabels,
+    required Duration duration,
+  }) {
+    return _AnimatedDayWheel(
+      isExpanded: _viewModel.mode == TimetableDisplayMode.day,
+      duration: duration,
+      child: SizedBox(
+        height: 40,
+        child: _HorizontalWheel(
+          controller: _dayController,
+          itemExtent: 64,
+          itemCount: dayLabels.length,
+          onSelectedItemChanged: (index) {
+            if (index < 0 || index >= dayLabels.length) {
+              return;
+            }
+            _viewModel.selectDay(index + 1);
+          },
+          itemBuilder: (context, index) {
+            final bool selected = _viewModel.selectedDay == index + 1;
+            return _WheelItem(
+              label: dayLabels[index],
+              selected: selected,
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _AnimatedDayWheel extends StatefulWidget {
+  const _AnimatedDayWheel({
+    required this.isExpanded,
+    required this.duration,
+    required this.child,
+  });
+
+  final bool isExpanded;
+  final Duration duration;
+  final Widget child;
+
+  @override
+  State<_AnimatedDayWheel> createState() => _AnimatedDayWheelState();
+}
+
+class _AnimatedDayWheelState extends State<_AnimatedDayWheel>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _sizeFactor;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: widget.duration,
+      value: widget.isExpanded ? 1 : 0,
+    );
+    _sizeFactor = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOutCubic,
+      reverseCurve: Curves.easeInCubic,
+    );
+  }
+
+  @override
+  void didUpdateWidget(covariant _AnimatedDayWheel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _controller.duration = widget.duration;
+    if (oldWidget.isExpanded == widget.isExpanded &&
+        oldWidget.duration == widget.duration) {
+      return;
+    }
+    if (widget.duration == Duration.zero) {
+      _controller.value = widget.isExpanded ? 1 : 0;
+      return;
+    }
+    if (widget.isExpanded) {
+      _controller.forward();
+      return;
+    }
+    _controller.reverse();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRect(
+      child: SizeTransition(
+        sizeFactor: _sizeFactor,
+        axis: Axis.vertical,
+        axisAlignment: -1,
+        child: IgnorePointer(
+          ignoring: !widget.isExpanded,
+          child: widget.child,
+        ),
       ),
     );
   }
