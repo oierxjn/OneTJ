@@ -75,6 +75,11 @@ ensure_fvm() {
     echo "fvm not found in PATH after installation." >&2
     exit 1
   fi
+
+  if [ -n "${GITHUB_PATH:-}" ]; then
+    printf '%s\n' "$HOME/.pub-cache/bin" >> "$GITHUB_PATH"
+    log "Persisted fvm PATH via GITHUB_PATH."
+  fi
 }
 
 ensure_fvm

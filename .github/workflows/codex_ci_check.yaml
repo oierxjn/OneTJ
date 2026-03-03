@@ -27,5 +27,9 @@ jobs:
 
       - name: Run Flutter checks
         shell: bash
+        env:
+          FVM_FLUTTER_VERSION: ohos_flutter
+          OHOS_FLUTTER_GIT_URL: ${{ vars.OHOS_FLUTTER_GIT_URL }}
+          OHOS_FLUTTER_GIT_REF: ${{ vars.OHOS_FLUTTER_GIT_REF }}
         run: |
           SKIP_BOOTSTRAP=1 sh scripts/check_ci.sh
