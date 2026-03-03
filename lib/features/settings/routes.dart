@@ -1,6 +1,7 @@
 import 'package:go_router/go_router.dart';
 
 import 'package:onetj/app/constant/route_paths.dart';
+import 'package:onetj/features/about/views/about_view.dart';
 import 'package:onetj/features/settings/views/developer_settings_view.dart';
 import 'package:onetj/features/settings/views/log_viewer_view.dart';
 import 'package:onetj/features/settings/views/settings_view.dart';
@@ -14,6 +15,11 @@ final List<GoRoute> settingsRoutes = [
     name: 'settings',
     builder: (context, state) => const SettingsView(),
     routes: [
+      GoRoute(
+        path: 'about',
+        name: 'settings-about',
+        builder: (context, state) => const AboutView(),
+      ),
       GoRoute(
         path: 'time-slots',
         name: 'settings-time-slots',

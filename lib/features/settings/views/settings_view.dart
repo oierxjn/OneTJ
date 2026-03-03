@@ -343,6 +343,18 @@ class _SettingsViewState extends State<SettingsView> {
     );
   }
 
+  Widget _buildAboutCard(AppLocalizations l10n) {
+    return Card(
+      child: ListTile(
+        leading: const Icon(Icons.info_outline),
+        title: Text(l10n.settingsAboutTitle),
+        subtitle: Text(l10n.settingsAboutSubtitle),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () => context.push(RoutePaths.homeSettingsAbout),
+      ),
+    );
+  }
+
   Widget _buildLogoutButton(AppLocalizations l10n) {
     return Center(
       child: FilledButton(
@@ -383,6 +395,8 @@ class _SettingsViewState extends State<SettingsView> {
             _buildAdvancedSectionTitle(l10n),
             const SizedBox(height: 8),
             _buildResetCard(l10n),
+            const SizedBox(height: 12),
+            _buildAboutCard(l10n),
             const SizedBox(height: 12),
             _buildDeveloperCard(l10n),
             const SizedBox(height: 24),

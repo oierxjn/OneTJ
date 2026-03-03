@@ -8,9 +8,9 @@ class RoutePaths {
   static const String homeTimetable = '$home/timetable';
   static const String homeSettings = '$home/settings';
   static const String homeSettingsTimeSlots = '$homeSettings/time-slots';
+  static const String homeSettingsAbout = '$homeSettings/about';
   static const String homeSettingsDeveloper = '$homeSettings/developer';
-  static const String homeSettingsDeveloperLogs =
-      '$homeSettingsDeveloper/logs';
+  static const String homeSettingsDeveloperLogs = '$homeSettingsDeveloper/logs';
   static const String homeTools = '$home/tools';
   static const String homeGrades = '$home/grades';
 }

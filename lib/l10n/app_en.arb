@@ -112,6 +112,8 @@
   "settingsDashboardUpcomingCountInvalidRange": "Course count must be between 1 and 20.",
 
   "settingsAdvancedSectionTitle": "Advanced",
+  "settingsAboutTitle": "About",
+  "settingsAboutSubtitle": "App info and project link",
   "settingsDeveloperTitle": "Developer Options",
   "settingsDeveloperSubtitle": "Diagnostics and logs",
   "settingsDeveloperPageTitle": "Developer Options",
@@ -124,5 +126,11 @@
   "settingsResetConfirmLabel": "This only resets app settings and does not affect your account or cache.",
   "settingsResetDone": "Settings reset to defaults",
 
-  "settingsSaved": "Settings saved"
+  "settingsSaved": "Settings saved",
+  "aboutDescription": "A third-party client for Tongji University services.",
+  "aboutAppNameLabel": "App Name",
+  "aboutVersionLabel": "Version",
+  "aboutBuildLabel": "Build Number",
+  "aboutRepoLabel": "Project Repository",
+  "aboutCopied": "Repository link copied"
 }
