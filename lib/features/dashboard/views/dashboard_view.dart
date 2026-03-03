@@ -95,15 +95,14 @@ class _DashboardViewState extends State<DashboardView> {
     final SchoolCalendarData? calendar = _viewModel.calendar;
     final l10n = AppLocalizations.of(context);
 
+    // TODO 加载没有完成的时候，显示一个加载条
     final String department = _viewModel.departmentName ?? '';
     final bool isLoading =
         _viewModel.studentLoading || _viewModel.calendarLoading;
-    final String termTitle = (calendar?.simpleName ?? '').isNotEmpty
-        ? calendar!.simpleName
-        : 'Term unavailable';
+    final String termTitle =
+        (calendar?.simpleName ?? '').isNotEmpty ? calendar!.simpleName : '';
     final int weekNumber = calendar?.week != null ? calendar!.week : 0;
-    final String departmentLabel =
-        department.isNotEmpty ? department : 'Department unavailable';
+    final String departmentLabel = department.isNotEmpty ? department : '';
 
     return Card(
       elevation: 0,
@@ -283,48 +282,44 @@ class _UpcomingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = Theme.of(context).colorScheme;
-    return Container(
-      width: double.infinity,
+    return Card(
+      color: colors.surfaceContainerHigh,
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: colors.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: colors.outlineVariant,
-        ),
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            top: 0,
-            bottom: 0,
-            left: 0,
-            child: _TimeBadge(label: timeLabel),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(left: _kUpcomingContentLeftInset),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 8),
-                _MetaRow(
-                  icon: Icons.room_outlined,
-                  label: roomLabel,
-                ),
-                const SizedBox(height: 4),
-                _MetaRow(
-                  icon: Icons.person_outline,
-                  label: teacherLabel,
-                ),
-              ],
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Stack(
+          children: [
+            Positioned(
+              top: 0,
+              bottom: 0,
+              left: 0,
+              child: _TimeBadge(label: timeLabel),
             ),
-          ),
-        ],
+            Padding(
+              padding: const EdgeInsets.only(left: _kUpcomingContentLeftInset),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  _MetaRow(
+                    icon: Icons.room_outlined,
+                    label: roomLabel,
+                  ),
+                  const SizedBox(height: 4),
+                  _MetaRow(
+                    icon: Icons.person_outline,
+                    label: teacherLabel,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -340,20 +335,23 @@ class _TimeBadge extends StatelessWidget {
     final ColorScheme colors = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.only(right: _kUpcomingTimeBadgeGap),
-      child: Container(
+      child: SizedBox(
         width: _kUpcomingTimeBadgeWidth,
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        alignment: Alignment.centerLeft,
-        decoration: BoxDecoration(
+        child: Card(
+          margin: EdgeInsets.zero,
           color: colors.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: colors.outlineVariant,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                label,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
           ),
-        ),
-        child: Text(
-          label,
-          style: Theme.of(context).textTheme.bodySmall,
         ),
       ),
     );
