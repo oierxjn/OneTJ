@@ -5,6 +5,8 @@ This project provides cross-platform CI scripts under `scripts/`:
 - `bootstrap_ci_env.ps1|cmd|sh`: install/check `fvm`, install/check OHOS Flutter SDK, set `.fvmrc`, and sync `ohos/local.properties`.
 - `check_ci.ps1|cmd|sh`: run CI checks with `fvm flutter pub get`, `fvm flutter analyze`, and `fvm flutter test --no-pub`.
 
+`bootstrap_ci_env` supports environments without a preinstalled system `dart`: it can bootstrap OHOS Flutter first and use the bundled `bin/dart` to install `fvm`.
+
 ## Environment variables
 
 - `FVM_FLUTTER_VERSION`: FVM version name. Default: `ohos_flutter`.

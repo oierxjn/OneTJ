@@ -28,22 +28,12 @@ OHOS_FLUTTER_SDK="${OHOS_FLUTTER_SDK:-$VERSIONS_DIR/$FVM_FLUTTER_VERSION}"
 FVMRC_PATH="$REPO_ROOT/.fvmrc"
 LOCAL_PROPERTIES_PATH="$REPO_ROOT/ohos/local.properties"
 
-if ! command_exists fvm; then
-  log "fvm not found. Installing via dart pub global activate fvm."
-  if ! command_exists dart; then
-    echo "dart is required to install fvm." >&2
-    exit 1
+ensure_ohos_flutter_sdk() {
+  if [ -x "$OHOS_FLUTTER_SDK/bin/flutter" ]; then
+    log "OHOS Flutter SDK found: $OHOS_FLUTTER_SDK"
+    return
   fi
-  dart pub global activate fvm
-  export PATH="$HOME/.pub-cache/bin:$PATH"
-fi
 
-if ! command_exists fvm; then
-  echo "fvm not found in PATH after installation." >&2
-  exit 1
-fi
-
-if [ ! -x "$OHOS_FLUTTER_SDK/bin/flutter" ]; then
   if [ -e "$OHOS_FLUTTER_SDK" ]; then
     echo "Path exists but is not a valid Flutter SDK: $OHOS_FLUTTER_SDK" >&2
     exit 1
@@ -59,9 +49,36 @@ if [ ! -x "$OHOS_FLUTTER_SDK/bin/flutter" ]; then
   else
     git clone --depth 1 "$OHOS_FLUTTER_GIT_URL" "$OHOS_FLUTTER_SDK"
   fi
-else
-  log "OHOS Flutter SDK found: $OHOS_FLUTTER_SDK"
-fi
+}
+
+ensure_fvm() {
+  if command_exists fvm; then
+    return
+  fi
+
+  log "fvm not found. Installing via dart pub global activate fvm."
+  if command_exists dart; then
+    dart pub global activate fvm
+  else
+    log "System dart not found. Bootstrapping OHOS Flutter SDK to use bundled dart."
+    ensure_ohos_flutter_sdk
+    if [ ! -x "$OHOS_FLUTTER_SDK/bin/dart" ]; then
+      echo "No system dart and no bundled dart at $OHOS_FLUTTER_SDK/bin/dart" >&2
+      exit 1
+    fi
+    export PATH="$OHOS_FLUTTER_SDK/bin:$PATH"
+    "$OHOS_FLUTTER_SDK/bin/dart" pub global activate fvm
+  fi
+
+  export PATH="$HOME/.pub-cache/bin:$PATH"
+  if ! command_exists fvm; then
+    echo "fvm not found in PATH after installation." >&2
+    exit 1
+  fi
+}
+
+ensure_fvm
+ensure_ohos_flutter_sdk
 
 printf '{\n  "flutter": "%s"\n}\n' "$FVM_FLUTTER_VERSION" > "$FVMRC_PATH"
 log "Updated .fvmrc -> $FVM_FLUTTER_VERSION"

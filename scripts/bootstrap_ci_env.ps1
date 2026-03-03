@@ -49,19 +49,7 @@ function Ensure-Command {
     }
 }
 
-function Ensure-Fvm {
-    if (Get-Command fvm -ErrorAction SilentlyContinue) {
-        Write-Log "fvm found."
-        return
-    }
-
-    Write-Log "fvm not found. Installing via dart pub global activate fvm."
-    Ensure-Command "dart"
-    & dart pub global activate fvm
-    if ($LASTEXITCODE -ne 0) {
-        throw "Failed to install fvm via dart."
-    }
-
+function Add-PubCacheBinToPath {
     $windowsPubBin = Join-Path $HOME "AppData\Local\Pub\Cache\bin"
     $linuxPubBin = Join-Path $HOME ".pub-cache/bin"
     if (Test-Path $windowsPubBin) {
@@ -69,7 +57,51 @@ function Ensure-Fvm {
     } elseif (Test-Path $linuxPubBin) {
         $env:PATH = "$linuxPubBin;$env:PATH"
     }
+}
 
+function Get-DartCommand {
+    $systemDart = Get-Command dart -ErrorAction SilentlyContinue
+    if ($systemDart) {
+        return $systemDart.Source
+    }
+
+    $candidates = @(
+        (Join-Path $OhosFlutterSdk "bin\dart.bat"),
+        (Join-Path $OhosFlutterSdk "bin\dart.exe"),
+        (Join-Path $OhosFlutterSdk "bin\dart")
+    )
+    foreach ($candidate in $candidates) {
+        if (Test-Path $candidate) {
+            return $candidate
+        }
+    }
+
+    return $null
+}
+
+function Ensure-Fvm {
+    if (Get-Command fvm -ErrorAction SilentlyContinue) {
+        Write-Log "fvm found."
+        return
+    }
+
+    Write-Log "fvm not found. Installing via dart pub global activate fvm."
+    $dartCommand = Get-DartCommand
+    if ($null -eq $dartCommand) {
+        Write-Log "System dart not found. Bootstrapping OHOS Flutter SDK to use bundled dart."
+        Ensure-OhosFlutterSdk
+        $dartCommand = Get-DartCommand
+    }
+    if ($null -eq $dartCommand) {
+        throw "No usable dart command found. Install dart or provide OHOS Flutter SDK."
+    }
+
+    & $dartCommand pub global activate fvm
+    if ($LASTEXITCODE -ne 0) {
+        throw "Failed to install fvm via dart."
+    }
+
+    Add-PubCacheBinToPath
     Ensure-Command "fvm"
     Write-Log "fvm installed."
 }
