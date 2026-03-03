@@ -135,6 +135,6 @@
   "aboutCopied": "Repository link copied",
   "aboutContributorsTitle": "Contributors",
   "aboutAcknowledgementsTitle": "Acknowledgements",
-  "aboutAckFlutterDescription": "Built with Flutter",
-  "aboutAckTjpbDescription": "Technical support provided by Pobi Studio"
+  "aboutAckFlutterDescription": "Flutter, Google's open-source cross-platform UI framework that serves as this project's foundation.",
+  "aboutAckTjpbDescription": "An internet team guided by the Information Office of Tongji University, providing technical support for this project."
 }
