@@ -45,9 +45,9 @@ ensure_ohos_flutter_sdk() {
   log "Cloning OHOS Flutter SDK from $OHOS_FLUTTER_GIT_URL ($OHOS_FLUTTER_GIT_REF)."
   mkdir -p "$(dirname "$OHOS_FLUTTER_SDK")"
   if [ -n "$OHOS_FLUTTER_GIT_REF" ]; then
-    git clone --depth 1 --branch "$OHOS_FLUTTER_GIT_REF" "$OHOS_FLUTTER_GIT_URL" "$OHOS_FLUTTER_SDK"
+    git clone --branch "$OHOS_FLUTTER_GIT_REF" "$OHOS_FLUTTER_GIT_URL" "$OHOS_FLUTTER_SDK"
   else
-    git clone --depth 1 "$OHOS_FLUTTER_GIT_URL" "$OHOS_FLUTTER_SDK"
+    git clone "$OHOS_FLUTTER_GIT_URL" "$OHOS_FLUTTER_SDK"
   fi
 }
 

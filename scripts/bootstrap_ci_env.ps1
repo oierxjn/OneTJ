@@ -131,7 +131,7 @@ function Ensure-OhosFlutterSdk {
         New-Item -ItemType Directory -Force -Path $parent | Out-Null
     }
 
-    $cloneArgs = @("clone", "--depth", "1")
+    $cloneArgs = @("clone")
     if (-not [string]::IsNullOrWhiteSpace($OhosFlutterGitRef)) {
         $cloneArgs += @("--branch", $OhosFlutterGitRef)
     }
