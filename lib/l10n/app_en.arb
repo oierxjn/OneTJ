@@ -132,5 +132,9 @@
   "aboutVersionLabel": "Version",
   "aboutBuildLabel": "Build Number",
   "aboutRepoLabel": "Project Repository",
-  "aboutCopied": "Repository link copied"
+  "aboutCopied": "Repository link copied",
+  "aboutContributorsTitle": "Contributors",
+  "aboutAcknowledgementsTitle": "Acknowledgements",
+  "aboutAckFlutterDescription": "Built with Flutter",
+  "aboutAckTjpbDescription": "Technical support provided by Pobi Studio"
 }

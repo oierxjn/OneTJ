@@ -132,6 +132,10 @@
     "aboutVersionLabel": "版本号",
     "aboutBuildLabel": "构建号",
     "aboutRepoLabel": "项目仓库",
-    "aboutCopied": "已复制仓库链接"
+    "aboutCopied": "已复制仓库链接",
+    "aboutContributorsTitle": "贡献者",
+    "aboutAcknowledgementsTitle": "鸣谢",
+    "aboutAckFlutterDescription": "基于 Flutter 构建",
+    "aboutAckTjpbDescription": "同济大学破壁工作室提供技术支持"
 }
 
