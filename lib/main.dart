@@ -9,13 +9,11 @@ void main() {
   runApp(const OneTJApp());
 }
 
-
 class OneTJApp extends StatelessWidget {
   const OneTJApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-
     return MaterialApp.router(
       localizationsDelegates: const [
         AppLocalizations.delegate,

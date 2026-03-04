@@ -9,6 +9,7 @@ import 'package:onetj/models/event_model.dart';
 import 'package:onetj/repo/token_repository.dart';
 import 'package:onetj/services/hive_storage_service.dart';
 import 'package:onetj/services/tongji.dart';
+import 'package:onetj/services/webview_environment_service.dart';
 
 class LauncherViewModel extends BaseViewModel {
   LauncherViewModel()
@@ -45,7 +46,10 @@ class LauncherViewModel extends BaseViewModel {
   }
 
   Future<String> _initialize() async {
-    await _hiveStorageService.initializeHive();
+    await Future.wait([
+      _hiveStorageService.initializeHive(),
+      WebViewEnvironmentService.instance.initialize(),
+    ]);
     final String route = await _resolveInitialRoute();
     return route;
   }

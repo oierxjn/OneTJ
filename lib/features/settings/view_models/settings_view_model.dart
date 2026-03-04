@@ -18,14 +18,17 @@ import 'package:onetj/repo/settings_repository.dart';
 import 'package:onetj/repo/student_info_repository.dart';
 import 'package:onetj/repo/token_repository.dart';
 import 'package:onetj/services/hive_storage_service.dart';
+import 'package:onetj/services/webview_environment_service.dart';
 
 class SettingsViewModel extends BaseViewModel {
   SettingsViewModel()
       : _eventController = StreamController<UiEvent>.broadcast(),
-        _hiveStorageService = HiveStorageService();
+        _hiveStorageService = HiveStorageService(),
+        _webViewEnvironment = WebViewEnvironmentService.instance.environment;
 
   final StreamController<UiEvent> _eventController;
   final HiveStorageService _hiveStorageService;
+  final WebViewEnvironment? _webViewEnvironment;
   Stream<UiEvent> get events => _eventController.stream;
   // 初值一般不会被使用
   SettingsData _settingsData = SettingsData(
@@ -58,7 +61,8 @@ class SettingsViewModel extends BaseViewModel {
       await StudentInfoRepository.getInstance().clearStudentInfo();
       await SchoolCalendarRepository.getInstance().clearSchoolCalendar();
       await CourseScheduleRepository.getInstance().clearCourseSchedule();
-      await CookieManager.instance().deleteAllCookies();
+      await CookieManager.instance(webViewEnvironment: _webViewEnvironment)
+          .deleteAllCookies();
       AppLogger.logNavigation(
         from: RoutePaths.homeSettings,
         to: RoutePaths.login,
