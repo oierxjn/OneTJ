@@ -134,6 +134,10 @@
   "settingsDataMigrationNoData": "No legacy data found to migrate",
   "settingsDataMigrationFailed": "Data migration failed. Please try again later",
   "settingsDataMigrationRestartHint": "Please restart the app to apply changes",
+  "settingsDataCleanupAction": "Clean Legacy Cache",
+  "settingsDataCleanupSuccess": "Legacy data cache cleaned",
+  "settingsDataCleanupNoData": "No legacy data cache found",
+  "settingsDataCleanupFailed": "Failed to clean legacy data cache. Please try again later",
   "settingsResetDone": "Settings reset to defaults",
 
   "settingsSaved": "Settings saved",
