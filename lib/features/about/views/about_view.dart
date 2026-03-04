@@ -7,6 +7,8 @@ import 'package:onetj/features/about/models/contributor_model.dart';
 import 'package:onetj/features/about/view_models/about_view_model.dart';
 
 const String _kProjectRepoUrl = 'https://github.com/oierxjn/OneTJ';
+const String _kQqGroupId = '322324184';
+const String _kQqGroupQrAsset = 'assets/media/qq_group_qrcode.png';
 
 class AboutView extends StatefulWidget {
   const AboutView({super.key});
@@ -25,6 +27,61 @@ class _AboutViewState extends State<AboutView> {
     }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(l10n.aboutCopied)),
+    );
+  }
+
+  Future<void> _copyQqGroupId(AppLocalizations l10n) async {
+    await Clipboard.setData(const ClipboardData(text: _kQqGroupId));
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(l10n.aboutQqGroupCopied)),
+    );
+  }
+
+  Future<void> _showQqGroupDialog(AppLocalizations l10n) async {
+    await showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: Text(l10n.aboutQqGroupTitle),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.asset(
+                  _kQqGroupQrAsset,
+                  width: 220,
+                  height: 320,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                l10n.aboutQqGroupNumberLabel,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 4),
+              SelectableText(
+                _kQqGroupId,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(l10n.closeLabel),
+            ),
+            FilledButton(
+              onPressed: () => _copyQqGroupId(l10n),
+              child: Text(l10n.aboutQqGroupCopyLabel),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -70,6 +127,18 @@ class _AboutViewState extends State<AboutView> {
           const Divider(height: 1),
           ...contributors.map(_buildContributorTile),
         ],
+      ),
+    );
+  }
+
+  Widget _buildQqGroupCard(AppLocalizations l10n) {
+    return Card(
+      child: ListTile(
+        leading: const Icon(Icons.groups_outlined),
+        title: Text(l10n.aboutQqGroupTitle),
+        subtitle: Text(l10n.aboutQqGroupSubtitle),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () => _showQqGroupDialog(l10n),
       ),
     );
   }
@@ -209,6 +278,8 @@ class _AboutViewState extends State<AboutView> {
               onTap: () => _copyRepoUrl(l10n),
             ),
           ),
+          const SizedBox(height: 12),
+          _buildQqGroupCard(l10n),
           const SizedBox(height: 12),
           _buildContributorsCard(l10n),
           const SizedBox(height: 12),
