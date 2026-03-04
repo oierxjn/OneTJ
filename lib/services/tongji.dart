@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 
 import 'package:onetj/app/constant/site_constant.dart';
 import 'package:onetj/app/exception/app_exception.dart';
-import 'package:onetj/app/logging/app_logger.dart';
+import 'package:onetj/app/logging/logger.dart';
 import 'package:onetj/models/api_response.dart';
 import 'package:onetj/models/data/code2token.dart';
 import 'package:onetj/models/data/course_schedule_net_data.dart';
@@ -203,7 +203,8 @@ class TongjiApi {
       jsonBody = json.decode(response.body) as Map<String, dynamic>;
       payload = ApiResponse.fromJson(jsonBody, parseData);
     } catch (error) {
-      throw JSONResolveException(message: 'Failed to parse response JSON', cause: error);
+      throw JSONResolveException(
+          message: 'Failed to parse response JSON', cause: error);
     }
     return payload.data;
   }
@@ -227,10 +228,12 @@ class TongjiApi {
 
   Future<StudentInfoData> fetchStudentInfo() async {
     final Uri uri = Uri.https(_baseUrl, studentInfoPath);
-    final StudentInfoNetData netData = await _authorizedGetData<StudentInfoNetData>(
+    final StudentInfoNetData netData =
+        await _authorizedGetData<StudentInfoNetData>(
       uri,
       parseData: (Object? data) {
-        final List<dynamic> list = (data as List<dynamic>?) ?? const <dynamic>[];
+        final List<dynamic> list =
+            (data as List<dynamic>?) ?? const <dynamic>[];
         if (list.isEmpty) {
           throw AppException('EMPTY_DATA', 'Student info is empty');
         }
@@ -257,7 +260,8 @@ class TongjiApi {
         await _authorizedGetData<List<CourseScheduleItemNetData>>(
       uri,
       parseData: (Object? data) {
-        final List<dynamic> list = (data as List<dynamic>?) ?? const <dynamic>[];
+        final List<dynamic> list =
+            (data as List<dynamic>?) ?? const <dynamic>[];
         return list
             .map(
               (dynamic item) => CourseScheduleItemNetData.fromJson(
@@ -273,7 +277,8 @@ class TongjiApi {
   /// 获取本科生成绩
   ///
   /// [calendarId] 可选，指定查询的学期，默认查询当前学期。-1 返回所有学期。
-  Future<UndergraduateScoreData> fetchUndergraduateScore({int? calendarId}) async {
+  Future<UndergraduateScoreData> fetchUndergraduateScore(
+      {int? calendarId}) async {
     final Uri uri = Uri.https(
       _baseUrl,
       undergraduateScorePath,

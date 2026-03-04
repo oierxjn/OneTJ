@@ -4,7 +4,7 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
 import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/app/constant/route_paths.dart';
-import 'package:onetj/app/logging/app_logger.dart';
+import 'package:onetj/app/logging/logger.dart';
 import 'package:onetj/models/dashboard_upcoming_mode.dart';
 import 'package:onetj/models/settings_defaults.dart';
 import 'package:onetj/features/settings/models/event.dart';
@@ -160,6 +160,37 @@ class SettingsViewModel extends BaseViewModel {
       _eventController.add(
         const SettingsDataMigrationFailedEvent(),
       );
+    } finally {
+      _hiveMigrationLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> cleanupLegacyHiveData() async {
+    if (_hiveMigrationLoading) {
+      return;
+    }
+    _hiveMigrationLoading = true;
+    notifyListeners();
+    try {
+      final HiveDataCleanupResult result =
+          await _hiveStorageService.cleanupLegacyHiveData();
+      _hiveMigrationStateLoaded = true;
+      _legacyHiveDataAvailable = false;
+      AppLogger.info(
+        'Cleanup legacy hive data finished',
+        loggerName: 'SettingsViewModel',
+        context: <String, Object?>{'result': result.name},
+      );
+      _eventController.add(SettingsDataCleanupEvent(result: result));
+    } catch (error, stackTrace) {
+      AppLogger.error(
+        'Cleanup legacy hive data failed',
+        loggerName: 'SettingsViewModel',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      _eventController.add(const SettingsDataCleanupFailedEvent());
     } finally {
       _hiveMigrationLoading = false;
       notifyListeners();

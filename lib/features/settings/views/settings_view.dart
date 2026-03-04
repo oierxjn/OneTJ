@@ -92,6 +92,24 @@ class _SettingsViewState extends State<SettingsView> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(l10n.settingsDataMigrationFailed)),
         );
+        return;
+      }
+      if (event is SettingsDataCleanupEvent) {
+        final AppLocalizations l10n = AppLocalizations.of(context);
+        final String message = switch (event.result) {
+          HiveDataCleanupResult.success => l10n.settingsDataCleanupSuccess,
+          HiveDataCleanupResult.noLegacyData => l10n.settingsDataCleanupNoData,
+        };
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message)),
+        );
+        return;
+      }
+      if (event is SettingsDataCleanupFailedEvent) {
+        final AppLocalizations l10n = AppLocalizations.of(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.settingsDataCleanupFailed)),
+        );
       }
     });
     _initSettings();
@@ -231,6 +249,13 @@ class _SettingsViewState extends State<SettingsView> {
         title: Text(l10n.settingsDataMigrationConfirmTitle),
         content: Text(l10n.settingsDataMigrationConfirmBody),
         actions: [
+          TextButton(
+            onPressed: () async {
+              Navigator.of(context).pop(false);
+              await _viewModel.cleanupLegacyHiveData();
+            },
+            child: Text(l10n.settingsDataCleanupAction),
+          ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
             child: Text(l10n.cancelLabel),

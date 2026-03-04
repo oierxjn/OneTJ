@@ -61,12 +61,12 @@ class _AboutViewState extends State<AboutView> {
               const SizedBox(height: 12),
               Text(
                 l10n.aboutQqGroupNumberLabel,
-                style: Theme.of(context).textTheme.bodyMedium,
+                style: Theme.of(dialogContext).textTheme.bodyMedium,
               ),
               const SizedBox(height: 4),
               SelectableText(
                 _kQqGroupId,
-                style: Theme.of(context).textTheme.titleMedium,
+                style: Theme.of(dialogContext).textTheme.titleMedium,
               ),
             ],
           ),

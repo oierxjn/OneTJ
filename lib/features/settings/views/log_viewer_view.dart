@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
-import 'package:onetj/app/logging/app_log_entry.dart';
-import 'package:onetj/app/logging/app_log_formatter.dart';
-import 'package:onetj/app/logging/app_logger.dart';
+import 'package:onetj/app/logging/log_entry.dart';
+import 'package:onetj/app/logging/log_formatter.dart';
+import 'package:onetj/app/logging/logger.dart';
 
 class LogViewerView extends StatelessWidget {
   const LogViewerView({super.key});

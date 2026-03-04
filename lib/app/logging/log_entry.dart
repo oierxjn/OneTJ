@@ -1,4 +1,4 @@
-import 'package:onetj/app/logging/app_log_level.dart';
+import 'package:onetj/app/logging/log_level.dart';
 
 class AppLogEntry {
   const AppLogEntry({

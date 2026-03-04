@@ -4,7 +4,7 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 
-import 'package:onetj/app/logging/app_logger.dart';
+import 'package:onetj/app/logging/logger.dart';
 
 class WebViewEnvironmentService {
   WebViewEnvironmentService._();
@@ -42,7 +42,7 @@ class WebViewEnvironmentService {
         context: <String, Object?>{'userDataFolder': userDataDirectory.path},
       );
     } catch (error, stackTrace) {
-      AppLogger.warning(
+      AppLogger.error(
         'WebView environment initialization failed, using default environment',
         loggerName: 'WebViewEnvironmentService',
         error: error,
