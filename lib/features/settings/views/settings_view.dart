@@ -16,6 +16,7 @@ import 'package:onetj/models/event_model.dart';
 import 'package:onetj/models/time_period_range.dart';
 import 'package:onetj/models/time_slot.dart';
 import 'package:onetj/repo/settings_repository.dart';
+import 'package:onetj/services/hive_storage_service.dart';
 
 class SettingsView extends StatefulWidget {
   const SettingsView({super.key});
@@ -66,6 +67,30 @@ class _SettingsViewState extends State<SettingsView> {
         final l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(l10n.settingsResetDone)),
+        );
+        return;
+      }
+      if (event is SettingsDataMigrationEvent) {
+        final AppLocalizations l10n = AppLocalizations.of(context);
+        String message;
+        switch (event.result) {
+          case HiveDataMigrationResult.success:
+            message =
+                '${l10n.settingsDataMigrationSuccess} ${l10n.settingsDataMigrationRestartHint}';
+            break;
+          case HiveDataMigrationResult.noLegacyData:
+            message = l10n.settingsDataMigrationNoData;
+            break;
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message)),
+        );
+        return;
+      }
+      if (event is SettingsDataMigrationFailedEvent) {
+        final AppLocalizations l10n = AppLocalizations.of(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.settingsDataMigrationFailed)),
         );
       }
     });
@@ -196,6 +221,51 @@ class _SettingsViewState extends State<SettingsView> {
       return;
     }
     await _viewModel.resetSettings();
+  }
+
+  Future<void> _confirmMigrateLegacyData(BuildContext context) async {
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.settingsDataMigrationConfirmTitle),
+        content: Text(l10n.settingsDataMigrationConfirmBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l10n.cancelLabel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(l10n.confirmLabel),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) {
+      return;
+    }
+    await _viewModel.migrateLegacyHiveData();
+  }
+
+  Future<void> _onTapDataMigration(BuildContext context) async {
+    if (_settingsBusy || _viewModel.hiveMigrationLoading) {
+      return;
+    }
+    if (!_viewModel.hiveMigrationStateLoaded) {
+      await _viewModel.loadHiveMigrationState();
+    }
+    if (!context.mounted) {
+      return;
+    }
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    if (!_viewModel.legacyHiveDataAvailable) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.settingsDataMigrationNoData)),
+      );
+      return;
+    }
+    await _confirmMigrateLegacyData(context);
   }
 
   Future<void> _openTimeSlotEditor() async {
@@ -331,6 +401,28 @@ class _SettingsViewState extends State<SettingsView> {
     );
   }
 
+  Widget _buildDataMigrationCard(AppLocalizations l10n) {
+    final bool canTap = !_settingsBusy && !_viewModel.hiveMigrationLoading;
+    final String subtitle;
+    if (_viewModel.hiveMigrationLoading) {
+      subtitle = l10n.settingsDataMigrationLoading;
+    } else if (!_viewModel.hiveMigrationStateLoaded) {
+      subtitle = l10n.settingsDataMigrationSubtitle;
+    } else if (!_viewModel.legacyHiveDataAvailable) {
+      subtitle = l10n.settingsDataMigrationNoData;
+    } else {
+      subtitle = l10n.settingsDataMigrationSubtitle;
+    }
+    return Card(
+      child: ListTile(
+        leading: const Icon(Icons.move_down),
+        title: Text(l10n.settingsDataMigrationTitle),
+        subtitle: Text(subtitle),
+        onTap: canTap ? () => _onTapDataMigration(context) : null,
+      ),
+    );
+  }
+
   Widget _buildDeveloperCard(AppLocalizations l10n) {
     return Card(
       child: ListTile(
@@ -395,6 +487,8 @@ class _SettingsViewState extends State<SettingsView> {
             _buildAdvancedSectionTitle(l10n),
             const SizedBox(height: 8),
             _buildResetCard(l10n),
+            const SizedBox(height: 12),
+            _buildDataMigrationCard(l10n),
             const SizedBox(height: 12),
             _buildAboutCard(l10n),
             const SizedBox(height: 12),

@@ -1,5 +1,6 @@
 import 'package:onetj/models/event_model.dart';
 import 'package:onetj/repo/settings_repository.dart';
+import 'package:onetj/services/hive_storage_service.dart';
 
 class SettingsSavedEvent extends UiEvent {
   const SettingsSavedEvent({required this.settings});
@@ -11,4 +12,14 @@ class SettingsResetEvent extends UiEvent {
   const SettingsResetEvent({required this.settings});
 
   final SettingsData settings;
+}
+
+class SettingsDataMigrationEvent extends UiEvent {
+  const SettingsDataMigrationEvent({required this.result});
+
+  final HiveDataMigrationResult result;
+}
+
+class SettingsDataMigrationFailedEvent extends UiEvent {
+  const SettingsDataMigrationFailedEvent();
 }
