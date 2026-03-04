@@ -22,3 +22,10 @@ Name: "desktopicon"; Description: "Create a &desktop icon"; GroupDescription: "A
 
 [Run]
 Filename: "{app}\onetj.exe"; Description: "Run OneTJ"; Flags: nowait postinstall skipifsilent
+
+[UninstallDelete]
+Type: filesandordirs; Name: "{userappdata}\onetj\hive"
+Type: filesandordirs; Name: "{userappdata}\onetj\logs"
+Type: filesandordirs; Name: "{localappdata}\OneTJ\EBWebView"
+Type: dirifempty; Name: "{userappdata}\onetj"
+Type: dirifempty; Name: "{localappdata}\OneTJ"
