@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:logging/logging.dart';
 
+import 'package:onetj/app/logging/app_file_log_sink.dart';
 import 'package:onetj/app/logging/app_log_buffer.dart';
 import 'package:onetj/app/logging/app_log_entry.dart';
 import 'package:onetj/app/logging/app_log_formatter.dart';
@@ -11,13 +14,18 @@ class AppLogger {
 
   static const int _defaultBufferCapacity = 500;
   static AppLogBuffer _buffer = AppLogBuffer(capacity: _defaultBufferCapacity);
+  static final AppFileLogSink _fileSink = AppFileLogSink.instance;
   static bool _initialized = false;
 
-  static void init({required bool verbose, int bufferCapacity = _defaultBufferCapacity}) {
+  static void init({
+    required bool verbose,
+    int bufferCapacity = _defaultBufferCapacity,
+  }) {
     if (_initialized) {
       return;
     }
     _buffer = AppLogBuffer(capacity: bufferCapacity);
+    unawaited(_fileSink.init());
     Logger.root.level = verbose ? Level.ALL : Level.INFO;
     Logger.root.onRecord.listen(_handleRootLogRecord);
     _initialized = true;
@@ -31,7 +39,12 @@ class AppLogger {
     );
   }
 
-  static List<AppLogEntry> recent({int limit = 100}) => _buffer.recent(limit: limit);
+  static List<AppLogEntry> recent({int limit = 100}) =>
+      _buffer.recent(limit: limit);
+
+  static Future<String?> currentLogFilePath() async {
+    return _fileSink.currentLogFilePath();
+  }
 
   static void debug(
     String message, {
@@ -215,6 +228,9 @@ class AppLogger {
     StackTrace? stackTrace,
     Map<String, Object?> context = const <String, Object?>{},
   }) {
+    if (!_initialized) {
+      init(verbose: kDebugMode);
+    }
     final Map<String, Object?> safeContext = _sanitizeContext(context);
     final AppLogEntry entry = AppLogEntry(
       time: DateTime.now(),
@@ -227,8 +243,13 @@ class AppLogger {
       context: safeContext,
     );
     _buffer.add(entry);
+    final String plainText = AppLogFormatter.toPlainText(entry);
+    unawaited(_fileSink.writeLine(plainText));
+    if (entry.stackTrace != null && entry.stackTrace!.isNotEmpty) {
+      unawaited(_fileSink.writeLine(entry.stackTrace!));
+    }
     if (kDebugMode) {
-      debugPrint('[ONETJ] ${AppLogFormatter.toPlainText(entry)}');
+      debugPrint('[ONETJ] $plainText');
       if (entry.stackTrace != null && entry.stackTrace!.isNotEmpty) {
         debugPrint(entry.stackTrace);
       }

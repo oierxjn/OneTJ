@@ -24,6 +24,7 @@ class LauncherViewModel extends BaseViewModel {
   Future<void> initialize() async {
     // 同步任务
     AppLoggingBootstrap.ensureInitialized();
+
     AppLogger.info(
       'Launcher initialization started',
       loggerName: 'LauncherViewModel',
