@@ -23,3 +23,13 @@ class SettingsDataMigrationEvent extends UiEvent {
 class SettingsDataMigrationFailedEvent extends UiEvent {
   const SettingsDataMigrationFailedEvent();
 }
+
+class SettingsDataCleanupEvent extends UiEvent {
+  const SettingsDataCleanupEvent({required this.result});
+
+  final HiveDataCleanupResult result;
+}
+
+class SettingsDataCleanupFailedEvent extends UiEvent {
+  const SettingsDataCleanupFailedEvent();
+}

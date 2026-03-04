@@ -166,6 +166,35 @@ class SettingsViewModel extends BaseViewModel {
     }
   }
 
+  Future<void> cleanupLegacyHiveData() async {
+    if (_hiveMigrationLoading) {
+      return;
+    }
+    _hiveMigrationLoading = true;
+    notifyListeners();
+    try {
+      final HiveDataCleanupResult result =
+          await _hiveStorageService.cleanupLegacyHiveData();
+      AppLogger.info(
+        'Cleanup legacy hive data finished',
+        loggerName: 'SettingsViewModel',
+        context: <String, Object?>{'result': result.name},
+      );
+      _eventController.add(SettingsDataCleanupEvent(result: result));
+    } catch (error, stackTrace) {
+      AppLogger.error(
+        'Cleanup legacy hive data failed',
+        loggerName: 'SettingsViewModel',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      _eventController.add(const SettingsDataCleanupFailedEvent());
+    } finally {
+      _hiveMigrationLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> saveSettings({
     required String maxWeekText,
     required List<TimePeriodRangeData> editedTimeSlotRanges,
