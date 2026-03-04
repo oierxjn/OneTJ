@@ -42,7 +42,7 @@ class WebViewEnvironmentService {
         context: <String, Object?>{'userDataFolder': userDataDirectory.path},
       );
     } catch (error, stackTrace) {
-      AppLogger.warning(
+      AppLogger.error(
         'WebView environment initialization failed, using default environment',
         loggerName: 'WebViewEnvironmentService',
         error: error,

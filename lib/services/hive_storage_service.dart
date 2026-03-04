@@ -33,6 +33,14 @@ class HiveStorageService {
     return false;
   }
 
+  /// 迁移旧目录Hive数据到新目录
+  /// 
+  /// 迁移过程中会关闭Hive数据库，迁移完成后会重新初始化Hive数据库
+  /// 
+  /// return [HiveDataMigrationResult.success] if migration success,
+  /// [HiveDataMigrationResult.noLegacyData] if no legacy data found.
+  /// 
+  /// throw error if migration failed.
   Future<HiveDataMigrationResult> migrateLegacyToNew() async {
     final Directory legacyDir = await _resolveLegacyHiveDirectory();
     if (!await legacyDir.exists()) {
