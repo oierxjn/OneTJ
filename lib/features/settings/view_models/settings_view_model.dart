@@ -175,6 +175,8 @@ class SettingsViewModel extends BaseViewModel {
     try {
       final HiveDataCleanupResult result =
           await _hiveStorageService.cleanupLegacyHiveData();
+      _hiveMigrationStateLoaded = true;
+      _legacyHiveDataAvailable = false;
       AppLogger.info(
         'Cleanup legacy hive data finished',
         loggerName: 'SettingsViewModel',
