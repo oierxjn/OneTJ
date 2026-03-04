@@ -1,7 +1,7 @@
 [Setup]
 AppId={{e52df8a9-9166-40d9-ad95-a4d5880b9a0f}}
 AppName=OneTJ
-AppVersion=2.2.1
+AppVersion=2.2.2
 DefaultDirName={localappdata}\Programs\OneTJ
 DefaultGroupName=OneTJ
 OutputDir=dist
