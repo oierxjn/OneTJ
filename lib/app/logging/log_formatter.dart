@@ -1,4 +1,4 @@
-import 'package:onetj/app/logging/app_log_entry.dart';
+import 'package:onetj/app/logging/log_entry.dart';
 
 class AppLogFormatter {
   const AppLogFormatter._();

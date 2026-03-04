@@ -3,11 +3,11 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:logging/logging.dart';
 
-import 'package:onetj/app/logging/app_file_log_sink.dart';
-import 'package:onetj/app/logging/app_log_buffer.dart';
-import 'package:onetj/app/logging/app_log_entry.dart';
-import 'package:onetj/app/logging/app_log_formatter.dart';
-import 'package:onetj/app/logging/app_log_level.dart';
+import 'package:onetj/app/logging/file_log_sink.dart';
+import 'package:onetj/app/logging/log_buffer.dart';
+import 'package:onetj/app/logging/log_entry.dart';
+import 'package:onetj/app/logging/log_formatter.dart';
+import 'package:onetj/app/logging/log_level.dart';
 
 class AppLogger {
   AppLogger._();

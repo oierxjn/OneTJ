@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:onetj/app/constant/route_paths.dart';
-import 'package:onetj/app/logging/app_logger.dart';
-import 'package:onetj/app/logging/app_logging_bootstrap.dart';
+import 'package:onetj/app/logging/logger.dart';
+import 'package:onetj/app/logging/logging_bootstrap.dart';
 import 'package:onetj/models/base_model.dart';
 import 'package:onetj/models/data/code2token.dart';
 import 'package:onetj/models/event_model.dart';

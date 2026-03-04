@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-import 'package:onetj/app/logging/app_logger.dart';
+import 'package:onetj/app/logging/logger.dart';
 
 class AppLoggingBootstrap {
   AppLoggingBootstrap._();

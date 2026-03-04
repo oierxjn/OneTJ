@@ -4,7 +4,7 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
 import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/app/exception/app_exception.dart';
-import 'package:onetj/app/logging/app_logger.dart';
+import 'package:onetj/app/logging/logger.dart';
 import 'package:onetj/models/event_model.dart';
 import 'package:onetj/features/login/models/login_model.dart';
 import 'package:onetj/models/base_model.dart';
@@ -22,7 +22,8 @@ class LoginViewModel extends BaseViewModel {
 
   Uri get authUri => _model.buildAuthUri();
 
-  Future<NavigationActionPolicy> handleRedirectUri(InAppWebViewController controller, WebUri uri) async {
+  Future<NavigationActionPolicy> handleRedirectUri(
+      InAppWebViewController controller, WebUri uri) async {
     AppLogger.debug(
       'Handle redirect uri',
       loggerName: 'LoginViewModel',

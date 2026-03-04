@@ -1,4 +1,4 @@
-import 'package:onetj/app/logging/app_logger.dart';
+import 'package:onetj/app/logging/logger.dart';
 
 class AppException implements Exception {
   final String code;
