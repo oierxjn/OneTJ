@@ -5,14 +5,15 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 
-
 import 'package:onetj/models/event_model.dart';
 import 'package:onetj/app/exception/app_exception.dart';
 
 import '../view_models/login_view_model.dart';
 
 class LoginView extends StatefulWidget {
-  const LoginView({super.key});
+  const LoginView({super.key, this.webViewEnvironment});
+
+  final WebViewEnvironment? webViewEnvironment;
 
   @override
   State<LoginView> createState() => _LoginViewState();
@@ -30,10 +31,11 @@ class _LoginViewState extends State<LoginView> {
     // 订阅Stream事件
     _eventSub = viewModel.events.listen((event) {
       if (event is ShowSnackBarEvent) {
-        if(!mounted)return;
-        if(event.code == AuthStateMismatchException.errorCode){
+        if (!mounted) return;
+        if (event.code == AuthStateMismatchException.errorCode) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(AppLocalizations.of(context).authStateMismatch)),
+            SnackBar(
+                content: Text(AppLocalizations.of(context).authStateMismatch)),
           );
           return;
         }
@@ -61,6 +63,7 @@ class _LoginViewState extends State<LoginView> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: InAppWebView(
+        webViewEnvironment: widget.webViewEnvironment,
         initialUrlRequest: URLRequest(
           url: WebUri(viewModel.authUri.toString()),
         ),
@@ -68,7 +71,8 @@ class _LoginViewState extends State<LoginView> {
           if (navigationAction.request.url == null) {
             return NavigationActionPolicy.ALLOW;
           }
-          return await viewModel.handleRedirectUri(controller, navigationAction.request.url!);
+          return await viewModel.handleRedirectUri(
+              controller, navigationAction.request.url!);
         },
       ),
     );

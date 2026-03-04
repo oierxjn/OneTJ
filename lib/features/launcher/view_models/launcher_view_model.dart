@@ -1,7 +1,5 @@
 import 'dart:async';
 
-import 'package:hive_flutter/hive_flutter.dart';
-
 import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/app/logging/app_logger.dart';
 import 'package:onetj/app/logging/app_logging_bootstrap.dart';
@@ -9,13 +7,17 @@ import 'package:onetj/models/base_model.dart';
 import 'package:onetj/models/data/code2token.dart';
 import 'package:onetj/models/event_model.dart';
 import 'package:onetj/repo/token_repository.dart';
+import 'package:onetj/services/hive_storage_service.dart';
 import 'package:onetj/services/tongji.dart';
+import 'package:onetj/services/webview_environment_service.dart';
 
 class LauncherViewModel extends BaseViewModel {
   LauncherViewModel()
-      : _eventController = StreamController<UiEvent>.broadcast();
+      : _eventController = StreamController<UiEvent>.broadcast(),
+        _hiveStorageService = HiveStorageService();
 
   final StreamController<UiEvent> _eventController;
+  final HiveStorageService _hiveStorageService;
   Stream<UiEvent> get events => _eventController.stream;
 
   /// 进行初始化任务和跳转路由
@@ -44,7 +46,10 @@ class LauncherViewModel extends BaseViewModel {
   }
 
   Future<String> _initialize() async {
-    await Hive.initFlutter();
+    await Future.wait([
+      _hiveStorageService.initializeHive(),
+      WebViewEnvironmentService.instance.initialize(),
+    ]);
     final String route = await _resolveInitialRoute();
     return route;
   }

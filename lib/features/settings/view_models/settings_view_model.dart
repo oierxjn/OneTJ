@@ -17,12 +17,18 @@ import 'package:onetj/repo/school_calendar_repository.dart';
 import 'package:onetj/repo/settings_repository.dart';
 import 'package:onetj/repo/student_info_repository.dart';
 import 'package:onetj/repo/token_repository.dart';
+import 'package:onetj/services/hive_storage_service.dart';
+import 'package:onetj/services/webview_environment_service.dart';
 
 class SettingsViewModel extends BaseViewModel {
   SettingsViewModel()
-      : _eventController = StreamController<UiEvent>.broadcast();
+      : _eventController = StreamController<UiEvent>.broadcast(),
+        _hiveStorageService = HiveStorageService(),
+        _webViewEnvironment = WebViewEnvironmentService.instance.environment;
 
   final StreamController<UiEvent> _eventController;
+  final HiveStorageService _hiveStorageService;
+  final WebViewEnvironment? _webViewEnvironment;
   Stream<UiEvent> get events => _eventController.stream;
   // 初值一般不会被使用
   SettingsData _settingsData = SettingsData(
@@ -33,11 +39,17 @@ class SettingsViewModel extends BaseViewModel {
   );
   bool _settingsLoading = true;
   bool _settingsSaving = false;
+  bool _legacyHiveDataAvailable = false;
+  bool _hiveMigrationLoading = false;
+  bool _hiveMigrationStateLoaded = false;
 
   int get maxWeek => _settingsData.maxWeek;
   SettingsData get settingsData => _settingsData;
   bool get settingsLoading => _settingsLoading;
   bool get settingsSaving => _settingsSaving;
+  bool get legacyHiveDataAvailable => _legacyHiveDataAvailable;
+  bool get hiveMigrationLoading => _hiveMigrationLoading;
+  bool get hiveMigrationStateLoaded => _hiveMigrationStateLoaded;
 
   Future<void> logout() async {
     AppLogger.logUiAction(feature: 'Settings', action: 'logout_started');
@@ -49,7 +61,8 @@ class SettingsViewModel extends BaseViewModel {
       await StudentInfoRepository.getInstance().clearStudentInfo();
       await SchoolCalendarRepository.getInstance().clearSchoolCalendar();
       await CourseScheduleRepository.getInstance().clearCourseSchedule();
-      await CookieManager.instance().deleteAllCookies();
+      await CookieManager.instance(webViewEnvironment: _webViewEnvironment)
+          .deleteAllCookies();
       AppLogger.logNavigation(
         from: RoutePaths.homeSettings,
         to: RoutePaths.login,
@@ -101,6 +114,54 @@ class SettingsViewModel extends BaseViewModel {
       );
     } finally {
       _settingsLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> loadHiveMigrationState() async {
+    _hiveMigrationLoading = true;
+    notifyListeners();
+    try {
+      _legacyHiveDataAvailable = await _hiveStorageService.hasLegacyHiveData();
+      _hiveMigrationStateLoaded = true;
+    } catch (error) {
+      AppLogger.error(
+        'Load hive migration state failed',
+        loggerName: 'SettingsViewModel',
+        error: error,
+      );
+    } finally {
+      _hiveMigrationLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> migrateLegacyHiveData() async {
+    if (_hiveMigrationLoading) {
+      return;
+    }
+    _hiveMigrationLoading = true;
+    notifyListeners();
+    try {
+      final HiveDataMigrationResult result =
+          await _hiveStorageService.migrateLegacyToNew();
+      _hiveMigrationStateLoaded = true;
+      if (result == HiveDataMigrationResult.success) {
+        _legacyHiveDataAvailable = false;
+      }
+      _eventController.add(SettingsDataMigrationEvent(result: result));
+    } catch (error, stackTrace) {
+      AppLogger.error(
+        'Migrate legacy hive data failed',
+        loggerName: 'SettingsViewModel',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      _eventController.add(
+        const SettingsDataMigrationFailedEvent(),
+      );
+    } finally {
+      _hiveMigrationLoading = false;
       notifyListeners();
     }
   }
