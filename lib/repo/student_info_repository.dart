@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:hive/hive.dart';
@@ -244,9 +245,35 @@ class StudentInfoData {
   }
 }
 
+class StudentInfoCacheMeta {
+  const StudentInfoCacheMeta({
+    required this.lastFetchedAtMillis,
+    this.versionKey,
+  });
+
+  final int lastFetchedAtMillis;
+  final String? versionKey;
+
+  factory StudentInfoCacheMeta.fromJson(Map<String, dynamic> json) {
+    return StudentInfoCacheMeta(
+      lastFetchedAtMillis: json['lastFetchedAtMillis'] as int? ?? 0,
+      versionKey: json['versionKey'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'lastFetchedAtMillis': lastFetchedAtMillis,
+      'versionKey': versionKey,
+    };
+  }
+}
+
 abstract class StudentInfoStorage {
   Future<StudentInfoData?> read();
+  Future<StudentInfoCacheMeta?> readMeta();
   Future<void> save(StudentInfoData info);
+  Future<void> saveMeta(StudentInfoCacheMeta meta);
   Future<void> clear();
 }
 
@@ -255,6 +282,7 @@ class HiveStudentInfoStorage implements StudentInfoStorage {
 
   static const String _boxName = 'student_info';
   static const String _key = 'payload';
+  static const String _metaKey = 'meta';
   final HiveInterface _hive;
 
   Future<Box<String>> _openBox() async {
@@ -282,17 +310,39 @@ class HiveStudentInfoStorage implements StudentInfoStorage {
   }
 
   @override
+  Future<StudentInfoCacheMeta?> readMeta() async {
+    final Box<String> box = await _openBox();
+    final String? raw = box.get(_metaKey);
+    if (raw == null || raw.isEmpty) {
+      return null;
+    }
+    final Map<String, dynamic> data = jsonDecode(raw) as Map<String, dynamic>;
+    return StudentInfoCacheMeta.fromJson(data);
+  }
+
+  @override
+  Future<void> saveMeta(StudentInfoCacheMeta meta) async {
+    final Box<String> box = await _openBox();
+    await box.put(_metaKey, jsonEncode(meta.toJson()));
+  }
+
+  @override
   Future<void> clear() async {
     final Box<String> box = await _openBox();
     await box.delete(_key);
+    await box.delete(_metaKey);
   }
 }
 
 class InMemoryStudentInfoStorage implements StudentInfoStorage {
   StudentInfoData? _cache;
+  StudentInfoCacheMeta? _metaCache;
 
   @override
   Future<StudentInfoData?> read() async => _cache;
+
+  @override
+  Future<StudentInfoCacheMeta?> readMeta() async => _metaCache;
 
   @override
   Future<void> save(StudentInfoData info) async {
@@ -300,13 +350,20 @@ class InMemoryStudentInfoStorage implements StudentInfoStorage {
   }
 
   @override
+  Future<void> saveMeta(StudentInfoCacheMeta meta) async {
+    _metaCache = meta;
+  }
+
+  @override
   Future<void> clear() async {
     _cache = null;
+    _metaCache = null;
   }
 }
 
 class StudentInfoRepository {
-  StudentInfoRepository._({required StudentInfoStorage storage}) : _storage = storage;
+  StudentInfoRepository._({required StudentInfoStorage storage})
+      : _storage = storage;
 
   static StudentInfoRepository? _instance;
 
@@ -323,26 +380,140 @@ class StudentInfoRepository {
 
   final StudentInfoStorage _storage;
   StudentInfoData? _cached;
+  StudentInfoCacheMeta? _cachedMeta;
+  Completer<void>? _readyCompleter;
+  Future<void>? _pendingPersist;
 
-  Future<StudentInfoData?> getStudentInfo({bool refreshFromStorage = false}) async {
-    if (!refreshFromStorage && _cached != null) {
-      return _cached;
+  Future<void> warmUp() async {
+    try {
+      final StudentInfoData? data = await _storage.read();
+      final StudentInfoCacheMeta? meta = await _storage.readMeta();
+      if (data == null && meta == null) {
+        return;
+      }
+      _saveCache(data: data, meta: meta, persist: false);
+    } catch (error, stackTrace) {
+      _completeLoadError(error, stackTrace);
+      rethrow;
     }
-    _cached = await _storage.read();
-    return _cached;
   }
 
-  Future<void> saveStudentInfo(StudentInfoData info) async {
-    _cached = info;
-    await _storage.save(info);
+  Future<void> ensureLoaded() async {
+    if (_cached != null && _cachedMeta != null) {
+      return;
+    }
+    if (_readyCompleter != null) {
+      return _readyCompleter!.future;
+    }
+    _readyCompleter = Completer<void>();
+    return _readyCompleter!.future;
   }
 
-  Future<void> saveFromNetData(StudentInfoNetData info) async {
-    await saveStudentInfo(StudentInfoData.fromNetData(info));
+  Future<StudentInfoData> fetchAndSave({
+    required DateTime now,
+    required Future<StudentInfoData> Function() fetcher,
+    String? versionKey,
+  }) async {
+    final StudentInfoData fetched = await fetcher();
+    final StudentInfoCacheMeta meta = StudentInfoCacheMeta(
+      lastFetchedAtMillis: now.millisecondsSinceEpoch,
+      versionKey: versionKey,
+    );
+    _saveCache(data: fetched, meta: meta, persist: true);
+    return fetched;
+  }
+
+  Future<StudentInfoData> getOrFetch({
+    required DateTime now,
+    required Future<StudentInfoData> Function() fetcher,
+    String? versionKey,
+    Duration ttl = const Duration(days: 7),
+  }) async {
+    final StudentInfoData? cached = _cached;
+    final StudentInfoCacheMeta? meta = _cachedMeta;
+    bool shouldFetch = cached == null;
+    if (!shouldFetch) {
+      if (versionKey != null &&
+          versionKey.isNotEmpty &&
+          meta?.versionKey != versionKey) {
+        shouldFetch = true;
+      } else if (meta == null || meta.lastFetchedAtMillis <= 0) {
+        shouldFetch = true;
+      } else {
+        final DateTime lastFetched =
+            DateTime.fromMillisecondsSinceEpoch(meta.lastFetchedAtMillis);
+        if (now.difference(lastFetched) >= ttl) {
+          shouldFetch = true;
+        }
+      }
+    }
+    if (!shouldFetch) {
+      return cached!;
+    }
+    return fetchAndSave(
+      now: now,
+      versionKey: versionKey,
+      fetcher: fetcher,
+    );
+  }
+
+  Future<void> saveMeta(StudentInfoCacheMeta meta) async {
+    _saveCache(meta: meta, persist: true);
+  }
+
+  Future<void> flush() {
+    return _pendingPersist ?? Future.value();
   }
 
   Future<void> clearStudentInfo() async {
+    await flush();
+    _pendingPersist = null;
     _cached = null;
+    _cachedMeta = null;
+    _readyCompleter = null;
     await _storage.clear();
+  }
+
+  void _saveCache({
+    StudentInfoData? data,
+    StudentInfoCacheMeta? meta,
+    required bool persist,
+  }) {
+    if (data != null) {
+      _cached = data;
+    }
+    if (meta != null) {
+      _cachedMeta = meta;
+    }
+    _completeReady();
+    if (!persist || _cached == null || _cachedMeta == null) {
+      return;
+    }
+    _queuePersist(_cached!, _cachedMeta!);
+  }
+
+  Future<void> _queuePersist(
+    StudentInfoData data,
+    StudentInfoCacheMeta meta,
+  ) {
+    final Future<void> task = Future.wait([
+      _storage.save(data),
+      _storage.saveMeta(meta),
+    ]).then((_) => null);
+    _pendingPersist = (_pendingPersist ?? Future.value()).then((_) => task);
+    return _pendingPersist!;
+  }
+
+  void _completeReady() {
+    if (_readyCompleter != null && !_readyCompleter!.isCompleted) {
+      _readyCompleter!.complete();
+    }
+  }
+
+  void _completeLoadError(Object error, [StackTrace? stackTrace]) {
+    if (_readyCompleter != null && !_readyCompleter!.isCompleted) {
+      _readyCompleter!.completeError(error, stackTrace);
+    }
+    _readyCompleter = null;
   }
 }
