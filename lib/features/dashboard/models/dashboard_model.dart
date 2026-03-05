@@ -13,6 +13,15 @@ class DashboardModel {
     return _api.fetchStudentInfo();
   }
 
+  Future<StudentInfoData> getStudentInfo() async {
+    final StudentInfoRepository repo = StudentInfoRepository.getInstance();
+    return repo.getOrFetch(
+      now: DateTime.now(),
+      fetcher: fetchStudentInfo,
+      ttl: const Duration(days: 1),
+    );
+  }
+
   Future<SchoolCalendarData> fetchSchoolCalendar() {
     return _api.fetchSchoolCalendarCurrentTerm();
   }

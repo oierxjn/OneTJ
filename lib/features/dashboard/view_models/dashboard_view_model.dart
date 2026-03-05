@@ -13,20 +13,25 @@ import 'package:onetj/repo/school_calendar_repository.dart';
 import 'package:onetj/repo/settings_repository.dart';
 import 'package:onetj/repo/student_info_repository.dart';
 import 'package:onetj/services/timetable_index_builder.dart';
+import 'package:onetj/services/user_collection_service.dart';
+import 'package:onetj/app/logging/logger.dart';
 
 class DashboardViewModel extends BaseViewModel {
   DashboardViewModel({
     DashboardModel? model,
     SettingsRepository? settingsRepository,
+    UserCollectionService? userCollectionService,
   })  : _model = model ?? DashboardModel(),
         _settingsRepository =
             settingsRepository ?? SettingsRepository.getInstance(),
+        _userCollectionService = userCollectionService ?? UserCollectionService(),
         _eventController = StreamController<UiEvent>.broadcast() {
     _settingsSub = _settingsRepository.stream.listen(_handleSettingsChanged);
   }
 
   final DashboardModel _model;
   final SettingsRepository _settingsRepository;
+  final UserCollectionService _userCollectionService;
   final StreamController<UiEvent> _eventController;
   StreamSubscription<SettingsData>? _settingsSub;
   Stream<UiEvent> get events => _eventController.stream;
@@ -146,8 +151,9 @@ class DashboardViewModel extends BaseViewModel {
 
   Future<void> loadStudentInfo() async {
     try {
-      final StudentInfoData data = await _model.fetchStudentInfo();
+      final StudentInfoData data = await _model.getStudentInfo();
       _departmentName = data.deptName;
+      unawaited(_uploadUserCollection(data));
       _studentError = null;
     } catch (error) {
       _studentError = error;
@@ -157,6 +163,23 @@ class DashboardViewModel extends BaseViewModel {
     } finally {
       _studentLoading = false;
       notifyListeners();
+    }
+  }
+
+  Future<void> _uploadUserCollection(StudentInfoData studentInfo) async {
+    try {
+      final SettingsData settings = await _settingsRepository.getSettings();
+      await _userCollectionService.uploadForProduction(
+        studentInfo: studentInfo,
+        settings: settings,
+      );
+    } catch (error, stackTrace) {
+      AppLogger.warning(
+        'Dashboard user collection upload failed',
+        loggerName: 'DashboardViewModel',
+        error: error,
+        stackTrace: stackTrace,
+      );
     }
   }
 
