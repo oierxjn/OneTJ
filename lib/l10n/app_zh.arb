@@ -121,6 +121,15 @@
     "settingsLogsTitle": "日志",
     "settingsLogsSubtitle": "查看最近应用日志",
     "settingsLogsEmpty": "暂无日志",
+    "settingsDebugUploadTitle": "发送到本地调试服务器",
+    "settingsDebugUploadSubtitle": "将用户采集信息发送到 http://127.0.0.1:8000/collector/v1/events",
+    "settingsDebugUploadSuccess": "已发送到本地调试服务器",
+    "settingsDebugUploadFailed": "发送失败：{error}",
+    "@settingsDebugUploadFailed": {
+      "placeholders": {
+        "error": {}
+      }
+    },
     "settingsResetTitle": "重置设置",
     "settingsResetSubtitle": "将所有设置恢复为默认值",
     "settingsResetConfirmTitle": "确认重置所有设置？",

@@ -36,6 +36,9 @@ class SettingsViewModel extends BaseViewModel {
     timeSlotRanges: kDefaultTimeSlotRanges,
     dashboardUpcomingMode: kDefaultDashboardUpcomingMode,
     dashboardUpcomingCount: kDefaultDashboardUpcomingCount,
+    userCollectionConsent: kDefaultUserCollectionConsent,
+    userCollectionEnabled: kDefaultUserCollectionEnabled,
+    userCollectionFeatureFlag: kDefaultUserCollectionFeatureFlag,
   );
   bool _settingsLoading = true;
   bool _settingsSaving = false;
@@ -225,6 +228,9 @@ class SettingsViewModel extends BaseViewModel {
         ),
         dashboardUpcomingMode: dashboardUpcomingMode,
         dashboardUpcomingCount: dashboardUpcomingCount,
+        userCollectionConsent: _settingsData.userCollectionConsent,
+        userCollectionEnabled: _settingsData.userCollectionEnabled,
+        userCollectionFeatureFlag: _settingsData.userCollectionFeatureFlag,
       );
       await SettingsRepository.getInstance().saveSettings(next);
       _settingsData = next;

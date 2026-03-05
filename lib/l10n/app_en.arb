@@ -121,6 +121,15 @@
   "settingsLogsTitle": "Logs",
   "settingsLogsSubtitle": "View recent application logs",
   "settingsLogsEmpty": "No logs yet",
+  "settingsDebugUploadTitle": "Send to Local Debug Server",
+  "settingsDebugUploadSubtitle": "Send user collection data to http://127.0.0.1:8000/collector/v1/events",
+  "settingsDebugUploadSuccess": "Sent to local debug server",
+  "settingsDebugUploadFailed": "Send failed: {error}",
+  "@settingsDebugUploadFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
   "settingsResetTitle": "Reset Settings",
   "settingsResetSubtitle": "Restore all settings to defaults",
   "settingsResetConfirmTitle": "Reset all settings?",

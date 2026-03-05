@@ -193,6 +193,24 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "3.0.1"
+  device_info_plus:
+    dependency: "direct main"
+    description:
+      path: "packages/device_info_plus/device_info_plus"
+      ref: "br_device_info_plus_v11.4.0_ohos"
+      resolved-ref: "03507cc39ab148fe9f5827cd991b3e04aed2bcc3"
+      url: "https://gitcode.com/openharmony-sig/flutter_plus_plugins.git"
+    source: git
+    version: "9.1.0"
+  device_info_plus_platform_interface:
+    dependency: "direct overridden"
+    description:
+      path: "packages/device_info_plus/device_info_plus_platform_interface"
+      ref: "br_device_info_plus_v11.4.0_ohos"
+      resolved-ref: "03507cc39ab148fe9f5827cd991b3e04aed2bcc3"
+      url: "https://gitcode.com/openharmony-sig/flutter_plus_plugins.git"
+    source: git
+    version: "7.0.0"
   fake_async:
     dependency: transitive
     description:
@@ -867,6 +885,22 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "3.0.3"
+  win32:
+    dependency: transitive
+    description:
+      name: win32
+      sha256: daf97c9d80197ed7b619040e86c8ab9a9dad285e7671ee7390f9180cc828a51e
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "5.10.1"
+  win32_registry:
+    dependency: transitive
+    description:
+      name: win32_registry
+      sha256: "21ec76dfc731550fd3e2ce7a33a9ea90b828fdf19a5c3bcf556fa992cfa99852"
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "1.1.5"
   xdg_directories:
     dependency: transitive
     description:

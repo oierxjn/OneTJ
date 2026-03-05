@@ -53,6 +53,7 @@ dependencies:
   http: ^1.6.0
   json_annotation: ^4.9.0
   logging: ^1.3.0
+  device_info_plus: ^10.1.2
 
 
 dev_dependencies:
@@ -121,6 +122,16 @@ dependency_overrides:
     git:
       url: "https://gitcode.com/openharmony-tpc/flutter_packages.git"
       path: "packages/path_provider/path_provider"
+  device_info_plus:
+    git:
+      url: "https://gitcode.com/openharmony-sig/flutter_plus_plugins.git"
+      ref: "br_device_info_plus_v11.4.0_ohos"
+      path: "packages/device_info_plus/device_info_plus"
+  device_info_plus_platform_interface:
+    git:
+      url: "https://gitcode.com/openharmony-sig/flutter_plus_plugins.git"
+      ref: "br_device_info_plus_v11.4.0_ohos"
+      path: "packages/device_info_plus/device_info_plus_platform_interface"
   flutter_inappwebview_platform_interface:
     path: ./local_packages/flutter_inappwebview/flutter_inappwebview_platform_interface
   flutter_inappwebview_android:

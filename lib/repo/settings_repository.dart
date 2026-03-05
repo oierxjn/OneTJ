@@ -5,6 +5,7 @@ import 'package:onetj/models/dashboard_upcoming_mode.dart';
 import 'package:onetj/models/settings_defaults.dart';
 import 'package:onetj/models/settings_validation.dart' as settings_validation;
 import 'package:onetj/models/time_period_range.dart';
+import 'package:onetj/models/user_collection_consent.dart';
 import 'package:hive/hive.dart';
 import 'package:onetj/app/exception/app_exception.dart';
 
@@ -14,12 +15,18 @@ class SettingsData {
     required this.timeSlotRanges,
     required this.dashboardUpcomingMode,
     required this.dashboardUpcomingCount,
+    required this.userCollectionConsent,
+    required this.userCollectionEnabled,
+    required this.userCollectionFeatureFlag,
   });
 
   final int maxWeek;
   final List<TimePeriodRangeData> timeSlotRanges;
   final DashboardUpcomingMode dashboardUpcomingMode;
   final int dashboardUpcomingCount;
+  final UserCollectionConsent userCollectionConsent;
+  final bool userCollectionEnabled;
+  final bool userCollectionFeatureFlag;
 
   factory SettingsData.fromJson(Map<String, dynamic> json) {
     final int maxWeek = _readMaxWeekWithFallback(json);
@@ -30,6 +37,10 @@ class SettingsData {
       timeSlotRanges: timeSlotRanges,
       dashboardUpcomingMode: _readDashboardUpcomingModeWithFallback(json),
       dashboardUpcomingCount: _readDashboardUpcomingCountWithFallback(json),
+      userCollectionConsent: _readUserCollectionConsentWithFallback(json),
+      userCollectionEnabled: _readUserCollectionEnabledWithFallback(json),
+      userCollectionFeatureFlag:
+          _readUserCollectionFeatureFlagWithFallback(json),
     );
   }
 
@@ -39,6 +50,9 @@ class SettingsData {
       'timeSlotRanges': timeSlotRanges.map((item) => item.toJson()).toList(),
       'dashboardUpcomingMode': dashboardUpcomingMode.jsonValue,
       'dashboardUpcomingCount': dashboardUpcomingCount,
+      'userCollectionConsent': userCollectionConsent.jsonValue,
+      'userCollectionEnabled': userCollectionEnabled,
+      'userCollectionFeatureFlag': userCollectionFeatureFlag,
     };
   }
 
@@ -105,6 +119,44 @@ class SettingsData {
     if (value < kMinDashboardUpcomingCount ||
         value > kMaxDashboardUpcomingCount) {
       return kDefaultDashboardUpcomingCount;
+    }
+    return value;
+  }
+
+  static UserCollectionConsent _readUserCollectionConsentWithFallback(
+    Map<String, dynamic> json,
+  ) {
+    if (!json.containsKey('userCollectionConsent')) {
+      return kDefaultUserCollectionConsent;
+    }
+    return UserCollectionConsent.fromJsonValue(
+      json['userCollectionConsent'],
+      defaultValue: kDefaultUserCollectionConsent,
+    );
+  }
+
+  static bool _readUserCollectionEnabledWithFallback(
+    Map<String, dynamic> json,
+  ) {
+    if (!json.containsKey('userCollectionEnabled')) {
+      return kDefaultUserCollectionEnabled;
+    }
+    final Object? value = json['userCollectionEnabled'];
+    if (value is! bool) {
+      return kDefaultUserCollectionEnabled;
+    }
+    return value;
+  }
+
+  static bool _readUserCollectionFeatureFlagWithFallback(
+    Map<String, dynamic> json,
+  ) {
+    if (!json.containsKey('userCollectionFeatureFlag')) {
+      return kDefaultUserCollectionFeatureFlag;
+    }
+    final Object? value = json['userCollectionFeatureFlag'];
+    if (value is! bool) {
+      return kDefaultUserCollectionFeatureFlag;
     }
     return value;
   }
@@ -232,6 +284,9 @@ class SettingsRepository {
     timeSlotRanges: kDefaultTimeSlotRanges,
     dashboardUpcomingMode: kDefaultDashboardUpcomingMode,
     dashboardUpcomingCount: kDefaultDashboardUpcomingCount,
+    userCollectionConsent: kDefaultUserCollectionConsent,
+    userCollectionEnabled: kDefaultUserCollectionEnabled,
+    userCollectionFeatureFlag: kDefaultUserCollectionFeatureFlag,
   );
 
   static SettingsRepository getInstance() {
