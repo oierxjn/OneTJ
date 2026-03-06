@@ -29,7 +29,7 @@ class UserCollectionService {
       Uri.https('onetjapi.jkljkluiouio.top', '/collector/v1/events');
   final Uri _debugEndpoint = Uri.http('127.0.0.1:8000', '/collector/v1/events');
 
-  bool _uploadedInSession = false;
+  final Set<String> _uploadedHashIdsInProcess = <String>{};
 
   Future<void> uploadForProduction({
     required StudentInfoData studentInfo,
@@ -69,7 +69,8 @@ class UserCollectionService {
     required bool applySessionGate,
     required Set<UserCollectionField>? selectedFields,
   }) async {
-    if (applySessionGate && _uploadedInSession) {
+    final String hashId = _hashUserId(studentInfo.userId);
+    if (applySessionGate && _uploadedHashIdsInProcess.contains(hashId)) {
       return;
     }
     final UserCollectionPayload payload =
@@ -83,7 +84,7 @@ class UserCollectionService {
       debugContext: payload.toSafeDebugMap(),
     );
     if (applySessionGate) {
-      _uploadedInSession = true;
+      _uploadedHashIdsInProcess.add(hashId);
     }
     AppLogger.info(
       'User collection success',
@@ -139,7 +140,7 @@ class UserCollectionService {
   }) async {
     final DeviceInfoData deviceInfo = await _deviceInfoService.getDeviceInfo();
     return UserCollectionPayload(
-      hashId: sha256.convert(utf8.encode(studentInfo.userId)).toString(),
+      hashId: _hashUserId(studentInfo.userId),
       userid: studentInfo.userId,
       username: studentInfo.name,
       clientVersion: '$oneTJAppVersion+$oneTJAppBuildNumber',
@@ -150,5 +151,9 @@ class UserCollectionService {
       gender: studentInfo.sexName,
       platform: deviceInfo.platform,
     );
+  }
+
+  String _hashUserId(String userId) {
+    return sha256.convert(utf8.encode(userId)).toString();
   }
 }
