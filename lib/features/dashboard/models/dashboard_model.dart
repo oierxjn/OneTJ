@@ -15,6 +15,7 @@ class DashboardModel {
 
   Future<StudentInfoData> getStudentInfo() async {
     final StudentInfoRepository repo = StudentInfoRepository.getInstance();
+    await repo.warmUp();
     return repo.getOrFetch(
       now: DateTime.now(),
       fetcher: fetchStudentInfo,
