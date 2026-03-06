@@ -114,6 +114,7 @@ class UserCollectionService {
       endpoint,
       headers: const <String, String>{
         'Content-Type': 'application/json; charset=utf-8',
+        'Accept': 'application/json',
       },
       body: jsonEncode(body),
     );
