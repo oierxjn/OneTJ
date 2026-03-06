@@ -113,6 +113,7 @@
   "settingsDashboardUpcomingCountInvalidRange": "Course count must be between 1 and 20.",
 
   "settingsAdvancedSectionTitle": "Advanced",
+  "settingsCommonSectionTitle": "Common",
   "settingsAboutTitle": "About",
   "settingsAboutSubtitle": "App info and project link",
   "settingsDeveloperTitle": "Developer Options",

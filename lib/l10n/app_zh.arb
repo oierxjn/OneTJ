@@ -113,6 +113,7 @@
     "settingsDashboardUpcomingCountInvalidRange": "课程节数必须在1到20之间",
 
     "settingsAdvancedSectionTitle": "高级",
+    "settingsCommonSectionTitle": "通用",
     "settingsAboutTitle": "关于",
     "settingsAboutSubtitle": "应用信息与项目链接",
     "settingsDeveloperTitle": "开发者选项",

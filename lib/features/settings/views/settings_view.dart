@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -437,6 +437,13 @@ class _SettingsViewState extends State<SettingsView> {
     );
   }
 
+  Widget _buildCommonSectionTitle(AppLocalizations l10n) {
+    return Text(
+      l10n.settingsCommonSectionTitle,
+      style: Theme.of(context).textTheme.titleMedium,
+    );
+  }
+
   Widget _buildAdvancedSectionTitle(AppLocalizations l10n) {
     return Text(
       l10n.settingsAdvancedSectionTitle,
@@ -544,21 +551,23 @@ class _SettingsViewState extends State<SettingsView> {
         builder: (context, _) => ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            _buildCommonSectionTitle(l10n),
+            const SizedBox(height: 8),
             _buildMaxWeekCard(l10n),
             const SizedBox(height: 12),
             _buildTimeSlotCard(l10n),
             const SizedBox(height: 12),
             _buildDashboardUpcomingCard(l10n),
+            const SizedBox(height: 12),
+            _buildUserCollectionPolicyCard(l10n),
+            const SizedBox(height: 12),
+            _buildAboutCard(l10n),
             const SizedBox(height: 24),
             _buildAdvancedSectionTitle(l10n),
             const SizedBox(height: 8),
             _buildResetCard(l10n),
             const SizedBox(height: 12),
             _buildDataMigrationCard(l10n),
-            const SizedBox(height: 12),
-            _buildUserCollectionPolicyCard(l10n),
-            const SizedBox(height: 12),
-            _buildAboutCard(l10n),
             const SizedBox(height: 12),
             _buildDeveloperCard(l10n),
             const SizedBox(height: 24),
