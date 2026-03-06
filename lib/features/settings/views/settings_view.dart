@@ -15,6 +15,7 @@ import 'package:onetj/models/settings_defaults.dart';
 import 'package:onetj/models/event_model.dart';
 import 'package:onetj/models/time_period_range.dart';
 import 'package:onetj/models/time_slot.dart';
+import 'package:onetj/models/user_collection_field.dart';
 import 'package:onetj/repo/settings_repository.dart';
 import 'package:onetj/services/hive_storage_service.dart';
 
@@ -32,6 +33,7 @@ class _SettingsViewState extends State<SettingsView> {
   late final TextEditingController _dashboardCountController;
   List<TimePeriodRangeData> _draftTimeSlotRanges = <TimePeriodRangeData>[];
   DashboardUpcomingMode _draftUpcomingMode = kDefaultDashboardUpcomingMode;
+  Set<UserCollectionField> _draftUserCollectionFields = <UserCollectionField>{};
 
   @override
   void initState() {
@@ -177,11 +179,15 @@ class _SettingsViewState extends State<SettingsView> {
       setState(() {
         _draftTimeSlotRanges = nextRanges;
         _draftUpcomingMode = settings.dashboardUpcomingMode;
+        _draftUserCollectionFields =
+            Set<UserCollectionField>.from(settings.userCollectionFields);
       });
       return;
     }
     _draftTimeSlotRanges = nextRanges;
     _draftUpcomingMode = settings.dashboardUpcomingMode;
+    _draftUserCollectionFields =
+        Set<UserCollectionField>.from(settings.userCollectionFields);
   }
 
   Future<void> _submitSettings() async {
@@ -190,6 +196,7 @@ class _SettingsViewState extends State<SettingsView> {
       editedTimeSlotRanges: _draftTimeSlotRanges,
       dashboardUpcomingMode: _draftUpcomingMode,
       dashboardUpcomingCountText: _dashboardCountController.text,
+      userCollectionFields: _draftUserCollectionFields,
     );
   }
 
@@ -314,6 +321,20 @@ class _SettingsViewState extends State<SettingsView> {
     });
   }
 
+  Future<void> _openUserCollectionPolicy() async {
+    final Set<UserCollectionField>? next =
+        await context.push<Set<UserCollectionField>>(
+      RoutePaths.homeSettingsUserCollectionPolicy,
+      extra: Set<UserCollectionField>.from(_draftUserCollectionFields),
+    );
+    if (next == null || !mounted) {
+      return;
+    }
+    setState(() {
+      _draftUserCollectionFields = next;
+    });
+  }
+
   String _timeSlotSummary(AppLocalizations l10n) {
     if (_draftTimeSlotRanges.isEmpty) {
       return l10n.settingsTimeSlotsEmpty;
@@ -342,6 +363,14 @@ class _SettingsViewState extends State<SettingsView> {
             kDefaultDashboardUpcomingCount;
         return l10n.settingsDashboardUpcomingModeCountSummary(count);
     }
+  }
+
+  String _userCollectionSummary(AppLocalizations l10n) {
+    final int selected = _draftUserCollectionFields.length;
+    return l10n.settingsUserCollectionPolicySummary(
+      selected,
+      UserCollectionField.values.length,
+    );
   }
 
   bool get _settingsBusy =>
@@ -460,6 +489,18 @@ class _SettingsViewState extends State<SettingsView> {
     );
   }
 
+  Widget _buildUserCollectionPolicyCard(AppLocalizations l10n) {
+    return Card(
+      child: ListTile(
+        leading: const Icon(Icons.privacy_tip_outlined),
+        title: Text(l10n.settingsUserCollectionPolicyTitle),
+        subtitle: Text(_userCollectionSummary(l10n)),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: _settingsBusy ? null : _openUserCollectionPolicy,
+      ),
+    );
+  }
+
   Widget _buildAboutCard(AppLocalizations l10n) {
     return Card(
       child: ListTile(
@@ -514,6 +555,8 @@ class _SettingsViewState extends State<SettingsView> {
             _buildResetCard(l10n),
             const SizedBox(height: 12),
             _buildDataMigrationCard(l10n),
+            const SizedBox(height: 12),
+            _buildUserCollectionPolicyCard(l10n),
             const SizedBox(height: 12),
             _buildAboutCard(l10n),
             const SizedBox(height: 12),

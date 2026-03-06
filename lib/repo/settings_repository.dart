@@ -5,7 +5,7 @@ import 'package:onetj/models/dashboard_upcoming_mode.dart';
 import 'package:onetj/models/settings_defaults.dart';
 import 'package:onetj/models/settings_validation.dart' as settings_validation;
 import 'package:onetj/models/time_period_range.dart';
-import 'package:onetj/models/user_collection_consent.dart';
+import 'package:onetj/models/user_collection_field.dart';
 import 'package:hive/hive.dart';
 import 'package:onetj/app/exception/app_exception.dart';
 
@@ -15,18 +15,14 @@ class SettingsData {
     required this.timeSlotRanges,
     required this.dashboardUpcomingMode,
     required this.dashboardUpcomingCount,
-    required this.userCollectionConsent,
-    required this.userCollectionEnabled,
-    required this.userCollectionFeatureFlag,
+    required this.userCollectionFields,
   });
 
   final int maxWeek;
   final List<TimePeriodRangeData> timeSlotRanges;
   final DashboardUpcomingMode dashboardUpcomingMode;
   final int dashboardUpcomingCount;
-  final UserCollectionConsent userCollectionConsent;
-  final bool userCollectionEnabled;
-  final bool userCollectionFeatureFlag;
+  final Set<UserCollectionField> userCollectionFields;
 
   factory SettingsData.fromJson(Map<String, dynamic> json) {
     final int maxWeek = _readMaxWeekWithFallback(json);
@@ -37,10 +33,7 @@ class SettingsData {
       timeSlotRanges: timeSlotRanges,
       dashboardUpcomingMode: _readDashboardUpcomingModeWithFallback(json),
       dashboardUpcomingCount: _readDashboardUpcomingCountWithFallback(json),
-      userCollectionConsent: _readUserCollectionConsentWithFallback(json),
-      userCollectionEnabled: _readUserCollectionEnabledWithFallback(json),
-      userCollectionFeatureFlag:
-          _readUserCollectionFeatureFlagWithFallback(json),
+      userCollectionFields: _readUserCollectionFieldsWithFallback(json),
     );
   }
 
@@ -50,9 +43,10 @@ class SettingsData {
       'timeSlotRanges': timeSlotRanges.map((item) => item.toJson()).toList(),
       'dashboardUpcomingMode': dashboardUpcomingMode.jsonValue,
       'dashboardUpcomingCount': dashboardUpcomingCount,
-      'userCollectionConsent': userCollectionConsent.jsonValue,
-      'userCollectionEnabled': userCollectionEnabled,
-      'userCollectionFeatureFlag': userCollectionFeatureFlag,
+      'userCollectionFields': UserCollectionField.values
+          .where((field) => userCollectionFields.contains(field))
+          .map((field) => field.jsonKey)
+          .toList(growable: false),
     };
   }
 
@@ -123,42 +117,22 @@ class SettingsData {
     return value;
   }
 
-  static UserCollectionConsent _readUserCollectionConsentWithFallback(
+  static Set<UserCollectionField> _readUserCollectionFieldsWithFallback(
     Map<String, dynamic> json,
   ) {
-    if (!json.containsKey('userCollectionConsent')) {
-      return kDefaultUserCollectionConsent;
+    if (!json.containsKey('userCollectionFields')) {
+      return kDefaultUserCollectionFields;
     }
-    return UserCollectionConsent.fromJsonValue(
-      json['userCollectionConsent'],
-      defaultValue: kDefaultUserCollectionConsent,
-    );
-  }
-
-  static bool _readUserCollectionEnabledWithFallback(
-    Map<String, dynamic> json,
-  ) {
-    if (!json.containsKey('userCollectionEnabled')) {
-      return kDefaultUserCollectionEnabled;
+    final Object? values = json['userCollectionFields'];
+    if (values is! List) {
+      return kDefaultUserCollectionFields;
     }
-    final Object? value = json['userCollectionEnabled'];
-    if (value is! bool) {
-      return kDefaultUserCollectionEnabled;
-    }
-    return value;
-  }
-
-  static bool _readUserCollectionFeatureFlagWithFallback(
-    Map<String, dynamic> json,
-  ) {
-    if (!json.containsKey('userCollectionFeatureFlag')) {
-      return kDefaultUserCollectionFeatureFlag;
-    }
-    final Object? value = json['userCollectionFeatureFlag'];
-    if (value is! bool) {
-      return kDefaultUserCollectionFeatureFlag;
-    }
-    return value;
+    return values
+        .map<UserCollectionField?>(
+          (Object? item) => UserCollectionField.fromJsonKey(item),
+        )
+        .whereType<UserCollectionField>()
+        .toSet();
   }
 
   static int _parseMaxWeek(Object? value) {
@@ -284,9 +258,7 @@ class SettingsRepository {
     timeSlotRanges: kDefaultTimeSlotRanges,
     dashboardUpcomingMode: kDefaultDashboardUpcomingMode,
     dashboardUpcomingCount: kDefaultDashboardUpcomingCount,
-    userCollectionConsent: kDefaultUserCollectionConsent,
-    userCollectionEnabled: kDefaultUserCollectionEnabled,
-    userCollectionFeatureFlag: kDefaultUserCollectionFeatureFlag,
+    userCollectionFields: kDefaultUserCollectionFields,
   );
 
   static SettingsRepository getInstance() {

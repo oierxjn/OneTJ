@@ -1,3 +1,5 @@
+import 'package:onetj/models/user_collection_field.dart';
+
 class UserCollectionPayload {
   const UserCollectionPayload({
     required this.userid,
@@ -33,6 +35,20 @@ class UserCollectionPayload {
       'gender': gender,
       'platform': platform,
     };
+  }
+
+  Map<String, Object?> toFilteredJson(Set<UserCollectionField> fields) {
+    final Map<String, Object?> source = toJson();
+    final Map<String, Object?> filtered = <String, Object?>{};
+    for (final UserCollectionField field in UserCollectionField.values) {
+      if (!fields.contains(field)) {
+        continue;
+      }
+      if (source.containsKey(field.jsonKey)) {
+        filtered[field.jsonKey] = source[field.jsonKey];
+      }
+    }
+    return filtered;
   }
 
   Map<String, Object?> toSafeDebugMap() {

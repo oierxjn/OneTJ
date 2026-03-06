@@ -1,6 +1,6 @@
 import 'package:onetj/models/dashboard_upcoming_mode.dart';
 import 'package:onetj/models/time_period_range.dart';
-import 'package:onetj/models/user_collection_consent.dart';
+import 'package:onetj/models/user_collection_field.dart';
 
 const int kDefaultMaxWeek = 22;
 const DashboardUpcomingMode kDefaultDashboardUpcomingMode =
@@ -8,10 +8,8 @@ const DashboardUpcomingMode kDefaultDashboardUpcomingMode =
 const int kDefaultDashboardUpcomingCount = 3;
 const int kMinDashboardUpcomingCount = 1;
 const int kMaxDashboardUpcomingCount = 20;
-const UserCollectionConsent kDefaultUserCollectionConsent =
-    UserCollectionConsent.unknown;
-const bool kDefaultUserCollectionEnabled = false;
-const bool kDefaultUserCollectionFeatureFlag = false;
+const Set<UserCollectionField> kDefaultUserCollectionFields =
+    <UserCollectionField>{};
 
 const int kLegacyTimeSlotLastDurationMinutes = 45;
 

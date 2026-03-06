@@ -56,21 +56,23 @@
 
 | 字段名 | 类型 | 必填 | 说明 | 示例 |
 | --- | --- | --- | --- | --- |
-| `userid` | string | 是 | 用户 ID | `2333333` |
-| `username` | string | 是 | 用户姓名 | `张三` |
-| `client_version` | string | 是 | 客户端版本（版本号+构建号） | `1.2.3+45` |
-| `device_brand` | string | 是 | 设备品牌 | `HUAWEI` |
-| `device_model` | string | 是 | 设备型号 | `Pura 70` |
-| `dept_name` | string | 是 | 院系名称 | `计算机科学与技术学院` |
-| `school_name` | string | 是 | 学校名称 | `同济大学` |
-| `gender` | string | 是 | 性别文本 | `男` |
-| `platform` | string | 是 | 平台标识 | `android` |
+| `userid` | string | 否（由客户端策略决定） | 用户 ID | `2333333` |
+| `username` | string | 否（由客户端策略决定） | 用户姓名 | `张三` |
+| `client_version` | string | 否（由客户端策略决定） | 客户端版本（版本号+构建号） | `1.2.3+45` |
+| `device_brand` | string | 否（由客户端策略决定） | 设备品牌 | `HUAWEI` |
+| `device_model` | string | 否（由客户端策略决定） | 设备型号 | `Pura 70` |
+| `dept_name` | string | 否（由客户端策略决定） | 院系名称 | `计算机科学与技术学院` |
+| `school_name` | string | 否（由客户端策略决定） | 学校名称 | `同济大学` |
+| `gender` | string | 否（由客户端策略决定） | 性别文本 | `男` |
+| `platform` | string | 否（由客户端策略决定） | 平台标识 | `android` |
 
 ### 5.2 字段约束
 
 - 字段名区分大小写，必须按上表使用 snake_case。
 - 所有字段类型必须为字符串。
-- 服务端应对字段执行 `trim` 后校验非空。
+- 客户端可按用户策略发送字段子集，甚至发送空对象 `{}`。
+- 服务端应允许字段缺失，并按“存在字段即校验”的原则处理。
+- 若字段存在，建议执行 `trim` 后校验非空。
 - `platform` 建议值：`android`、`ios`、`ohos`、`windows`、`macos`、`linux`、`web`。
 
 ### 5.3 请求示例
@@ -213,7 +215,7 @@ Accept: application/json
 
 - [ ] 仅接受 `POST`
 - [ ] 校验 `Content-Type` 为 JSON
-- [ ] 校验必填字段存在且为字符串
+- [ ] 按“存在字段即校验”处理字段类型（字符串）
 - [ ] 返回统一 JSON 响应结构（含 `status/code/message`）
 - [ ] 失败场景返回匹配的 HTTP 状态码
 - [ ] 返回 `request_id` 便于排障

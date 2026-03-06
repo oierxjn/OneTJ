@@ -130,6 +130,29 @@
         "error": {}
       }
     },
+    "settingsUserCollectionPolicyTitle": "用户信息收集策略",
+    "settingsUserCollectionPolicySummary": "已选择 {selected}/{total} 个字段",
+    "@settingsUserCollectionPolicySummary": {
+      "placeholders": {
+        "selected": {
+          "type": "int"
+        },
+        "total": {
+          "type": "int"
+        }
+      }
+    },
+    "settingsUserCollectionPolicySelectAll": "全选",
+    "settingsUserCollectionPolicyClearAll": "全不选",
+    "settingsUserCollectionFieldUserid": "学号",
+    "settingsUserCollectionFieldUsername": "姓名",
+    "settingsUserCollectionFieldClientVersion": "客户端版本",
+    "settingsUserCollectionFieldDeviceBrand": "设备品牌",
+    "settingsUserCollectionFieldDeviceModel": "设备型号",
+    "settingsUserCollectionFieldDeptName": "院系名称",
+    "settingsUserCollectionFieldSchoolName": "学校名称",
+    "settingsUserCollectionFieldGender": "性别",
+    "settingsUserCollectionFieldPlatform": "平台",
     "settingsResetTitle": "重置设置",
     "settingsResetSubtitle": "将所有设置恢复为默认值",
     "settingsResetConfirmTitle": "确认重置所有设置？",

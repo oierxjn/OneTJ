@@ -130,6 +130,29 @@
       "error": {}
     }
   },
+  "settingsUserCollectionPolicyTitle": "User Collection Policy",
+  "settingsUserCollectionPolicySummary": "{selected}/{total} fields selected",
+  "@settingsUserCollectionPolicySummary": {
+    "placeholders": {
+      "selected": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsUserCollectionPolicySelectAll": "Select all",
+  "settingsUserCollectionPolicyClearAll": "Clear all",
+  "settingsUserCollectionFieldUserid": "Student ID",
+  "settingsUserCollectionFieldUsername": "Name",
+  "settingsUserCollectionFieldClientVersion": "Client version",
+  "settingsUserCollectionFieldDeviceBrand": "Device brand",
+  "settingsUserCollectionFieldDeviceModel": "Device model",
+  "settingsUserCollectionFieldDeptName": "Department",
+  "settingsUserCollectionFieldSchoolName": "School",
+  "settingsUserCollectionFieldGender": "Gender",
+  "settingsUserCollectionFieldPlatform": "Platform",
   "settingsResetTitle": "Reset Settings",
   "settingsResetSubtitle": "Restore all settings to defaults",
   "settingsResetConfirmTitle": "Reset all settings?",

@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:onetj/app/constant/app_version_constant.dart';
 import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/app/logging/logger.dart';
-import 'package:onetj/models/user_collection_consent.dart';
+import 'package:onetj/models/user_collection_field.dart';
 import 'package:onetj/models/user_collection_payload.dart';
 import 'package:onetj/repo/settings_repository.dart';
 import 'package:onetj/repo/student_info_repository.dart';
@@ -25,7 +25,7 @@ class UserCollectionService {
   final http.Client _client;
   final DeviceInfoService _deviceInfoService;
   final Uri _endpoint =
-      Uri.https('www.gardilily.com', '/oneDotTongji/userLoginInfoUpload.php');
+      Uri.https('onetjapi.jkljkluiouio.top', '/collector/v1/events');
   final Uri _debugEndpoint = Uri.http('127.0.0.1:8000', '/collector/v1/events');
 
   bool _uploadedInSession = false;
@@ -34,23 +34,12 @@ class UserCollectionService {
     required StudentInfoData studentInfo,
     required SettingsData settings,
   }) async {
-    if (!_canUploadBySettings(settings)) {
-      AppLogger.debug(
-        'User collection skipped by settings gate',
-        loggerName: 'UserCollectionService',
-        context: <String, Object?>{
-          'featureFlag': settings.userCollectionFeatureFlag,
-          'enabled': settings.userCollectionEnabled,
-          'consent': settings.userCollectionConsent.jsonValue,
-        },
-      );
-      return;
-    }
     try {
       await _collectAndUpload(
         studentInfo: studentInfo,
         endpoint: _endpoint,
         applySessionGate: true,
+        selectedFields: settings.userCollectionFields,
       );
     } catch (error, stackTrace) {
       AppLogger.warning(
@@ -69,23 +58,28 @@ class UserCollectionService {
       studentInfo: studentInfo,
       endpoint: _debugEndpoint,
       applySessionGate: false,
+      selectedFields: null,
     );
   }
 
   Future<void> _collectAndUpload({
     required StudentInfoData studentInfo,
     required Uri endpoint,
-    /// 为 true 时，仅在当前会话中上传一次
     required bool applySessionGate,
+    required Set<UserCollectionField>? selectedFields,
   }) async {
     if (applySessionGate && _uploadedInSession) {
       return;
     }
     final UserCollectionPayload payload =
         await _buildPayload(studentInfo: studentInfo);
+    final Map<String, Object?> requestBody = selectedFields == null
+        ? payload.toJson()
+        : payload.toFilteredJson(selectedFields);
     await _postJson(
       endpoint: endpoint,
-      payload: payload,
+      body: requestBody,
+      debugContext: payload.toSafeDebugMap(),
     );
     if (applySessionGate) {
       _uploadedInSession = true;
@@ -93,18 +87,25 @@ class UserCollectionService {
     AppLogger.info(
       'User collection success',
       loggerName: 'UserCollectionService',
-      context: payload.toSafeDebugMap(),
+      context: <String, Object?>{
+        ...payload.toSafeDebugMap(),
+        'fieldCount': requestBody.length,
+      },
     );
   }
 
   Future<void> _postJson({
     required Uri endpoint,
-    required UserCollectionPayload payload,
+    required Map<String, Object?> body,
+    required Map<String, Object?> debugContext,
   }) async {
     AppLogger.info(
       'User collection started',
       loggerName: 'UserCollectionService',
-      context: payload.toSafeDebugMap(),
+      context: <String, Object?>{
+        ...debugContext,
+        'fieldCount': body.length,
+      },
     );
     final Stopwatch stopwatch = Stopwatch()..start();
     final http.Response response = await _client.post(
@@ -112,7 +113,7 @@ class UserCollectionService {
       headers: const <String, String>{
         'Content-Type': 'application/json; charset=utf-8',
       },
-      body: jsonEncode(payload.toJson()),
+      body: jsonEncode(body),
     );
     AppLogger.info(
       'User collection response',
@@ -130,12 +131,6 @@ class UserCollectionService {
         uri: endpoint,
       );
     }
-  }
-
-  bool _canUploadBySettings(SettingsData settings) {
-    return settings.userCollectionFeatureFlag &&
-        settings.userCollectionEnabled &&
-        settings.userCollectionConsent == UserCollectionConsent.accepted;
   }
 
   Future<UserCollectionPayload> _buildPayload({
