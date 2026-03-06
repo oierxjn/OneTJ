@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:onetj/app/constant/site_constant.dart';
+import 'package:onetj/features/settings/models/developer_settings_exception.dart';
 import 'package:onetj/features/settings/models/developer_settings_model.dart';
 import 'package:onetj/features/settings/models/event.dart';
 import 'package:onetj/models/base_model.dart';
@@ -17,15 +19,25 @@ class DeveloperSettingsViewModel extends BaseViewModel {
 
   bool _sendingDebug = false;
   bool get sendingDebug => _sendingDebug;
+  String _debugCollectionEndpoint = defaultDebugCollectionEndpoint;
+  String get debugCollectionEndpoint => _debugCollectionEndpoint;
 
-  Future<void> sendDebugCollection() async {
+  Future<void> sendDebugCollectionWithEndpoint(String rawEndpoint) async {
     if (_sendingDebug) {
       return;
     }
+    final Uri endpoint;
+    try {
+      endpoint = _model.parseDebugEndpoint(rawEndpoint.trim());
+    } on DeveloperDebugEndpointException catch (error) {
+      _eventController.add(DeveloperDebugEndpointInvalidEvent(type: error.code));
+      return;
+    }
+    _debugCollectionEndpoint = endpoint.toString();
     _sendingDebug = true;
     notifyListeners();
     try {
-      await _model.sendDebugCollection();
+      await _model.sendDebugCollection(endpoint: endpoint);
       _eventController.add(const DeveloperDebugUploadSuccessEvent());
     } catch (error) {
       _eventController.add(

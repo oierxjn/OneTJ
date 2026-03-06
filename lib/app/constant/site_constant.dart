@@ -15,12 +15,16 @@ const List<String> oauthScope = [
 ];
 const String tongjiApiBaseUrl = "api.tongji.edu.cn";
 
-const String loginEndpointPath = "/keycloak/realms/OpenPlatform/protocol/openid-connect/auth";
+const String loginEndpointPath =
+    "/keycloak/realms/OpenPlatform/protocol/openid-connect/auth";
 const String code2tokenPath = "/v1/token";
 const String studentInfoPath = "/v1/dc/user/student_info";
-const String currentTermCalendarPath = "/v1/rt/onetongji/school_calendar_current_term_calendar";
+const String currentTermCalendarPath =
+    "/v1/rt/onetongji/school_calendar_current_term_calendar";
 const String studentTimetablePath = "/v1/rt/onetongji/student_timetable";
 const String undergraduateScorePath = "/v1/rt/onetongji/undergraduate_score";
+const String defaultDebugCollectionEndpoint =
+    "http://127.0.0.1:8000/collector/v1/events";
 
 const String tongjiClientID = "authorization-xxb-onedottongji-yuchen";
 const String oneTJredirectUri = "https://fakeredir.jkljkluiouio.top";

@@ -27,7 +27,6 @@ class UserCollectionService {
   final DeviceInfoService _deviceInfoService;
   final Uri _endpoint =
       Uri.https('onetjapi.jkljkluiouio.top', '/collector/v1/events');
-  final Uri _debugEndpoint = Uri.http('127.0.0.1:8000', '/collector/v1/events');
 
   final Set<String> _uploadedHashIdsInProcess = <String>{};
 
@@ -53,11 +52,12 @@ class UserCollectionService {
   }
 
   Future<void> sendDebugCollectionFromCurrentUser(
-    StudentInfoData studentInfo,
-  ) async {
+    StudentInfoData studentInfo, {
+    required Uri endpoint,
+  }) async {
     await _collectAndUpload(
       studentInfo: studentInfo,
-      endpoint: _debugEndpoint,
+      endpoint: endpoint,
       applySessionGate: false,
       selectedFields: null,
     );

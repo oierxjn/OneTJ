@@ -122,8 +122,25 @@
     "settingsLogsTitle": "日志",
     "settingsLogsSubtitle": "查看最近应用日志",
     "settingsLogsEmpty": "暂无日志",
+    "settingsDebugEndpointTitle": "调试上传地址",
+    "settingsDebugEndpointSubtitle": "当前地址：{endpoint}",
+    "@settingsDebugEndpointSubtitle": {
+      "placeholders": {
+        "endpoint": {}
+      }
+    },
+    "settingsDebugEndpointDialogTitle": "设置调试上传地址",
+    "settingsDebugEndpointHint": "请输入完整 URL（http:// 或 https://）",
+    "settingsDebugEndpointInvalid": "地址格式无效",
+    "settingsDebugEndpointInvalidFormat": "地址格式无效，请输入完整 URL",
+    "settingsDebugEndpointInvalidScheme": "地址协议仅支持 http 或 https",
     "settingsDebugUploadTitle": "发送到本地调试服务器",
-    "settingsDebugUploadSubtitle": "将用户采集信息发送到 http://127.0.0.1:8000/collector/v1/events",
+    "settingsDebugUploadSubtitle": "将用户采集信息发送到 {endpoint}",
+    "@settingsDebugUploadSubtitle": {
+      "placeholders": {
+        "endpoint": {}
+      }
+    },
     "settingsDebugUploadSuccess": "已发送到本地调试服务器",
     "settingsDebugUploadFailed": "发送失败：{error}",
     "@settingsDebugUploadFailed": {

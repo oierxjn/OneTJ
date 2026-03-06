@@ -122,8 +122,25 @@
   "settingsLogsTitle": "Logs",
   "settingsLogsSubtitle": "View recent application logs",
   "settingsLogsEmpty": "No logs yet",
+  "settingsDebugEndpointTitle": "Debug Upload Endpoint",
+  "settingsDebugEndpointSubtitle": "Current endpoint: {endpoint}",
+  "@settingsDebugEndpointSubtitle": {
+    "placeholders": {
+      "endpoint": {}
+    }
+  },
+  "settingsDebugEndpointDialogTitle": "Set Debug Upload Endpoint",
+  "settingsDebugEndpointHint": "Enter a full URL (http:// or https://)",
+  "settingsDebugEndpointInvalid": "Invalid endpoint format",
+  "settingsDebugEndpointInvalidFormat": "Invalid endpoint format. Please enter a full URL.",
+  "settingsDebugEndpointInvalidScheme": "Endpoint scheme must be http or https.",
   "settingsDebugUploadTitle": "Send to Local Debug Server",
-  "settingsDebugUploadSubtitle": "Send user collection data to http://127.0.0.1:8000/collector/v1/events",
+  "settingsDebugUploadSubtitle": "Send user collection data to {endpoint}",
+  "@settingsDebugUploadSubtitle": {
+    "placeholders": {
+      "endpoint": {}
+    }
+  },
   "settingsDebugUploadSuccess": "Sent to local debug server",
   "settingsDebugUploadFailed": "Send failed: {error}",
   "@settingsDebugUploadFailed": {
