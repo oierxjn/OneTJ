@@ -73,27 +73,34 @@ class UserCollectionService {
     if (applySessionGate && _uploadedHashIdsInProcess.contains(hashId)) {
       return;
     }
-    final UserCollectionPayload payload =
-        await _buildPayload(studentInfo: studentInfo);
-    final Map<String, Object?> requestBody = selectedFields == null
-        ? payload.toJson()
-        : payload.toFilteredJson(selectedFields);
-    await _postJson(
-      endpoint: endpoint,
-      body: requestBody,
-      debugContext: payload.toSafeDebugMap(),
-    );
     if (applySessionGate) {
       _uploadedHashIdsInProcess.add(hashId);
     }
-    AppLogger.info(
-      'User collection success',
-      loggerName: 'UserCollectionService',
-      context: <String, Object?>{
-        ...payload.toSafeDebugMap(),
-        'fieldCount': requestBody.length,
-      },
-    );
+    try {
+      final UserCollectionPayload payload =
+          await _buildPayload(studentInfo: studentInfo);
+      final Map<String, Object?> requestBody = selectedFields == null
+          ? payload.toJson()
+          : payload.toFilteredJson(selectedFields);
+      await _postJson(
+        endpoint: endpoint,
+        body: requestBody,
+        debugContext: payload.toSafeDebugMap(),
+      );
+      AppLogger.info(
+        'User collection success',
+        loggerName: 'UserCollectionService',
+        context: <String, Object?>{
+          ...payload.toSafeDebugMap(),
+          'fieldCount': requestBody.length,
+        },
+      );
+    } catch (_) {
+      if (applySessionGate) {
+        _uploadedHashIdsInProcess.remove(hashId);
+      }
+      rethrow;
+    }
   }
 
   Future<void> _postJson({
