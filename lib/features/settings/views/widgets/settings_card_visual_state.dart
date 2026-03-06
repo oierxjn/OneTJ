@@ -25,11 +25,7 @@ class SettingsCardVisualState {
         return const SettingsCardVisualState();
       case SettingsCardStatus.dirty:
         return SettingsCardVisualState(
-          color: colors.primaryContainer.withValues(alpha: 0.35),
-          shape: RoundedRectangleBorder(
-            side: BorderSide(color: colors.primary, width: 1),
-            borderRadius: BorderRadius.circular(12),
-          ),
+          color: colors.secondaryContainer
         );
       case SettingsCardStatus.error:
         return SettingsCardVisualState(

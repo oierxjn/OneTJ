@@ -10,8 +10,8 @@ import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/features/settings/models/event.dart';
 import 'package:onetj/features/settings/models/settings_model.dart';
 import 'package:onetj/features/settings/view_models/settings_view_model.dart';
+import 'package:onetj/features/settings/views/widgets/settings_card.dart';
 import 'package:onetj/features/settings/views/widgets/settings_card_visual_state.dart';
-import 'package:onetj/features/settings/views/widgets/settings_state_card.dart';
 import 'package:onetj/features/settings/views/widgets/upcoming_courses_card.dart';
 import 'package:onetj/models/dashboard_upcoming_mode.dart';
 import 'package:onetj/models/settings_defaults.dart';
@@ -483,25 +483,23 @@ class _SettingsViewState extends State<SettingsView> {
       isDirty: _isMaxWeekDirty(),
       hasError: _isMaxWeekInvalid(),
     );
-    return SettingsStateCard(
+    return SettingsCard(
       status: status,
-      child: ListTile(
-        title: Text(l10n.settingsMaxWeekTitle),
-        subtitle: Text(l10n.settingsMaxWeekSubtitle),
-        trailing: SizedBox(
-          width: 100,
-          child: TextField(
-            controller: _maxWeekController,
-            onChanged: (_) => setState(() {}),
-            keyboardType: TextInputType.number,
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-            ],
-            enabled: !_settingsBusy,
-            decoration: const InputDecoration(
-              isDense: true,
-              border: OutlineInputBorder(),
-            ),
+      title: Text(l10n.settingsMaxWeekTitle),
+      subtitle: Text(l10n.settingsMaxWeekSubtitle),
+      trailing: SizedBox(
+        width: 100,
+        child: TextField(
+          controller: _maxWeekController,
+          onChanged: (_) => setState(() {}),
+          keyboardType: TextInputType.number,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+          ],
+          enabled: !_settingsBusy,
+          decoration: const InputDecoration(
+            isDense: true,
+            border: OutlineInputBorder(),
           ),
         ),
       ),
@@ -513,15 +511,13 @@ class _SettingsViewState extends State<SettingsView> {
       isDirty: _isTimeSlotDirty(),
       hasError: false,
     );
-    return SettingsStateCard(
+    return SettingsCard(
       status: status,
-      child: ListTile(
-        leading: const Icon(Icons.schedule),
-        title: Text(l10n.settingsTimeSlotsTitle),
-        subtitle: Text(_timeSlotSummary(l10n)),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: _settingsBusy ? null : _openTimeSlotEditor,
-      ),
+      leading: const Icon(Icons.schedule),
+      title: Text(l10n.settingsTimeSlotsTitle),
+      subtitle: Text(_timeSlotSummary(l10n)),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: _settingsBusy ? null : _openTimeSlotEditor,
     );
   }
 
@@ -529,10 +525,6 @@ class _SettingsViewState extends State<SettingsView> {
     final SettingsCardStatus status = _resolveCardStatus(
       isDirty: _isUpcomingDirty(),
       hasError: _isUpcomingInvalid(),
-    );
-    final SettingsCardVisualState visual = SettingsCardVisualState.fromStatus(
-      context,
-      status,
     );
     return UpcomingCoursesCard(
       l10n: l10n,
@@ -542,8 +534,7 @@ class _SettingsViewState extends State<SettingsView> {
       summaryText: _dashboardUpcomingSummary(l10n),
       onModeChanged: _onUpcomingModeChanged,
       onCountChanged: _onDashboardCountChanged,
-      cardColor: visual.color,
-      cardShape: visual.shape,
+      status: status,
     );
   }
 
@@ -562,13 +553,11 @@ class _SettingsViewState extends State<SettingsView> {
   }
 
   Widget _buildResetCard(AppLocalizations l10n) {
-    return Card(
-      child: ListTile(
-        leading: const Icon(Icons.restore),
-        title: Text(l10n.settingsResetTitle),
-        subtitle: Text(l10n.settingsResetSubtitle),
-        onTap: _settingsBusy ? null : () => _confirmResetSettings(context),
-      ),
+    return SettingsCard(
+      leading: const Icon(Icons.restore),
+      title: Text(l10n.settingsResetTitle),
+      subtitle: Text(l10n.settingsResetSubtitle),
+      onTap: _settingsBusy ? null : () => _confirmResetSettings(context),
     );
   }
 
@@ -584,25 +573,21 @@ class _SettingsViewState extends State<SettingsView> {
     } else {
       subtitle = l10n.settingsDataMigrationSubtitle;
     }
-    return Card(
-      child: ListTile(
-        leading: const Icon(Icons.move_down),
-        title: Text(l10n.settingsDataMigrationTitle),
-        subtitle: Text(subtitle),
-        onTap: canTap ? () => _onTapDataMigration(context) : null,
-      ),
+    return SettingsCard(
+      leading: const Icon(Icons.move_down),
+      title: Text(l10n.settingsDataMigrationTitle),
+      subtitle: Text(subtitle),
+      onTap: canTap ? () => _onTapDataMigration(context) : null,
     );
   }
 
   Widget _buildDeveloperCard(AppLocalizations l10n) {
-    return Card(
-      child: ListTile(
-        leading: const Icon(Icons.developer_mode),
-        title: Text(l10n.settingsDeveloperTitle),
-        subtitle: Text(l10n.settingsDeveloperSubtitle),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: () => context.push(RoutePaths.homeSettingsDeveloper),
-      ),
+    return SettingsCard(
+      leading: const Icon(Icons.developer_mode),
+      title: Text(l10n.settingsDeveloperTitle),
+      subtitle: Text(l10n.settingsDeveloperSubtitle),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () => context.push(RoutePaths.homeSettingsDeveloper),
     );
   }
 
@@ -611,27 +596,23 @@ class _SettingsViewState extends State<SettingsView> {
       isDirty: _isUserCollectionDirty(),
       hasError: false,
     );
-    return SettingsStateCard(
+    return SettingsCard(
       status: status,
-      child: ListTile(
-        leading: const Icon(Icons.privacy_tip_outlined),
-        title: Text(l10n.settingsUserCollectionPolicyTitle),
-        subtitle: Text(_userCollectionSummary(l10n)),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: _settingsBusy ? null : _openUserCollectionPolicy,
-      ),
+      leading: const Icon(Icons.privacy_tip_outlined),
+      title: Text(l10n.settingsUserCollectionPolicyTitle),
+      subtitle: Text(_userCollectionSummary(l10n)),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: _settingsBusy ? null : _openUserCollectionPolicy,
     );
   }
 
   Widget _buildAboutCard(AppLocalizations l10n) {
-    return Card(
-      child: ListTile(
-        leading: const Icon(Icons.info_outline),
-        title: Text(l10n.settingsAboutTitle),
-        subtitle: Text(l10n.settingsAboutSubtitle),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: () => context.push(RoutePaths.homeSettingsAbout),
-      ),
+    return SettingsCard(
+      leading: const Icon(Icons.info_outline),
+      title: Text(l10n.settingsAboutTitle),
+      subtitle: Text(l10n.settingsAboutSubtitle),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () => context.push(RoutePaths.homeSettingsAbout),
     );
   }
 
