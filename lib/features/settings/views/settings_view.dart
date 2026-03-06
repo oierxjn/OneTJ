@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,7 +8,10 @@ import 'package:go_router/go_router.dart';
 import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/features/settings/models/event.dart';
+import 'package:onetj/features/settings/models/settings_model.dart';
 import 'package:onetj/features/settings/view_models/settings_view_model.dart';
+import 'package:onetj/features/settings/views/widgets/settings_card_visual_state.dart';
+import 'package:onetj/features/settings/views/widgets/settings_state_card.dart';
 import 'package:onetj/features/settings/views/widgets/upcoming_courses_card.dart';
 import 'package:onetj/models/dashboard_upcoming_mode.dart';
 import 'package:onetj/models/settings_defaults.dart';
@@ -376,6 +379,92 @@ class _SettingsViewState extends State<SettingsView> {
   bool get _settingsBusy =>
       _viewModel.settingsLoading || _viewModel.settingsSaving;
 
+  SettingsCardStatus _resolveCardStatus({
+    required bool isDirty,
+    required bool hasError,
+  }) {
+    if (hasError) {
+      return SettingsCardStatus.error;
+    }
+    if (isDirty) {
+      return SettingsCardStatus.dirty;
+    }
+    return SettingsCardStatus.normal;
+  }
+
+  bool _isMaxWeekDirty() {
+    return _maxWeekController.text !=
+        _viewModel.settingsData.maxWeek.toString();
+  }
+
+  bool _isMaxWeekInvalid() {
+    try {
+      final int maxWeek =
+          SettingsModel.parseMaxWeekText(_maxWeekController.text);
+      SettingsModel.validateMaxWeek(maxWeek);
+      return false;
+    } on SettingsValidationException {
+      return true;
+    }
+  }
+
+  bool _isTimeSlotDirty() {
+    final List<TimePeriodRangeData> saved =
+        _viewModel.settingsData.timeSlotRanges;
+    if (saved.length != _draftTimeSlotRanges.length) {
+      return true;
+    }
+    for (int i = 0; i < saved.length; i++) {
+      if (saved[i].startMinutes != _draftTimeSlotRanges[i].startMinutes) {
+        return true;
+      }
+      if (saved[i].endMinutes != _draftTimeSlotRanges[i].endMinutes) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool _isUpcomingDirty() {
+    if (_draftUpcomingMode != _viewModel.settingsData.dashboardUpcomingMode) {
+      return true;
+    }
+    if (_draftUpcomingMode != DashboardUpcomingMode.count) {
+      return false;
+    }
+    final int? count = int.tryParse(_dashboardCountController.text);
+    return count != _viewModel.settingsData.dashboardUpcomingCount;
+  }
+
+  bool _isUpcomingInvalid() {
+    if (_draftUpcomingMode != DashboardUpcomingMode.count) {
+      return false;
+    }
+    try {
+      final int count = SettingsModel.parseDashboardUpcomingCountText(
+        _dashboardCountController.text,
+      );
+      SettingsModel.validateDashboardUpcomingCount(count);
+      return false;
+    } on SettingsValidationException {
+      return true;
+    }
+  }
+
+  bool _isUserCollectionDirty() {
+    final Set<UserCollectionField> saved =
+        _viewModel.settingsData.userCollectionFields;
+    if (saved.length != _draftUserCollectionFields.length) {
+      return true;
+    }
+    for (final UserCollectionField field in saved) {
+      if (!_draftUserCollectionFields.contains(field)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   void _onUpcomingModeChanged(DashboardUpcomingMode value) {
     setState(() {
       _draftUpcomingMode = value;
@@ -390,7 +479,12 @@ class _SettingsViewState extends State<SettingsView> {
   }
 
   Widget _buildMaxWeekCard(AppLocalizations l10n) {
-    return Card(
+    final SettingsCardStatus status = _resolveCardStatus(
+      isDirty: _isMaxWeekDirty(),
+      hasError: _isMaxWeekInvalid(),
+    );
+    return SettingsStateCard(
+      status: status,
       child: ListTile(
         title: Text(l10n.settingsMaxWeekTitle),
         subtitle: Text(l10n.settingsMaxWeekSubtitle),
@@ -398,6 +492,7 @@ class _SettingsViewState extends State<SettingsView> {
           width: 100,
           child: TextField(
             controller: _maxWeekController,
+            onChanged: (_) => setState(() {}),
             keyboardType: TextInputType.number,
             inputFormatters: [
               FilteringTextInputFormatter.digitsOnly,
@@ -414,7 +509,12 @@ class _SettingsViewState extends State<SettingsView> {
   }
 
   Widget _buildTimeSlotCard(AppLocalizations l10n) {
-    return Card(
+    final SettingsCardStatus status = _resolveCardStatus(
+      isDirty: _isTimeSlotDirty(),
+      hasError: false,
+    );
+    return SettingsStateCard(
+      status: status,
       child: ListTile(
         leading: const Icon(Icons.schedule),
         title: Text(l10n.settingsTimeSlotsTitle),
@@ -426,6 +526,14 @@ class _SettingsViewState extends State<SettingsView> {
   }
 
   Widget _buildDashboardUpcomingCard(AppLocalizations l10n) {
+    final SettingsCardStatus status = _resolveCardStatus(
+      isDirty: _isUpcomingDirty(),
+      hasError: _isUpcomingInvalid(),
+    );
+    final SettingsCardVisualState visual = SettingsCardVisualState.fromStatus(
+      context,
+      status,
+    );
     return UpcomingCoursesCard(
       l10n: l10n,
       mode: _draftUpcomingMode,
@@ -434,6 +542,8 @@ class _SettingsViewState extends State<SettingsView> {
       summaryText: _dashboardUpcomingSummary(l10n),
       onModeChanged: _onUpcomingModeChanged,
       onCountChanged: _onDashboardCountChanged,
+      cardColor: visual.color,
+      cardShape: visual.shape,
     );
   }
 
@@ -497,7 +607,12 @@ class _SettingsViewState extends State<SettingsView> {
   }
 
   Widget _buildUserCollectionPolicyCard(AppLocalizations l10n) {
-    return Card(
+    final SettingsCardStatus status = _resolveCardStatus(
+      isDirty: _isUserCollectionDirty(),
+      hasError: false,
+    );
+    return SettingsStateCard(
+      status: status,
       child: ListTile(
         leading: const Icon(Icons.privacy_tip_outlined),
         title: Text(l10n.settingsUserCollectionPolicyTitle),

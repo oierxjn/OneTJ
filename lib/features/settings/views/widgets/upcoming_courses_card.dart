@@ -13,6 +13,8 @@ class UpcomingCoursesCard extends StatefulWidget {
     required this.summaryText,
     required this.onModeChanged,
     required this.onCountChanged,
+    this.cardColor,
+    this.cardShape,
     super.key,
   });
 
@@ -23,6 +25,8 @@ class UpcomingCoursesCard extends StatefulWidget {
   final String summaryText;
   final ValueChanged<DashboardUpcomingMode> onModeChanged;
   final ValueChanged<String> onCountChanged;
+  final Color? cardColor;
+  final ShapeBorder? cardShape;
 
   @override
   State<UpcomingCoursesCard> createState() => _UpcomingCoursesCardState();
@@ -133,6 +137,8 @@ class _UpcomingCoursesCardState extends State<UpcomingCoursesCard>
   @override
   Widget build(BuildContext context) {
     return Card(
+      color: widget.cardColor,
+      shape: widget.cardShape,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
