@@ -480,6 +480,7 @@ class StudentInfoRepository {
     required bool persist,
   }) {
     if (data != null) {
+      // TODO: 拿到data应视为已加载
       _cached = data;
     }
     if (meta != null) {

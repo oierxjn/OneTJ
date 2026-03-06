@@ -97,6 +97,7 @@ class DashboardViewModel extends BaseViewModel {
       loadStudentInfo(),
       loadSchoolCalendar(),
       loadCourseSchedule(),
+      _uploadUserCollectionWhenStudentInfoLoaded(),
     ]);
   }
 
@@ -156,7 +157,6 @@ class DashboardViewModel extends BaseViewModel {
     try {
       final StudentInfoData data = await _model.getStudentInfo();
       _departmentName = data.deptName;
-      unawaited(_uploadUserCollection(data));
       _studentError = null;
     } catch (error) {
       _studentError = error;
@@ -169,8 +169,15 @@ class DashboardViewModel extends BaseViewModel {
     }
   }
 
-  Future<void> _uploadUserCollection(StudentInfoData studentInfo) async {
+  Future<void> _uploadUserCollectionWhenStudentInfoLoaded() async {
     try {
+      final StudentInfoRepository repo = StudentInfoRepository.getInstance();
+      await repo.ensureLoaded();
+      final StudentInfoData studentInfo = await repo.getOrFetch(
+        now: DateTime.now(),
+        fetcher: _model.fetchStudentInfo,
+        ttl: const Duration(days: 1),
+      );
       final SettingsData settings = await _settingsRepository.getSettings();
       await _userCollectionService.uploadForProduction(
         studentInfo: studentInfo,
