@@ -24,7 +24,8 @@ class DashboardViewModel extends BaseViewModel {
   })  : _model = model ?? DashboardModel(),
         _settingsRepository =
             settingsRepository ?? SettingsRepository.getInstance(),
-        _userCollectionService = userCollectionService ?? UserCollectionService(),
+        _userCollectionService =
+            userCollectionService ?? UserCollectionService(),
         _eventController = StreamController<UiEvent>.broadcast() {
     _settingsSub = _settingsRepository.stream.listen(_handleSettingsChanged);
   }
@@ -38,6 +39,7 @@ class DashboardViewModel extends BaseViewModel {
 
   String? _departmentName;
   SchoolCalendarData? _calendar;
+  TimetableIndex? _timetableIndex;
   List<TimetableEntry> _timetableEntries = const [];
   List<TimePeriodRangeData> _timeSlotRanges = kDefaultTimeSlotRanges;
   DashboardUpcomingMode _upcomingMode = kDefaultDashboardUpcomingMode;
@@ -53,6 +55,7 @@ class DashboardViewModel extends BaseViewModel {
 
   String? get departmentName => _departmentName;
   SchoolCalendarData? get calendar => _calendar;
+  TimetableIndex? get timetableIndex => _timetableIndex;
   List<TimetableEntry> get timetableEntries => _timetableEntries;
   Object? get studentError => _studentError;
   Object? get calendarError => _calendarError;
@@ -226,8 +229,10 @@ class DashboardViewModel extends BaseViewModel {
               return endA.compareTo(endB);
             });
       _timetableEntries = entries;
+      _timetableIndex = index;
       _timetableError = null;
     } catch (error) {
+      _timetableIndex = null;
       _timetableError = error;
       _eventController.add(
         ShowSnackBarEvent(message: 'Failed to load timetable: $error'),

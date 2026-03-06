@@ -8,6 +8,7 @@ import 'package:onetj/features/timetable/views/widgets/timetable_timeline_panel.
 import 'package:onetj/features/timetable/models/event.dart';
 import 'package:onetj/models/event_model.dart';
 import 'package:onetj/models/timetable_index.dart';
+import 'package:onetj/widgets/course_detail_bottom_sheet.dart';
 
 class TimetableView extends StatefulWidget {
   const TimetableView({super.key});
@@ -62,6 +63,18 @@ class _TimetableViewState extends State<TimetableView> {
 
   String _formatTeacher(TimetableEntry entry) {
     return entry.teacherName;
+  }
+
+  Future<void> _showCourseDetails(
+    TimetableEntry entry,
+    TimetableIndex index,
+  ) async {
+    await showCourseDetailBottomSheet(
+      context: context,
+      entry: entry,
+      index: index,
+      timeSlotRanges: _viewModel.timeSlotRanges,
+    );
   }
 
   @override
@@ -180,6 +193,9 @@ class _TimetableViewState extends State<TimetableView> {
             roomBuilder: _formatRoom,
             teacherBuilder: _formatTeacher,
             entriesForDay: _viewModel.entriesForSelectedWeekDay,
+            onCourseTap: (entry) {
+              unawaited(_showCourseDetails(entry, index));
+            },
           ),
         ),
       ],

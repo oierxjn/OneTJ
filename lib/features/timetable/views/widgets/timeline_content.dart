@@ -12,6 +12,7 @@ class DayTimelineContent extends StatelessWidget {
     required this.slotCount,
     required this.roomBuilder,
     required this.teacherBuilder,
+    required this.onCourseTap,
     super.key,
   });
 
@@ -20,6 +21,7 @@ class DayTimelineContent extends StatelessWidget {
   final int slotCount;
   final String Function(TimetableEntry) roomBuilder;
   final String Function(TimetableEntry) teacherBuilder;
+  final void Function(TimetableEntry) onCourseTap;
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +43,7 @@ class DayTimelineContent extends StatelessWidget {
               entry: entries[i],
               roomBuilder: roomBuilder,
               teacherBuilder: teacherBuilder,
+              onTap: () => onCourseTap(entries[i]),
             ),
           ),
       ],
@@ -57,6 +60,7 @@ class WeekTimelineContent extends StatelessWidget {
     required this.entriesForDay,
     required this.roomBuilder,
     required this.teacherBuilder,
+    required this.onCourseTap,
     super.key,
   });
 
@@ -67,6 +71,7 @@ class WeekTimelineContent extends StatelessWidget {
   final List<TimetableEntry> Function(int day) entriesForDay;
   final String Function(TimetableEntry) roomBuilder;
   final String Function(TimetableEntry) teacherBuilder;
+  final void Function(TimetableEntry) onCourseTap;
 
   @override
   Widget build(BuildContext context) {
@@ -78,8 +83,7 @@ class WeekTimelineContent extends StatelessWidget {
           for (int i = 0; i < dayLabels.length; i += 1)
             Builder(
               builder: (context) {
-                final List<TimetableEntry> dayEntries =
-                    entriesForDay(i + 1);
+                final List<TimetableEntry> dayEntries = entriesForDay(i + 1);
                 return SizedBox(
                   width: dayColumnWidth,
                   child: Column(
@@ -106,6 +110,7 @@ class WeekTimelineContent extends StatelessWidget {
                                   entry: dayEntries[j],
                                   roomBuilder: roomBuilder,
                                   teacherBuilder: teacherBuilder,
+                                  onTap: () => onCourseTap(dayEntries[j]),
                                 ),
                               ),
                           ],
