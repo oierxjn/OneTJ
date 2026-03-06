@@ -19,6 +19,7 @@ class TimetableTimelinePanel extends StatelessWidget {
     required this.roomBuilder,
     required this.teacherBuilder,
     required this.entriesForDay,
+    required this.onCourseTap,
     super.key,
   });
 
@@ -32,6 +33,7 @@ class TimetableTimelinePanel extends StatelessWidget {
   final String Function(TimetableEntry) roomBuilder;
   final String Function(TimetableEntry) teacherBuilder;
   final List<TimetableEntry> Function(int day) entriesForDay;
+  final void Function(TimetableEntry) onCourseTap;
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +53,8 @@ class TimetableTimelinePanel extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(4, 8, 12, 4),
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final _TimelineLayoutMetrics layoutMetrics = _computeTimelineMetrics(
+              final _TimelineLayoutMetrics layoutMetrics =
+                  _computeTimelineMetrics(
                 context,
                 maxWidth: constraints.maxWidth,
                 timeSlotsCount: timeSlots.length,
@@ -85,6 +88,7 @@ class TimetableTimelinePanel extends StatelessWidget {
                           entriesForDay: entriesForDay,
                           roomBuilder: roomBuilder,
                           teacherBuilder: teacherBuilder,
+                          onCourseTap: onCourseTap,
                           duration: duration,
                           disableAnimations: disableAnimations,
                         ),
@@ -133,7 +137,8 @@ class TimetableTimelinePanel extends StatelessWidget {
     if (dayColumnWidth < minCardWidth) {
       final double neededLabelWidth = availableWidth - minCardWidth * 7;
       labelWidth = neededLabelWidth.clamp(minLabelWidth, preferredLabelWidth);
-      dayColumnWidth = ((availableWidth - labelWidth) / 7).clamp(0, maxCardWidth);
+      dayColumnWidth =
+          ((availableWidth - labelWidth) / 7).clamp(0, maxCardWidth);
     }
 
     final bool isNarrowLabel = labelWidth <= minLabelWidth + 0.1;
@@ -227,6 +232,7 @@ class _TimelineGridAndContent extends StatelessWidget {
     required this.entriesForDay,
     required this.roomBuilder,
     required this.teacherBuilder,
+    required this.onCourseTap,
     required this.duration,
     required this.disableAnimations,
   });
@@ -241,6 +247,7 @@ class _TimelineGridAndContent extends StatelessWidget {
   final List<TimetableEntry> Function(int day) entriesForDay;
   final String Function(TimetableEntry) roomBuilder;
   final String Function(TimetableEntry) teacherBuilder;
+  final void Function(TimetableEntry) onCourseTap;
   final Duration duration;
   final bool disableAnimations;
 
@@ -279,6 +286,7 @@ class _TimelineGridAndContent extends StatelessWidget {
                 slotCount: timeSlotsCount,
                 roomBuilder: roomBuilder,
                 teacherBuilder: teacherBuilder,
+                onCourseTap: onCourseTap,
               ),
             ),
             weekChild: KeyedSubtree(
@@ -291,6 +299,7 @@ class _TimelineGridAndContent extends StatelessWidget {
                 entriesForDay: entriesForDay,
                 roomBuilder: roomBuilder,
                 teacherBuilder: teacherBuilder,
+                onCourseTap: onCourseTap,
               ),
             ),
           ),

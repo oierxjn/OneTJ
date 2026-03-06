@@ -21,6 +21,8 @@ class TimetableEntry {
     required this.weeks,
     required this.weekNum,
     required this.teachingClassId,
+    required this.sourceItemIndex,
+    required this.sourceTimeTableIndex,
   });
 
   final String courseName;
@@ -39,7 +41,10 @@ class TimetableEntry {
   final List<int> weeks;
   final String weekNum;
   final int? teachingClassId;
+  final int sourceItemIndex;
+  final int sourceTimeTableIndex;
 }
+
 /// 课程表索引
 /// 
 /// 用于UI数据源，快速查询课程
@@ -49,6 +54,7 @@ class TimetableIndex {
     required this.byWeekThenDay,
     required this.allEntries,
     required this.nonTimetableItems,
+    required this.sourceData,
   });
 
   /// 索引：一周的第 `n` 天 -> 课程列表
@@ -62,4 +68,7 @@ class TimetableIndex {
 
   /// 原始数据中，timeTableList 为空的项
   final List<CourseScheduleItemData> nonTimetableItems;
+
+  /// 原始课表数据，供详情页按 source 索引回源映射字段
+  final CourseScheduleData sourceData;
 }

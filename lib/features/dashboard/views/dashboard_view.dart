@@ -10,6 +10,7 @@ import 'package:onetj/models/time_period_range.dart';
 import 'package:onetj/models/timetable_index.dart';
 import 'package:onetj/models/time_slot.dart';
 import 'package:onetj/repo/school_calendar_repository.dart';
+import 'package:onetj/widgets/course_detail_bottom_sheet.dart';
 
 const double _kUpcomingTimeBadgeWidth = 95;
 const double _kUpcomingTimeBadgeGap = 12;
@@ -89,6 +90,19 @@ class _DashboardViewState extends State<DashboardView> {
     );
   }
 
+  Future<void> _showCourseDetails(TimetableEntry entry) async {
+    final TimetableIndex? index = _viewModel.timetableIndex;
+    if (index == null) {
+      return;
+    }
+    await showCourseDetailBottomSheet(
+      context: context,
+      entry: entry,
+      index: index,
+      timeSlotRanges: _viewModel.timeSlotRanges,
+    );
+  }
+
   Widget _buildHeroCard(
     BuildContext context,
   ) {
@@ -165,6 +179,9 @@ class _DashboardViewState extends State<DashboardView> {
                   : entry.roomLabel,
               teacherLabel:
                   entry.teacherName.isNotEmpty ? entry.teacherName : '-',
+              onTap: () {
+                _showCourseDetails(entry);
+              },
             ),
           )
           .toList(),
@@ -272,12 +289,14 @@ class _UpcomingCard extends StatelessWidget {
     required this.timeLabel,
     required this.roomLabel,
     required this.teacherLabel,
+    this.onTap,
   });
 
   final String title;
   final String timeLabel;
   final String roomLabel;
   final String teacherLabel;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -286,39 +305,44 @@ class _UpcomingCard extends StatelessWidget {
       color: colors.surfaceContainerHigh,
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Stack(
-          children: [
-            Positioned(
-              top: 0,
-              bottom: 0,
-              left: 0,
-              child: _TimeBadge(label: timeLabel),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(left: _kUpcomingContentLeftInset),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 8),
-                  _MetaRow(
-                    icon: Icons.room_outlined,
-                    label: roomLabel,
-                  ),
-                  const SizedBox(height: 4),
-                  _MetaRow(
-                    icon: Icons.person_outline,
-                    label: teacherLabel,
-                  ),
-                ],
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Stack(
+            children: [
+              Positioned(
+                top: 0,
+                bottom: 0,
+                left: 0,
+                child: _TimeBadge(label: timeLabel),
               ),
-            ),
-          ],
+              Padding(
+                padding:
+                    const EdgeInsets.only(left: _kUpcomingContentLeftInset),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    _MetaRow(
+                      icon: Icons.room_outlined,
+                      label: roomLabel,
+                    ),
+                    const SizedBox(height: 4),
+                    _MetaRow(
+                      icon: Icons.person_outline,
+                      label: teacherLabel,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

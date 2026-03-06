@@ -30,6 +30,21 @@
   "dashboardUpcomingEmptyThisWeek": "No upcoming courses this week",
   "dashboardUpcomingEmptyToday": "No upcoming courses today",
   "dashboardUpcomingEmptyByCount": "No upcoming courses",
+  "courseDetailUnknownCourse": "Unknown course",
+  "courseDetailSectionBasic": "Basic Information",
+  "courseDetailSectionExtra": "Extra Fields",
+  "courseDetailFieldCourseCode": "Course Code",
+  "courseDetailFieldClassCode": "Class Code",
+  "courseDetailFieldClassName": "Class Name",
+  "courseDetailFieldTeacher": "Teacher",
+  "courseDetailFieldDay": "Day",
+  "courseDetailFieldTime": "Time",
+  "courseDetailFieldPeriods": "Periods",
+  "courseDetailFieldWeeks": "Weeks",
+  "courseDetailFieldWeekNum": "Week Range",
+  "courseDetailFieldRoom": "Room",
+  "courseDetailFieldCampus": "Campus",
+  "courseDetailFieldTeachingClassId": "Teaching Class ID",
   "weekLabel": "Week {week}",
   "@weekLabel": {
     "placeholders": {
@@ -113,6 +128,7 @@
   "settingsDashboardUpcomingCountInvalidRange": "Course count must be between 1 and 20.",
 
   "settingsAdvancedSectionTitle": "Advanced",
+  "settingsCommonSectionTitle": "Common",
   "settingsAboutTitle": "About",
   "settingsAboutSubtitle": "App info and project link",
   "settingsDeveloperTitle": "Developer Options",
@@ -121,6 +137,55 @@
   "settingsLogsTitle": "Logs",
   "settingsLogsSubtitle": "View recent application logs",
   "settingsLogsEmpty": "No logs yet",
+  "settingsDebugEndpointTitle": "Debug Upload Endpoint",
+  "settingsDebugEndpointSubtitle": "Current endpoint: {endpoint}",
+  "@settingsDebugEndpointSubtitle": {
+    "placeholders": {
+      "endpoint": {}
+    }
+  },
+  "settingsDebugEndpointDialogTitle": "Set Debug Upload Endpoint",
+  "settingsDebugEndpointHint": "Enter a full URL (http:// or https://)",
+  "settingsDebugEndpointInvalid": "Invalid endpoint format",
+  "settingsDebugEndpointInvalidFormat": "Invalid endpoint format. Please enter a full URL.",
+  "settingsDebugEndpointInvalidScheme": "Endpoint scheme must be http or https.",
+  "settingsDebugUploadTitle": "Send to Local Debug Server",
+  "settingsDebugUploadSubtitle": "Send user collection data to {endpoint}",
+  "@settingsDebugUploadSubtitle": {
+    "placeholders": {
+      "endpoint": {}
+    }
+  },
+  "settingsDebugUploadSuccess": "Sent to local debug server",
+  "settingsDebugUploadFailed": "Send failed: {error}",
+  "@settingsDebugUploadFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "settingsUserCollectionPolicyTitle": "User Collection Policy",
+  "settingsUserCollectionPolicySummary": "{selected}/{total} fields selected",
+  "@settingsUserCollectionPolicySummary": {
+    "placeholders": {
+      "selected": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsUserCollectionPolicySelectAll": "Select all",
+  "settingsUserCollectionPolicyClearAll": "Clear all",
+  "settingsUserCollectionFieldUserid": "Student ID",
+  "settingsUserCollectionFieldUsername": "Name",
+  "settingsUserCollectionFieldClientVersion": "Client version",
+  "settingsUserCollectionFieldDeviceBrand": "Device brand",
+  "settingsUserCollectionFieldDeviceModel": "Device model",
+  "settingsUserCollectionFieldDeptName": "Department",
+  "settingsUserCollectionFieldSchoolName": "School",
+  "settingsUserCollectionFieldGender": "Gender",
+  "settingsUserCollectionFieldPlatform": "Platform",
   "settingsResetTitle": "Reset Settings",
   "settingsResetSubtitle": "Restore all settings to defaults",
   "settingsResetConfirmTitle": "Reset all settings?",

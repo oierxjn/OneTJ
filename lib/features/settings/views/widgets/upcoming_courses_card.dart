@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
+import 'package:onetj/features/settings/views/widgets/settings_card_visual_state.dart';
 import 'package:onetj/models/dashboard_upcoming_mode.dart';
 
 class UpcomingCoursesCard extends StatefulWidget {
@@ -13,6 +14,7 @@ class UpcomingCoursesCard extends StatefulWidget {
     required this.summaryText,
     required this.onModeChanged,
     required this.onCountChanged,
+    this.status = SettingsCardStatus.normal,
     super.key,
   });
 
@@ -23,6 +25,7 @@ class UpcomingCoursesCard extends StatefulWidget {
   final String summaryText;
   final ValueChanged<DashboardUpcomingMode> onModeChanged;
   final ValueChanged<String> onCountChanged;
+  final SettingsCardStatus status;
 
   @override
   State<UpcomingCoursesCard> createState() => _UpcomingCoursesCardState();
@@ -132,7 +135,11 @@ class _UpcomingCoursesCardState extends State<UpcomingCoursesCard>
 
   @override
   Widget build(BuildContext context) {
+    final SettingsCardVisualState visual =
+        SettingsCardVisualState.fromStatus(context, widget.status);
     return Card(
+      color: visual.color,
+      shape: visual.shape,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

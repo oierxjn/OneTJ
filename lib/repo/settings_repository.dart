@@ -5,6 +5,7 @@ import 'package:onetj/models/dashboard_upcoming_mode.dart';
 import 'package:onetj/models/settings_defaults.dart';
 import 'package:onetj/models/settings_validation.dart' as settings_validation;
 import 'package:onetj/models/time_period_range.dart';
+import 'package:onetj/models/user_collection_field.dart';
 import 'package:hive/hive.dart';
 import 'package:onetj/app/exception/app_exception.dart';
 
@@ -14,12 +15,14 @@ class SettingsData {
     required this.timeSlotRanges,
     required this.dashboardUpcomingMode,
     required this.dashboardUpcomingCount,
+    required this.userCollectionFields,
   });
 
   final int maxWeek;
   final List<TimePeriodRangeData> timeSlotRanges;
   final DashboardUpcomingMode dashboardUpcomingMode;
   final int dashboardUpcomingCount;
+  final Set<UserCollectionField> userCollectionFields;
 
   factory SettingsData.fromJson(Map<String, dynamic> json) {
     final int maxWeek = _readMaxWeekWithFallback(json);
@@ -30,6 +33,7 @@ class SettingsData {
       timeSlotRanges: timeSlotRanges,
       dashboardUpcomingMode: _readDashboardUpcomingModeWithFallback(json),
       dashboardUpcomingCount: _readDashboardUpcomingCountWithFallback(json),
+      userCollectionFields: _readUserCollectionFieldsWithFallback(json),
     );
   }
 
@@ -39,6 +43,10 @@ class SettingsData {
       'timeSlotRanges': timeSlotRanges.map((item) => item.toJson()).toList(),
       'dashboardUpcomingMode': dashboardUpcomingMode.jsonValue,
       'dashboardUpcomingCount': dashboardUpcomingCount,
+      'userCollectionFields': UserCollectionField.values
+          .where((field) => userCollectionFields.contains(field))
+          .map((field) => field.jsonKey)
+          .toList(growable: false),
     };
   }
 
@@ -107,6 +115,24 @@ class SettingsData {
       return kDefaultDashboardUpcomingCount;
     }
     return value;
+  }
+
+  static Set<UserCollectionField> _readUserCollectionFieldsWithFallback(
+    Map<String, dynamic> json,
+  ) {
+    if (!json.containsKey('userCollectionFields')) {
+      return kDefaultUserCollectionFields;
+    }
+    final Object? values = json['userCollectionFields'];
+    if (values is! List) {
+      return kDefaultUserCollectionFields;
+    }
+    return values
+        .map<UserCollectionField?>(
+          (Object? item) => UserCollectionField.fromJsonKey(item),
+        )
+        .whereType<UserCollectionField>()
+        .toSet();
   }
 
   static int _parseMaxWeek(Object? value) {
@@ -232,6 +258,7 @@ class SettingsRepository {
     timeSlotRanges: kDefaultTimeSlotRanges,
     dashboardUpcomingMode: kDefaultDashboardUpcomingMode,
     dashboardUpcomingCount: kDefaultDashboardUpcomingCount,
+    userCollectionFields: kDefaultUserCollectionFields,
   );
 
   static SettingsRepository getInstance() {

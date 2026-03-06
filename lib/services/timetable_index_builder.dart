@@ -17,57 +17,42 @@ class TimetableIndexBuilder {
     /// 原始数据中，timeTableList为空的项
     final List<CourseScheduleItemData> nonTimetableItems = [];
 
-    for (final CourseScheduleItemData item in data.items) {
+    for (int itemIndex = 0; itemIndex < data.items.length; itemIndex += 1) {
+      final CourseScheduleItemData item = data.items[itemIndex];
       final List<CourseTimeTableItemData>? timeTableList = item.timeTableList;
-
       // 将没有时间表的项添加到nonTimetableItems
       if (timeTableList == null || timeTableList.isEmpty) {
         nonTimetableItems.add(item);
         continue;
       }
 
-      for (final CourseTimeTableItemData timeItem in timeTableList) {
+      for (int timeIndex = 0;
+          timeIndex < timeTableList.length;
+          timeIndex += 1) {
+        final CourseTimeTableItemData timeItem = timeTableList[timeIndex];
         // 将Timetable中每节课程都看作一个独立的课程，即使他们的课程代码、班级代码、班级名称相同
         final List<int> weeks = timeItem.weeks ?? const [];
         // TODO(oierxjn): add logging/monitoring if backend returns missing
         // dayOfWeek/timeStart/timeEnd; defaults below are a fallback only.
         final TimetableEntry entry = TimetableEntry(
-          courseName: item.courseName ??
-              timeItem.courseName ??
-              '',
-          courseCode: item.courseCode ??
-              timeItem.courseCode ??
-              '',
-          classCode: item.classCode ??
-              timeItem.classCode ??
-              '',
-          className: item.className ??
-              timeItem.className ??
-              '',
-          teacherName: timeItem.teacherName ??
-              item.teacherName ??
-              '',
-          campus: timeItem.campus ??
-              item.campus ??
-              '',
-          campusI18n: timeItem.campusI18n ??
-              item.campusI18n ??
-              '',
-          roomId: timeItem.roomId ??
-              item.classRoom ??
-              '',
-          roomIdI18n: timeItem.roomIdI18n ??
-              item.classRoomI18n ??
-              '',
-          roomLabel: timeItem.roomLabel ??
-              item.roomLabel ??
-              '',
+          courseName: item.courseName ?? timeItem.courseName ?? '',
+          courseCode: item.courseCode ?? timeItem.courseCode ?? '',
+          classCode: item.classCode ?? timeItem.classCode ?? '',
+          className: item.className ?? timeItem.className ?? '',
+          teacherName: timeItem.teacherName ?? item.teacherName ?? '',
+          campus: timeItem.campus ?? item.campus ?? '',
+          campusI18n: timeItem.campusI18n ?? item.campusI18n ?? '',
+          roomId: timeItem.roomId ?? item.classRoom ?? '',
+          roomIdI18n: timeItem.roomIdI18n ?? item.classRoomI18n ?? '',
+          roomLabel: timeItem.roomLabel ?? item.roomLabel ?? '',
           dayOfWeek: timeItem.dayOfWeek ?? 7,
           timeStart: timeItem.timeStart ?? 1,
           timeEnd: timeItem.timeEnd ?? timeItem.timeStart ?? 1,
           weeks: weeks,
           weekNum: timeItem.weekNum ?? '',
           teachingClassId: timeItem.teachingClassId ?? item.teachingClassId,
+          sourceItemIndex: itemIndex,
+          sourceTimeTableIndex: timeIndex,
         );
 
         allEntries.add(entry);
@@ -84,9 +69,9 @@ class TimetableIndexBuilder {
           for (final int week in weeks) {
             final Map<int, List<TimetableEntry>> weekMap =
                 byWeekThenDay.putIfAbsent(week, () => {});
-            final List<TimetableEntry> dayList =
+            final List<TimetableEntry> weekDayList =
                 weekMap.putIfAbsent(day, () => []);
-            dayList.add(entry);
+            weekDayList.add(entry);
           }
         }
       }
@@ -97,6 +82,7 @@ class TimetableIndexBuilder {
       byWeekThenDay: byWeekThenDay,
       allEntries: allEntries,
       nonTimetableItems: nonTimetableItems,
+      sourceData: data,
     );
   }
 }

@@ -1,0 +1,70 @@
+import 'package:onetj/models/user_collection_field.dart';
+
+class UserCollectionPayload {
+  const UserCollectionPayload({
+    required this.hashId,
+    required this.userid,
+    required this.username,
+    required this.clientVersion,
+    required this.deviceBrand,
+    required this.deviceModel,
+    required this.deptName,
+    required this.schoolName,
+    required this.gender,
+    required this.platform,
+  });
+
+  final String hashId;
+  final String userid;
+  final String username;
+  final String clientVersion;
+  final String deviceBrand;
+  final String deviceModel;
+  final String deptName;
+  final String schoolName;
+  final String gender;
+  final String platform;
+
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
+      'hashId': hashId,
+      'userid': userid,
+      'username': username,
+      'client_version': clientVersion,
+      'device_brand': deviceBrand,
+      'device_model': deviceModel,
+      'dept_name': deptName,
+      'school_name': schoolName,
+      'gender': gender,
+      'platform': platform,
+    };
+  }
+
+  Map<String, Object?> toFilteredJson(Set<UserCollectionField> fields) {
+    final Map<String, Object?> source = toJson();
+    final Map<String, Object?> filtered = <String, Object?>{
+      'hashId': hashId,
+    };
+    for (final UserCollectionField field in UserCollectionField.values) {
+      if (!fields.contains(field)) {
+        continue;
+      }
+      if (source.containsKey(field.jsonKey)) {
+        filtered[field.jsonKey] = source[field.jsonKey];
+      }
+    }
+    return filtered;
+  }
+
+  Map<String, Object?> toSafeDebugMap() {
+    return <String, Object?>{
+      'platform': platform,
+      'clientVersion': clientVersion,
+      'hasUserid': userid.isNotEmpty,
+      'hasUsername': username.isNotEmpty,
+      'hasDeptName': deptName.isNotEmpty,
+      'hasSchoolName': schoolName.isNotEmpty,
+      'hasGender': gender.isNotEmpty,
+    };
+  }
+}

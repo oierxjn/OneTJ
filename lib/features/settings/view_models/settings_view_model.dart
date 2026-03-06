@@ -7,6 +7,7 @@ import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/app/logging/logger.dart';
 import 'package:onetj/models/dashboard_upcoming_mode.dart';
 import 'package:onetj/models/settings_defaults.dart';
+import 'package:onetj/models/user_collection_field.dart';
 import 'package:onetj/features/settings/models/event.dart';
 import 'package:onetj/features/settings/models/settings_model.dart';
 import 'package:onetj/models/base_model.dart';
@@ -36,6 +37,7 @@ class SettingsViewModel extends BaseViewModel {
     timeSlotRanges: kDefaultTimeSlotRanges,
     dashboardUpcomingMode: kDefaultDashboardUpcomingMode,
     dashboardUpcomingCount: kDefaultDashboardUpcomingCount,
+    userCollectionFields: kDefaultUserCollectionFields,
   );
   bool _settingsLoading = true;
   bool _settingsSaving = false;
@@ -202,6 +204,7 @@ class SettingsViewModel extends BaseViewModel {
     required List<TimePeriodRangeData> editedTimeSlotRanges,
     required DashboardUpcomingMode dashboardUpcomingMode,
     required String dashboardUpcomingCountText,
+    required Set<UserCollectionField> userCollectionFields,
   }) async {
     AppLogger.logUiAction(feature: 'Settings', action: 'save_started');
     _settingsSaving = true;
@@ -225,6 +228,9 @@ class SettingsViewModel extends BaseViewModel {
         ),
         dashboardUpcomingMode: dashboardUpcomingMode,
         dashboardUpcomingCount: dashboardUpcomingCount,
+        userCollectionFields: Set<UserCollectionField>.unmodifiable(
+          userCollectionFields,
+        ),
       );
       await SettingsRepository.getInstance().saveSettings(next);
       _settingsData = next;

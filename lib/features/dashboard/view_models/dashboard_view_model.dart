@@ -13,26 +13,33 @@ import 'package:onetj/repo/school_calendar_repository.dart';
 import 'package:onetj/repo/settings_repository.dart';
 import 'package:onetj/repo/student_info_repository.dart';
 import 'package:onetj/services/timetable_index_builder.dart';
+import 'package:onetj/services/user_collection_service.dart';
+import 'package:onetj/app/logging/logger.dart';
 
 class DashboardViewModel extends BaseViewModel {
   DashboardViewModel({
     DashboardModel? model,
     SettingsRepository? settingsRepository,
+    UserCollectionService? userCollectionService,
   })  : _model = model ?? DashboardModel(),
         _settingsRepository =
             settingsRepository ?? SettingsRepository.getInstance(),
+        _userCollectionService =
+            userCollectionService ?? UserCollectionService(),
         _eventController = StreamController<UiEvent>.broadcast() {
     _settingsSub = _settingsRepository.stream.listen(_handleSettingsChanged);
   }
 
   final DashboardModel _model;
   final SettingsRepository _settingsRepository;
+  final UserCollectionService _userCollectionService;
   final StreamController<UiEvent> _eventController;
   StreamSubscription<SettingsData>? _settingsSub;
   Stream<UiEvent> get events => _eventController.stream;
 
   String? _departmentName;
   SchoolCalendarData? _calendar;
+  TimetableIndex? _timetableIndex;
   List<TimetableEntry> _timetableEntries = const [];
   List<TimePeriodRangeData> _timeSlotRanges = kDefaultTimeSlotRanges;
   DashboardUpcomingMode _upcomingMode = kDefaultDashboardUpcomingMode;
@@ -48,6 +55,7 @@ class DashboardViewModel extends BaseViewModel {
 
   String? get departmentName => _departmentName;
   SchoolCalendarData? get calendar => _calendar;
+  TimetableIndex? get timetableIndex => _timetableIndex;
   List<TimetableEntry> get timetableEntries => _timetableEntries;
   Object? get studentError => _studentError;
   Object? get calendarError => _calendarError;
@@ -89,6 +97,7 @@ class DashboardViewModel extends BaseViewModel {
       loadStudentInfo(),
       loadSchoolCalendar(),
       loadCourseSchedule(),
+      _uploadUserCollectionWhenStudentInfoLoaded(),
     ]);
   }
 
@@ -146,7 +155,7 @@ class DashboardViewModel extends BaseViewModel {
 
   Future<void> loadStudentInfo() async {
     try {
-      final StudentInfoData data = await _model.fetchStudentInfo();
+      final StudentInfoData data = await _model.getStudentInfo();
       _departmentName = data.deptName;
       _studentError = null;
     } catch (error) {
@@ -157,6 +166,30 @@ class DashboardViewModel extends BaseViewModel {
     } finally {
       _studentLoading = false;
       notifyListeners();
+    }
+  }
+
+  Future<void> _uploadUserCollectionWhenStudentInfoLoaded() async {
+    try {
+      final StudentInfoRepository repo = StudentInfoRepository.getInstance();
+      await repo.ensureLoaded();
+      final StudentInfoData studentInfo = await repo.getOrFetch(
+        now: DateTime.now(),
+        fetcher: _model.fetchStudentInfo,
+        ttl: const Duration(days: 1),
+      );
+      final SettingsData settings = await _settingsRepository.getSettings();
+      await _userCollectionService.uploadForProduction(
+        studentInfo: studentInfo,
+        settings: settings,
+      );
+    } catch (error, stackTrace) {
+      AppLogger.warning(
+        'Dashboard user collection upload failed',
+        loggerName: 'DashboardViewModel',
+        error: error,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -203,8 +236,10 @@ class DashboardViewModel extends BaseViewModel {
               return endA.compareTo(endB);
             });
       _timetableEntries = entries;
+      _timetableIndex = index;
       _timetableError = null;
     } catch (error) {
+      _timetableIndex = null;
       _timetableError = error;
       _eventController.add(
         ShowSnackBarEvent(message: 'Failed to load timetable: $error'),

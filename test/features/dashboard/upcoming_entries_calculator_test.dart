@@ -34,6 +34,8 @@ void main() {
       weeks: weeks,
       weekNum: '',
       teachingClassId: null,
+      sourceItemIndex: 0,
+      sourceTimeTableIndex: 0,
     );
   }
 

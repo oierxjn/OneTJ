@@ -33,3 +33,18 @@ class SettingsDataCleanupEvent extends UiEvent {
 class SettingsDataCleanupFailedEvent extends UiEvent {
   const SettingsDataCleanupFailedEvent();
 }
+
+class DeveloperDebugUploadSuccessEvent extends UiEvent {
+  const DeveloperDebugUploadSuccessEvent();
+}
+
+class DeveloperDebugEndpointInvalidEvent extends UiEvent {
+  const DeveloperDebugEndpointInvalidEvent({
+    required this.type,
+  }): super(code: type);
+  final String type;
+}
+
+class DeveloperDebugUploadFailedEvent extends UiEvent {
+  const DeveloperDebugUploadFailedEvent({super.message});
+}
