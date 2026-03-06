@@ -56,6 +56,7 @@
 
 | 字段名 | 类型 | 必填 | 说明 | 示例 |
 | --- | --- | --- | --- | --- |
+| `hashId` | string | 是（客户端固定发送） | `userid` 的 SHA-256 不可逆哈希（小写十六进制） | `0952d090ec4262c37f2d256bcb980faf051b6d736680cb2357165f0dc42225b3` |
 | `userid` | string | 否（由客户端策略决定） | 用户 ID | `2333333` |
 | `username` | string | 否（由客户端策略决定） | 用户姓名 | `张三` |
 | `client_version` | string | 否（由客户端策略决定） | 客户端版本（版本号+构建号） | `1.2.3+45` |
@@ -68,9 +69,9 @@
 
 ### 5.2 字段约束
 
-- 字段名区分大小写，必须按上表使用 snake_case。
+- 字段名区分大小写，必须严格按上表使用（包含 `hashId`）。
 - 所有字段类型必须为字符串。
-- 客户端可按用户策略发送字段子集，甚至发送空对象 `{}`。
+- 客户端可按用户策略发送字段子集；但请求体至少包含 `hashId`，不会是空对象 `{}`。
 - 服务端应允许字段缺失，并按“存在字段即校验”的原则处理。
 - 若字段存在，建议执行 `trim` 后校验非空。
 - `platform` 建议值：`android`、`ios`、`ohos`、`windows`、`macos`、`linux`、`web`。
@@ -85,6 +86,7 @@ Accept: application/json
 
 ```json
 {
+  "hashId": "0952d090ec4262c37f2d256bcb980faf051b6d736680cb2357165f0dc42225b3",
   "userid": "2333333",
   "username": "张三",
   "client_version": "1.2.3+45",
@@ -188,7 +190,7 @@ Accept: application/json
 
 服务端应重点防止短时间高频请求，建议采用限流：
 
-- 建议按 `userid + platform` 或 `IP + userid` 维度限流。
+- 建议按 `IP` 维度限流。
 - 建议采用固定窗口或滑动窗口策略（例如 60 秒内不超过 15 次）。
 - 超限时返回 `429`，并在响应体中返回：
   - `status = error`
@@ -200,16 +202,17 @@ Accept: application/json
 
 - 服务端日志不应明文打印完整 `userid`、`username`。
 - 建议日志使用脱敏形式（如部分掩码）。
+- `hashId` 为不可逆哈希，可用于排障关联
 - 响应体中不回传任何新增敏感信息。
 - 客户端日志建议仅记录字段存在性、平台、状态码和 `request_id`。
 
 ## 11. 兼容性说明
 
-- 本规范 V1 与当前客户端字段完全兼容：
-  - 字段名不变
-  - 类型不变
+- 本规范 V1 与当前客户端字段兼容：
   - 传输方式不变（`POST + application/json`）
-- 后续扩展如新增字段，建议采用“可选字段 + 向后兼容”原则。
+  - 新增固定字段 `hashId`，其余字段保持原有语义
+  - 类型不变（字符串）
+- 服务端应采用“向后兼容”策略：允许字段子集并忽略未来新增的可选字段。
 
 ## 12. 最小实现检查清单（服务端）
 
@@ -230,6 +233,7 @@ curl -X POST "https://example.com/collector/v1/events" \
   -H "Content-Type: application/json; charset=utf-8" \
   -H "Accept: application/json" \
   -d '{
+    "hashId":"0952d090ec4262c37f2d256bcb980faf051b6d736680cb2357165f0dc42225b3",
     "userid":"2333333",
     "username":"张三",
     "client_version":"1.2.3+45",

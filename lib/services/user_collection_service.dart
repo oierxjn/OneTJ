@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:onetj/app/constant/app_version_constant.dart';
@@ -138,6 +139,7 @@ class UserCollectionService {
   }) async {
     final DeviceInfoData deviceInfo = await _deviceInfoService.getDeviceInfo();
     return UserCollectionPayload(
+      hashId: sha256.convert(utf8.encode(studentInfo.userId)).toString(),
       userid: studentInfo.userId,
       username: studentInfo.name,
       clientVersion: '$oneTJAppVersion+$oneTJAppBuildNumber',

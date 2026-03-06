@@ -51,6 +51,7 @@ dependencies:
   flutter_inappwebview:
     path: ./local_packages/flutter_inappwebview/flutter_inappwebview
   http: ^1.6.0
+  crypto: ^3.0.6
   json_annotation: ^4.9.0
   logging: ^1.3.0
   device_info_plus: ^10.1.2

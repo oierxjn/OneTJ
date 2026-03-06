@@ -2,6 +2,7 @@ import 'package:onetj/models/user_collection_field.dart';
 
 class UserCollectionPayload {
   const UserCollectionPayload({
+    required this.hashId,
     required this.userid,
     required this.username,
     required this.clientVersion,
@@ -13,6 +14,7 @@ class UserCollectionPayload {
     required this.platform,
   });
 
+  final String hashId;
   final String userid;
   final String username;
   final String clientVersion;
@@ -25,6 +27,7 @@ class UserCollectionPayload {
 
   Map<String, Object?> toJson() {
     return <String, Object?>{
+      'hashId': hashId,
       'userid': userid,
       'username': username,
       'client_version': clientVersion,
@@ -39,7 +42,9 @@ class UserCollectionPayload {
 
   Map<String, Object?> toFilteredJson(Set<UserCollectionField> fields) {
     final Map<String, Object?> source = toJson();
-    final Map<String, Object?> filtered = <String, Object?>{};
+    final Map<String, Object?> filtered = <String, Object?>{
+      'hashId': hashId,
+    };
     for (final UserCollectionField field in UserCollectionField.values) {
       if (!fields.contains(field)) {
         continue;
