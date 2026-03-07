@@ -197,20 +197,20 @@ packages:
     dependency: "direct main"
     description:
       path: "packages/device_info_plus/device_info_plus"
-      ref: "br_device_info_plus_v11.4.0_ohos"
-      resolved-ref: "03507cc39ab148fe9f5827cd991b3e04aed2bcc3"
+      ref: "br_device_info_plus-v11.1.0_ohos"
+      resolved-ref: "9f92933f2ac78bb3d7ec534f22bc3183a257fbb9"
       url: "https://gitcode.com/openharmony-sig/flutter_plus_plugins.git"
     source: git
-    version: "9.1.0"
+    version: "11.1.0"
   device_info_plus_platform_interface:
     dependency: "direct overridden"
     description:
       path: "packages/device_info_plus/device_info_plus_platform_interface"
-      ref: "br_device_info_plus_v11.4.0_ohos"
-      resolved-ref: "03507cc39ab148fe9f5827cd991b3e04aed2bcc3"
+      ref: "br_device_info_plus-v11.1.0_ohos"
+      resolved-ref: "9f92933f2ac78bb3d7ec534f22bc3183a257fbb9"
       url: "https://gitcode.com/openharmony-sig/flutter_plus_plugins.git"
     source: git
-    version: "7.0.0"
+    version: "7.0.1"
   fake_async:
     dependency: transitive
     description:

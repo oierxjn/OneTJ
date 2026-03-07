@@ -128,12 +128,12 @@ dependency_overrides:
   device_info_plus:
     git:
       url: "https://gitcode.com/openharmony-sig/flutter_plus_plugins.git"
-      ref: "br_device_info_plus_v11.4.0_ohos"
+      ref: "br_device_info_plus-v11.1.0_ohos"
       path: "packages/device_info_plus/device_info_plus"
   device_info_plus_platform_interface:
     git:
       url: "https://gitcode.com/openharmony-sig/flutter_plus_plugins.git"
-      ref: "br_device_info_plus_v11.4.0_ohos"
+      ref: "br_device_info_plus-v11.1.0_ohos"
       path: "packages/device_info_plus/device_info_plus_platform_interface"
   flutter_inappwebview_platform_interface:
     path: ./local_packages/flutter_inappwebview/flutter_inappwebview_platform_interface

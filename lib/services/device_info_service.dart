@@ -51,7 +51,7 @@ class DeviceInfoService {
           platform: 'android',
         );
       case TargetPlatform.ohos:
-        final OhosDeviceInfo info = await _plugin.ohosInfo;
+        final info = await _plugin.ohosDeviceInfo;
         return DeviceInfoData(
           brand: _pickFirstNonBlank(
             <String?>[info.brand, info.manufacture],
