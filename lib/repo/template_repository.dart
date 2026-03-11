@@ -104,7 +104,7 @@ class HiveTemplateStorage implements TemplateStorage {
   }
 }
 
-class TemplateRepository extends BaseCachedRepository<TemplateData,
+class TemplateRepository extends BaseNetCachedRepository<TemplateData,
     TemplateCacheMeta, TemplateStorage> {
   TemplateRepository._({
     required TemplateStorage storage,

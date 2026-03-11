@@ -229,7 +229,7 @@ class InMemorySchoolCalendarStorage implements SchoolCalendarStorage {
   }
 }
 
-class SchoolCalendarRepository extends BaseCachedRepository<SchoolCalendarData,
+class SchoolCalendarRepository extends BaseNetCachedRepository<SchoolCalendarData,
     SchoolCalendarCacheMeta, SchoolCalendarStorage> {
   SchoolCalendarRepository._({
     required SchoolCalendarStorage storage,

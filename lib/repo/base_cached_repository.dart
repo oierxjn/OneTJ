@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:onetj/app/exception/app_exception.dart';
 
 /// 基础数据类，所有缓存数据都必须实现该类
@@ -29,17 +30,21 @@ abstract class CacheStorage<TData extends BaseData, TMeta extends BaseMeta> {
   Future<void> clear();
 }
 
-abstract class BaseCachedRepository<TData extends BaseData,
+abstract class BaseNetCachedRepository<TData extends BaseData,
     TMeta extends BaseMeta, TStorage extends CacheStorage<TData, TMeta>> {
-  BaseCachedRepository(this._storage);
+  BaseNetCachedRepository(this._storage);
 
   final TStorage _storage;
 
-  TData? _cached;
+  TData? _cachedData;
   TMeta? _cachedMeta;
   Future<void>? _pendingPersist;
   Future<TData>? _inFlightFetch;
   Completer<void>? _clearCompleter;
+  @protected
+  TData? get cachedData => _cachedData;
+  @protected
+  TMeta? get cachedMeta => _cachedMeta;
 
   Future<TData?> readDataFromStorage() async => await _storage.read();
   Future<TMeta?> readMetaFromStorage() async => await _storage.readMeta();
@@ -83,7 +88,7 @@ abstract class BaseCachedRepository<TData extends BaseData,
     Duration ttl = const Duration(days: 7),
   }) async {
     _throwIfClearing();
-    final TData? cached = _cached;
+    final TData? cached = _cachedData;
     final TMeta? meta = _cachedMeta;
     bool shouldFetchFlag = shouldFetch(
       now: now,
@@ -122,7 +127,7 @@ abstract class BaseCachedRepository<TData extends BaseData,
       await flushInFlight();
       await flush();
       _pendingPersist = null;
-      _cached = null;
+      _cachedData = null;
       _cachedMeta = null;
       _inFlightFetch = null;
       await clearStorage();
@@ -147,6 +152,7 @@ abstract class BaseCachedRepository<TData extends BaseData,
       return inFlight;
     }
     late final Future<TData> nextInFlight;
+    // TODO: 这里是立即执行 fetcher，是否有更好的方式？
     nextInFlight = () async {
       try {
         return await _fetchAndSave(now: now, fetcher: fetcher);
@@ -176,15 +182,15 @@ abstract class BaseCachedRepository<TData extends BaseData,
     required bool persist,
   }) {
     if (data != null) {
-      _cached = data;
+      _cachedData = data;
     }
     if (meta != null) {
       _cachedMeta = meta;
     }
-    if (!persist || _cached == null || _cachedMeta == null) {
+    if (!persist || _cachedData == null || _cachedMeta == null) {
       return;
     }
-    final TData dataToPersist = _cached as TData;
+    final TData dataToPersist = _cachedData as TData;
     final TMeta metaToPersist = _cachedMeta as TMeta;
     _queuePersist(dataToPersist, metaToPersist);
   }

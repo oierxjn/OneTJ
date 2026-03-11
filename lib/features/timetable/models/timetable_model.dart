@@ -15,8 +15,8 @@ class TimetableModel {
         _indexBuilder = indexBuilder ?? const TimetableIndexBuilder(),
         _scheduleRepository =
             scheduleRepository ?? CourseScheduleRepository.getInstance(),
-        _calendarRepository = calendarRepository ??
-            SchoolCalendarRepository.getInstance();
+        _calendarRepository =
+            calendarRepository ?? SchoolCalendarRepository.getInstance();
 
   final TongjiApi _api;
   final TimetableIndexBuilder _indexBuilder;
@@ -29,7 +29,7 @@ class TimetableModel {
   Future<int> getSchoolCalendarCurrentWeek() async {
     await _calendarRepository.warmUp();
     final SchoolCalendarData data = await _calendarRepository.getOrFetch(
-      now: DateTime.now(), 
+      now: DateTime.now(),
       fetcher: _api.fetchSchoolCalendarCurrentTerm,
     );
     return data.week;
@@ -39,8 +39,8 @@ class TimetableModel {
   ///
   /// 如果本地数据库没有数据，从服务器获取并保存
   Future<TimetableIndex> getTimetableIndex() async {
-    CourseScheduleData? data = await _scheduleRepository.getCourseSchedule();
-    data ??= await _scheduleRepository.fetchAndSave(
+    await _scheduleRepository.warmUp();
+    final CourseScheduleData data = await _scheduleRepository.getOrFetch(
       now: DateTime.now(),
       fetcher: _api.fetchStudentTimetable,
     );
@@ -48,7 +48,8 @@ class TimetableModel {
   }
 
   Future<DateTime?> getLastFetchedAt() async {
-    final CourseScheduleCacheMeta? meta = await _scheduleRepository.getMeta();
+    final CourseScheduleCacheMeta? meta =
+        await _scheduleRepository.getCachedMeta(refreshFromStorage: true);
     if (meta == null || meta.lastFetchedAtMillis <= 0) {
       return null;
     }

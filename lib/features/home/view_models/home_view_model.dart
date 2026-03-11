@@ -47,11 +47,12 @@ class HomeViewModel extends BaseViewModel {
   }
 
   Future<void> loadSchoolCalendar() async {
-    final SchoolCalendarRepository repo = SchoolCalendarRepository.getInstance();
+    final SchoolCalendarRepository repo =
+        SchoolCalendarRepository.getInstance();
     try {
       await repo.warmUp();
       final SchoolCalendarData data = await repo.getOrFetch(
-        now: DateTime.now(), 
+        now: DateTime.now(),
         fetcher: _model.fetchSchoolCalendar,
       );
       _schoolCalendarController.add(data);
@@ -64,9 +65,10 @@ class HomeViewModel extends BaseViewModel {
     try {
       final CourseScheduleRepository repo =
           CourseScheduleRepository.getInstance();
-      final CourseScheduleData data = await repo.fetchAndSave(
+      final CourseScheduleData data = await repo.getOrFetch(
         now: DateTime.now(),
         fetcher: _model.fetchCourseSchedule,
+        ttl: Duration.zero,
       );
       final TimetableIndex index =
           const TimetableIndexBuilder().buildIndex(data);
