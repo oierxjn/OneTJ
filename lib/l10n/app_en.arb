@@ -24,6 +24,13 @@
     }
   },
   "timetableNoData": "No timetable data available",
+  "timetableLastFetch": "Last fetch: {time}",
+  "@timetableLastFetch": {
+    "placeholders": {
+      "time": {}
+    }
+  },
+  "timetableLastFetchUnknown": "--",
   "emptyClassesToday": "No classes today",
   "dashboardUpcomingTitle": "Upcoming Courses",
   "dashboardUpcomingEmpty": "No upcoming courses this week",

@@ -65,6 +65,36 @@ class _TimetableViewState extends State<TimetableView> {
     return entry.teacherName;
   }
 
+  String _formatLastFetchTime(DateTime value) {
+    final String year = value.year.toString().padLeft(4, '0');
+    final String month = value.month.toString().padLeft(2, '0');
+    final String day = value.day.toString().padLeft(2, '0');
+    final String hour = value.hour.toString().padLeft(2, '0');
+    final String minute = value.minute.toString().padLeft(2, '0');
+    return '$year-$month-$day $hour:$minute';
+  }
+
+  Widget _buildLastFetchFooter(BuildContext context, AppLocalizations l10n) {
+    final DateTime? lastFetchedAt = _viewModel.lastFetchedAt;
+    final String timeText = lastFetchedAt == null
+        ? l10n.timetableLastFetchUnknown
+        : _formatLastFetchTime(lastFetchedAt);
+    final TextStyle? style = Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        );
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+        child: Text(
+          l10n.timetableLastFetch(timeText),
+          textAlign: TextAlign.center,
+          style: style,
+        ),
+      ),
+    );
+  }
+
   Future<void> _showCourseDetails(
     TimetableEntry entry,
     TimetableIndex index,
@@ -198,6 +228,7 @@ class _TimetableViewState extends State<TimetableView> {
             },
           ),
         ),
+        _buildLastFetchFooter(context, l10n),
       ],
     );
   }

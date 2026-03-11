@@ -41,17 +41,18 @@ class TimetableViewModel extends BaseViewModel {
   int _selectedDay = DateTime.now().weekday;
   int? _currentWeek;
   int? _selectedWeek;
+  DateTime? _lastFetchedAt;
   TimetableDisplayMode _mode = TimetableDisplayMode.day;
 
   TimetableIndex? get index => _index;
   Object? get error => _error;
   bool get isLoading => _isLoading;
-  List<int> get timeSlotStartMinutes => _timeSlotRanges
-      .map((item) => item.startMinutes)
-      .toList(growable: false);
+  List<int> get timeSlotStartMinutes =>
+      _timeSlotRanges.map((item) => item.startMinutes).toList(growable: false);
   List<TimePeriodRangeData> get timeSlotRanges => _timeSlotRanges;
   int get selectedDay => _selectedDay;
   int? get selectedWeek => _selectedWeek;
+  DateTime? get lastFetchedAt => _lastFetchedAt;
   TimetableDisplayMode get mode => _mode;
   List<int> get availableWeeks => _availableWeeks();
   Stream<UiEvent> get events => _eventController.stream;
@@ -63,6 +64,7 @@ class TimetableViewModel extends BaseViewModel {
     await _loadSettings();
     await _loadCurrentWeek();
     await _loadTimetable();
+    await _loadLastFetchedAt();
     _isLoading = false;
     notifyListeners();
   }
@@ -145,7 +147,8 @@ class TimetableViewModel extends BaseViewModel {
     }
   }
 
-  bool _sameTimeSlotRanges(List<TimePeriodRangeData> a, List<TimePeriodRangeData> b) {
+  bool _sameTimeSlotRanges(
+      List<TimePeriodRangeData> a, List<TimePeriodRangeData> b) {
     if (a.length != b.length) {
       return false;
     }
@@ -215,6 +218,14 @@ class TimetableViewModel extends BaseViewModel {
       _eventController.add(
         ShowSnackBarEvent(message: _formatErrorMessage(error)),
       );
+    }
+  }
+
+  Future<void> _loadLastFetchedAt() async {
+    try {
+      _lastFetchedAt = await _model.getLastFetchedAt();
+    } catch (_) {
+      _lastFetchedAt = null;
     }
   }
 
