@@ -194,15 +194,16 @@ class DashboardViewModel extends BaseViewModel {
   }
 
   Future<void> loadSchoolCalendar() async {
-    final SchoolCalendarRepository repo =
-        SchoolCalendarRepository.getInstance();
+    final SchoolCalendarRepository repo = SchoolCalendarRepository.getInstance();
     try {
-      final SchoolCalendarData data = await _model.fetchSchoolCalendar();
-      await repo.saveSchoolCalendar(data);
+      await repo.warmUp();
+      final SchoolCalendarData data = await repo.getOrFetch(
+        now: DateTime.now(), 
+        fetcher: _model.fetchSchoolCalendar,
+      );
       _calendar = data;
       _calendarError = null;
     } catch (error) {
-      repo.markFailed(error);
       _calendarError = error;
       _eventController.add(
         ShowSnackBarEvent(message: 'Failed to load school calendar: $error'),

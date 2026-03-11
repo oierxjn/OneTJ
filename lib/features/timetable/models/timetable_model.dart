@@ -15,8 +15,8 @@ class TimetableModel {
         _indexBuilder = indexBuilder ?? const TimetableIndexBuilder(),
         _scheduleRepository =
             scheduleRepository ?? CourseScheduleRepository.getInstance(),
-        _calendarRepository =
-            calendarRepository ?? SchoolCalendarRepository.getInstance();
+        _calendarRepository = calendarRepository ??
+            SchoolCalendarRepository.getInstance();
 
   final TongjiApi _api;
   final TimetableIndexBuilder _indexBuilder;
@@ -27,10 +27,12 @@ class TimetableModel {
   ///
   /// 如果获取失败，返回默认值1
   Future<int> getSchoolCalendarCurrentWeek() async {
-    await _calendarRepository.ensureLoaded();
-    final SchoolCalendarData? data =
-        await _calendarRepository.getSchoolCalendar();
-    return data?.week ?? 1;
+    await _calendarRepository.warmUp();
+    final SchoolCalendarData data = await _calendarRepository.getOrFetch(
+      now: DateTime.now(), 
+      fetcher: _api.fetchSchoolCalendarCurrentTerm,
+    );
+    return data.week;
   }
 
   /// 获取课表索引

@@ -61,7 +61,7 @@ class SettingsViewModel extends BaseViewModel {
     try {
       await TokenRepository.getInstance().clearToken();
       await StudentInfoRepository.getInstance().clearStudentInfo();
-      await SchoolCalendarRepository.getInstance().clearSchoolCalendar();
+      await SchoolCalendarRepository.getInstance().clearCache();
       await CourseScheduleRepository.getInstance().clearCourseSchedule();
       await CookieManager.instance(webViewEnvironment: _webViewEnvironment)
           .deleteAllCookies();

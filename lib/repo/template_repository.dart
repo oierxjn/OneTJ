@@ -108,42 +108,29 @@ class TemplateRepository extends BaseCachedRepository<TemplateData,
     TemplateCacheMeta, TemplateStorage> {
   TemplateRepository._({
     required TemplateStorage storage,
-    required Future<TemplateData> Function() fetcher,
-  })  : _fetcher = fetcher,
-        super(storage);
+  })  : super(storage);
 
   static TemplateRepository? _instance;
 
   static TemplateRepository getInstance({
     TemplateStorage? storage,
-    Future<TemplateData> Function()? fetcher,
   }) {
     if (_instance != null) {
       return _instance!;
     }
-    if (fetcher == null) {
-      throw StateError(
-        'TemplateRepository is not initialized. '
-        'Provide fetcher on first getInstance() call.',
-      );
-    }
     final TemplateRepository repo = TemplateRepository._(
       storage: storage ?? HiveTemplateStorage(),
-      fetcher: fetcher,
     );
     _instance = repo;
     return repo;
   }
 
-  final Future<TemplateData> Function() _fetcher;
 
   @visibleForTesting
   static void resetInstanceForTest() {
     _instance = null;
   }
 
-  @override
-  Future<TemplateData> fetchFresh() => _fetcher();
 
   @override
   TemplateCacheMeta buildMeta(DateTime now) {

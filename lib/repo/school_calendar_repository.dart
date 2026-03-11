@@ -1,9 +1,9 @@
 import 'dart:convert';
-import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
-
 import 'package:onetj/models/data/school_calendar_net_data.dart';
+import 'package:onetj/repo/base_cached_repository.dart';
 
 class SchoolCalendarItemData {
   const SchoolCalendarItemData({
@@ -76,7 +76,7 @@ class SchoolCalendarItemData {
   }
 }
 
-class SchoolCalendarData {
+class SchoolCalendarData extends BaseData {
   const SchoolCalendarData({
     required this.schoolCalendar,
     required this.week,
@@ -113,6 +113,7 @@ class SchoolCalendarData {
     );
   }
 
+  @override
   Map<String, dynamic> toJson() {
     return {
       'schoolCalendar': schoolCalendar.toJson(),
@@ -124,17 +125,32 @@ class SchoolCalendarData {
   }
 }
 
-abstract class SchoolCalendarStorage {
-  Future<SchoolCalendarData?> read();
-  Future<void> save(SchoolCalendarData data);
-  Future<void> clear();
+class SchoolCalendarCacheMeta extends BaseMeta {
+  const SchoolCalendarCacheMeta({required super.lastFetchedAtMillis}) : super();
+
+  factory SchoolCalendarCacheMeta.fromJson(Map<String, dynamic> json) {
+    return SchoolCalendarCacheMeta(
+      lastFetchedAtMillis: json['lastFetchedAtMillis'] as int? ?? 0,
+    );
+  }
+
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      'lastFetchedAtMillis': lastFetchedAtMillis,
+    };
+  }
 }
+
+abstract class SchoolCalendarStorage
+    extends CacheStorage<SchoolCalendarData, SchoolCalendarCacheMeta> {}
 
 class HiveSchoolCalendarStorage implements SchoolCalendarStorage {
   HiveSchoolCalendarStorage({HiveInterface? hive}) : _hive = hive ?? Hive;
 
   static const String _boxName = 'school_calendar';
   static const String _key = 'payload';
+  static const String _metaKey = 'meta';
   final HiveInterface _hive;
 
   Future<Box<String>> _openBox() async {
@@ -162,14 +178,33 @@ class HiveSchoolCalendarStorage implements SchoolCalendarStorage {
   }
 
   @override
+  Future<SchoolCalendarCacheMeta?> readMeta() async {
+    final Box<String> box = await _openBox();
+    final String? raw = box.get(_metaKey);
+    if (raw == null || raw.isEmpty) {
+      return null;
+    }
+    final Map<String, dynamic> data = jsonDecode(raw) as Map<String, dynamic>;
+    return SchoolCalendarCacheMeta.fromJson(data);
+  }
+
+  @override
+  Future<void> saveMeta(SchoolCalendarCacheMeta meta) async {
+    final Box<String> box = await _openBox();
+    await box.put(_metaKey, jsonEncode(meta.toJson()));
+  }
+
+  @override
   Future<void> clear() async {
     final Box<String> box = await _openBox();
     await box.delete(_key);
+    await box.delete(_metaKey);
   }
 }
 
 class InMemorySchoolCalendarStorage implements SchoolCalendarStorage {
   SchoolCalendarData? _cache;
+  SchoolCalendarCacheMeta? _meta;
 
   @override
   Future<SchoolCalendarData?> read() async => _cache;
@@ -180,88 +215,60 @@ class InMemorySchoolCalendarStorage implements SchoolCalendarStorage {
   }
 
   @override
+  Future<SchoolCalendarCacheMeta?> readMeta() async => _meta;
+
+  @override
+  Future<void> saveMeta(SchoolCalendarCacheMeta meta) async {
+    _meta = meta;
+  }
+
+  @override
   Future<void> clear() async {
     _cache = null;
+    _meta = null;
   }
 }
 
-class SchoolCalendarRepository {
-  SchoolCalendarRepository._({required SchoolCalendarStorage storage}) : _storage = storage;
+class SchoolCalendarRepository extends BaseCachedRepository<SchoolCalendarData,
+    SchoolCalendarCacheMeta, SchoolCalendarStorage> {
+  SchoolCalendarRepository._({
+    required SchoolCalendarStorage storage,
+  })  : super(storage);
 
   static SchoolCalendarRepository? _instance;
 
-  static SchoolCalendarRepository getInstance() {
+  static SchoolCalendarRepository getInstance({
+    SchoolCalendarStorage? storage,
+  }) {
     if (_instance != null) {
       return _instance!;
     }
     final SchoolCalendarRepository repo = SchoolCalendarRepository._(
-      storage: HiveSchoolCalendarStorage(),
+      storage: storage ?? HiveSchoolCalendarStorage(),
     );
     _instance = repo;
     return repo;
   }
 
-  final SchoolCalendarStorage _storage;
-  SchoolCalendarData? _cached;
-  Completer<void>? _readyCompleter;
 
-  Future<SchoolCalendarData?> getSchoolCalendar({bool refreshFromStorage = false}) async {
-    if (!refreshFromStorage && _cached != null) {
-      return _cached;
-    }
-    _cached = await _storage.read();
-    return _cached;
+  @visibleForTesting
+  static void resetInstanceForTest() {
+    _instance = null;
   }
 
-  Future<void> ensureLoaded() async {
-    if (_cached != null) {
-      _completeReady();
-      return;
-    }
-    if (_readyCompleter != null) {
-      return _readyCompleter!.future;
-    }
-    _readyCompleter = Completer<void>();
-    return _readyCompleter!.future;
+  @override
+  SchoolCalendarCacheMeta buildMeta(DateTime now) {
+    return SchoolCalendarCacheMeta(
+      lastFetchedAtMillis: now.millisecondsSinceEpoch,
+    );
   }
 
-  void markLoaded() {
-    _completeReady();
-  }
-
-  void markFailed(Object error, [StackTrace? stackTrace]) {
-    _completeError(error, stackTrace);
-  }
-
-  void _completeReady() {
-    if (_readyCompleter != null && !_readyCompleter!.isCompleted) {
-      _readyCompleter!.complete();
-    }
-  }
-
-  void _completeError(Object error, [StackTrace? stackTrace]) {
-    if (_readyCompleter != null && !_readyCompleter!.isCompleted) {
-      _readyCompleter!.completeError(error, stackTrace);
-    }
-    _readyCompleter = null;
-  }
-
-  /// 保存学校日历数据
-  /// 
-  /// 会更新 [_cached] 并调用 [markLoaded]。
-  Future<void> saveSchoolCalendar(SchoolCalendarData data) async {
-    _cached = data;
-    markLoaded();
-    await _storage.save(data);
-  }
-
-  Future<void> saveFromNetData(SchoolCalendarNetData data) async {
-    await saveSchoolCalendar(SchoolCalendarData.fromNetData(data));
-  }
-
-  Future<void> clearSchoolCalendar() async {
-    _cached = null;
-    _readyCompleter = null;
-    await _storage.clear();
+  @override
+  Future<SchoolCalendarData> getOrFetch({
+    required DateTime now, 
+    required Future<SchoolCalendarData> Function() fetcher, 
+    Duration ttl = const Duration(days: 1)
+  }) {
+    return super.getOrFetch(now: now, fetcher: fetcher, ttl: ttl);
   }
 }
