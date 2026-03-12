@@ -49,7 +49,7 @@ class TimetableModel {
 
   Future<DateTime?> getLastFetchedAt() async {
     final CourseScheduleCacheMeta? meta =
-        await _scheduleRepository.getCachedMeta(refreshFromStorage: true);
+        await _scheduleRepository.getCachedMeta(refreshFromStorage: false);
     if (meta == null || meta.lastFetchedAtMillis <= 0) {
       return null;
     }
