@@ -29,7 +29,7 @@ class GradesModel {
   Future<UndergraduateScoreData> refreshUndergraduateScore() async {
     final UndergraduateScoreRepository repo =
         UndergraduateScoreRepository.getInstance();
-    return repo.fetchAndSave(
+    return repo.refresh(
       now: DateTime.now(),
       fetcher: () => fetchUndergraduateScore(calendarId: -1),
     );

@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:onetj/app/exception/app_exception.dart';
 
 /// 基础数据类，所有缓存数据都必须实现该类
-/// 
+///
 /// 建议补上fromJson工厂方法
 abstract class BaseData {
   const BaseData();
@@ -12,7 +12,7 @@ abstract class BaseData {
 }
 
 /// 基础元数据类，所有缓存元数据都必须实现该类
-/// 
+///
 /// 建议补上fromJson工厂方法
 abstract class BaseMeta {
   const BaseMeta({required this.lastFetchedAtMillis});
@@ -99,6 +99,13 @@ abstract class BaseNetCachedRepository<TData extends BaseData,
     if (!shouldFetchFlag) {
       return cached!;
     }
+    return _runSingleFlightFetch(now: now, fetcher: fetcher);
+  }
+
+  Future<TData> refresh({
+    required DateTime now,
+    required Future<TData> Function() fetcher,
+  }) {
     return _runSingleFlightFetch(now: now, fetcher: fetcher);
   }
 

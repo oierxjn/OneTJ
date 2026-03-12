@@ -456,4 +456,19 @@ class StudentInfoRepository extends BaseNetCachedRepository<StudentInfoData,
       _pendingVersionKey = null;
     }
   }
+
+  @override
+  Future<StudentInfoData> refresh({
+    required DateTime now,
+    required Future<StudentInfoData> Function() fetcher,
+    String? versionKey,
+  }) async {
+    _pendingVersionKey =
+        (versionKey != null && versionKey.isNotEmpty) ? versionKey : null;
+    try {
+      return await super.refresh(now: now, fetcher: fetcher);
+    } finally {
+      _pendingVersionKey = null;
+    }
+  }
 }

@@ -471,8 +471,8 @@ class InMemoryCourseScheduleStorage implements CourseScheduleStorage {
   }
 }
 
-class CourseScheduleRepository extends BaseNetCachedRepository<CourseScheduleData,
-    CourseScheduleCacheMeta, CourseScheduleStorage> {
+class CourseScheduleRepository extends BaseNetCachedRepository<
+    CourseScheduleData, CourseScheduleCacheMeta, CourseScheduleStorage> {
   CourseScheduleRepository._({
     required CourseScheduleStorage storage,
   }) : super(storage);
@@ -560,6 +560,20 @@ class CourseScheduleRepository extends BaseNetCachedRepository<CourseScheduleDat
       final CourseScheduleData data =
           await super.getOrFetch(now: now, fetcher: fetcher, ttl: ttl);
       return data;
+    } finally {
+      _pendingTermKey = null;
+    }
+  }
+
+  @override
+  Future<CourseScheduleData> refresh({
+    required DateTime now,
+    required Future<CourseScheduleData> Function() fetcher,
+    String? termKey,
+  }) async {
+    _pendingTermKey = (termKey != null && termKey.isNotEmpty) ? termKey : null;
+    try {
+      return await super.refresh(now: now, fetcher: fetcher);
     } finally {
       _pendingTermKey = null;
     }
