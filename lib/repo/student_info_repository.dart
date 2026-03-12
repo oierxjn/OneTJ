@@ -1,11 +1,12 @@
-import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 
 import 'package:onetj/models/data/student_info_net_data.dart';
+import 'package:onetj/repo/base_cached_repository.dart';
 
-class StudentInfoData {
+class StudentInfoData extends BaseData {
   const StudentInfoData({
     required this.campusCode,
     this.campusName,
@@ -196,6 +197,7 @@ class StudentInfoData {
     );
   }
 
+  @override
   Map<String, dynamic> toJson() {
     return {
       'campusCode': campusCode,
@@ -245,13 +247,12 @@ class StudentInfoData {
   }
 }
 
-class StudentInfoCacheMeta {
+class StudentInfoCacheMeta extends BaseMeta {
   const StudentInfoCacheMeta({
-    required this.lastFetchedAtMillis,
+    required super.lastFetchedAtMillis,
     this.versionKey,
-  });
+  }) : super();
 
-  final int lastFetchedAtMillis;
   final String? versionKey;
 
   factory StudentInfoCacheMeta.fromJson(Map<String, dynamic> json) {
@@ -261,6 +262,7 @@ class StudentInfoCacheMeta {
     );
   }
 
+  @override
   Map<String, dynamic> toJson() {
     return {
       'lastFetchedAtMillis': lastFetchedAtMillis,
@@ -269,13 +271,8 @@ class StudentInfoCacheMeta {
   }
 }
 
-abstract class StudentInfoStorage {
-  Future<StudentInfoData?> read();
-  Future<StudentInfoCacheMeta?> readMeta();
-  Future<void> save(StudentInfoData info);
-  Future<void> saveMeta(StudentInfoCacheMeta meta);
-  Future<void> clear();
-}
+abstract class StudentInfoStorage
+    extends CacheStorage<StudentInfoData, StudentInfoCacheMeta> {}
 
 class HiveStudentInfoStorage implements StudentInfoStorage {
   HiveStudentInfoStorage({HiveInterface? hive}) : _hive = hive ?? Hive;
@@ -361,160 +358,102 @@ class InMemoryStudentInfoStorage implements StudentInfoStorage {
   }
 }
 
-class StudentInfoRepository {
-  StudentInfoRepository._({required StudentInfoStorage storage})
-      : _storage = storage;
+class StudentInfoRepository extends BaseNetCachedRepository<StudentInfoData,
+    StudentInfoCacheMeta, StudentInfoStorage> {
+  StudentInfoRepository._({
+    required StudentInfoStorage storage,
+  }) : super(storage);
 
   static StudentInfoRepository? _instance;
 
-  static StudentInfoRepository getInstance() {
+  static StudentInfoRepository getInstance({
+    StudentInfoStorage? storage,
+  }) {
     if (_instance != null) {
       return _instance!;
     }
     final StudentInfoRepository repo = StudentInfoRepository._(
-      storage: HiveStudentInfoStorage(),
+      storage: storage ?? HiveStudentInfoStorage(),
     );
     _instance = repo;
     return repo;
   }
 
-  final StudentInfoStorage _storage;
-  StudentInfoData? _cached;
-  StudentInfoCacheMeta? _cachedMeta;
-  Completer<void>? _readyCompleter;
-  Future<void>? _pendingPersist;
-
-  Future<void> warmUp() async {
-    try {
-      final StudentInfoData? data = await _storage.read();
-      final StudentInfoCacheMeta? meta = await _storage.readMeta();
-      if (data == null && meta == null) {
-        return;
-      }
-      _saveCache(data: data, meta: meta, persist: false);
-    } catch (error, stackTrace) {
-      _completeLoadError(error, stackTrace);
-      rethrow;
-    }
+  @visibleForTesting
+  static void resetInstanceForTest() {
+    _instance = null;
   }
 
-  Future<void> ensureLoaded() async {
-    if (_cached != null && _cachedMeta != null) {
-      return;
-    }
-    if (_readyCompleter != null) {
-      return _readyCompleter!.future;
-    }
-    _readyCompleter = Completer<void>();
-    return _readyCompleter!.future;
-  }
+  String? _pendingVersionKey;
 
-  Future<StudentInfoData> fetchAndSave({
-    required DateTime now,
-    required Future<StudentInfoData> Function() fetcher,
-    String? versionKey,
-  }) async {
-    final StudentInfoData fetched = await fetcher();
-    final StudentInfoCacheMeta meta = StudentInfoCacheMeta(
+  @override
+  StudentInfoCacheMeta buildMeta(DateTime now) {
+    return StudentInfoCacheMeta(
       lastFetchedAtMillis: now.millisecondsSinceEpoch,
-      versionKey: versionKey,
+      versionKey: _pendingVersionKey,
     );
-    _saveCache(data: fetched, meta: meta, persist: true);
-    return fetched;
   }
 
+  @override
+  bool shouldFetch({
+    required DateTime now,
+    required Duration ttl,
+    required StudentInfoData? cached,
+    required StudentInfoCacheMeta? meta,
+  }) {
+    final bool shouldFetchByBase = super.shouldFetch(
+      now: now,
+      ttl: ttl,
+      cached: cached,
+      meta: meta,
+    );
+    if (shouldFetchByBase) {
+      return true;
+    }
+    final String? versionKey = _pendingVersionKey;
+    if (versionKey != null &&
+        versionKey.isNotEmpty &&
+        meta?.versionKey != versionKey) {
+      return true;
+    }
+    return false;
+  }
+
+  Future<StudentInfoData?> getCached({
+    bool refreshFromStorage = false,
+  }) async {
+    if (!refreshFromStorage && cachedData != null) {
+      return cachedData;
+    }
+    return readDataFromStorage();
+  }
+
+  Future<StudentInfoCacheMeta?> getCachedMeta({
+    bool refreshFromStorage = false,
+  }) async {
+    if (!refreshFromStorage && cachedMeta != null) {
+      return cachedMeta;
+    }
+    return readMetaFromStorage();
+  }
+
+  @override
   Future<StudentInfoData> getOrFetch({
     required DateTime now,
     required Future<StudentInfoData> Function() fetcher,
     String? versionKey,
     Duration ttl = const Duration(days: 7),
   }) async {
-    final StudentInfoData? cached = _cached;
-    final StudentInfoCacheMeta? meta = _cachedMeta;
-    bool shouldFetch = cached == null;
-    if (!shouldFetch) {
-      if (versionKey != null &&
-          versionKey.isNotEmpty &&
-          meta?.versionKey != versionKey) {
-        shouldFetch = true;
-      } else if (meta == null || meta.lastFetchedAtMillis <= 0) {
-        shouldFetch = true;
-      } else {
-        final DateTime lastFetched =
-            DateTime.fromMillisecondsSinceEpoch(meta.lastFetchedAtMillis);
-        if (now.difference(lastFetched) >= ttl) {
-          shouldFetch = true;
-        }
-      }
+    _pendingVersionKey =
+        (versionKey != null && versionKey.isNotEmpty) ? versionKey : null;
+    try {
+      return await super.getOrFetch(
+        now: now,
+        fetcher: fetcher,
+        ttl: ttl,
+      );
+    } finally {
+      _pendingVersionKey = null;
     }
-    if (!shouldFetch) {
-      return cached!;
-    }
-    return fetchAndSave(
-      now: now,
-      versionKey: versionKey,
-      fetcher: fetcher,
-    );
-  }
-
-  Future<void> saveMeta(StudentInfoCacheMeta meta) async {
-    _saveCache(meta: meta, persist: true);
-  }
-
-  Future<void> flush() {
-    return _pendingPersist ?? Future.value();
-  }
-
-  Future<void> clearStudentInfo() async {
-    await flush();
-    _pendingPersist = null;
-    _cached = null;
-    _cachedMeta = null;
-    _readyCompleter = null;
-    await _storage.clear();
-  }
-
-  void _saveCache({
-    StudentInfoData? data,
-    StudentInfoCacheMeta? meta,
-    required bool persist,
-  }) {
-    if (data != null) {
-      // TODO: 拿到data应视为已加载
-      _cached = data;
-    }
-    if (meta != null) {
-      _cachedMeta = meta;
-    }
-    _completeReady();
-    if (!persist || _cached == null || _cachedMeta == null) {
-      return;
-    }
-    _queuePersist(_cached!, _cachedMeta!);
-  }
-
-  Future<void> _queuePersist(
-    StudentInfoData data,
-    StudentInfoCacheMeta meta,
-  ) {
-    final Future<void> task = Future.wait([
-      _storage.save(data),
-      _storage.saveMeta(meta),
-    ]).then((_) => null);
-    _pendingPersist = (_pendingPersist ?? Future.value()).then((_) => task);
-    return _pendingPersist!;
-  }
-
-  void _completeReady() {
-    if (_readyCompleter != null && !_readyCompleter!.isCompleted) {
-      _readyCompleter!.complete();
-    }
-  }
-
-  void _completeLoadError(Object error, [StackTrace? stackTrace]) {
-    if (_readyCompleter != null && !_readyCompleter!.isCompleted) {
-      _readyCompleter!.completeError(error, stackTrace);
-    }
-    _readyCompleter = null;
   }
 }

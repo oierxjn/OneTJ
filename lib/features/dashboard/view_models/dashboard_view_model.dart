@@ -172,7 +172,6 @@ class DashboardViewModel extends BaseViewModel {
   Future<void> _uploadUserCollectionWhenStudentInfoLoaded() async {
     try {
       final StudentInfoRepository repo = StudentInfoRepository.getInstance();
-      await repo.ensureLoaded();
       final StudentInfoData studentInfo = await repo.getOrFetch(
         now: DateTime.now(),
         fetcher: _model.fetchStudentInfo,
@@ -194,11 +193,12 @@ class DashboardViewModel extends BaseViewModel {
   }
 
   Future<void> loadSchoolCalendar() async {
-    final SchoolCalendarRepository repo = SchoolCalendarRepository.getInstance();
+    final SchoolCalendarRepository repo =
+        SchoolCalendarRepository.getInstance();
     try {
       await repo.warmUp();
       final SchoolCalendarData data = await repo.getOrFetch(
-        now: DateTime.now(), 
+        now: DateTime.now(),
         fetcher: _model.fetchSchoolCalendar,
       );
       _calendar = data;
