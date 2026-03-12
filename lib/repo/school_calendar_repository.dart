@@ -126,11 +126,17 @@ class SchoolCalendarData extends BaseData {
 }
 
 class SchoolCalendarCacheMeta extends BaseMeta {
-  const SchoolCalendarCacheMeta({required super.lastFetchedAtMillis}) : super();
+  const SchoolCalendarCacheMeta({
+    required super.lastFetchedAtMillis,
+    required this.weekBeginDay,
+  }) : super();
+
+  final int weekBeginDay;
 
   factory SchoolCalendarCacheMeta.fromJson(Map<String, dynamic> json) {
     return SchoolCalendarCacheMeta(
       lastFetchedAtMillis: json['lastFetchedAtMillis'] as int? ?? 0,
+      weekBeginDay: json['weekBeginDay'] as int? ?? 0,
     );
   }
 
@@ -138,6 +144,7 @@ class SchoolCalendarCacheMeta extends BaseMeta {
   Map<String, dynamic> toJson() {
     return {
       'lastFetchedAtMillis': lastFetchedAtMillis,
+      'weekBeginDay': weekBeginDay,
     };
   }
 }
@@ -236,6 +243,7 @@ class SchoolCalendarRepository extends BaseNetCachedRepository<SchoolCalendarDat
   })  : super(storage);
 
   static SchoolCalendarRepository? _instance;
+  int? _fetchedWeekBeginDay;
 
   static SchoolCalendarRepository getInstance({
     SchoolCalendarStorage? storage,
@@ -258,17 +266,84 @@ class SchoolCalendarRepository extends BaseNetCachedRepository<SchoolCalendarDat
 
   @override
   SchoolCalendarCacheMeta buildMeta(DateTime now) {
+    final int weekBeginDay = _fetchedWeekBeginDay ?? 0;
+    _fetchedWeekBeginDay = null;
     return SchoolCalendarCacheMeta(
       lastFetchedAtMillis: now.millisecondsSinceEpoch,
+      weekBeginDay: weekBeginDay,
     );
   }
 
   @override
-  Future<SchoolCalendarData> getOrFetch({
-    required DateTime now, 
-    required Future<SchoolCalendarData> Function() fetcher, 
-    Duration ttl = const Duration(days: 1)
+  bool shouldFetch({
+    required DateTime now,
+    required Duration ttl,
+    required SchoolCalendarData? cached,
+    required SchoolCalendarCacheMeta? meta,
   }) {
-    return super.getOrFetch(now: now, fetcher: fetcher, ttl: ttl);
+    final bool baseShouldFetch = super.shouldFetch(
+      now: now,
+      ttl: ttl,
+      cached: cached,
+      meta: meta,
+    );
+    if (baseShouldFetch || meta == null) {
+      return baseShouldFetch;
+    }
+    final int weekBeginDay = meta.weekBeginDay;
+    if (weekBeginDay < DateTime.monday || weekBeginDay > DateTime.sunday) {
+      return false;
+    }
+
+    final DateTime fetchedAt =
+        DateTime.fromMillisecondsSinceEpoch(meta.lastFetchedAtMillis);
+    final DateTime startOfFetchedDay = DateTime(
+      fetchedAt.year,
+      fetchedAt.month,
+      fetchedAt.day,
+    );
+    int daysUntilNextWeekBoundary =
+        (weekBeginDay - fetchedAt.weekday + 7) % 7;
+    if (daysUntilNextWeekBoundary == 0) {
+      daysUntilNextWeekBoundary = 7;
+    }
+    final DateTime nextWeekBoundary = startOfFetchedDay.add(
+      Duration(days: daysUntilNextWeekBoundary),
+    );
+    return !now.isBefore(nextWeekBoundary);
+  }
+
+  @override
+  Future<SchoolCalendarData> getOrFetch({
+    required DateTime now,
+    required Future<SchoolCalendarData> Function() fetcher,
+    Duration ttl = const Duration(days: 1),
+  }) {
+    return super.getOrFetch(
+      now: now,
+      fetcher: _withWeekBeginDay(fetcher),
+      ttl: ttl,
+    );
+  }
+
+  @override
+  Future<SchoolCalendarData> refresh({
+    required DateTime now,
+    required Future<SchoolCalendarData> Function() fetcher,
+  }) {
+    return super.refresh(
+      now: now,
+      fetcher: _withWeekBeginDay(fetcher),
+    );
+  }
+
+  Future<SchoolCalendarData> Function() _withWeekBeginDay(
+    Future<SchoolCalendarData> Function() fetcher,
+  ) {
+    return () async {
+      final SchoolCalendarData data = await fetcher();
+      _fetchedWeekBeginDay = data.schoolCalendar.weekBeginDay;
+      return data;
+    };
   }
 }
