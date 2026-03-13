@@ -65,7 +65,7 @@ class DashboardViewModel extends BaseViewModel {
   bool get timetableLoading => _timetableLoading;
   List<TimePeriodRangeData> get timeSlotRanges => _timeSlotRanges;
   DashboardUpcomingMode get upcomingMode => _upcomingMode;
-  List<TimetableEntry> buildUpcomingEntries({DateTime? now}) {
+  List<DashboardUpcomingEntryData> buildUpcomingEntries({DateTime? now}) {
     final int? currentWeek = _calendar?.week;
     if (currentWeek == null || _timetableEntries.isEmpty) {
       return const [];

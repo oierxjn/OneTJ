@@ -1,6 +1,7 @@
 import 'package:onetj/models/dashboard_upcoming_mode.dart';
 import 'package:onetj/models/time_period_range.dart';
 import 'package:onetj/models/timetable_index.dart';
+import 'dashboard_model.dart';
 
 /// 储存查询即将到来的课程的参数
 ///
@@ -34,7 +35,38 @@ class UpcomingEntriesQuery {
 class UpcomingEntriesCalculator {
   const UpcomingEntriesCalculator._();
 
-  static List<TimetableEntry> calculate(UpcomingEntriesQuery query) {
+  static bool isEntryOngoing({
+    required TimetableEntry entry,
+    required DateTime now,
+    required List<TimePeriodRangeData> timeSlotRanges,
+  }) {
+    final int startIndex = entry.timeStart - 1;
+    final int endIndex = entry.timeEnd - 1;
+    if (startIndex < 0 ||
+        startIndex >= timeSlotRanges.length ||
+        endIndex < 0 ||
+        endIndex >= timeSlotRanges.length) {
+      return false;
+    }
+    final int startMinute = timeSlotRanges[startIndex].startMinutes;
+    final int endMinute = timeSlotRanges[endIndex].endMinutes;
+    final int nowMinutes = now.hour * 60 + now.minute;
+    return startMinute <= nowMinutes && nowMinutes < endMinute;
+  }
+
+  static List<DashboardUpcomingEntryData> calculate(UpcomingEntriesQuery query) {
+    final List<TimetableEntry> entries = calculateEntry(query);
+    return entries.map((e) => DashboardUpcomingEntryData(
+      entry: e,
+      isOngoing: isEntryOngoing(
+        entry: e,
+        now: query.now,
+        timeSlotRanges: query.timeSlotRanges,
+      ),
+    )).toList();
+  }
+
+  static List<TimetableEntry> calculateEntry(UpcomingEntriesQuery query) {
     switch (query.mode) {
       case DashboardUpcomingMode.thisWeek:
         return _upcomingThisWeek(query);
@@ -121,7 +153,8 @@ class UpcomingEntriesCalculator {
       return dayEntries;
     }
     dayEntries.removeWhere(
-        (entry) => !_isAfterNow(entry, query.now, query.timeSlotRanges));
+      (entry) => !_isOngoingOrAfterNow(entry, query.now, query.timeSlotRanges),
+    );
     return dayEntries;
   }
 
@@ -130,6 +163,19 @@ class UpcomingEntriesCalculator {
       return true;
     }
     return entry.weeks.contains(week);
+  }
+
+  static bool _isOngoingOrAfterNow(
+    TimetableEntry entry,
+    DateTime now,
+    List<TimePeriodRangeData> timeSlotRanges,
+  ) {
+    return isEntryOngoing(
+          entry: entry,
+          now: now,
+          timeSlotRanges: timeSlotRanges,
+        ) ||
+        _isAfterNow(entry, now, timeSlotRanges);
   }
 
   static bool _isAfterNow(
@@ -143,6 +189,6 @@ class UpcomingEntriesCalculator {
     }
     final int startMinute = timeSlotRanges[index].startMinutes;
     final int nowMinutes = now.hour * 60 + now.minute;
-    return startMinute > nowMinutes;
+    return nowMinutes < startMinute;
   }
 }
