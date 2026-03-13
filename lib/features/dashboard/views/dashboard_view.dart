@@ -110,7 +110,6 @@ class _DashboardViewState extends State<DashboardView> {
     final SchoolCalendarData? calendar = _viewModel.calendar;
     final l10n = AppLocalizations.of(context);
 
-    // TODO 加载没有完成的时候，显示一个加载条
     final String department = _viewModel.departmentName ?? '';
     final bool isLoading =
         _viewModel.studentLoading || _viewModel.calendarLoading;
@@ -125,31 +124,65 @@ class _DashboardViewState extends State<DashboardView> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              termTitle,
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 6),
-            Text(
-              departmentLabel,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                _InfoPill(text: l10n.currentTeachingWeekText(weekNumber)),
-              ],
-            ),
-            if (isLoading) ...[
+        child: AnimatedSize(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          alignment: Alignment.topCenter,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                termTitle,
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                departmentLabel,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+              ),
               const SizedBox(height: 12),
-              const LinearProgressIndicator(),
+              Row(
+                children: [
+                  _InfoPill(text: l10n.currentTeachingWeekText(weekNumber)),
+                ],
+              ),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 520),
+                switchInCurve: Curves.easeOutCubic,
+                switchOutCurve: Curves.easeInCubic,
+                transitionBuilder: (child, animation) {
+                  final Animation<double> fade = CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeOut,
+                  );
+                  final Animation<double> scale = Tween<double>(
+                    begin: 0.98,
+                    end: 1,
+                  ).animate(
+                    CurvedAnimation(
+                      parent: animation,
+                      curve: Curves.easeOutCubic,
+                    ),
+                  );
+                  return FadeTransition(
+                    opacity: fade,
+                    child: ScaleTransition(
+                      scale: scale,
+                      child: child,
+                    ),
+                  );
+                },
+                child: isLoading
+                    ? const _HeroLoadingBlock(key: ValueKey('hero-loading'))
+                    : const SizedBox(
+                        key: ValueKey('hero-idle'),
+                        height: 16,
+                      ),
+              ),
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -178,8 +211,9 @@ class _DashboardViewState extends State<DashboardView> {
               roomLabel: item.entry.roomIdI18n.isNotEmpty
                   ? item.entry.roomIdI18n
                   : item.entry.roomLabel,
-              teacherLabel:
-                  item.entry.teacherName.isNotEmpty ? item.entry.teacherName : '-',
+              teacherLabel: item.entry.teacherName.isNotEmpty
+                  ? item.entry.teacherName
+                  : '-',
               isOngoing: item.isOngoing,
               onTap: () {
                 _showCourseDetails(item.entry);
@@ -281,6 +315,20 @@ class _InfoPill extends StatelessWidget {
               fontWeight: FontWeight.w600,
             ),
       ),
+    );
+  }
+}
+
+class _HeroLoadingBlock extends StatelessWidget {
+  const _HeroLoadingBlock({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      children: [
+        SizedBox(height: 12),
+        LinearProgressIndicator(),
+      ],
     );
   }
 }
