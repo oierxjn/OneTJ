@@ -3,6 +3,17 @@ import 'package:onetj/services/tongji.dart';
 import 'package:onetj/repo/student_info_repository.dart';
 import 'package:onetj/repo/school_calendar_repository.dart';
 import 'package:onetj/repo/course_schedule_repository.dart';
+import 'package:onetj/models/timetable_index.dart';
+
+class DashboardUpcomingEntryData {
+  const DashboardUpcomingEntryData({
+    required this.entry,
+    required this.isOngoing,
+  });
+
+  final TimetableEntry entry;
+  final bool isOngoing;
+}
 
 class DashboardModel {
   DashboardModel({TongjiApi? api}) : _api = api ?? TongjiApi();
@@ -32,11 +43,20 @@ class DashboardModel {
   }
 
   Future<CourseScheduleData> getCourseSchedule() async {
-    final CourseScheduleRepository repo = CourseScheduleRepository.getInstance();
-    final SchoolCalendarData? calendar = await SchoolCalendarRepository.getInstance().getSchoolCalendar();
-    final String? termKey = calendar == null
-        ? null
-        : '${calendar.schoolCalendar.year}-${calendar.schoolCalendar.term}';
+    final CourseScheduleRepository repo =
+        CourseScheduleRepository.getInstance();
+    final SchoolCalendarRepository schoolCalendarRepository =
+        SchoolCalendarRepository.getInstance();
+    String? termKey;
+    try {
+      await schoolCalendarRepository.warmUp();
+      final SchoolCalendarData calendar =
+          await schoolCalendarRepository.getOrFetch(now: DateTime.now(), fetcher: fetchSchoolCalendar);
+      termKey =
+          '${calendar.schoolCalendar.year}-${calendar.schoolCalendar.term}';
+    } catch (_) {
+      termKey = null;
+    }
     return repo.getOrFetch(
       now: DateTime.now(),
       termKey: termKey,

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'package:onetj/features/dashboard/view_models/dashboard_view_model.dart';
+import 'package:onetj/features/dashboard/models/dashboard_model.dart';
 import 'package:onetj/models/dashboard_upcoming_mode.dart';
 import 'package:onetj/models/event_model.dart';
 import 'package:onetj/models/time_period_range.dart';
@@ -156,7 +157,7 @@ class _DashboardViewState extends State<DashboardView> {
 
   Widget _buildUpcomingSection(
     BuildContext context, {
-    required List<TimetableEntry> entries,
+    required List<DashboardUpcomingEntryData> entries,
   }) {
     final l10n = AppLocalizations.of(context);
     if (entries.isEmpty) {
@@ -168,19 +169,20 @@ class _DashboardViewState extends State<DashboardView> {
     return Column(
       children: entries
           .map(
-            (entry) => _UpcomingCard(
-              title: entry.courseName.isNotEmpty
-                  ? entry.courseName
+            (item) => _UpcomingCard(
+              title: item.entry.courseName.isNotEmpty
+                  ? item.entry.courseName
                   : 'Unknown course',
               timeLabel:
-                  '${_weekdayLabel(l10n, entry.dayOfWeek)}\n${_formatTimeRange(entry, _viewModel.timeSlotRanges)}',
-              roomLabel: entry.roomIdI18n.isNotEmpty
-                  ? entry.roomIdI18n
-                  : entry.roomLabel,
+                  '${_weekdayLabel(l10n, item.entry.dayOfWeek)}\n${_formatTimeRange(item.entry, _viewModel.timeSlotRanges)}',
+              roomLabel: item.entry.roomIdI18n.isNotEmpty
+                  ? item.entry.roomIdI18n
+                  : item.entry.roomLabel,
               teacherLabel:
-                  entry.teacherName.isNotEmpty ? entry.teacherName : '-',
+                  item.entry.teacherName.isNotEmpty ? item.entry.teacherName : '-',
+              isOngoing: item.isOngoing,
               onTap: () {
-                _showCourseDetails(entry);
+                _showCourseDetails(item.entry);
               },
             ),
           )
@@ -289,6 +291,7 @@ class _UpcomingCard extends StatelessWidget {
     required this.timeLabel,
     required this.roomLabel,
     required this.teacherLabel,
+    required this.isOngoing,
     this.onTap,
   });
 
@@ -296,13 +299,16 @@ class _UpcomingCard extends StatelessWidget {
   final String timeLabel;
   final String roomLabel;
   final String teacherLabel;
+  final bool isOngoing;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = Theme.of(context).colorScheme;
+    final Color backgroundColor =
+        isOngoing ? colors.primaryContainer : colors.surfaceContainerHigh;
     return Card(
-      color: colors.surfaceContainerHigh,
+      color: backgroundColor,
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       child: InkWell(

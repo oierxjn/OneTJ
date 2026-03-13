@@ -25,6 +25,13 @@
       }
     },
     "timetableNoData": "暂无课程表数据",
+    "timetableLastFetch": "上次同步：{time}",
+    "@timetableLastFetch": {
+      "placeholders": {
+        "time": {}
+      }
+    },
+    "timetableLastFetchUnknown": "--",
     "emptyClassesToday": "今天没有课哦",
     "dashboardUpcomingTitle": "即将到来的课程",
     "dashboardUpcomingEmpty": "本周暂无课程",

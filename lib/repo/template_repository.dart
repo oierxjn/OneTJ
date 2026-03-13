@@ -1,34 +1,30 @@
-import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
+import 'package:onetj/repo/base_cached_repository.dart';
 
-class TemplateCacheMeta {
+class TemplateCacheMeta extends BaseMeta {
   const TemplateCacheMeta({
-    required this.lastFetchedAtMillis,
-    this.versionKey,
-  });
-
-  final int lastFetchedAtMillis;
-  final String? versionKey;
+    required super.lastFetchedAtMillis,
+  }) : super();
 
   factory TemplateCacheMeta.fromJson(Map<String, dynamic> json) {
     return TemplateCacheMeta(
       lastFetchedAtMillis: json['lastFetchedAtMillis'] as int? ?? 0,
-      versionKey: json['versionKey'] as String?,
     );
   }
 
+  @override
   Map<String, dynamic> toJson() {
     return {
       'lastFetchedAtMillis': lastFetchedAtMillis,
-      'versionKey': versionKey,
     };
   }
 }
 
-class TemplateData {
-  const TemplateData({required this.items});
+class TemplateData extends BaseData {
+  const TemplateData({required this.items}) : super();
 
   final List<Map<String, dynamic>> items;
 
@@ -40,6 +36,7 @@ class TemplateData {
     return TemplateData(items: items);
   }
 
+  @override
   Map<String, dynamic> toJson() {
     return {
       'items': items,
@@ -47,13 +44,8 @@ class TemplateData {
   }
 }
 
-abstract class TemplateStorage {
-  Future<TemplateData?> read();
-  Future<TemplateCacheMeta?> readMeta();
-  Future<void> save(TemplateData data);
-  Future<void> saveMeta(TemplateCacheMeta meta);
-  Future<void> clear();
-}
+abstract class TemplateStorage
+    extends CacheStorage<TemplateData, TemplateCacheMeta> {}
 
 class HiveTemplateStorage implements TemplateStorage {
   HiveTemplateStorage({HiveInterface? hive}) : _hive = hive ?? Hive;
@@ -112,163 +104,38 @@ class HiveTemplateStorage implements TemplateStorage {
   }
 }
 
-class TemplateRepository {
-  TemplateRepository._({required TemplateStorage storage}) : _storage = storage;
+class TemplateRepository extends BaseNetCachedRepository<TemplateData,
+    TemplateCacheMeta, TemplateStorage> {
+  TemplateRepository._({
+    required TemplateStorage storage,
+  })  : super(storage);
 
   static TemplateRepository? _instance;
 
-  static TemplateRepository getInstance() {
+  static TemplateRepository getInstance({
+    TemplateStorage? storage,
+  }) {
     if (_instance != null) {
       return _instance!;
     }
     final TemplateRepository repo = TemplateRepository._(
-      storage: HiveTemplateStorage(),
+      storage: storage ?? HiveTemplateStorage(),
     );
     _instance = repo;
     return repo;
   }
 
-  final TemplateStorage _storage;
-  TemplateData? _cached;
-  TemplateCacheMeta? _cachedMeta;
-  Completer<void>? _readyCompleter;
-  Future<void>? _pendingPersist;
 
-  /// Loads cache from local storage only, without network calls.
-  Future<void> warmUp() async {
-    try {
-      final TemplateData? data = await _storage.read();
-      final TemplateCacheMeta? meta = await _storage.readMeta();
-      if (data == null && meta == null) {
-        return;
-      }
-      _saveCache(data: data, meta: meta, persist: false);
-    } catch (error, stackTrace) {
-      _completeLoadError(error, stackTrace);
-      rethrow;
-    }
+  @visibleForTesting
+  static void resetInstanceForTest() {
+    _instance = null;
   }
 
-  /// Waits until cache is ready
-  Future<void> ensureLoaded() async {
-    if (_cached != null && _cachedMeta != null) {
-      return;
-    }
-    if (_readyCompleter != null) {
-      return _readyCompleter!.future;
-    }
-    _readyCompleter = Completer<void>();
-    return _readyCompleter!.future;
-  }
 
-  Future<TemplateData> fetchAndSave({
-    required DateTime now,
-    required Future<TemplateData> Function() fetcher,
-    String? versionKey,
-  }) async {
-    final TemplateData fetched = await fetcher();
-    final TemplateCacheMeta meta = TemplateCacheMeta(
+  @override
+  TemplateCacheMeta buildMeta(DateTime now) {
+    return TemplateCacheMeta(
       lastFetchedAtMillis: now.millisecondsSinceEpoch,
-      versionKey: versionKey,
     );
-    _saveCache(data: fetched, meta: meta, persist: true);
-    return fetched;
-  }
-
-  /// Returns cached data if valid, otherwise fetches and persists fresh data.
-  Future<TemplateData> getOrFetch({
-    required DateTime now,
-    required Future<TemplateData> Function() fetcher,
-    String? versionKey,
-    Duration ttl = const Duration(days: 7),
-  }) async {
-    final TemplateData? cached = _cached;
-    final TemplateCacheMeta? meta = _cachedMeta;
-    bool shouldFetch = cached == null;
-    if (!shouldFetch) {
-      if (versionKey != null && versionKey.isNotEmpty && meta?.versionKey != versionKey) {
-        shouldFetch = true;
-      } else if (meta == null || meta.lastFetchedAtMillis <= 0) {
-        shouldFetch = true;
-      } else {
-        final DateTime lastFetched =
-            DateTime.fromMillisecondsSinceEpoch(meta.lastFetchedAtMillis);
-        if (now.difference(lastFetched) >= ttl) {
-          shouldFetch = true;
-        }
-      }
-    }
-    if (!shouldFetch) {
-      return cached!;
-    }
-    return fetchAndSave(
-      now: now,
-      versionKey: versionKey,
-      fetcher: fetcher,
-    );
-  }
-
-  Future<void> save(TemplateData data) async {
-    _saveCache(data: data, persist: true);
-  }
-
-  Future<void> saveMeta(TemplateCacheMeta meta) async {
-    _saveCache(meta: meta, persist: true);
-  }
-
-  Future<void> flush() {
-    return _pendingPersist ?? Future.value();
-  }
-
-  Future<void> clear() async {
-    await flush();
-    _pendingPersist = null;
-    _cached = null;
-    _cachedMeta = null;
-    _readyCompleter = null;
-    await _storage.clear();
-  }
-
-  void _saveCache({
-    TemplateData? data,
-    TemplateCacheMeta? meta,
-    required bool persist,
-  }) {
-    if (data != null) {
-      _cached = data;
-    }
-    if (meta != null) {
-      _cachedMeta = meta;
-    }
-    _completeReady();
-    if (!persist || _cached == null || _cachedMeta == null) {
-      return;
-    }
-    _queuePersist(_cached!, _cachedMeta!);
-  }
-
-  Future<void> _queuePersist(
-    TemplateData data,
-    TemplateCacheMeta meta,
-  ) {
-    final Future<void> task = Future.wait([
-      _storage.save(data),
-      _storage.saveMeta(meta),
-    ]).then((_) => null);
-    _pendingPersist = (_pendingPersist ?? Future.value()).then((_) => task);
-    return _pendingPersist!;
-  }
-
-  void _completeReady() {
-    if (_readyCompleter != null && !_readyCompleter!.isCompleted) {
-      _readyCompleter!.complete();
-    }
-  }
-
-  void _completeLoadError(Object error, [StackTrace? stackTrace]) {
-    if (_readyCompleter != null && !_readyCompleter!.isCompleted) {
-      _readyCompleter!.completeError(error, stackTrace);
-    }
-    _readyCompleter = null;
   }
 }

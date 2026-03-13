@@ -6,6 +6,7 @@ import 'package:onetj/app/logging/logging_bootstrap.dart';
 import 'package:onetj/models/base_model.dart';
 import 'package:onetj/models/data/code2token.dart';
 import 'package:onetj/models/event_model.dart';
+import 'package:onetj/repo/settings_repository.dart';
 import 'package:onetj/repo/token_repository.dart';
 import 'package:onetj/services/hive_storage_service.dart';
 import 'package:onetj/services/tongji.dart';
@@ -47,9 +48,12 @@ class LauncherViewModel extends BaseViewModel {
   }
 
   Future<String> _initialize() async {
+    await _hiveStorageService.initializeHive();
     await Future.wait([
-      _hiveStorageService.initializeHive(),
       WebViewEnvironmentService.instance.initialize(),
+      SettingsRepository.getInstance().getSettings(
+        refreshFromStorage: true,
+      ),
     ]);
     final String route = await _resolveInitialRoute();
     return route;

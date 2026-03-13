@@ -50,7 +50,7 @@ class TimetableTimelinePanel extends StatelessWidget {
       tween: Tween<double>(begin: 0, end: targetHeaderHeight),
       builder: (context, animatedHeaderHeight, _) {
         return Padding(
-          padding: const EdgeInsets.fromLTRB(4, 8, 12, 4),
+          padding: const EdgeInsets.fromLTRB(4, 4, 12, 4),
           child: LayoutBuilder(
             builder: (context, constraints) {
               final _TimelineLayoutMetrics layoutMetrics =

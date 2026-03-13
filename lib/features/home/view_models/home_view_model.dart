@@ -12,8 +12,10 @@ class HomeViewModel extends BaseViewModel {
   HomeViewModel({HomeModel? model})
       : _model = model ?? HomeModel(),
         _studentInfoController = StreamController<String>.broadcast(),
-        _schoolCalendarController = StreamController<SchoolCalendarData>.broadcast(),
-        _timetableController = StreamController<List<TimetableEntry>>.broadcast(),
+        _schoolCalendarController =
+            StreamController<SchoolCalendarData>.broadcast(),
+        _timetableController =
+            StreamController<List<TimetableEntry>>.broadcast(),
         _studentErrorController = StreamController<Object>.broadcast(),
         _calendarErrorController = StreamController<Object>.broadcast(),
         _timetableErrorController = StreamController<Object>.broadcast();
@@ -27,8 +29,10 @@ class HomeViewModel extends BaseViewModel {
   final StreamController<Object> _timetableErrorController;
 
   Stream<String> get studentInfo => _studentInfoController.stream;
-  Stream<SchoolCalendarData> get schoolCalendar => _schoolCalendarController.stream;
-  Stream<List<TimetableEntry>> get timetableEntries => _timetableController.stream;
+  Stream<SchoolCalendarData> get schoolCalendar =>
+      _schoolCalendarController.stream;
+  Stream<List<TimetableEntry>> get timetableEntries =>
+      _timetableController.stream;
   Stream<Object> get studentErrors => _studentErrorController.stream;
   Stream<Object> get calendarErrors => _calendarErrorController.stream;
   Stream<Object> get timetableErrors => _timetableErrorController.stream;
@@ -42,42 +46,49 @@ class HomeViewModel extends BaseViewModel {
     }
   }
 
-
-
   Future<void> loadSchoolCalendar() async {
-    final SchoolCalendarRepository repo = SchoolCalendarRepository.getInstance();
+    final SchoolCalendarRepository repo =
+        SchoolCalendarRepository.getInstance();
     try {
-      final SchoolCalendarData data = await _model.fetchSchoolCalendar();
-      await repo.saveSchoolCalendar(data);
+      await repo.warmUp();
+      final SchoolCalendarData data = await repo.getOrFetch(
+        now: DateTime.now(),
+        fetcher: _model.fetchSchoolCalendar,
+      );
       _schoolCalendarController.add(data);
     } catch (error) {
-      repo.markFailed(error);
       _calendarErrorController.add(error);
     }
   }
 
   Future<void> loadCourseSchedule() async {
     try {
-      final CourseScheduleData data = await _model.fetchCourseSchedule();
-      final CourseScheduleRepository repo = CourseScheduleRepository.getInstance();
-      await repo.saveCourseSchedule(data);
-      final TimetableIndex index = const TimetableIndexBuilder().buildIndex(data);
-      final List<TimetableEntry> entries = List<TimetableEntry>.from(index.allEntries)
-        ..sort((a, b) {
-          final int dayA = a.dayOfWeek;
-          final int dayB = b.dayOfWeek;
-          if (dayA != dayB) {
-            return dayA.compareTo(dayB);
-          }
-          final int startA = a.timeStart;
-          final int startB = b.timeStart;
-          if (startA != startB) {
-            return startA.compareTo(startB);
-          }
-          final int endA = a.timeEnd;
-          final int endB = b.timeEnd;
-          return endA.compareTo(endB);
-        });
+      final CourseScheduleRepository repo =
+          CourseScheduleRepository.getInstance();
+      final CourseScheduleData data = await repo.getOrFetch(
+        now: DateTime.now(),
+        fetcher: _model.fetchCourseSchedule,
+        ttl: Duration.zero,
+      );
+      final TimetableIndex index =
+          const TimetableIndexBuilder().buildIndex(data);
+      final List<TimetableEntry> entries =
+          List<TimetableEntry>.from(index.allEntries)
+            ..sort((a, b) {
+              final int dayA = a.dayOfWeek;
+              final int dayB = b.dayOfWeek;
+              if (dayA != dayB) {
+                return dayA.compareTo(dayB);
+              }
+              final int startA = a.timeStart;
+              final int startB = b.timeStart;
+              if (startA != startB) {
+                return startA.compareTo(startB);
+              }
+              final int endA = a.timeEnd;
+              final int endB = b.timeEnd;
+              return endA.compareTo(endB);
+            });
       _timetableController.add(entries);
     } catch (error) {
       _timetableErrorController.add(error);

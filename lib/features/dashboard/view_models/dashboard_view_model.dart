@@ -65,7 +65,7 @@ class DashboardViewModel extends BaseViewModel {
   bool get timetableLoading => _timetableLoading;
   List<TimePeriodRangeData> get timeSlotRanges => _timeSlotRanges;
   DashboardUpcomingMode get upcomingMode => _upcomingMode;
-  List<TimetableEntry> buildUpcomingEntries({DateTime? now}) {
+  List<DashboardUpcomingEntryData> buildUpcomingEntries({DateTime? now}) {
     final int? currentWeek = _calendar?.week;
     if (currentWeek == null || _timetableEntries.isEmpty) {
       return const [];
@@ -172,7 +172,6 @@ class DashboardViewModel extends BaseViewModel {
   Future<void> _uploadUserCollectionWhenStudentInfoLoaded() async {
     try {
       final StudentInfoRepository repo = StudentInfoRepository.getInstance();
-      await repo.ensureLoaded();
       final StudentInfoData studentInfo = await repo.getOrFetch(
         now: DateTime.now(),
         fetcher: _model.fetchStudentInfo,
@@ -197,12 +196,14 @@ class DashboardViewModel extends BaseViewModel {
     final SchoolCalendarRepository repo =
         SchoolCalendarRepository.getInstance();
     try {
-      final SchoolCalendarData data = await _model.fetchSchoolCalendar();
-      await repo.saveSchoolCalendar(data);
+      await repo.warmUp();
+      final SchoolCalendarData data = await repo.getOrFetch(
+        now: DateTime.now(),
+        fetcher: _model.fetchSchoolCalendar,
+      );
       _calendar = data;
       _calendarError = null;
     } catch (error) {
-      repo.markFailed(error);
       _calendarError = error;
       _eventController.add(
         ShowSnackBarEvent(message: 'Failed to load school calendar: $error'),

@@ -272,11 +272,21 @@ class SettingsRepository {
     return repo;
   }
 
+  static void resetForTesting({SettingsStorage? storage}) {
+    _instance = SettingsRepository._(
+      storage: storage ?? InMemorySettingsStorage(),
+    );
+  }
+
   final SettingsStorage _storage;
   final StreamController<SettingsData> _controller;
   SettingsData? _cached;
 
   Stream<SettingsData> get stream => _controller.stream;
+
+  SettingsData peekCachedOrDefault() {
+    return _cached ?? _defaultSettings;
+  }
 
   Future<SettingsData> getSettings({bool refreshFromStorage = false}) async {
     if (!refreshFromStorage && _cached != null) {

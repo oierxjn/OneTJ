@@ -6,7 +6,6 @@ import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/app/logging/logger.dart';
 import 'package:onetj/models/dashboard_upcoming_mode.dart';
-import 'package:onetj/models/settings_defaults.dart';
 import 'package:onetj/models/user_collection_field.dart';
 import 'package:onetj/features/settings/models/event.dart';
 import 'package:onetj/features/settings/models/settings_model.dart';
@@ -22,23 +21,23 @@ import 'package:onetj/services/hive_storage_service.dart';
 import 'package:onetj/services/webview_environment_service.dart';
 
 class SettingsViewModel extends BaseViewModel {
-  SettingsViewModel()
-      : _eventController = StreamController<UiEvent>.broadcast(),
+  SettingsViewModel({
+    SettingsRepository? settingsRepository,
+  })  : _eventController = StreamController<UiEvent>.broadcast(),
+        _settingsRepository =
+            settingsRepository ?? SettingsRepository.getInstance(),
         _hiveStorageService = HiveStorageService(),
-        _webViewEnvironment = WebViewEnvironmentService.instance.environment;
+        _webViewEnvironment = WebViewEnvironmentService.instance.environment {
+    _settingsData = _settingsRepository.peekCachedOrDefault();
+  }
 
   final StreamController<UiEvent> _eventController;
+  final SettingsRepository _settingsRepository;
   final HiveStorageService _hiveStorageService;
   final WebViewEnvironment? _webViewEnvironment;
   Stream<UiEvent> get events => _eventController.stream;
   // 初值一般不会被使用
-  SettingsData _settingsData = SettingsData(
-    maxWeek: kDefaultMaxWeek,
-    timeSlotRanges: kDefaultTimeSlotRanges,
-    dashboardUpcomingMode: kDefaultDashboardUpcomingMode,
-    dashboardUpcomingCount: kDefaultDashboardUpcomingCount,
-    userCollectionFields: kDefaultUserCollectionFields,
-  );
+  late SettingsData _settingsData;
   bool _settingsLoading = true;
   bool _settingsSaving = false;
   bool _legacyHiveDataAvailable = false;
@@ -60,9 +59,9 @@ class SettingsViewModel extends BaseViewModel {
     notifyListeners();
     try {
       await TokenRepository.getInstance().clearToken();
-      await StudentInfoRepository.getInstance().clearStudentInfo();
-      await SchoolCalendarRepository.getInstance().clearSchoolCalendar();
-      await CourseScheduleRepository.getInstance().clearCourseSchedule();
+      await StudentInfoRepository.getInstance().clearCache();
+      await SchoolCalendarRepository.getInstance().clearCache();
+      await CourseScheduleRepository.getInstance().clearCache();
       await CookieManager.instance(webViewEnvironment: _webViewEnvironment)
           .deleteAllCookies();
       AppLogger.logNavigation(
@@ -94,8 +93,7 @@ class SettingsViewModel extends BaseViewModel {
     _settingsLoading = true;
     notifyListeners();
     try {
-      final SettingsData data =
-          await SettingsRepository.getInstance().getSettings();
+      final SettingsData data = await _settingsRepository.getSettings();
       _settingsData = data;
       AppLogger.info(
         'Load settings success',
@@ -232,7 +230,7 @@ class SettingsViewModel extends BaseViewModel {
           userCollectionFields,
         ),
       );
-      await SettingsRepository.getInstance().saveSettings(next);
+      await _settingsRepository.saveSettings(next);
       _settingsData = next;
       AppLogger.info(
         'Save settings success',
@@ -278,9 +276,9 @@ class SettingsViewModel extends BaseViewModel {
     errorMessage = null;
     notifyListeners();
     try {
-      final SettingsRepository repo = SettingsRepository.getInstance();
-      await repo.clearSettings();
-      _settingsData = await repo.getSettings(refreshFromStorage: true);
+      await _settingsRepository.clearSettings();
+      _settingsData =
+          await _settingsRepository.getSettings(refreshFromStorage: true);
       AppLogger.info(
         'Reset settings success',
         loggerName: 'SettingsViewModel',

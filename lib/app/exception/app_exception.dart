@@ -94,3 +94,15 @@ class SettingsValidationException extends AppException {
     Object? cause,
   }) : super(code, message, cause: cause);
 }
+
+class RepositoryClearingException extends AppException {
+  static const String errorCode = 'REPOSITORY_CLEARING';
+
+  RepositoryClearingException({String? repositoryName})
+      : super(
+          errorCode,
+          repositoryName == null || repositoryName.isEmpty
+              ? 'Repository is clearing'
+              : 'Repository $repositoryName is clearing',
+        );
+}

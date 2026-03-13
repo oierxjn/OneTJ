@@ -1,9 +1,10 @@
-import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 
 import 'package:onetj/models/data/course_schedule_net_data.dart';
+import 'package:onetj/repo/base_cached_repository.dart';
 
 class CourseTimeTableItemData {
   const CourseTimeTableItemData({
@@ -227,9 +228,8 @@ class CourseScheduleItemData {
       classRoomName: data.classRoomName,
       classRoomPractice: data.classRoomPractice,
       remark: data.remark,
-      timeTableList: data.timeTableList
-          ?.map(CourseTimeTableItemData.fromNetData)
-          .toList(),
+      timeTableList:
+          data.timeTableList?.map(CourseTimeTableItemData.fromNetData).toList(),
       compulsory: data.compulsory,
       classType: data.classType,
       roomCategory: data.roomCategory,
@@ -249,13 +249,13 @@ class CourseScheduleItemData {
 
   factory CourseScheduleItemData.fromJson(Map<String, dynamic> json) {
     final Object? rawTimeTableList = json['timeTableList'];
-    final List<CourseTimeTableItemData>? timeTableList =
-        rawTimeTableList is List<dynamic>
-            ? rawTimeTableList
-                .map((item) =>
-                    CourseTimeTableItemData.fromJson(item as Map<String, dynamic>))
-                .toList()
-            : null;
+    final List<CourseTimeTableItemData>? timeTableList = rawTimeTableList
+            is List<dynamic>
+        ? rawTimeTableList
+            .map((item) =>
+                CourseTimeTableItemData.fromJson(item as Map<String, dynamic>))
+            .toList()
+        : null;
     return CourseScheduleItemData(
       teachingClassId: json['teachingClassId'] as int?,
       classCode: json['classCode'] as String?,
@@ -326,10 +326,10 @@ class CourseScheduleItemData {
   }
 }
 
-class CourseScheduleData {
+class CourseScheduleData extends BaseData {
   const CourseScheduleData({
     required this.items,
-  });
+  }) : super();
 
   final List<CourseScheduleItemData> items;
 
@@ -345,12 +345,14 @@ class CourseScheduleData {
     final Object? rawItems = json['items'];
     final List<CourseScheduleItemData> items = rawItems is List<dynamic>
         ? rawItems
-            .map((item) => CourseScheduleItemData.fromJson(item as Map<String, dynamic>))
+            .map((item) =>
+                CourseScheduleItemData.fromJson(item as Map<String, dynamic>))
             .toList()
         : const [];
     return CourseScheduleData(items: items);
   }
 
+  @override
   Map<String, dynamic> toJson() {
     return {
       'items': items.map((item) => item.toJson()).toList(),
@@ -358,21 +360,15 @@ class CourseScheduleData {
   }
 }
 
-abstract class CourseScheduleStorage {
-  Future<CourseScheduleData?> read();
-  Future<CourseScheduleCacheMeta?> readMeta();
-  Future<void> save(CourseScheduleData data);
-  Future<void> saveMeta(CourseScheduleCacheMeta meta);
-  Future<void> clear();
-}
+abstract class CourseScheduleStorage
+    extends CacheStorage<CourseScheduleData, CourseScheduleCacheMeta> {}
 
-class CourseScheduleCacheMeta {
+class CourseScheduleCacheMeta extends BaseMeta {
   const CourseScheduleCacheMeta({
-    required this.lastFetchedAtMillis,
+    required super.lastFetchedAtMillis,
     this.termKey,
-  });
+  }) : super();
 
-  final int lastFetchedAtMillis;
   final String? termKey;
 
   factory CourseScheduleCacheMeta.fromJson(Map<String, dynamic> json) {
@@ -382,6 +378,7 @@ class CourseScheduleCacheMeta {
     );
   }
 
+  @override
   Map<String, dynamic> toJson() {
     return {
       'lastFetchedAtMillis': lastFetchedAtMillis,
@@ -474,206 +471,78 @@ class InMemoryCourseScheduleStorage implements CourseScheduleStorage {
   }
 }
 
-class CourseScheduleRepository {
-  CourseScheduleRepository._({required CourseScheduleStorage storage})
-      : _storage = storage;
+class CourseScheduleRepository extends BaseNetCachedRepository<
+    CourseScheduleData, CourseScheduleCacheMeta, CourseScheduleStorage> {
+  CourseScheduleRepository._({
+    required CourseScheduleStorage storage,
+  }) : super(storage);
 
   static CourseScheduleRepository? _instance;
 
-  static CourseScheduleRepository getInstance() {
+  static CourseScheduleRepository getInstance({
+    CourseScheduleStorage? storage,
+  }) {
     if (_instance != null) {
       return _instance!;
     }
     final CourseScheduleRepository repo = CourseScheduleRepository._(
-      storage: HiveCourseScheduleStorage(),
+      storage: storage ?? HiveCourseScheduleStorage(),
     );
     _instance = repo;
     return repo;
   }
 
-  final CourseScheduleStorage _storage;
-  CourseScheduleData? _cached;
-  CourseScheduleCacheMeta? _cachedMeta;
-  Completer<void>? _readyCompleter;
-  Future<void>? _pendingPersist;
-
-  Future<CourseScheduleData?> getCourseSchedule({
-    bool refreshFromStorage = false,
-  }) async {
-    if (!refreshFromStorage && _cached != null) {
-      return _cached;
-    }
-    _cached = await _storage.read();
-    return _cached;
+  @visibleForTesting
+  static void resetInstanceForTest() {
+    _instance = null;
   }
 
-  Future<CourseScheduleCacheMeta?> getMeta({
-    bool refreshFromStorage = false,
-  }) async {
-    if (!refreshFromStorage && _cachedMeta != null) {
-      return _cachedMeta;
-    }
-    _cachedMeta = await _storage.readMeta();
-    return _cachedMeta;
-  }
+  String? _pendingTermKey;
 
-  /// 仅从本地存储加载缓存，不触发网络请求。
-  Future<void> warmUp() async {
-    try {
-      final CourseScheduleData? data = await _storage.read();
-      final CourseScheduleCacheMeta? meta = await _storage.readMeta();
-      if (data == null && meta == null) {
-        return;
-      }
-      _saveCache(data: data, meta: meta, persist: false);
-    } catch (error, stackTrace) {
-      _completeLoadError(error, stackTrace);
-      rethrow;
-    }
-  }
-
-  /// 确保缓存数据已加载。
-  /// 
-  /// 如果缓存数据未加载，则会保持挂起状态，直到数据加载完成或出错。
-  Future<void> ensureLoaded() async{
-    if (_cached != null && _cachedMeta != null) {
-      return;
-    }
-    if (_readyCompleter != null) {
-      return _readyCompleter!.future;
-    }
-    _readyCompleter = Completer<void>();
-    return _readyCompleter!.future;
-  }
-
-  void _completeReady() {
-    if (_readyCompleter != null && !_readyCompleter!.isCompleted) {
-      _readyCompleter!.complete();
-    }
-  }
-
-  void _completeLoadError(Object error, [StackTrace? stackTrace]) {
-    if (_readyCompleter != null && !_readyCompleter!.isCompleted) {
-      _readyCompleter!.completeError(error, stackTrace);
-    }
-    _readyCompleter = null;
-  }
-
-  /// 从 [fetcher] 中获取数据，并缓存到 [_storage] 中。
-  /// 
-  /// fetch后会立即缓存数据到 [_storage] 中，并且不会等待落盘IO完成，直接返回fetch到的数据。
-  /// save抛出的错误可以从 [flush] 方法中获取。
-  Future<CourseScheduleData> fetchAndSave({
-    required DateTime now,
-    required Future<CourseScheduleData> Function() fetcher,
-    String? termKey,
-  }) async {
-    final CourseScheduleData fetched = await fetcher();
-    final CourseScheduleCacheMeta meta = CourseScheduleCacheMeta(
+  @override
+  CourseScheduleCacheMeta buildMeta(DateTime now) {
+    return CourseScheduleCacheMeta(
       lastFetchedAtMillis: now.millisecondsSinceEpoch,
-      termKey: termKey,
+      termKey: _pendingTermKey,
     );
-    _saveCache(data: fetched, meta: meta, persist: true);
-    return fetched;
   }
 
-  /// 缓存数据到内存或者本地存储。
-  /// 
-  /// 尽量以非挂起式方式缓存数据，避免阻塞调用方。
-  /// 如果 [persist] 为 `true`，则会额外将数据持久化到本地存储。
-  void _saveCache({
-    CourseScheduleData? data,
-    CourseScheduleCacheMeta? meta,
-    required bool persist,
-  }) {
-    if (data != null) {
-      _cached = data;
+  Future<CourseScheduleData?> getCached({
+    bool refreshFromStorage = false,
+  }) async {
+    if (!refreshFromStorage && cachedData != null) {
+      return cachedData;
     }
-    if (meta != null) {
-      _cachedMeta = meta;
+    return readDataFromStorage();
+  }
+
+  Future<CourseScheduleCacheMeta?> getCachedMeta({
+    bool refreshFromStorage = false,
+  }) async {
+    if (!refreshFromStorage && cachedMeta != null) {
+      return cachedMeta;
     }
-    _completeReady();
-    if (!persist || _cached == null || _cachedMeta == null) {
-      return;
-    }
-    _queuePersist(_cached!, _cachedMeta!);
+    return readMetaFromStorage();
   }
 
-  /// 异步将缓存数据持久化到本地存储。
-  /// 
-  /// 后续可通过 [flush] 方法等待所有持久化任务完成或处理错误。
-  Future<void> _queuePersist(
-    CourseScheduleData data,
-    CourseScheduleCacheMeta meta,
-  ) {
-    final Future<void> task = Future.wait([
-      _storage.save(data),
-      _storage.saveMeta(meta),
-    ]).then((_) => null);
-    _pendingPersist = (_pendingPersist ?? Future.value()).then((_) => task);
-    return _pendingPersist!;
-  }
-
-  Future<void> flush() {
-    return _pendingPersist ?? Future.value();
-  }
-
-  /// 获取课程表数据（推荐）
-  /// 
-  /// 如果缓存中没有数据，或者缓存数据过期，
-  /// 则会从 [fetcher] 中获取数据，并缓存到 [_storage] 中。
+  @override
   Future<CourseScheduleData> getOrFetch({
     required DateTime now,
     required Future<CourseScheduleData> Function() fetcher,
     String? termKey,
     Duration ttl = const Duration(days: 7),
   }) async {
-    final CourseScheduleData? cached = _cached;
-    final CourseScheduleCacheMeta? meta = _cachedMeta;
-    bool shouldFetch = cached == null;
-    if (!shouldFetch) {
-      if (termKey != null && termKey.isNotEmpty && meta?.termKey != termKey) {
-        shouldFetch = true;
-      } else if (meta == null || meta.lastFetchedAtMillis <= 0) {
-        shouldFetch = true;
-      } else {
-        final DateTime lastFetched =
-            DateTime.fromMillisecondsSinceEpoch(meta.lastFetchedAtMillis);
-        if (now.difference(lastFetched) >= ttl) {
-          shouldFetch = true;
-        }
-      }
+    _pendingTermKey ??= termKey;
+    final CourseScheduleData data;
+    try{
+      data = await super.getOrFetch(
+        now: now,
+        fetcher: fetcher,
+        ttl: ttl,
+      );
+      return data;
+    } finally{
+      _pendingTermKey = null;
     }
-    if (!shouldFetch) {
-      return cached!;
-    }
-    return fetchAndSave(
-      now: now,
-      termKey: termKey,
-      fetcher: fetcher,
-    );
-  }
-
-  Future<void> saveCourseSchedule(CourseScheduleData data) async {
-    _saveCache(data: data, persist: true);
-  }
-
-  Future<void> saveFromNetDataList(
-    List<CourseScheduleItemNetData> list,
-  ) async {
-    await saveCourseSchedule(CourseScheduleData.fromNetDataList(list));
-  }
-
-  Future<void> clearCourseSchedule() async {
-    await flush();
-    _pendingPersist = null;
-    _cached = null;
-    _cachedMeta = null;
-    _readyCompleter = null;
-    await _storage.clear();
-  }
-
-  Future<void> saveMeta(CourseScheduleCacheMeta meta) async {
-    _saveCache(meta: meta, persist: true);
   }
 }

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:onetj/app/logging/logger.dart';
 
 import 'package:onetj/features/timetable/view_models/timetable_view_model.dart';
 import 'package:onetj/features/timetable/views/widgets/timetable_timeline_panel.dart';
@@ -63,6 +64,36 @@ class _TimetableViewState extends State<TimetableView> {
 
   String _formatTeacher(TimetableEntry entry) {
     return entry.teacherName;
+  }
+
+  String _formatLastFetchTime(DateTime value) {
+    final String year = value.year.toString().padLeft(4, '0');
+    final String month = value.month.toString().padLeft(2, '0');
+    final String day = value.day.toString().padLeft(2, '0');
+    final String hour = value.hour.toString().padLeft(2, '0');
+    final String minute = value.minute.toString().padLeft(2, '0');
+    return '$year-$month-$day $hour:$minute';
+  }
+
+  Widget _buildLastFetchFooter(BuildContext context, AppLocalizations l10n) {
+    final DateTime? lastFetchedAt = _viewModel.lastFetchedAt;
+    final String timeText = lastFetchedAt == null
+        ? l10n.timetableLastFetchUnknown
+        : _formatLastFetchTime(lastFetchedAt);
+    final TextStyle? style = Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        );
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+        child: Text(
+          l10n.timetableLastFetch(timeText),
+          textAlign: TextAlign.center,
+          style: style,
+        ),
+      ),
+    );
   }
 
   Future<void> _showCourseDetails(
@@ -136,7 +167,7 @@ class _TimetableViewState extends State<TimetableView> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
           child: SegmentedButton<TimetableDisplayMode>(
             segments: [
               ButtonSegment(
@@ -156,7 +187,7 @@ class _TimetableViewState extends State<TimetableView> {
         ),
         if (_viewModel.availableWeeks.isNotEmpty)
           SizedBox(
-            height: 40,
+            height: 30,
             child: _HorizontalWheel(
               controller: _weekController,
               itemExtent: 90,
@@ -198,6 +229,7 @@ class _TimetableViewState extends State<TimetableView> {
             },
           ),
         ),
+        _buildLastFetchFooter(context, l10n),
       ],
     );
   }
@@ -229,7 +261,7 @@ class _TimetableViewState extends State<TimetableView> {
         }
         return;
       }
-      // TODO 日志记录未同步的情况
+      AppLogger.error("Failed to sync wheel controllers", loggerName: "TimetableView");
     });
   }
 
@@ -241,7 +273,7 @@ class _TimetableViewState extends State<TimetableView> {
       isExpanded: _viewModel.mode == TimetableDisplayMode.day,
       duration: duration,
       child: SizedBox(
-        height: 40,
+        height: 30,
         child: _HorizontalWheel(
           controller: _dayController,
           itemExtent: 64,
