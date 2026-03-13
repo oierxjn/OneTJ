@@ -507,29 +507,6 @@ class CourseScheduleRepository extends BaseNetCachedRepository<
     );
   }
 
-  @override
-  bool shouldFetch({
-    required DateTime now,
-    required Duration ttl,
-    required CourseScheduleData? cached,
-    required CourseScheduleCacheMeta? meta,
-  }) {
-    final bool shouldFetchByBase = super.shouldFetch(
-      now: now,
-      ttl: ttl,
-      cached: cached,
-      meta: meta,
-    );
-    if (shouldFetchByBase) {
-      return true;
-    }
-    final String? termKey = _pendingTermKey;
-    if (termKey != null && termKey.isNotEmpty && meta?.termKey != termKey) {
-      return true;
-    }
-    return false;
-  }
-
   Future<CourseScheduleData?> getCached({
     bool refreshFromStorage = false,
   }) async {
@@ -555,26 +532,16 @@ class CourseScheduleRepository extends BaseNetCachedRepository<
     String? termKey,
     Duration ttl = const Duration(days: 7),
   }) async {
-    _pendingTermKey = (termKey != null && termKey.isNotEmpty) ? termKey : null;
-    try {
-      final CourseScheduleData data =
-          await super.getOrFetch(now: now, fetcher: fetcher, ttl: ttl);
+    _pendingTermKey ??= termKey;
+    final CourseScheduleData data;
+    try{
+      data = await super.getOrFetch(
+        now: now,
+        fetcher: fetcher,
+        ttl: ttl,
+      );
       return data;
-    } finally {
-      _pendingTermKey = null;
-    }
-  }
-
-  @override
-  Future<CourseScheduleData> refresh({
-    required DateTime now,
-    required Future<CourseScheduleData> Function() fetcher,
-    String? termKey,
-  }) async {
-    _pendingTermKey = (termKey != null && termKey.isNotEmpty) ? termKey : null;
-    try {
-      return await super.refresh(now: now, fetcher: fetcher);
-    } finally {
+    } finally{
       _pendingTermKey = null;
     }
   }
