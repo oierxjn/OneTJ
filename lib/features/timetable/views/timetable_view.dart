@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:onetj/app/logging/logger.dart';
 
 import 'package:onetj/features/timetable/view_models/timetable_view_model.dart';
 import 'package:onetj/features/timetable/views/widgets/timetable_timeline_panel.dart';
@@ -85,7 +86,7 @@ class _TimetableViewState extends State<TimetableView> {
     return SafeArea(
       top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
         child: Text(
           l10n.timetableLastFetch(timeText),
           textAlign: TextAlign.center,
@@ -260,7 +261,7 @@ class _TimetableViewState extends State<TimetableView> {
         }
         return;
       }
-      // TODO 日志记录未同步的情况
+      AppLogger.error("Failed to sync wheel controllers", loggerName: "TimetableView");
     });
   }
 
