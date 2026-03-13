@@ -167,7 +167,7 @@ class _TimetableViewState extends State<TimetableView> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
           child: SegmentedButton<TimetableDisplayMode>(
             segments: [
               ButtonSegment(
@@ -187,7 +187,7 @@ class _TimetableViewState extends State<TimetableView> {
         ),
         if (_viewModel.availableWeeks.isNotEmpty)
           SizedBox(
-            height: 40,
+            height: 30,
             child: _HorizontalWheel(
               controller: _weekController,
               itemExtent: 90,
@@ -273,7 +273,7 @@ class _TimetableViewState extends State<TimetableView> {
       isExpanded: _viewModel.mode == TimetableDisplayMode.day,
       duration: duration,
       child: SizedBox(
-        height: 40,
+        height: 30,
         child: _HorizontalWheel(
           controller: _dayController,
           itemExtent: 64,
