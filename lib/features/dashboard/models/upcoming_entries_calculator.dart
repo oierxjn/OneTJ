@@ -38,8 +38,15 @@ class UpcomingEntriesCalculator {
   static bool isEntryOngoing({
     required TimetableEntry entry,
     required DateTime now,
+    required int currentWeek,
     required List<TimePeriodRangeData> timeSlotRanges,
   }) {
+    if (entry.dayOfWeek != now.weekday) {
+      return false;
+    }
+    if (entry.weeks.isNotEmpty && !entry.weeks.contains(currentWeek)) {
+      return false;
+    }
     final int startIndex = entry.timeStart - 1;
     final int endIndex = entry.timeEnd - 1;
     if (startIndex < 0 ||
@@ -54,16 +61,26 @@ class UpcomingEntriesCalculator {
     return startMinute <= nowMinutes && nowMinutes < endMinute;
   }
 
-  static List<DashboardUpcomingEntryData> calculate(UpcomingEntriesQuery query) {
+  static List<DashboardUpcomingEntryData> calculate(
+      UpcomingEntriesQuery query) {
     final List<TimetableEntry> entries = calculateEntry(query);
-    return entries.map((e) => DashboardUpcomingEntryData(
-      entry: e,
-      isOngoing: isEntryOngoing(
-        entry: e,
-        now: query.now,
-        timeSlotRanges: query.timeSlotRanges,
-      ),
-    )).toList();
+    return entries
+        .asMap()
+        .entries
+        .map(
+          (item) => DashboardUpcomingEntryData(
+            entry: item.value,
+            isOngoing: item.key == 0
+                ? isEntryOngoing(
+                    entry: item.value,
+                    now: query.now,
+                    currentWeek: query.currentWeek,
+                    timeSlotRanges: query.timeSlotRanges,
+                  )
+                : false,
+          ),
+        )
+        .toList(growable: false);
   }
 
   static List<TimetableEntry> calculateEntry(UpcomingEntriesQuery query) {
@@ -153,7 +170,12 @@ class UpcomingEntriesCalculator {
       return dayEntries;
     }
     dayEntries.removeWhere(
-      (entry) => !_isOngoingOrAfterNow(entry, query.now, query.timeSlotRanges),
+      (entry) => !_isOngoingOrAfterNow(
+        entry,
+        query.now,
+        query.currentWeek,
+        query.timeSlotRanges,
+      ),
     );
     return dayEntries;
   }
@@ -168,11 +190,13 @@ class UpcomingEntriesCalculator {
   static bool _isOngoingOrAfterNow(
     TimetableEntry entry,
     DateTime now,
+    int currentWeek,
     List<TimePeriodRangeData> timeSlotRanges,
   ) {
     return isEntryOngoing(
           entry: entry,
           now: now,
+          currentWeek: currentWeek,
           timeSlotRanges: timeSlotRanges,
         ) ||
         _isAfterNow(entry, now, timeSlotRanges);

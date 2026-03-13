@@ -545,4 +545,30 @@ class CourseScheduleRepository extends BaseNetCachedRepository<
       _pendingTermKey = null;
     }
   }
+
+  @override bool shouldFetch({required DateTime now, required Duration ttl, required CourseScheduleData? cached, required CourseScheduleCacheMeta? meta}) {
+    if (meta == null || meta.termKey != _pendingTermKey) {
+      return true;
+    }
+    return super.shouldFetch(now: now, ttl: ttl, cached: cached, meta: meta);
+  }
+
+  @override
+  Future<CourseScheduleData> refresh({
+    required DateTime now,
+    required Future<CourseScheduleData> Function() fetcher,
+    String? termKey,
+  }) async {
+    _pendingTermKey ??= termKey;
+    final CourseScheduleData data;
+    try {
+      data = await super.refresh(
+        now: now,
+        fetcher: fetcher,
+      );
+      return data;
+    } finally {
+      _pendingTermKey = null;
+    }
+  }
 }
