@@ -3,6 +3,7 @@ import 'package:onetj/services/tongji.dart';
 import 'package:onetj/repo/course_schedule_repository.dart';
 import 'package:onetj/repo/school_calendar_repository.dart';
 import 'package:onetj/services/timetable_index_builder.dart';
+import 'package:onetj/services/term_key_resolver.dart';
 import 'package:onetj/models/timetable_index.dart';
 
 class TimetableModel {
@@ -11,17 +12,26 @@ class TimetableModel {
     TimetableIndexBuilder? indexBuilder,
     CourseScheduleRepository? scheduleRepository,
     SchoolCalendarRepository? calendarRepository,
+    TermKeyResolver? termKeyResolver,
   })  : _api = api ?? TongjiApi(),
         _indexBuilder = indexBuilder ?? const TimetableIndexBuilder(),
         _scheduleRepository =
             scheduleRepository ?? CourseScheduleRepository.getInstance(),
         _calendarRepository =
-            calendarRepository ?? SchoolCalendarRepository.getInstance();
+            calendarRepository ?? SchoolCalendarRepository.getInstance(),
+        _termKeyResolver = termKeyResolver ??
+            TermKeyResolver(
+              calendarRepository:
+                  calendarRepository ?? SchoolCalendarRepository.getInstance(),
+              scheduleRepository:
+                  scheduleRepository ?? CourseScheduleRepository.getInstance(),
+            );
 
   final TongjiApi _api;
   final TimetableIndexBuilder _indexBuilder;
   final CourseScheduleRepository _scheduleRepository;
   final SchoolCalendarRepository _calendarRepository;
+  final TermKeyResolver _termKeyResolver;
 
   /// 获取当前周数
   ///
@@ -39,9 +49,15 @@ class TimetableModel {
   ///
   /// 如果本地数据库没有数据，从服务器获取并保存
   Future<TimetableIndex> getTimetableIndex() async {
+    final DateTime now = DateTime.now();
     await _scheduleRepository.warmUp();
+    final String? termKey = await _termKeyResolver.resolveCurrentTermKey(
+      now: now,
+      fetchSchoolCalendar: _api.fetchSchoolCalendarCurrentTerm,
+    );
     final CourseScheduleData data = await _scheduleRepository.getOrFetch(
-      now: DateTime.now(),
+      now: now,
+      termKey: termKey,
       fetcher: _api.fetchStudentTimetable,
     );
     return _indexBuilder.buildIndex(data);
