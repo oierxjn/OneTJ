@@ -25,7 +25,7 @@ class TimetableModel {
 
   /// 获取当前周数
   ///
-  /// 如果获取失败，返回默认值1
+  /// 如果获取失败，抛出错误
   Future<int> getSchoolCalendarCurrentWeek() async {
     await _calendarRepository.warmUp();
     final SchoolCalendarData data = await _calendarRepository.getOrFetch(
