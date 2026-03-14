@@ -55,8 +55,10 @@ abstract class BaseNetCachedRepository<TData extends BaseData,
   TMeta buildMeta(DateTime now);
 
   Future<void> warmUp() async {
+    _throwIfClearing();
     final TData? data = await readDataFromStorage();
     final TMeta? meta = await readMetaFromStorage();
+    _throwIfClearing();
     if (data == null && meta == null) {
       return;
     }
@@ -159,7 +161,6 @@ abstract class BaseNetCachedRepository<TData extends BaseData,
       return inFlight;
     }
     late final Future<TData> nextInFlight;
-    // TODO: 这里是立即执行 fetcher，是否有更好的方式？
     nextInFlight = () async {
       try {
         return await _fetchAndSave(now: now, fetcher: fetcher);
@@ -202,6 +203,7 @@ abstract class BaseNetCachedRepository<TData extends BaseData,
     _queuePersist(dataToPersist, metaToPersist);
   }
 
+  /// 轻量式检查是否正在清除缓存
   void _throwIfClearing() {
     if (_clearCompleter != null) {
       throw RepositoryClearingException(
