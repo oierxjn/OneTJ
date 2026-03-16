@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -315,6 +315,59 @@ class _SettingsViewState extends State<SettingsView> {
     _viewModel.updateUserCollectionFields(next);
   }
 
+  Future<void> _showLaunchWallpaperActions(BuildContext context) async {
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    final int? action = await showModalBottomSheet<int>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: Text(l10n.settingsLaunchWallpaperPickAction),
+              onTap: () => Navigator.of(context).pop(1),
+            ),
+            ListTile(
+              leading: const Icon(Icons.restore),
+              title: Text(l10n.settingsLaunchWallpaperResetAction),
+              onTap: () => Navigator.of(context).pop(2),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (!mounted) {
+      return;
+    }
+    if (action == 1) {
+      await _pickLaunchWallpaper();
+      return;
+    }
+    if (action == 2) {
+      _resetLaunchWallpaperToDefault();
+    }
+  }
+
+  Future<void> _pickLaunchWallpaper() async {
+    final bool changed = await _viewModel.pickLaunchWallpaperFromGallery();
+    if (!mounted || !changed) {
+      return;
+    }
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(l10n.settingsLaunchWallpaperPickSuccess)),
+    );
+  }
+
+  void _resetLaunchWallpaperToDefault() {
+    _viewModel.resetLaunchWallpaperToDefault();
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(l10n.settingsLaunchWallpaperResetDone)),
+    );
+  }
+
   String _timeSlotSummary(AppLocalizations l10n) {
     final List<TimePeriodRangeData> ranges = _viewModel.draftTimeSlotRanges;
     if (ranges.isEmpty) {
@@ -348,6 +401,13 @@ class _SettingsViewState extends State<SettingsView> {
       selected,
       UserCollectionField.values.length,
     );
+  }
+
+  String _launchWallpaperSummary(AppLocalizations l10n) {
+    if (_viewModel.draftLaunchWallpaperPath == null) {
+      return l10n.settingsLaunchWallpaperDefaultSummary;
+    }
+    return l10n.settingsLaunchWallpaperCustomSummary;
   }
 
   bool get _settingsBusy => _viewModel.isBusy;
@@ -501,6 +561,21 @@ class _SettingsViewState extends State<SettingsView> {
     );
   }
 
+  Widget _buildLaunchWallpaperCard(AppLocalizations l10n) {
+    final SettingsCardStatus status = _resolveCardStatus(
+      isDirty: _viewModel.isLaunchWallpaperDirty,
+      hasError: false,
+    );
+    return SettingsCard(
+      status: status,
+      leading: const Icon(Icons.wallpaper_outlined),
+      title: Text(l10n.settingsLaunchWallpaperTitle),
+      subtitle: Text(_launchWallpaperSummary(l10n)),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: _settingsBusy ? null : () => _showLaunchWallpaperActions(context),
+    );
+  }
+
   Widget _buildAboutCard(AppLocalizations l10n) {
     return SettingsCard(
       leading: const Icon(Icons.info_outline),
@@ -543,6 +618,8 @@ class _SettingsViewState extends State<SettingsView> {
         _buildDashboardUpcomingCard(l10n),
         const SizedBox(height: 12),
         _buildUserCollectionPolicyCard(l10n),
+        const SizedBox(height: 12),
+        _buildLaunchWallpaperCard(l10n),
         const SizedBox(height: 12),
         _buildAboutCard(l10n),
         const SizedBox(height: 24),

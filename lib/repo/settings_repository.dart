@@ -16,6 +16,7 @@ class SettingsData {
     required this.dashboardUpcomingMode,
     required this.dashboardUpcomingCount,
     required this.userCollectionFields,
+    required this.launchWallpaperPath,
   });
 
   final int maxWeek;
@@ -23,6 +24,7 @@ class SettingsData {
   final DashboardUpcomingMode dashboardUpcomingMode;
   final int dashboardUpcomingCount;
   final Set<UserCollectionField> userCollectionFields;
+  final String? launchWallpaperPath;
 
   factory SettingsData.fromJson(Map<String, dynamic> json) {
     final int maxWeek = _readMaxWeekWithFallback(json);
@@ -34,6 +36,7 @@ class SettingsData {
       dashboardUpcomingMode: _readDashboardUpcomingModeWithFallback(json),
       dashboardUpcomingCount: _readDashboardUpcomingCountWithFallback(json),
       userCollectionFields: _readUserCollectionFieldsWithFallback(json),
+      launchWallpaperPath: _readLaunchWallpaperPathWithFallback(json),
     );
   }
 
@@ -47,6 +50,7 @@ class SettingsData {
           .where((field) => userCollectionFields.contains(field))
           .map((field) => field.jsonKey)
           .toList(growable: false),
+      'launchWallpaperPath': launchWallpaperPath,
     };
   }
 
@@ -133,6 +137,22 @@ class SettingsData {
         )
         .whereType<UserCollectionField>()
         .toSet();
+  }
+
+  static String? _readLaunchWallpaperPathWithFallback(
+    Map<String, dynamic> json,
+  ) {
+    if (!json.containsKey('launchWallpaperPath')) {
+      return null;
+    }
+    final Object? value = json['launchWallpaperPath'];
+    if (value == null) {
+      return null;
+    }
+    if (value is! String || value.isEmpty) {
+      return null;
+    }
+    return value;
   }
 
   static int _parseMaxWeek(Object? value) {
@@ -259,6 +279,7 @@ class SettingsRepository {
     dashboardUpcomingMode: kDefaultDashboardUpcomingMode,
     dashboardUpcomingCount: kDefaultDashboardUpcomingCount,
     userCollectionFields: kDefaultUserCollectionFields,
+    launchWallpaperPath: null,
   );
 
   static SettingsRepository getInstance() {

@@ -47,6 +47,11 @@ dependencies:
 
   uuid: ^4.4.2
   shared_preferences: ^2.3.2
+  image_picker:
+    git:
+      url: "https://gitcode.com/openharmony-tpc/flutter_packages.git"
+      ref: "br_image_picker-v1.1.2_ohos"
+      path: "packages/image_picker/image_picker"
 
   flutter_inappwebview:
     path: ./local_packages/flutter_inappwebview/flutter_inappwebview

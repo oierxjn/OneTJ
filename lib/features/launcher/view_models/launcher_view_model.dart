@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/app/logging/logger.dart';
@@ -19,7 +20,11 @@ class LauncherViewModel extends BaseViewModel {
 
   final StreamController<UiEvent> _eventController;
   final HiveStorageService _hiveStorageService;
+  String? _wallpaperFilePath;
+
   Stream<UiEvent> get events => _eventController.stream;
+  String? get wallpaperFilePath => _wallpaperFilePath;
+  bool get useDefaultWallpaper => _wallpaperFilePath == null;
 
   /// 进行初始化任务和跳转路由
   Future<void> initialize() async {
@@ -31,14 +36,14 @@ class LauncherViewModel extends BaseViewModel {
       loggerName: 'LauncherViewModel',
     );
 
-    final List<Object?> results = await Future.wait([
-      // 异步任务
-      _initialize(),
-      // 启动延迟
-      Future.delayed(const Duration(milliseconds: 1200)),
-    ]);
+    final Future<String> initFuture = _initialize();
+    final Future<void> delayFuture = Future.delayed(
+      const Duration(milliseconds: 1200),
+    );
 
-    final String route = results.first as String;
+    final String route = await initFuture;
+    await delayFuture;
+
     AppLogger.logNavigation(
       from: RoutePaths.launcher,
       to: route,
@@ -47,16 +52,55 @@ class LauncherViewModel extends BaseViewModel {
     _eventController.add(NavigateEvent(route));
   }
 
+  /// 根据初始化状况返回初始路由
   Future<String> _initialize() async {
     await _hiveStorageService.initializeHive();
-    await Future.wait([
-      WebViewEnvironmentService.instance.initialize(),
-      SettingsRepository.getInstance().getSettings(
-        refreshFromStorage: true,
-      ),
-    ]);
+    final Future<void> webViewInitFuture =
+        WebViewEnvironmentService.instance.initialize();
+    final Future<SettingsData> settingsFuture =
+        SettingsRepository.getInstance().getSettings(
+      refreshFromStorage: true,
+    );
+
+    final SettingsData settings = await settingsFuture;
+    final String? wallpaperFilePath = await _resolveWallpaperFilePath(settings);
+    _updateWallpaperFilePath(wallpaperFilePath);
+    await webViewInitFuture;
     final String route = await _resolveInitialRoute();
     return route;
+  }
+
+  Future<String?> _resolveWallpaperFilePath(SettingsData settings) async {
+    final String? path = settings.launchWallpaperPath;
+    if (path == null || path.isEmpty) {
+      AppLogger.info(
+        'Launch wallpaper fallback to default by empty custom path',
+        loggerName: 'LauncherViewModel',
+      );
+      return null;
+    }
+    if (!await File(path).exists()) {
+      AppLogger.warning(
+        'Launch wallpaper fallback to default by missing custom file',
+        loggerName: 'LauncherViewModel',
+        context: <String, Object?>{'path': path},
+      );
+      return null;
+    }
+    AppLogger.info(
+      'Launch wallpaper resolved to custom file',
+      loggerName: 'LauncherViewModel',
+      context: <String, Object?>{'path': path},
+    );
+    return path;
+  }
+
+  void _updateWallpaperFilePath(String? path) {
+    if (_wallpaperFilePath == path) {
+      return;
+    }
+    _wallpaperFilePath = path;
+    notifyListeners();
   }
 
   /// 通过判断 token 状态来确定初始路由
