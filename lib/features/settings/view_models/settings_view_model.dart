@@ -1,10 +1,6 @@
 import 'dart:async';
-import 'dart:io';
 
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-import 'package:image_picker/image_picker.dart';
 
 import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/app/constant/route_paths.dart';
@@ -60,7 +56,7 @@ class SettingsViewModel extends BaseViewModel {
   late DashboardUpcomingMode _draftUpcomingMode;
   late String _draftDashboardUpcomingCountText;
   late Set<UserCollectionField> _draftUserCollectionFields;
-  String? _draftLaunchWallpaperPath;
+  String? _draftLaunchWallpaperId;
 
   bool _hydrated = false;
   bool _settingsLoading = false;
@@ -86,7 +82,7 @@ class SettingsViewModel extends BaseViewModel {
       _draftDashboardUpcomingCountText;
   Set<UserCollectionField> get draftUserCollectionFields =>
       Set<UserCollectionField>.unmodifiable(_draftUserCollectionFields);
-  String? get draftLaunchWallpaperPath => _draftLaunchWallpaperPath;
+  String? get draftLaunchWallpaperId => _draftLaunchWallpaperId;
 
   bool get isHydrated => _hydrated;
   bool get settingsLoading => _settingsLoading;
@@ -128,7 +124,7 @@ class SettingsViewModel extends BaseViewModel {
   }
 
   bool get isLaunchWallpaperDirty =>
-      _draftLaunchWallpaperPath != _savedSettings.launchWallpaperPath;
+      _draftLaunchWallpaperId != _savedSettings.selectedLaunchWallpaperId;
 
   bool get isMaxWeekInvalid {
     try {
@@ -240,44 +236,11 @@ class SettingsViewModel extends BaseViewModel {
     notifyListeners();
   }
 
-  Future<bool> pickLaunchWallpaperFromGallery() async {
-    try {
-      final XFile? picked = await ImagePicker().pickImage(
-        source: ImageSource.gallery,
-      );
-      if (picked == null) {
-        return false;
-      }
-      final String persistedPath = await _persistLaunchWallpaperFile(
-        picked.path,
-      );
-      final bool pathChanged = _draftLaunchWallpaperPath != persistedPath;
-      _draftLaunchWallpaperPath = persistedPath;
-      if (pathChanged) {
-        notifyListeners();
-      }
-      return true;
-    } catch (error, stackTrace) {
-      AppLogger.error(
-        'Pick launch wallpaper failed',
-        loggerName: 'SettingsViewModel',
-        error: error,
-        stackTrace: stackTrace,
-      );
-      _eventController.add(
-        ShowSnackBarEvent(
-          message: 'Failed to select launch wallpaper: $error',
-        ),
-      );
-      return false;
-    }
-  }
-
-  void resetLaunchWallpaperToDefault() {
-    if (_draftLaunchWallpaperPath == null) {
+  void updateLaunchWallpaperSelection(String? value) {
+    if (_draftLaunchWallpaperId == value) {
       return;
     }
-    _draftLaunchWallpaperPath = null;
+    _draftLaunchWallpaperId = value;
     notifyListeners();
   }
 
@@ -419,7 +382,7 @@ class SettingsViewModel extends BaseViewModel {
         userCollectionFields: Set<UserCollectionField>.unmodifiable(
           _draftUserCollectionFields,
         ),
-        launchWallpaperPath: _draftLaunchWallpaperPath,
+        selectedLaunchWallpaperId: _draftLaunchWallpaperId,
       );
       await _settingsRepository.saveSettings(next);
       _savedSettings = next;
@@ -512,25 +475,7 @@ class SettingsViewModel extends BaseViewModel {
     _draftUserCollectionFields = Set<UserCollectionField>.from(
       data.userCollectionFields,
     );
-    _draftLaunchWallpaperPath = data.launchWallpaperPath;
-  }
-
-  /// 持久化启动壁纸文件
-  /// 
-  /// 将[sourcePath]复制到应用支持目录下的`launch_wallpaper.jpg`文件中
-  /// 再将[destinationPath]返回
-  Future<String> _persistLaunchWallpaperFile(String sourcePath) async {
-    final Directory supportDir = await getApplicationSupportDirectory();
-    final String extension = p.extension(sourcePath).toLowerCase();
-    final String safeExtension = extension.isEmpty ? '.jpg' : extension;
-    final String destinationPath = p.join(
-      supportDir.path,
-      'launch_wallpaper$safeExtension',
-    );
-    final File destination = File(destinationPath);
-    await destination.parent.create(recursive: true);
-    await File(sourcePath).copy(destinationPath);
-    return destinationPath;
+    _draftLaunchWallpaperId = data.selectedLaunchWallpaperId;
   }
 
   bool _sameTimeSlotRanges(

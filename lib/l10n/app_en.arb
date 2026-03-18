@@ -187,8 +187,26 @@
   "settingsLaunchWallpaperTitle": "Launch Wallpaper",
   "settingsLaunchWallpaperDefaultSummary": "Using built-in default wallpaper",
   "settingsLaunchWallpaperCustomSummary": "Using custom wallpaper",
+  "settingsLaunchWallpaperEditorCurrentTitle": "Current selection",
+  "settingsLaunchWallpaperLibraryEmpty": "No local wallpapers yet",
+  "settingsLaunchWallpaperLoadingPreview": "Loading preview...",
+  "settingsLaunchWallpaperRenameAction": "Rename",
+  "settingsLaunchWallpaperRenameTitle": "Rename wallpaper",
+  "settingsLaunchWallpaperRenameHint": "Wallpaper name",
+  "settingsLaunchWallpaperDeleteAction": "Delete",
+  "settingsLaunchWallpaperDeleteTitle": "Delete wallpaper",
+  "settingsLaunchWallpaperDeleteBody": "Delete \"{name}\" from local wallpaper library?",
+  "@settingsLaunchWallpaperDeleteBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "settingsLaunchWallpaperPickAction": "Choose from gallery",
+  "settingsLaunchWallpaperPickSubtitle": "Pick an image from the system gallery for the launch screen wallpaper",
   "settingsLaunchWallpaperResetAction": "Restore default wallpaper",
+  "settingsLaunchWallpaperResetSubtitle": "Switch back to the built-in launch screen wallpaper",
   "settingsLaunchWallpaperPickSuccess": "Custom launch wallpaper selected",
   "settingsLaunchWallpaperResetDone": "Launch wallpaper restored to default",
   "settingsUserCollectionFieldUserid": "Student ID",

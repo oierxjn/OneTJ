@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/features/settings/models/event.dart';
+import 'package:onetj/features/settings/models/launch_wallpaper_editor_result.dart';
 import 'package:onetj/features/settings/view_models/settings_view_model.dart';
 import 'package:onetj/features/settings/views/widgets/settings_card.dart';
 import 'package:onetj/features/settings/views/widgets/settings_card_visual_state.dart';
@@ -315,57 +316,36 @@ class _SettingsViewState extends State<SettingsView> {
     _viewModel.updateUserCollectionFields(next);
   }
 
-  Future<void> _showLaunchWallpaperActions(BuildContext context) async {
-    final AppLocalizations l10n = AppLocalizations.of(context);
-    final int? action = await showModalBottomSheet<int>(
-      context: context,
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.photo_library_outlined),
-              title: Text(l10n.settingsLaunchWallpaperPickAction),
-              onTap: () => Navigator.of(context).pop(1),
-            ),
-            ListTile(
-              leading: const Icon(Icons.restore),
-              title: Text(l10n.settingsLaunchWallpaperResetAction),
-              onTap: () => Navigator.of(context).pop(2),
-            ),
-          ],
-        ),
-      ),
+  Future<void> _openLaunchWallpaperEditor() async {
+    final LaunchWallpaperEditorResult? result =
+        await context.push<LaunchWallpaperEditorResult>(
+      RoutePaths.homeSettingsLaunchWallpaper,
+      extra: _viewModel.draftLaunchWallpaperId,
     );
-    if (!mounted) {
-      return;
-    }
-    if (action == 1) {
-      await _pickLaunchWallpaper();
-      return;
-    }
-    if (action == 2) {
-      _resetLaunchWallpaperToDefault();
-    }
-  }
-
-  Future<void> _pickLaunchWallpaper() async {
-    final bool changed = await _viewModel.pickLaunchWallpaperFromGallery();
-    if (!mounted || !changed) {
+    if (!mounted || result == null) {
       return;
     }
     final AppLocalizations l10n = AppLocalizations.of(context);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n.settingsLaunchWallpaperPickSuccess)),
-    );
-  }
-
-  void _resetLaunchWallpaperToDefault() {
-    _viewModel.resetLaunchWallpaperToDefault();
-    final AppLocalizations l10n = AppLocalizations.of(context);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n.settingsLaunchWallpaperResetDone)),
-    );
+    switch (result.action) {
+      case LaunchWallpaperEditorAction.unchanged:
+        return;
+      case LaunchWallpaperEditorAction.selectedCustom:
+        final String? wallpaperId = result.wallpaperId;
+        if (wallpaperId == null) {
+          return;
+        }
+        _viewModel.updateLaunchWallpaperSelection(wallpaperId);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.settingsLaunchWallpaperPickSuccess)),
+        );
+        return;
+      case LaunchWallpaperEditorAction.resetToDefault:
+        _viewModel.updateLaunchWallpaperSelection(null);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.settingsLaunchWallpaperResetDone)),
+        );
+        return;
+    }
   }
 
   String _timeSlotSummary(AppLocalizations l10n) {
@@ -404,7 +384,7 @@ class _SettingsViewState extends State<SettingsView> {
   }
 
   String _launchWallpaperSummary(AppLocalizations l10n) {
-    if (_viewModel.draftLaunchWallpaperPath == null) {
+    if (_viewModel.draftLaunchWallpaperId == null) {
       return l10n.settingsLaunchWallpaperDefaultSummary;
     }
     return l10n.settingsLaunchWallpaperCustomSummary;
@@ -572,7 +552,7 @@ class _SettingsViewState extends State<SettingsView> {
       title: Text(l10n.settingsLaunchWallpaperTitle),
       subtitle: Text(_launchWallpaperSummary(l10n)),
       trailing: const Icon(Icons.chevron_right),
-      onTap: _settingsBusy ? null : () => _showLaunchWallpaperActions(context),
+      onTap: _settingsBusy ? null : _openLaunchWallpaperEditor,
     );
   }
 

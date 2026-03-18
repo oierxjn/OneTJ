@@ -16,7 +16,7 @@ class SettingsData {
     required this.dashboardUpcomingMode,
     required this.dashboardUpcomingCount,
     required this.userCollectionFields,
-    required this.launchWallpaperPath,
+    required this.selectedLaunchWallpaperId,
   });
 
   final int maxWeek;
@@ -24,7 +24,7 @@ class SettingsData {
   final DashboardUpcomingMode dashboardUpcomingMode;
   final int dashboardUpcomingCount;
   final Set<UserCollectionField> userCollectionFields;
-  final String? launchWallpaperPath;
+  final String? selectedLaunchWallpaperId;
 
   factory SettingsData.fromJson(Map<String, dynamic> json) {
     final int maxWeek = _readMaxWeekWithFallback(json);
@@ -36,7 +36,8 @@ class SettingsData {
       dashboardUpcomingMode: _readDashboardUpcomingModeWithFallback(json),
       dashboardUpcomingCount: _readDashboardUpcomingCountWithFallback(json),
       userCollectionFields: _readUserCollectionFieldsWithFallback(json),
-      launchWallpaperPath: _readLaunchWallpaperPathWithFallback(json),
+      selectedLaunchWallpaperId:
+          _readSelectedLaunchWallpaperIdWithFallback(json),
     );
   }
 
@@ -50,8 +51,31 @@ class SettingsData {
           .where((field) => userCollectionFields.contains(field))
           .map((field) => field.jsonKey)
           .toList(growable: false),
-      'launchWallpaperPath': launchWallpaperPath,
+      'selectedLaunchWallpaperId': selectedLaunchWallpaperId,
     };
+  }
+
+  SettingsData copyWith({
+    int? maxWeek,
+    List<TimePeriodRangeData>? timeSlotRanges,
+    DashboardUpcomingMode? dashboardUpcomingMode,
+    int? dashboardUpcomingCount,
+    Set<UserCollectionField>? userCollectionFields,
+    String? selectedLaunchWallpaperId,
+    bool clearSelectedLaunchWallpaperId = false,
+  }) {
+    return SettingsData(
+      maxWeek: maxWeek ?? this.maxWeek,
+      timeSlotRanges: timeSlotRanges ?? this.timeSlotRanges,
+      dashboardUpcomingMode:
+          dashboardUpcomingMode ?? this.dashboardUpcomingMode,
+      dashboardUpcomingCount:
+          dashboardUpcomingCount ?? this.dashboardUpcomingCount,
+      userCollectionFields: userCollectionFields ?? this.userCollectionFields,
+      selectedLaunchWallpaperId: clearSelectedLaunchWallpaperId
+          ? null
+          : selectedLaunchWallpaperId ?? this.selectedLaunchWallpaperId,
+    );
   }
 
   static int _readMaxWeekWithFallback(Map<String, dynamic> json) {
@@ -139,13 +163,13 @@ class SettingsData {
         .toSet();
   }
 
-  static String? _readLaunchWallpaperPathWithFallback(
+  static String? _readSelectedLaunchWallpaperIdWithFallback(
     Map<String, dynamic> json,
   ) {
-    if (!json.containsKey('launchWallpaperPath')) {
+    if (!json.containsKey('selectedLaunchWallpaperId')) {
       return null;
     }
-    final Object? value = json['launchWallpaperPath'];
+    final Object? value = json['selectedLaunchWallpaperId'];
     if (value == null) {
       return null;
     }
@@ -279,7 +303,7 @@ class SettingsRepository {
     dashboardUpcomingMode: kDefaultDashboardUpcomingMode,
     dashboardUpcomingCount: kDefaultDashboardUpcomingCount,
     userCollectionFields: kDefaultUserCollectionFields,
-    launchWallpaperPath: null,
+    selectedLaunchWallpaperId: null,
   );
 
   static SettingsRepository getInstance() {

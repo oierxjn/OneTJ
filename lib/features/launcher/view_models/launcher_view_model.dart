@@ -10,6 +10,7 @@ import 'package:onetj/models/event_model.dart';
 import 'package:onetj/repo/settings_repository.dart';
 import 'package:onetj/repo/token_repository.dart';
 import 'package:onetj/services/hive_storage_service.dart';
+import 'package:onetj/services/launch_wallpaper_file_service.dart';
 import 'package:onetj/services/tongji.dart';
 import 'package:onetj/services/webview_environment_service.dart';
 
@@ -71,10 +72,13 @@ class LauncherViewModel extends BaseViewModel {
   }
 
   Future<String?> _resolveWallpaperFilePath(SettingsData settings) async {
-    final String? path = settings.launchWallpaperPath;
-    if (path == null || path.isEmpty) {
+    final String? path =
+        await LaunchWallpaperFileService.resolveWallpaperPathById(
+      settings.selectedLaunchWallpaperId,
+    );
+    if (path == null) {
       AppLogger.info(
-        'Launch wallpaper fallback to default by empty custom path',
+        'Launch wallpaper fallback to default by empty or missing custom id',
         loggerName: 'LauncherViewModel',
       );
       return null;

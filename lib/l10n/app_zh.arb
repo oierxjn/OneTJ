@@ -187,8 +187,26 @@
     "settingsLaunchWallpaperTitle": "启动页壁纸",
     "settingsLaunchWallpaperDefaultSummary": "当前使用内置默认壁纸",
     "settingsLaunchWallpaperCustomSummary": "当前使用自定义壁纸",
+    "settingsLaunchWallpaperEditorCurrentTitle": "当前选择",
+    "settingsLaunchWallpaperLibraryEmpty": "当前还没有本地壁纸",
+    "settingsLaunchWallpaperLoadingPreview": "正在加载预览...",
+    "settingsLaunchWallpaperRenameAction": "重命名",
+    "settingsLaunchWallpaperRenameTitle": "重命名壁纸",
+    "settingsLaunchWallpaperRenameHint": "壁纸名称",
+    "settingsLaunchWallpaperDeleteAction": "删除",
+    "settingsLaunchWallpaperDeleteTitle": "删除壁纸",
+    "settingsLaunchWallpaperDeleteBody": "确定将“{name}”从本地壁纸库中删除吗？",
+    "@settingsLaunchWallpaperDeleteBody": {
+      "placeholders": {
+        "name": {
+          "type": "String"
+        }
+      }
+    },
     "settingsLaunchWallpaperPickAction": "从相册选择",
+    "settingsLaunchWallpaperPickSubtitle": "从系统相册选择一张图片作为启动页壁纸",
     "settingsLaunchWallpaperResetAction": "恢复默认壁纸",
+    "settingsLaunchWallpaperResetSubtitle": "切换回应用内置的默认启动页壁纸",
     "settingsLaunchWallpaperPickSuccess": "已选择自定义启动页壁纸",
     "settingsLaunchWallpaperResetDone": "启动页壁纸已恢复为默认",
     "settingsUserCollectionFieldUserid": "学号",
