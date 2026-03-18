@@ -1,9 +1,9 @@
 import 'dart:async';
 
+import 'package:onetj/features/settings/models/launch_wallpaper_editor_result.dart';
 import 'package:onetj/models/base_model.dart';
 import 'package:onetj/models/event_model.dart';
 import 'package:onetj/models/launch_wallpaper_item.dart';
-import 'package:onetj/features/settings/models/launch_wallpaper_editor_result.dart';
 import 'package:onetj/services/launch_wallpaper_file_service.dart';
 
 class LaunchWallpaperEditorUiState {
@@ -11,6 +11,7 @@ class LaunchWallpaperEditorUiState {
     required this.loading,
     required this.busy,
     required this.wallpapers,
+    required this.wallpaperPathById,
     required this.selectedWallpaperId,
     required this.selectedWallpaperPath,
   });
@@ -18,6 +19,7 @@ class LaunchWallpaperEditorUiState {
   final bool loading;
   final bool busy;
   final List<LaunchWallpaperItem> wallpapers;
+  final Map<String, String> wallpaperPathById;
   final String? selectedWallpaperId;
   final String? selectedWallpaperPath;
 }
@@ -35,9 +37,10 @@ class LaunchWallpaperEditorViewModel extends BaseViewModel {
   String? _draftSelectedWallpaperId;
   String? _selectedWallpaperPath;
   List<LaunchWallpaperItem> _wallpapers = <LaunchWallpaperItem>[];
+  /// 快速映射壁纸ID到路径
+  Map<String, String> _wallpaperPathById = <String, String>{};
   bool _loading = true;
   bool _busy = false;
-  int _pathResolveVersion = 0;
 
   Stream<UiEvent> get events => _eventController.stream;
 
@@ -45,6 +48,7 @@ class LaunchWallpaperEditorViewModel extends BaseViewModel {
         loading: _loading,
         busy: _busy,
         wallpapers: List<LaunchWallpaperItem>.unmodifiable(_wallpapers),
+        wallpaperPathById: Map<String, String>.unmodifiable(_wallpaperPathById),
         selectedWallpaperId: _draftSelectedWallpaperId,
         selectedWallpaperPath: _selectedWallpaperPath,
       );
@@ -72,7 +76,8 @@ class LaunchWallpaperEditorViewModel extends BaseViewModel {
           await LaunchWallpaperFileService.importFromGallery();
       await _refreshWallpapers();
       if (selectedId != null) {
-        await _setSelectedWallpaperId(selectedId);
+        _draftSelectedWallpaperId = selectedId;
+        _selectedWallpaperPath = _wallpaperPathById[selectedId];
       }
     } catch (error) {
       _eventController.add(
@@ -90,7 +95,6 @@ class LaunchWallpaperEditorViewModel extends BaseViewModel {
   }) async {
     final String trimmed = displayName.trim();
     if (trimmed.isEmpty || _busy) {
-      // TODO: 详细提示
       return;
     }
     _busy = true;
@@ -113,7 +117,6 @@ class LaunchWallpaperEditorViewModel extends BaseViewModel {
 
   Future<void> deleteWallpaper(String wallpaperId) async {
     if (_busy) {
-      // TODO: 显示繁忙提示
       return;
     }
     _busy = true;
@@ -135,12 +138,12 @@ class LaunchWallpaperEditorViewModel extends BaseViewModel {
     if (_draftSelectedWallpaperId == wallpaperId || _busy) {
       return;
     }
-    _setSelectedWallpaperId(wallpaperId).then((_) {
-      notifyListeners();
-    });
+    _draftSelectedWallpaperId = wallpaperId;
+    _selectedWallpaperPath = _wallpaperPathById[wallpaperId];
+    notifyListeners();
   }
 
-  Future<void> resetToDefault() async {
+  void resetToDefault() {
     if (_draftSelectedWallpaperId == null || _busy) {
       return;
     }
@@ -167,35 +170,37 @@ class LaunchWallpaperEditorViewModel extends BaseViewModel {
     final List<LaunchWallpaperItem> items =
         await LaunchWallpaperFileService.listWallpapers();
     _wallpapers = items;
+    _wallpaperPathById = await _buildWallpaperPathById(items);
     if (_draftSelectedWallpaperId != null &&
         !_wallpapers.any((item) => item.id == _draftSelectedWallpaperId)) {
       _draftSelectedWallpaperId = null;
     }
-    await _resolveSelectedWallpaperPath();
-  }
-
-  Future<void> _setSelectedWallpaperId(String? value) async {
-    _draftSelectedWallpaperId = value;
-    await _resolveSelectedWallpaperPath();
-  }
-
-  /// 设置选中的壁纸路径
-  /// 
-  /// 当解析完成后，若版本号与当前版本号不一致，则说明有其他操作已更新选中的壁纸，
-  /// 则不更新当前选中的壁纸路径。
-  Future<void> _resolveSelectedWallpaperPath() async {
-    final int version = ++_pathResolveVersion;
     final String? selectedId = _draftSelectedWallpaperId;
-    if (selectedId == null || selectedId.isEmpty) {
-      _selectedWallpaperPath = null;
-      return;
+    _selectedWallpaperPath =
+        selectedId == null ? null : _wallpaperPathById[selectedId];
+  }
+
+  Future<Map<String, String>> _buildWallpaperPathById(
+    List<LaunchWallpaperItem> items,
+  ) async {
+    final List<MapEntry<String, String?>> entries = await Future.wait(
+      items.map((item) async {
+        final String? path =
+            await LaunchWallpaperFileService.resolveWallpaperPathByFileName(
+          item.fileName,
+        );
+        return MapEntry<String, String?>(item.id, path);
+      }),
+    );
+    final Map<String, String> result = <String, String>{};
+    for (final MapEntry<String, String?> entry in entries) {
+      final String? value = entry.value;
+      if (value == null || value.isEmpty) {
+        continue;
+      }
+      result[entry.key] = value;
     }
-    final String? path =
-        await LaunchWallpaperFileService.resolveWallpaperPathById(selectedId);
-    if (version != _pathResolveVersion) {
-      return;
-    }
-    _selectedWallpaperPath = path;
+    return result;
   }
 
   @override

@@ -117,6 +117,17 @@ class LaunchWallpaperFileService {
     return file.path;
   }
 
+  static Future<String?> resolveWallpaperPathByFileName(String fileName) async {
+    if (fileName.isEmpty) {
+      return null;
+    }
+    final File file = await _getFileByName(fileName);
+    if (!await file.exists()) {
+      return null;
+    }
+    return file.path;
+  }
+
   /// 重命名壁纸
   ///
   /// 将其显示名称更新为[displayName]的trimmed版本。

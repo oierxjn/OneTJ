@@ -124,7 +124,49 @@ class _LaunchWallpaperEditorViewState extends State<LaunchWallpaperEditorView> {
     Navigator.of(context).pop(result);
   }
 
-  Widget _buildPreviewCard(
+  Widget _buildCurrentPreviewCard(
+    AppLocalizations l10n,
+    LaunchWallpaperEditorUiState state,
+  ) {
+    final bool useDefaultWallpaper = state.selectedWallpaperId == null;
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.settingsLaunchWallpaperEditorCurrentTitle,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 10),
+            Container(
+              height: 220,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainerLow,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: _buildPreviewContent(l10n, state),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              useDefaultWallpaper
+                  ? l10n.settingsLaunchWallpaperDefaultSummary
+                  : l10n.settingsLaunchWallpaperCustomSummary,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPreviewContent(
     AppLocalizations l10n,
     LaunchWallpaperEditorUiState state,
   ) {
@@ -142,121 +184,172 @@ class _LaunchWallpaperEditorViewState extends State<LaunchWallpaperEditorView> {
         title: l10n.settingsLaunchWallpaperLoadingPreview,
       );
     }
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: Image.file(
-        File(selectedPath),
-        height: 220,
-        width: double.infinity,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return _WallpaperPreviewPlaceholder(
-            icon: Icons.broken_image_outlined,
-            title: l10n.settingsLaunchWallpaperCustomSummary,
-          );
-        },
-      ),
+    return Image.file(
+      File(selectedPath),
+      fit: BoxFit.contain,
+      errorBuilder: (context, error, stackTrace) {
+        return _WallpaperPreviewPlaceholder(
+          icon: Icons.broken_image_outlined,
+          title: l10n.settingsLaunchWallpaperCustomSummary,
+        );
+      },
     );
   }
 
-  Widget _buildWallpaperLibraryCard(
+  Widget _buildGridSection(
     AppLocalizations l10n,
     LaunchWallpaperEditorUiState state,
   ) {
     final List<LaunchWallpaperItem> wallpapers = state.wallpapers;
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        child: wallpapers.isEmpty
-            ? Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                child: Text(l10n.settingsLaunchWallpaperLibraryEmpty),
-              )
-            : Column(
-                children: wallpapers.map((item) {
-                  final bool isSelected = item.id == state.selectedWallpaperId;
-                  return ListTile(
-                    enabled: !state.busy,
-                    leading: Icon(
-                      isSelected
-                          ? Icons.radio_button_checked
-                          : Icons.radio_button_unchecked,
-                    ),
-                    title: Text(item.displayName),
-                    subtitle: Text(item.fileName),
-                    onTap: () => _viewModel.selectWallpaper(item.id),
-                    trailing: PopupMenuButton<String>(
-                      onSelected: (value) {
-                        if (value == 'rename') {
-                          _onRenameWallpaper(item);
-                          return;
-                        }
-                        if (value == 'delete') {
-                          _onDeleteWallpaper(item);
-                        }
-                      },
-                      itemBuilder: (context) => [
-                        PopupMenuItem<String>(
-                          value: 'rename',
-                          child: Text(l10n.settingsLaunchWallpaperRenameAction),
-                        ),
-                        PopupMenuItem<String>(
-                          value: 'delete',
-                          child: Text(l10n.settingsLaunchWallpaperDeleteAction),
-                        ),
-                      ],
-                    ),
-                  );
-                }).toList(growable: false),
-              ),
+    if (wallpapers.isEmpty) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
+          child: Text(l10n.settingsLaunchWallpaperLibraryEmpty),
+        ),
+      );
+    }
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: wallpapers.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        childAspectRatio: 0.82,
       ),
+      itemBuilder: (context, index) {
+        final LaunchWallpaperItem item = wallpapers[index];
+        final bool selected = item.id == state.selectedWallpaperId;
+        final String? path = state.wallpaperPathById[item.id];
+        return _buildWallpaperTile(
+          l10n: l10n,
+          item: item,
+          selected: selected,
+          path: path,
+          busy: state.busy,
+        );
+      },
     );
   }
 
-  Widget _buildCurrentWallpaperCard(
-    AppLocalizations l10n,
-    LaunchWallpaperEditorUiState state,
-  ) {
-    final bool useDefaultWallpaper = state.selectedWallpaperId == null;
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: const EdgeInsets.all(8),
+  Widget _buildWallpaperTile({
+    required AppLocalizations l10n,
+    required LaunchWallpaperItem item,
+    required bool selected,
+    required String? path,
+    required bool busy,
+  }) {
+    return InkWell(
+      onTap: busy ? null : () => _viewModel.selectWallpaper(item.id),
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: selected
+                ? Theme.of(context).colorScheme.primary
+                : Theme.of(context).colorScheme.outlineVariant,
+            width: selected ? 2.2 : 1,
+          ),
+          color: Theme.of(context).colorScheme.surface,
+        ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              l10n.settingsLaunchWallpaperEditorCurrentTitle,
-              style: Theme.of(context).textTheme.titleMedium,
+            Expanded(
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: Container(
+                          color: Theme.of(context).colorScheme.surfaceContainer,
+                          child: path == null
+                              ? _WallpaperPreviewPlaceholder(
+                                  icon: Icons.image_not_supported_outlined,
+                                  title:
+                                      l10n.settingsLaunchWallpaperCustomSummary,
+                                )
+                              : Image.file(
+                                  File(path),
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return _WallpaperPreviewPlaceholder(
+                                      icon: Icons.broken_image_outlined,
+                                      title: l10n
+                                          .settingsLaunchWallpaperCustomSummary,
+                                    );
+                                  },
+                                ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 6,
+                    right: 6,
+                    child: Row(
+                      children: [
+                        PopupMenuButton<String>(
+                          enabled: !busy,
+                          icon: const Icon(Icons.more_vert, size: 18),
+                          onSelected: (value) {
+                            if (value == 'rename') {
+                              _onRenameWallpaper(item);
+                              return;
+                            }
+                            if (value == 'delete') {
+                              _onDeleteWallpaper(item);
+                            }
+                          },
+                          itemBuilder: (context) => [
+                            PopupMenuItem<String>(
+                              value: 'rename',
+                              child: Text(
+                                  l10n.settingsLaunchWallpaperRenameAction),
+                            ),
+                            PopupMenuItem<String>(
+                              value: 'delete',
+                              child: Text(
+                                  l10n.settingsLaunchWallpaperDeleteAction),
+                            ),
+                          ],
+                        ),
+                        if (selected)
+                          Container(
+                            width: 22,
+                            height: 22,
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.primary,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.check,
+                              size: 14,
+                              color: Theme.of(context).colorScheme.onPrimary,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 8),
-            _buildPreviewCard(l10n, state),
-            const SizedBox(height: 8),
-            Text(
-              useDefaultWallpaper
-                  ? l10n.settingsLaunchWallpaperDefaultSummary
-                  : l10n.settingsLaunchWallpaperCustomSummary,
-              style: Theme.of(context).textTheme.bodyMedium,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(4, 0, 4, 4),
+              child: Text(
+                item.displayName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildActionCard({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-  }) {
-    return Card(
-      child: ListTile(
-        leading: Icon(icon),
-        title: Text(title),
-        subtitle: Text(subtitle),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: onTap,
       ),
     );
   }
@@ -280,6 +373,30 @@ class _LaunchWallpaperEditorViewState extends State<LaunchWallpaperEditorView> {
             onPressed: _popWithResult,
           ),
           title: Text(l10n.settingsLaunchWallpaperTitle),
+          actions: [
+            IconButton(
+              tooltip: l10n.settingsLaunchWallpaperPickAction,
+              onPressed: () {
+                final LaunchWallpaperEditorUiState state = _viewModel.uiState;
+                if (state.busy) {
+                  return;
+                }
+                _viewModel.pickFromGallery();
+              },
+              icon: const Icon(Icons.add_photo_alternate_outlined),
+            ),
+            IconButton(
+              tooltip: l10n.settingsLaunchWallpaperResetAction,
+              onPressed: () {
+                final LaunchWallpaperEditorUiState state = _viewModel.uiState;
+                if (state.busy) {
+                  return;
+                }
+                _viewModel.resetToDefault();
+              },
+              icon: const Icon(Icons.restore),
+            ),
+          ],
         ),
         body: AnimatedBuilder(
           animation: _viewModel,
@@ -289,25 +406,11 @@ class _LaunchWallpaperEditorViewState extends State<LaunchWallpaperEditorView> {
               return const Center(child: CircularProgressIndicator());
             }
             return ListView(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(12),
               children: [
-                _buildCurrentWallpaperCard(l10n, state),
+                _buildCurrentPreviewCard(l10n, state),
                 const SizedBox(height: 12),
-                _buildWallpaperLibraryCard(l10n, state),
-                const SizedBox(height: 12),
-                _buildActionCard(
-                  icon: Icons.photo_library_outlined,
-                  title: l10n.settingsLaunchWallpaperPickAction,
-                  subtitle: l10n.settingsLaunchWallpaperPickSubtitle,
-                  onTap: state.busy ? () {} : _viewModel.pickFromGallery,
-                ),
-                const SizedBox(height: 12),
-                _buildActionCard(
-                  icon: Icons.restore,
-                  title: l10n.settingsLaunchWallpaperResetAction,
-                  subtitle: l10n.settingsLaunchWallpaperResetSubtitle,
-                  onTap: state.busy ? () {} : _viewModel.resetToDefault,
-                ),
+                _buildGridSection(l10n, state),
               ],
             );
           },
@@ -328,26 +431,19 @@ class _WallpaperPreviewPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 220,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Theme.of(context).colorScheme.surfaceContainerHighest,
-            Theme.of(context).colorScheme.surfaceContainerLow,
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-      ),
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(icon, size: 40),
           const SizedBox(height: 12),
-          Text(title),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Text(
+              title,
+              textAlign: TextAlign.center,
+            ),
+          ),
         ],
       ),
     );
