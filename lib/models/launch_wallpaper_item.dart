@@ -2,7 +2,8 @@ class LaunchWallpaperItem {
   const LaunchWallpaperItem({
     required this.id,
     required this.displayName,
-    required this.fileName,
+    this.fileName,
+    this.assetPath,
     required this.source,
     required this.createdAt,
     required this.updatedAt,
@@ -10,7 +11,8 @@ class LaunchWallpaperItem {
 
   final String id;
   final String displayName;
-  final String fileName;
+  final String? fileName;
+  final String? assetPath;
   final String source;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -19,7 +21,8 @@ class LaunchWallpaperItem {
     return LaunchWallpaperItem(
       id: json['id'] as String,
       displayName: json['displayName'] as String,
-      fileName: json['fileName'] as String,
+      fileName: json['fileName'] as String?,
+      assetPath: json['assetPath'] as String?,
       source: json['source'] as String? ?? 'gallery',
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
@@ -31,6 +34,7 @@ class LaunchWallpaperItem {
       'id': id,
       'displayName': displayName,
       'fileName': fileName,
+      'assetPath': assetPath,
       'source': source,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
@@ -40,6 +44,7 @@ class LaunchWallpaperItem {
   LaunchWallpaperItem copyWith({
     String? displayName,
     String? fileName,
+    String? assetPath,
     String? source,
     DateTime? updatedAt,
   }) {
@@ -47,6 +52,7 @@ class LaunchWallpaperItem {
       id: id,
       displayName: displayName ?? this.displayName,
       fileName: fileName ?? this.fileName,
+      assetPath: assetPath ?? this.assetPath,
       source: source ?? this.source,
       createdAt: createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

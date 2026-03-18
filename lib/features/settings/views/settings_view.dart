@@ -15,6 +15,7 @@ import 'package:onetj/features/settings/views/widgets/settings_card_visual_state
 import 'package:onetj/features/settings/views/widgets/upcoming_courses_card.dart';
 import 'package:onetj/models/dashboard_upcoming_mode.dart';
 import 'package:onetj/models/event_model.dart';
+import 'package:onetj/models/launch_wallpaper_ref.dart';
 import 'package:onetj/models/time_period_range.dart';
 import 'package:onetj/models/time_slot.dart';
 import 'package:onetj/models/user_collection_field.dart';
@@ -320,7 +321,7 @@ class _SettingsViewState extends State<SettingsView> {
     final LaunchWallpaperEditorResult? result =
         await context.push<LaunchWallpaperEditorResult>(
       RoutePaths.homeSettingsLaunchWallpaper,
-      extra: _viewModel.draftLaunchWallpaperId,
+      extra: _viewModel.draftLaunchWallpaperRef,
     );
     if (!mounted || result == null) {
       return;
@@ -329,20 +330,10 @@ class _SettingsViewState extends State<SettingsView> {
     switch (result.action) {
       case LaunchWallpaperEditorAction.unchanged:
         return;
-      case LaunchWallpaperEditorAction.selectedCustom:
-        final String? wallpaperId = result.wallpaperId;
-        if (wallpaperId == null) {
-          return;
-        }
-        _viewModel.updateLaunchWallpaperSelection(wallpaperId);
+      case LaunchWallpaperEditorAction.selected:
+        _viewModel.updateLaunchWallpaperSelection(result.wallpaperRef);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(l10n.settingsLaunchWallpaperPickSuccess)),
-        );
-        return;
-      case LaunchWallpaperEditorAction.resetToDefault:
-        _viewModel.updateLaunchWallpaperSelection(null);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.settingsLaunchWallpaperResetDone)),
         );
         return;
     }
@@ -384,7 +375,8 @@ class _SettingsViewState extends State<SettingsView> {
   }
 
   String _launchWallpaperSummary(AppLocalizations l10n) {
-    if (_viewModel.draftLaunchWallpaperId == null) {
+    if (_viewModel.draftLaunchWallpaperRef.type ==
+        LaunchWallpaperRef.typeBuiltin) {
       return l10n.settingsLaunchWallpaperDefaultSummary;
     }
     return l10n.settingsLaunchWallpaperCustomSummary;

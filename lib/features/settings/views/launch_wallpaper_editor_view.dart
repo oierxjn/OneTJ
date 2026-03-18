@@ -8,14 +8,16 @@ import 'package:onetj/features/settings/models/launch_wallpaper_editor_result.da
 import 'package:onetj/features/settings/view_models/launch_wallpaper_editor_view_model.dart';
 import 'package:onetj/models/event_model.dart';
 import 'package:onetj/models/launch_wallpaper_item.dart';
+import 'package:onetj/models/launch_wallpaper_ref.dart';
+import 'package:onetj/services/launch_wallpaper_file_service.dart';
 
 class LaunchWallpaperEditorView extends StatefulWidget {
   const LaunchWallpaperEditorView({
     super.key,
-    required this.initialSelectedWallpaperId,
+    required this.initialSelectedWallpaperRef,
   });
 
-  final String? initialSelectedWallpaperId;
+  final LaunchWallpaperRef initialSelectedWallpaperRef;
 
   @override
   State<LaunchWallpaperEditorView> createState() =>
@@ -30,7 +32,7 @@ class _LaunchWallpaperEditorViewState extends State<LaunchWallpaperEditorView> {
   void initState() {
     super.initState();
     _viewModel = LaunchWallpaperEditorViewModel(
-      initialSelectedWallpaperId: widget.initialSelectedWallpaperId,
+      initialSelectedWallpaperRef: widget.initialSelectedWallpaperRef,
     );
     _eventSub = _viewModel.events.listen((event) {
       if (!mounted || event is! ShowSnackBarEvent) {
@@ -128,7 +130,7 @@ class _LaunchWallpaperEditorViewState extends State<LaunchWallpaperEditorView> {
     AppLocalizations l10n,
     LaunchWallpaperEditorUiState state,
   ) {
-    final bool useDefaultWallpaper = state.selectedWallpaperId == null;
+    final bool useDefaultWallpaper = state.selectedWallpaperRef.isBuiltin;
     return Card(
       clipBehavior: Clip.antiAlias,
       child: Padding(
@@ -170,12 +172,40 @@ class _LaunchWallpaperEditorViewState extends State<LaunchWallpaperEditorView> {
     AppLocalizations l10n,
     LaunchWallpaperEditorUiState state,
   ) {
-    final String? selectedId = state.selectedWallpaperId;
+    final String selectedId = state.selectedWallpaperRef.id;
     final String? selectedPath = state.selectedWallpaperPath;
-    if (selectedId == null) {
+    LaunchWallpaperItem? selectedItem;
+    for (final LaunchWallpaperItem item in state.wallpapers) {
+      if (item.id == selectedId) {
+        selectedItem = item;
+        break;
+      }
+    }
+    if (selectedItem == null) {
       return _WallpaperPreviewPlaceholder(
         icon: Icons.wallpaper_outlined,
         title: l10n.settingsLaunchWallpaperDefaultSummary,
+      );
+    }
+    if (selectedItem.source == LaunchWallpaperFileService.builtinSource) {
+      final String? assetPath = selectedItem.assetPath;
+      if (assetPath == null || assetPath.isEmpty) {
+        return _WallpaperPreviewPlaceholder(
+          icon: Icons.broken_image_outlined,
+          // TODO 应该改成错误文本
+          title: l10n.settingsLaunchWallpaperCustomSummary,
+        );
+      }
+      return Image.asset(
+        assetPath,
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) {
+          return _WallpaperPreviewPlaceholder(
+            icon: Icons.broken_image_outlined,
+            // TODO 应该改成错误文本
+            title: l10n.settingsLaunchWallpaperCustomSummary,
+          );
+        },
       );
     }
     if (selectedPath == null) {
@@ -222,7 +252,7 @@ class _LaunchWallpaperEditorViewState extends State<LaunchWallpaperEditorView> {
       ),
       itemBuilder: (context, index) {
         final LaunchWallpaperItem item = wallpapers[index];
-        final bool selected = item.id == state.selectedWallpaperId;
+        final bool selected = item.id == state.selectedWallpaperRef.id;
         final String? path = state.wallpaperPathById[item.id];
         return _buildWallpaperTile(
           l10n: l10n,
@@ -242,6 +272,9 @@ class _LaunchWallpaperEditorViewState extends State<LaunchWallpaperEditorView> {
     required String? path,
     required bool busy,
   }) {
+    // TODO 可以讨论isBuiltin是否要放在viewModel
+    final bool isBuiltin =
+        item.source == LaunchWallpaperFileService.builtinSource;
     return InkWell(
       onTap: busy ? null : () => _viewModel.selectWallpaper(item.id),
       borderRadius: BorderRadius.circular(14),
@@ -269,11 +302,24 @@ class _LaunchWallpaperEditorViewState extends State<LaunchWallpaperEditorView> {
                         child: Container(
                           color: Theme.of(context).colorScheme.surfaceContainer,
                           child: path == null
-                              ? _WallpaperPreviewPlaceholder(
-                                  icon: Icons.image_not_supported_outlined,
-                                  title:
-                                      l10n.settingsLaunchWallpaperCustomSummary,
-                                )
+                              ? (isBuiltin
+                                  ? Image.asset(
+                                      item.assetPath ?? '',
+                                      fit: BoxFit.contain,
+                                      errorBuilder:
+                                          (context, error, stackTrace) {
+                                        return _WallpaperPreviewPlaceholder(
+                                          icon: Icons.broken_image_outlined,
+                                          title: l10n
+                                              .settingsLaunchWallpaperCustomSummary,
+                                        );
+                                      },
+                                    )
+                                  : _WallpaperPreviewPlaceholder(
+                                      icon: Icons.image_not_supported_outlined,
+                                      title: l10n
+                                          .settingsLaunchWallpaperCustomSummary,
+                                    ))
                               : Image.file(
                                   File(path),
                                   fit: BoxFit.contain,
@@ -312,11 +358,12 @@ class _LaunchWallpaperEditorViewState extends State<LaunchWallpaperEditorView> {
                               child: Text(
                                   l10n.settingsLaunchWallpaperRenameAction),
                             ),
-                            PopupMenuItem<String>(
-                              value: 'delete',
-                              child: Text(
-                                  l10n.settingsLaunchWallpaperDeleteAction),
-                            ),
+                            if (!isBuiltin)
+                              PopupMenuItem<String>(
+                                value: 'delete',
+                                child: Text(
+                                    l10n.settingsLaunchWallpaperDeleteAction),
+                              ),
                           ],
                         ),
                         if (selected)

@@ -8,6 +8,7 @@ import 'package:onetj/features/settings/views/log_viewer_view.dart';
 import 'package:onetj/features/settings/views/settings_view.dart';
 import 'package:onetj/features/settings/views/time_slot_editor_view.dart';
 import 'package:onetj/features/settings/views/user_collection_policy_view.dart';
+import 'package:onetj/models/launch_wallpaper_ref.dart';
 import 'package:onetj/models/settings_defaults.dart';
 import 'package:onetj/models/time_period_range.dart';
 import 'package:onetj/models/user_collection_field.dart';
@@ -53,12 +54,12 @@ final List<GoRoute> settingsRoutes = [
         name: 'settings-launch-wallpaper',
         builder: (context, state) {
           final Object? extra = state.extra;
-          final String? initialWallpaperId = switch (extra) {
-            String value when value.isNotEmpty => value,
-            _ => null,
+          final LaunchWallpaperRef initialWallpaperRef = switch (extra) {
+            LaunchWallpaperRef value => value,
+            _ => LaunchWallpaperRef.defaultValue,
           };
           return LaunchWallpaperEditorView(
-            initialSelectedWallpaperId: initialWallpaperId,
+            initialSelectedWallpaperRef: initialWallpaperRef,
           );
         },
       ),

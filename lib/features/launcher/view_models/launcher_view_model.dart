@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/app/logging/logger.dart';
@@ -7,6 +6,7 @@ import 'package:onetj/app/logging/logging_bootstrap.dart';
 import 'package:onetj/models/base_model.dart';
 import 'package:onetj/models/data/code2token.dart';
 import 'package:onetj/models/event_model.dart';
+import 'package:onetj/models/launch_wallpaper_ref.dart';
 import 'package:onetj/repo/settings_repository.dart';
 import 'package:onetj/repo/token_repository.dart';
 import 'package:onetj/services/hive_storage_service.dart';
@@ -22,10 +22,11 @@ class LauncherViewModel extends BaseViewModel {
   final StreamController<UiEvent> _eventController;
   final HiveStorageService _hiveStorageService;
   String? _wallpaperFilePath;
+  String? _wallpaperAssetPath;
 
   Stream<UiEvent> get events => _eventController.stream;
   String? get wallpaperFilePath => _wallpaperFilePath;
-  bool get useDefaultWallpaper => _wallpaperFilePath == null;
+  String? get wallpaperAssetPath => _wallpaperAssetPath;
 
   /// 进行初始化任务和跳转路由
   Future<void> initialize() async {
@@ -64,46 +65,46 @@ class LauncherViewModel extends BaseViewModel {
     );
 
     final SettingsData settings = await settingsFuture;
-    final String? wallpaperFilePath = await _resolveWallpaperFilePath(settings);
-    _updateWallpaperFilePath(wallpaperFilePath);
+    final LaunchWallpaperResolved? resolved =
+        await _resolveWallpaper(settings.selectedLaunchWallpaperRef);
+    _updateWallpaper(resolved);
     await webViewInitFuture;
     final String route = await _resolveInitialRoute();
     return route;
   }
 
-  Future<String?> _resolveWallpaperFilePath(SettingsData settings) async {
-    final String? path =
-        await LaunchWallpaperFileService.resolveWallpaperPathById(
-      settings.selectedLaunchWallpaperId,
-    );
-    if (path == null) {
+  Future<LaunchWallpaperResolved?> _resolveWallpaper(
+    LaunchWallpaperRef wallpaperRef,
+  ) async {
+    final LaunchWallpaperResolved? resolved =
+        await LaunchWallpaperFileService.resolveWallpaper(wallpaperRef);
+    if (resolved == null) {
       AppLogger.info(
-        'Launch wallpaper fallback to default by empty or missing custom id',
+        'Launch wallpaper fallback to default by missing selected id',
         loggerName: 'LauncherViewModel',
-      );
-      return null;
-    }
-    if (!await File(path).exists()) {
-      AppLogger.warning(
-        'Launch wallpaper fallback to default by missing custom file',
-        loggerName: 'LauncherViewModel',
-        context: <String, Object?>{'path': path},
       );
       return null;
     }
     AppLogger.info(
-      'Launch wallpaper resolved to custom file',
+      'Launch wallpaper resolved',
       loggerName: 'LauncherViewModel',
-      context: <String, Object?>{'path': path},
+      context: <String, Object?>{
+        'filePath': resolved.filePath,
+        'assetPath': resolved.assetPath,
+      },
     );
-    return path;
+    return resolved;
   }
 
-  void _updateWallpaperFilePath(String? path) {
-    if (_wallpaperFilePath == path) {
+  void _updateWallpaper(LaunchWallpaperResolved? resolved) {
+    final String? nextFilePath = resolved?.filePath;
+    final String? nextAssetPath = resolved?.assetPath;
+    if (_wallpaperFilePath == nextFilePath &&
+        _wallpaperAssetPath == nextAssetPath) {
       return;
     }
-    _wallpaperFilePath = path;
+    _wallpaperFilePath = nextFilePath;
+    _wallpaperAssetPath = nextAssetPath;
     notifyListeners();
   }
 

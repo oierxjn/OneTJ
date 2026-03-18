@@ -53,6 +53,14 @@ class _LauncherViewState extends State<LauncherView> {
   }
 
   Widget _buildWallpaper() {
+    final String? assetPath = _viewModel.wallpaperAssetPath;
+    if (assetPath != null) {
+      return Image.asset(
+        assetPath,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _defaultWallpaper(),
+      );
+    }
     final String? customPath = _viewModel.wallpaperFilePath;
     if (customPath != null) {
       return Image.file(

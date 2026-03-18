@@ -1,5 +1,5 @@
-import 'dart:io';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
@@ -8,6 +8,24 @@ import 'package:uuid/uuid.dart';
 
 import 'package:onetj/app/logging/logger.dart';
 import 'package:onetj/models/launch_wallpaper_item.dart';
+import 'package:onetj/models/launch_wallpaper_ref.dart';
+import 'package:onetj/models/settings_defaults.dart';
+
+class LaunchWallpaperResolved {
+  const LaunchWallpaperResolved._({
+    this.filePath,
+    this.assetPath,
+  });
+
+  const LaunchWallpaperResolved.file(String filePath)
+      : this._(filePath: filePath);
+
+  const LaunchWallpaperResolved.asset(String assetPath)
+      : this._(assetPath: assetPath);
+
+  final String? filePath;
+  final String? assetPath;
+}
 
 class LaunchWallpaperFileService {
   const LaunchWallpaperFileService._();
@@ -16,6 +34,20 @@ class LaunchWallpaperFileService {
   static const String _indexFileName = 'index.json';
   static const String _filesFolderName = 'files';
   static const Uuid _uuid = Uuid();
+  static const String builtinSource = 'builtin';
+  static const String importedSource = 'gallery';
+
+  /// 内置壁纸项
+  static const List<(String id, String name, String assetPath)> _builtinSeeds =
+      [
+    (
+      kDefaultLaunchWallpaperId,
+      'Built-in Wallpaper',
+      kDefaultLaunchWallpaperAsset,
+    ),
+  ];
+
+  static String get defaultWallpaperId => kDefaultLaunchWallpaperId;
 
   static Future<String?> importFromGallery() async {
     final XFile? picked = await ImagePicker().pickImage(
@@ -27,7 +59,7 @@ class LaunchWallpaperFileService {
     return importFromFile(
       sourcePath: picked.path,
       preferredDisplayName: p.basenameWithoutExtension(picked.path),
-      source: 'gallery',
+      source: importedSource,
     );
   }
 
@@ -53,6 +85,7 @@ class LaunchWallpaperFileService {
         fallbackIndex: items.length + 1,
       ),
       fileName: fileName,
+      assetPath: null,
       source: source,
       createdAt: now,
       updatedAt: now,
@@ -72,8 +105,128 @@ class LaunchWallpaperFileService {
     return id;
   }
 
-  /// 在index.json中读取所有壁纸项
   static Future<List<LaunchWallpaperItem>> listWallpapers() async {
+    final List<LaunchWallpaperItem> indexItems = await _readIndexItems();
+    return _mergeBuiltinItems(indexItems);
+  }
+
+  static Future<LaunchWallpaperResolved?> resolveWallpaper(
+    LaunchWallpaperRef ref,
+  ) async {
+    if (ref.id.isEmpty) {
+      return null;
+    }
+    if (ref.type == LaunchWallpaperRef.typeNetwork) {
+      return null;
+    }
+    final List<LaunchWallpaperItem> items = await listWallpapers();
+    final LaunchWallpaperItem? item = _findItemById(
+      items,
+      wallpaperId: ref.id,
+    );
+    if (item == null) {
+      return null;
+    }
+    if (ref.type == LaunchWallpaperRef.typeBuiltin) {
+      final String? assetPath = item.assetPath;
+      if (assetPath == null || assetPath.isEmpty) {
+        return null;
+      }
+      return LaunchWallpaperResolved.asset(assetPath);
+    }
+    final String? fileName = item.fileName;
+    if (fileName == null || fileName.isEmpty) {
+      return null;
+    }
+    final File file = await _getFileByName(fileName);
+    if (!await file.exists()) {
+      return null;
+    }
+    return LaunchWallpaperResolved.file(file.path);
+  }
+
+  static Future<LaunchWallpaperResolved?> resolveWallpaperById(
+    String wallpaperId,
+  ) {
+    return resolveWallpaper(
+      LaunchWallpaperRef(
+        type: LaunchWallpaperRef.typeLocal,
+        id: wallpaperId,
+      ),
+    );
+  }
+
+  static Future<String?> resolveWallpaperPathById(String wallpaperId) async {
+    final LaunchWallpaperResolved? resolved = await resolveWallpaperById(
+      wallpaperId,
+    );
+    return resolved?.filePath;
+  }
+
+  static Future<String?> resolveWallpaperPathByFileName(String fileName) async {
+    if (fileName.isEmpty) {
+      return null;
+    }
+    final File file = await _getFileByName(fileName);
+    if (!await file.exists()) {
+      return null;
+    }
+    return file.path;
+  }
+
+  static Future<void> renameWallpaper({
+    required String wallpaperId,
+    required String displayName,
+  }) async {
+    final String normalized =
+        _normalizeDisplayName(displayName, fallbackIndex: 0);
+    final List<LaunchWallpaperItem> items = await listWallpapers();
+    final int index = items.indexWhere((item) => item.id == wallpaperId);
+    if (index < 0) {
+      return;
+    }
+    items[index] = items[index].copyWith(
+      displayName: normalized,
+      updatedAt: DateTime.now(),
+    );
+    await _saveIndex(items);
+  }
+
+  static Future<void> deleteWallpaper(String wallpaperId) async {
+    final List<LaunchWallpaperItem> items = await listWallpapers();
+    final int index = items.indexWhere((item) => item.id == wallpaperId);
+    if (index < 0) {
+      return;
+    }
+    final LaunchWallpaperItem removed = items.removeAt(index);
+    if (removed.source == builtinSource) {
+      return;
+    }
+    await _saveIndex(items);
+
+    final String? fileName = removed.fileName;
+    if (fileName == null || fileName.isEmpty) {
+      return;
+    }
+    final File file = await _getFileByName(fileName);
+    if (await file.exists()) {
+      await file.delete();
+    }
+  }
+
+  static LaunchWallpaperItem? _findItemById(
+    List<LaunchWallpaperItem> items, {
+    required String wallpaperId,
+  }) {
+    for (final LaunchWallpaperItem item in items) {
+      if (item.id == wallpaperId) {
+        return item;
+      }
+    }
+    return null;
+  }
+
+  static Future<List<LaunchWallpaperItem>> _readIndexItems() async {
     final File indexFile = await _getIndexFile(create: false);
     if (!await indexFile.exists()) {
       return <LaunchWallpaperItem>[];
@@ -96,100 +249,44 @@ class LaunchWallpaperFileService {
     return items;
   }
 
-  /// 根据壁纸ID获取壁纸文件路径
-  ///
-  /// 如果[wallpaperId]存在于index.json中且元数据对应的文件存在，返回对应的文件路径
-  /// 否则返回null。
-  static Future<String?> resolveWallpaperPathById(String? wallpaperId) async {
-    if (wallpaperId == null || wallpaperId.isEmpty) {
-      return null;
-    }
-    final List<LaunchWallpaperItem> items = await listWallpapers();
-    final LaunchWallpaperItem? item =
-        _findItemById(items, wallpaperId: wallpaperId);
-    if (item == null) {
-      return null;
-    }
-    final File file = await _getFileByName(item.fileName);
-    if (!await file.exists()) {
-      return null;
-    }
-    return file.path;
-  }
-
-  static Future<String?> resolveWallpaperPathByFileName(String fileName) async {
-    if (fileName.isEmpty) {
-      return null;
-    }
-    final File file = await _getFileByName(fileName);
-    if (!await file.exists()) {
-      return null;
-    }
-    return file.path;
-  }
-
-  /// 重命名壁纸
-  ///
-  /// 将其显示名称更新为[displayName]的trimmed版本。
-  /// 如果[displayName]为空，将显示名称设置为'Wallpaper'。
-  static Future<void> renameWallpaper({
-    required String wallpaperId,
-    required String displayName,
-  }) async {
-    final String normalized =
-        _normalizeDisplayName(displayName, fallbackIndex: 0);
-    final List<LaunchWallpaperItem> items = await listWallpapers();
-    final int index = items.indexWhere((item) => item.id == wallpaperId);
-    if (index < 0) {
-      return;
-    }
-    items[index] = items[index].copyWith(
-      displayName: normalized,
-      updatedAt: DateTime.now(),
-    );
-    await _saveIndex(items);
-  }
-
-  /// 删除壁纸
-  ///
-  /// 如果[wallpaperId]存在于index.json中，将其从index.json中移除
-  /// 并删除对应的文件。
-  /// 否则，不执行任何操作。
-  static Future<void> deleteWallpaper(String wallpaperId) async {
-    final List<LaunchWallpaperItem> items = await listWallpapers();
-    final int index = items.indexWhere((item) => item.id == wallpaperId);
-    if (index < 0) {
-      // TODO 不存在的情况应该让上层感知
-      return;
-    }
-    final LaunchWallpaperItem removed = items.removeAt(index);
-    await _saveIndex(items);
-
-    final File file = await _getFileByName(removed.fileName);
-    if (await file.exists()) {
-      await file.delete();
-    }
-  }
-
-  static LaunchWallpaperItem? _findItemById(
-    List<LaunchWallpaperItem> items, {
-    required String wallpaperId,
-  }) {
-    for (final LaunchWallpaperItem item in items) {
-      if (item.id == wallpaperId) {
-        return item;
+  static List<LaunchWallpaperItem> _mergeBuiltinItems(
+    List<LaunchWallpaperItem> items,
+  ) {
+    final List<LaunchWallpaperItem> merged = <LaunchWallpaperItem>[...items];
+    final DateTime now = DateTime.now();
+    for (final (String id, String name, String assetPath) in _builtinSeeds) {
+      final int index = merged.indexWhere((item) => item.id == id);
+      if (index < 0) {
+        merged.add(
+          LaunchWallpaperItem(
+            id: id,
+            displayName: name,
+            fileName: null,
+            assetPath: assetPath,
+            source: builtinSource,
+            createdAt: now,
+            updatedAt: now,
+          ),
+        );
+        continue;
+      }
+      final LaunchWallpaperItem current = merged[index];
+      if (current.source != builtinSource) {
+        merged[index] = current.copyWith(
+          source: builtinSource,
+          fileName: null,
+          assetPath: assetPath,
+        );
+        continue;
+      }
+      if (current.assetPath != assetPath) {
+        merged[index] = current.copyWith(assetPath: assetPath);
       }
     }
-    return null;
+    return merged;
   }
 
-  /// 标准化壁纸显示名称
-  ///
-  /// 如果[value]不为空，返回[value]的trimmed版本。
-  /// 否则，如果[fallbackIndex]大于0，返回'Wallpaper $fallbackIndex'。
-  /// 否则，返回'Wallpaper'。
-  static String _normalizeDisplayName(String value,
-      {required int fallbackIndex}) {
+  static String _normalizeDisplayName(String value, {required int fallbackIndex}) {
     final String trimmed = value.trim();
     if (trimmed.isNotEmpty) {
       return trimmed;

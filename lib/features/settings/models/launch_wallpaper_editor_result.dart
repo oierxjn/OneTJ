@@ -1,27 +1,28 @@
+import 'package:onetj/models/launch_wallpaper_ref.dart';
+
 enum LaunchWallpaperEditorAction {
   unchanged,
-  selectedCustom,
-  resetToDefault,
+  selected,
 }
 
 class LaunchWallpaperEditorResult {
   const LaunchWallpaperEditorResult._({
     required this.action,
-    this.wallpaperId,
+    required this.wallpaperRef,
   });
 
   const LaunchWallpaperEditorResult.unchanged()
-      : this._(action: LaunchWallpaperEditorAction.unchanged);
-
-  const LaunchWallpaperEditorResult.selectedCustom(String wallpaperId)
       : this._(
-          action: LaunchWallpaperEditorAction.selectedCustom,
-          wallpaperId: wallpaperId,
+          action: LaunchWallpaperEditorAction.unchanged,
+          wallpaperRef: LaunchWallpaperRef.defaultValue,
         );
 
-  const LaunchWallpaperEditorResult.resetToDefault()
-      : this._(action: LaunchWallpaperEditorAction.resetToDefault);
+  const LaunchWallpaperEditorResult.selected(LaunchWallpaperRef wallpaperRef)
+      : this._(
+          action: LaunchWallpaperEditorAction.selected,
+          wallpaperRef: wallpaperRef,
+        );
 
   final LaunchWallpaperEditorAction action;
-  final String? wallpaperId;
+  final LaunchWallpaperRef wallpaperRef;
 }
