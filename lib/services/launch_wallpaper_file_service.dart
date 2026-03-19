@@ -37,6 +37,11 @@ class LaunchWallpaperFileService {
   static const String builtinSource = 'builtin';
   static const String importedSource = 'gallery';
   static Future<Directory>? _cachedSupportDirectoryFuture;
+  static List<LaunchWallpaperItem>? _cachedIndexItems;
+  static List<LaunchWallpaperItem>? _cachedMergedItems;
+  static Map<String, String>? _cachedPathById;
+  static bool _cacheDirty = true;
+  static Future<void>? _cacheLoadingFuture;
 
   /// 内置壁纸项
   static const List<(String id, String name, String assetPath)> _builtinSeeds =
@@ -106,9 +111,18 @@ class LaunchWallpaperFileService {
     return id;
   }
 
-  static Future<List<LaunchWallpaperItem>> listWallpapers() async {
-    final List<LaunchWallpaperItem> indexItems = await _readIndexItems();
-    return _mergeBuiltinItems(indexItems);
+  static Future<List<LaunchWallpaperItem>> listWallpapers({
+    bool refreshFromDisk = false,
+  }) async {
+    await _ensureCache(refreshFromDisk: refreshFromDisk);
+    return List<LaunchWallpaperItem>.from(_cachedMergedItems!);
+  }
+
+  static Future<Map<String, String>> listWallpaperPathById({
+    bool refreshFromDisk = false,
+  }) async {
+    await _ensureCache(refreshFromDisk: refreshFromDisk);
+    return Map<String, String>.from(_cachedPathById!);
   }
 
   static Future<LaunchWallpaperResolved?> resolveWallpaper(
@@ -175,32 +189,6 @@ class LaunchWallpaperFileService {
     return file.path;
   }
 
-  /// 解析id到路径的映射
-  /// 
-  /// 返回的路径仅为用户的自定义壁纸路径，不包含内置壁纸路径
-  /// 
-  /// 出现异常时，返回空映射
-  static Future<Map<String, String>> resolveWallpaperPathByIdBatch(
-    List<LaunchWallpaperItem> items,
-  ) async {
-    final Directory filesDir = await _getFilesDirectory(create: false);
-    final Map<String, String> result = <String, String>{};
-    await Future.wait(
-      items.map((item) async {
-        final String? fileName = item.fileName;
-        if (fileName == null || fileName.isEmpty) {
-          return null;
-        }
-        final File file = File(p.join(filesDir.path, fileName));
-        if (!await file.exists()) {
-          return null;
-        }
-        result[item.id] = file.path;
-        return null;
-      }),
-    );
-    return result;
-  }
 
   static Future<void> renameWallpaper({
     required String wallpaperId,
@@ -364,6 +352,7 @@ class LaunchWallpaperFileService {
       items.map((item) => item.toJson()).toList(growable: false),
     );
     await indexFile.writeAsString(raw);
+    await _updateCacheFromIndexItems(items);
     AppLogger.info(
       'Launch wallpaper index saved',
       loggerName: 'LaunchWallpaperFileService',
@@ -371,5 +360,66 @@ class LaunchWallpaperFileService {
         'count': items.length,
       },
     );
+  }
+
+  static Future<void> _ensureCache({required bool refreshFromDisk}) async {
+    if (!refreshFromDisk &&
+        !_cacheDirty &&
+        _cachedIndexItems != null &&
+        _cachedMergedItems != null &&
+        _cachedPathById != null) {
+      return;
+    }
+    final Future<void>? inFlight = _cacheLoadingFuture;
+    if (inFlight != null) {
+      await inFlight;
+      return;
+    }
+
+    final Future<void> loading = _reloadCacheFromDisk();
+    _cacheLoadingFuture = loading;
+    try {
+      await loading;
+    } finally {
+      if (identical(_cacheLoadingFuture, loading)) {
+        _cacheLoadingFuture = null;
+      }
+    }
+  }
+
+  static Future<void> _reloadCacheFromDisk() async {
+    final List<LaunchWallpaperItem> indexItems = await _readIndexItems();
+    await _updateCacheFromIndexItems(indexItems);
+  }
+
+  static Future<void> _updateCacheFromIndexItems(
+    List<LaunchWallpaperItem> indexItems,
+  ) async {
+    _cachedIndexItems = List<LaunchWallpaperItem>.from(indexItems);
+    _cachedMergedItems = _mergeBuiltinItems(
+      List<LaunchWallpaperItem>.from(indexItems),
+    );
+    _cachedPathById = await _buildPathByIdFromItems(_cachedMergedItems!);
+    _cacheDirty = false;
+  }
+
+  /// 解析id到路径的映射
+  /// 
+  /// 返回的路径仅为用户的自定义壁纸路径，不包含内置壁纸路径
+  /// 
+  /// 出现异常时，返回空映射
+  static Future<Map<String, String>> _buildPathByIdFromItems(
+    List<LaunchWallpaperItem> items,
+  ) async {
+    final Directory filesDir = await _getFilesDirectory(create: false);
+    final Map<String, String> result = <String, String>{};
+    for (final LaunchWallpaperItem item in items) {
+      final String? fileName = item.fileName;
+      if (fileName == null || fileName.isEmpty) {
+        continue;
+      }
+      result[item.id] = p.join(filesDir.path, fileName);
+    }
+    return result;
   }
 }

@@ -178,22 +178,15 @@ class LaunchWallpaperEditorViewModel extends BaseViewModel {
 
   /// 刷新当前壁纸
   ///
-  /// 若当前选中的壁纸不在列表中，则将当前选中的壁纸ID设为null。
+  /// 若当前选中的壁纸不在列表中，则将当前选中的壁纸设为默认壁纸。
   Future<void> _refreshWallpapers() async {
-    final List<LaunchWallpaperItem> items =
-        await LaunchWallpaperFileService.listWallpapers();
-    _wallpapers = items;
-    _wallpaperPathById = await _buildWallpaperPathById(items);
+    _wallpapers = await LaunchWallpaperFileService.listWallpapers();
+    _wallpaperPathById =
+        await LaunchWallpaperFileService.listWallpaperPathById();
     if (!_wallpapers.any((item) => item.id == _draftSelectedWallpaperRef.id)) {
       _draftSelectedWallpaperRef = LaunchWallpaperRef.defaultValue;
     }
     _selectedWallpaperPath = _wallpaperPathById[_draftSelectedWallpaperRef.id];
-  }
-
-  Future<Map<String, String>> _buildWallpaperPathById(
-    List<LaunchWallpaperItem> items,
-  ) async {
-    return LaunchWallpaperFileService.resolveWallpaperPathByIdBatch(items);
   }
 
   LaunchWallpaperRef _buildRefFromItem(LaunchWallpaperItem item) {

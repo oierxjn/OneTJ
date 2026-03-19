@@ -210,8 +210,8 @@ class _LaunchWallpaperEditorViewState extends State<LaunchWallpaperEditorView> {
     }
     if (selectedPath == null) {
       return _WallpaperPreviewPlaceholder(
-        icon: Icons.hourglass_top,
-        title: l10n.settingsLaunchWallpaperLoadingPreview,
+        icon: Icons.image_not_supported_outlined,
+        title: l10n.settingsLaunchWallpaperCustomSummary,
       );
     }
     return Image.file(
