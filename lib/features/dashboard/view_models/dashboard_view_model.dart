@@ -35,7 +35,11 @@ class DashboardViewModel extends BaseViewModel {
   final UserCollectionService _userCollectionService;
   final StreamController<UiEvent> _eventController;
   StreamSubscription<SettingsData>? _settingsSub;
+  Timer? _upcomingRefreshTimer;
+  DateTime? _lastCalendarSyncDate;
+  bool _isDisposed = false;
   Stream<UiEvent> get events => _eventController.stream;
+  bool get isDisposed => _isDisposed;
 
   String? _departmentName;
   SchoolCalendarData? _calendar;
@@ -82,14 +86,19 @@ class DashboardViewModel extends BaseViewModel {
     _studentLoading = true;
     _calendarLoading = true;
     _timetableLoading = true;
+    _upcomingRefreshTimer?.cancel();
     notifyListeners();
-    await Future.wait([
-      loadSettings(),
-      loadStudentInfo(),
-      loadSchoolCalendar(),
-      loadCourseSchedule(),
-      _uploadUserCollectionWhenStudentInfoLoaded(),
-    ]);
+    try {
+      await Future.wait([
+        loadSettings(),
+        loadStudentInfo(),
+        loadSchoolCalendar(),
+        loadCourseSchedule(),
+        _uploadUserCollectionWhenStudentInfoLoaded(),
+      ]);
+    } finally {
+      _scheduleUpcomingRefresh();
+    }
   }
 
   Future<void> loadSettings() async {
@@ -185,12 +194,14 @@ class DashboardViewModel extends BaseViewModel {
     final SchoolCalendarRepository repo =
         SchoolCalendarRepository.getInstance();
     try {
+      final DateTime now = DateTime.now();
       await repo.warmUp();
       final SchoolCalendarData data = await repo.getOrFetch(
-        now: DateTime.now(),
+        now: now,
         fetcher: _model.fetchSchoolCalendar,
       );
       _calendar = data;
+      _lastCalendarSyncDate = now;
     } catch (error) {
       _eventController.add(
         ShowSnackBarEvent(message: 'Failed to load school calendar: $error'),
@@ -236,8 +247,107 @@ class DashboardViewModel extends BaseViewModel {
     }
   }
 
+  Future<void> onAppResumed() async {
+    final DateTime now = DateTime.now();
+    final bool shouldSyncCalendar = _lastCalendarSyncDate == null ||
+        !_isSameDate(_lastCalendarSyncDate!, now);
+    if (shouldSyncCalendar) {
+      await loadSchoolCalendar();
+      _scheduleUpcomingRefresh();
+      return;
+    }
+    notifyListeners();
+    _scheduleUpcomingRefresh();
+  }
+
+  /// 计划下次即将到来的课程时间刷新
+  void _scheduleUpcomingRefresh() {
+    if (_isDisposed) {
+      return;
+    }
+    _upcomingRefreshTimer?.cancel();
+    final DateTime now = DateTime.now();
+    final DateTime nextRefreshAt = _computeNextUpcomingRefreshAt(now);
+    Duration delay = nextRefreshAt.difference(now);
+    if (delay.isNegative) {
+      delay = Duration.zero;
+    }
+    _upcomingRefreshTimer = Timer(delay, () {
+      unawaited(_onUpcomingRefreshTick());
+    });
+  }
+
+  /// 刷新即将到来的课程时间
+  Future<void> _onUpcomingRefreshTick() async {
+    if (_isDisposed) {
+      return;
+    }
+    final DateTime now = DateTime.now();
+    final bool shouldSyncCalendar = _lastCalendarSyncDate == null ||
+        !_isSameDate(_lastCalendarSyncDate!, now);
+    if (shouldSyncCalendar) {
+      await loadSchoolCalendar();
+      _scheduleUpcomingRefresh();
+      return;
+    }
+    notifyListeners();
+    _scheduleUpcomingRefresh();
+  }
+
+  /// 计算下次即将到来的课程时间刷新时间
+  DateTime _computeNextUpcomingRefreshAt(DateTime now) {
+    final DateTime nextDayStart = DateTime(now.year, now.month, now.day + 1);
+    final int? currentWeek = _calendar?.week;
+    if (currentWeek == null || _timetableEntries.isEmpty) {
+      return nextDayStart;
+    }
+    final List<DateTime> candidates = <DateTime>[nextDayStart];
+    for (final TimetableEntry entry in _timetableEntries) {
+      if (entry.dayOfWeek != now.weekday) {
+        continue;
+      }
+      if (entry.weeks.isNotEmpty && !entry.weeks.contains(currentWeek)) {
+        continue;
+      }
+      final int startIndex = entry.timeStart - 1;
+      if (startIndex >= 0 && startIndex < _timeSlotRanges.length) {
+        final DateTime startTime =
+            _atMinuteOfDay(now, _timeSlotRanges[startIndex].startMinutes);
+        if (startTime.isAfter(now)) {
+          candidates.add(startTime);
+        }
+      }
+      final int endIndex = entry.timeEnd - 1;
+      if (endIndex >= 0 && endIndex < _timeSlotRanges.length) {
+        final DateTime endTime =
+            _atMinuteOfDay(now, _timeSlotRanges[endIndex].endMinutes);
+        if (endTime.isAfter(now)) {
+          candidates.add(endTime);
+        }
+      }
+    }
+    candidates.sort((a, b) => a.compareTo(b));
+    return candidates.first;
+  }
+
+  DateTime _atMinuteOfDay(DateTime source, int minutes) {
+    return DateTime(
+      source.year,
+      source.month,
+      source.day,
+      minutes ~/ 60,
+      minutes % 60,
+    );
+  }
+
+  bool _isSameDate(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
   @override
   void dispose() {
+    _isDisposed = true;
+    _upcomingRefreshTimer?.cancel();
     _settingsSub?.cancel();
     _eventController.close();
     super.dispose();

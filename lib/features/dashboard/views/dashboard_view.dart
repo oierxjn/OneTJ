@@ -25,13 +25,15 @@ class DashboardView extends StatefulWidget {
   State<DashboardView> createState() => _DashboardViewState();
 }
 
-class _DashboardViewState extends State<DashboardView> {
+class _DashboardViewState extends State<DashboardView>
+    with WidgetsBindingObserver {
   late final DashboardViewModel _viewModel;
   StreamSubscription<UiEvent>? _eventSub;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _viewModel = DashboardViewModel();
     _eventSub = _viewModel.events.listen((event) {
       if (event is ShowSnackBarEvent) {
@@ -46,7 +48,15 @@ class _DashboardViewState extends State<DashboardView> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      unawaited(_viewModel.onAppResumed());
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _eventSub?.cancel();
     _viewModel.dispose();
     super.dispose();
