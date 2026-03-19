@@ -190,6 +190,8 @@
     "settingsLaunchWallpaperEditorCurrentTitle": "当前选择",
     "settingsLaunchWallpaperLibraryEmpty": "当前还没有本地壁纸",
     "settingsLaunchWallpaperLoadingPreview": "正在加载预览...",
+    "settingsLaunchWallpaperPreviewLoadFailed": "预览加载失败",
+    "settingsLaunchWallpaperPreviewUnavailable": "壁纸文件不可用",
     "settingsLaunchWallpaperRenameAction": "重命名",
     "settingsLaunchWallpaperRenameTitle": "重命名壁纸",
     "settingsLaunchWallpaperRenameHint": "壁纸名称",

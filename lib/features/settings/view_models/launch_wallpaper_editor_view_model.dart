@@ -14,6 +14,7 @@ class LaunchWallpaperEditorUiState {
     required this.wallpapers,
     required this.wallpaperPathById,
     required this.selectedWallpaperRef,
+    required this.selectedWallpaperItem,
     required this.selectedWallpaperPath,
   });
 
@@ -22,6 +23,7 @@ class LaunchWallpaperEditorUiState {
   final List<LaunchWallpaperItem> wallpapers;
   final Map<String, String> wallpaperPathById;
   final LaunchWallpaperRef selectedWallpaperRef;
+  final LaunchWallpaperItem? selectedWallpaperItem;
   final String? selectedWallpaperPath;
 }
 
@@ -54,6 +56,8 @@ class LaunchWallpaperEditorViewModel extends BaseViewModel {
         wallpapers: List<LaunchWallpaperItem>.unmodifiable(_wallpapers),
         wallpaperPathById: Map<String, String>.unmodifiable(_wallpaperPathById),
         selectedWallpaperRef: _draftSelectedWallpaperRef,
+        selectedWallpaperItem:
+            _findWallpaperById(_draftSelectedWallpaperRef.id),
         selectedWallpaperPath: _selectedWallpaperPath,
       );
 
@@ -200,6 +204,15 @@ class LaunchWallpaperEditorViewModel extends BaseViewModel {
       type: LaunchWallpaperRef.typeLocal,
       id: item.id,
     );
+  }
+
+  LaunchWallpaperItem? _findWallpaperById(String wallpaperId) {
+    for (final LaunchWallpaperItem item in _wallpapers) {
+      if (item.id == wallpaperId) {
+        return item;
+      }
+    }
+    return null;
   }
 
   @override

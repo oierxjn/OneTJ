@@ -190,6 +190,8 @@
   "settingsLaunchWallpaperEditorCurrentTitle": "Current selection",
   "settingsLaunchWallpaperLibraryEmpty": "No local wallpapers yet",
   "settingsLaunchWallpaperLoadingPreview": "Loading preview...",
+  "settingsLaunchWallpaperPreviewLoadFailed": "Preview failed to load",
+  "settingsLaunchWallpaperPreviewUnavailable": "Wallpaper file is unavailable",
   "settingsLaunchWallpaperRenameAction": "Rename",
   "settingsLaunchWallpaperRenameTitle": "Rename wallpaper",
   "settingsLaunchWallpaperRenameHint": "Wallpaper name",

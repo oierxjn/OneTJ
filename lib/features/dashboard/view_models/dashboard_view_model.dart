@@ -46,9 +46,6 @@ class DashboardViewModel extends BaseViewModel {
   int _upcomingCount = kDefaultDashboardUpcomingCount;
   int _maxWeek = kDefaultMaxWeek;
 
-  Object? _studentError;
-  Object? _calendarError;
-  Object? _timetableError;
   bool _studentLoading = true;
   bool _calendarLoading = true;
   bool _timetableLoading = true;
@@ -57,10 +54,6 @@ class DashboardViewModel extends BaseViewModel {
   SchoolCalendarData? get calendar => _calendar;
   TimetableIndex? get timetableIndex => _timetableIndex;
   List<TimetableEntry> get timetableEntries => _timetableEntries;
-  // TODO 异常上报应该使用事件流
-  Object? get studentError => _studentError;
-  Object? get calendarError => _calendarError;
-  Object? get timetableError => _timetableError;
   bool get studentLoading => _studentLoading;
   bool get calendarLoading => _calendarLoading;
   bool get timetableLoading => _timetableLoading;
@@ -89,9 +82,6 @@ class DashboardViewModel extends BaseViewModel {
     _studentLoading = true;
     _calendarLoading = true;
     _timetableLoading = true;
-    _studentError = null;
-    _calendarError = null;
-    _timetableError = null;
     notifyListeners();
     await Future.wait([
       loadSettings(),
@@ -158,9 +148,7 @@ class DashboardViewModel extends BaseViewModel {
     try {
       final StudentInfoData data = await _model.getStudentInfo();
       _departmentName = data.deptName;
-      _studentError = null;
     } catch (error) {
-      _studentError = error;
       _eventController.add(
         ShowSnackBarEvent(message: 'Failed to load student info: $error'),
       );
@@ -203,9 +191,7 @@ class DashboardViewModel extends BaseViewModel {
         fetcher: _model.fetchSchoolCalendar,
       );
       _calendar = data;
-      _calendarError = null;
     } catch (error) {
-      _calendarError = error;
       _eventController.add(
         ShowSnackBarEvent(message: 'Failed to load school calendar: $error'),
       );
@@ -239,10 +225,8 @@ class DashboardViewModel extends BaseViewModel {
             });
       _timetableEntries = entries;
       _timetableIndex = index;
-      _timetableError = null;
     } catch (error) {
       _timetableIndex = null;
-      _timetableError = error;
       _eventController.add(
         ShowSnackBarEvent(message: 'Failed to load timetable: $error'),
       );

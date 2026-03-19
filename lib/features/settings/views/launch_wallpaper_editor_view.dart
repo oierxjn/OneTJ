@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -172,57 +172,64 @@ class _LaunchWallpaperEditorViewState extends State<LaunchWallpaperEditorView> {
     AppLocalizations l10n,
     LaunchWallpaperEditorUiState state,
   ) {
-    final String selectedId = state.selectedWallpaperRef.id;
     final String? selectedPath = state.selectedWallpaperPath;
-    LaunchWallpaperItem? selectedItem;
-    for (final LaunchWallpaperItem item in state.wallpapers) {
-      if (item.id == selectedId) {
-        selectedItem = item;
-        break;
-      }
-    }
+    final LaunchWallpaperItem? selectedItem = state.selectedWallpaperItem;
     if (selectedItem == null) {
       return _WallpaperPreviewPlaceholder(
         icon: Icons.wallpaper_outlined,
         title: l10n.settingsLaunchWallpaperDefaultSummary,
       );
     }
-    if (selectedItem.source == LaunchWallpaperFileService.builtinSource) {
-      final String? assetPath = selectedItem.assetPath;
+    return _buildWallpaperPreviewImage(
+      l10n: l10n,
+      item: selectedItem,
+      path: selectedPath,
+    );
+  }
+
+  Widget _buildWallpaperPreviewImage({
+    required AppLocalizations l10n,
+    required LaunchWallpaperItem item,
+    required String? path,
+  }) {
+    final bool isBuiltin =
+        item.source == LaunchWallpaperFileService.builtinSource;
+    if (path == null) {
+      if (!isBuiltin) {
+        return _buildUnsupportedImagePlaceholder(l10n);
+      }
+      final String? assetPath = item.assetPath;
       if (assetPath == null || assetPath.isEmpty) {
-        return _WallpaperPreviewPlaceholder(
-          icon: Icons.broken_image_outlined,
-          // TODO 应该改成错误文本
-          title: l10n.settingsLaunchWallpaperCustomSummary,
-        );
+        return _buildBrokenImagePlaceholder(l10n);
       }
       return Image.asset(
         assetPath,
         fit: BoxFit.contain,
         errorBuilder: (context, error, stackTrace) {
-          return _WallpaperPreviewPlaceholder(
-            icon: Icons.broken_image_outlined,
-            // TODO 应该改成错误文本
-            title: l10n.settingsLaunchWallpaperCustomSummary,
-          );
+          return _buildBrokenImagePlaceholder(l10n);
         },
       );
     }
-    if (selectedPath == null) {
-      return _WallpaperPreviewPlaceholder(
-        icon: Icons.image_not_supported_outlined,
-        title: l10n.settingsLaunchWallpaperCustomSummary,
-      );
-    }
     return Image.file(
-      File(selectedPath),
+      File(path),
       fit: BoxFit.contain,
       errorBuilder: (context, error, stackTrace) {
-        return _WallpaperPreviewPlaceholder(
-          icon: Icons.broken_image_outlined,
-          title: l10n.settingsLaunchWallpaperCustomSummary,
-        );
+        return _buildBrokenImagePlaceholder(l10n);
       },
+    );
+  }
+
+  Widget _buildBrokenImagePlaceholder(AppLocalizations l10n) {
+    return _WallpaperPreviewPlaceholder(
+      icon: Icons.broken_image_outlined,
+      title: l10n.settingsLaunchWallpaperPreviewLoadFailed,
+    );
+  }
+
+  Widget _buildUnsupportedImagePlaceholder(AppLocalizations l10n) {
+    return _WallpaperPreviewPlaceholder(
+      icon: Icons.image_not_supported_outlined,
+      title: l10n.settingsLaunchWallpaperPreviewUnavailable,
     );
   }
 
@@ -272,7 +279,6 @@ class _LaunchWallpaperEditorViewState extends State<LaunchWallpaperEditorView> {
     required String? path,
     required bool busy,
   }) {
-    // TODO 可以讨论isBuiltin是否要放在viewModel
     final bool isBuiltin =
         item.source == LaunchWallpaperFileService.builtinSource;
     return InkWell(
@@ -301,36 +307,11 @@ class _LaunchWallpaperEditorViewState extends State<LaunchWallpaperEditorView> {
                         borderRadius: BorderRadius.circular(10),
                         child: Container(
                           color: Theme.of(context).colorScheme.surfaceContainer,
-                          child: path == null
-                              ? (isBuiltin
-                                  ? Image.asset(
-                                      item.assetPath ?? '',
-                                      fit: BoxFit.contain,
-                                      errorBuilder:
-                                          (context, error, stackTrace) {
-                                        return _WallpaperPreviewPlaceholder(
-                                          icon: Icons.broken_image_outlined,
-                                          title: l10n
-                                              .settingsLaunchWallpaperCustomSummary,
-                                        );
-                                      },
-                                    )
-                                  : _WallpaperPreviewPlaceholder(
-                                      icon: Icons.image_not_supported_outlined,
-                                      title: l10n
-                                          .settingsLaunchWallpaperCustomSummary,
-                                    ))
-                              : Image.file(
-                                  File(path),
-                                  fit: BoxFit.contain,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return _WallpaperPreviewPlaceholder(
-                                      icon: Icons.broken_image_outlined,
-                                      title: l10n
-                                          .settingsLaunchWallpaperCustomSummary,
-                                    );
-                                  },
-                                ),
+                          child: _buildWallpaperPreviewImage(
+                            l10n: l10n,
+                            item: item,
+                            path: path,
+                          ),
                         ),
                       ),
                     ),

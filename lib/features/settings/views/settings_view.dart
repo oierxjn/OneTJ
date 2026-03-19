@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -326,15 +326,11 @@ class _SettingsViewState extends State<SettingsView> {
     if (!mounted || result == null) {
       return;
     }
-    final AppLocalizations l10n = AppLocalizations.of(context);
     switch (result.action) {
       case LaunchWallpaperEditorAction.unchanged:
         return;
       case LaunchWallpaperEditorAction.selected:
         _viewModel.updateLaunchWallpaperSelection(result.wallpaperRef);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.settingsLaunchWallpaperPickSuccess)),
-        );
         return;
     }
   }
