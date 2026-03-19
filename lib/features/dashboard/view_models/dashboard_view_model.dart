@@ -27,7 +27,7 @@ class DashboardViewModel extends BaseViewModel {
         _userCollectionService =
             userCollectionService ?? UserCollectionService(),
         _eventController = StreamController<UiEvent>.broadcast() {
-    _settingsSub = _settingsRepository.stream.listen(_handleSettingsChanged);
+    _settingsSub = _settingsRepository.stream.listen(_listenSettingsChanged);
   }
 
   final DashboardModel _model;
@@ -110,6 +110,11 @@ class DashboardViewModel extends BaseViewModel {
         ShowSnackBarEvent(message: 'Failed to load settings: $error'),
       );
     }
+  }
+
+  void _listenSettingsChanged(SettingsData data) {
+    _handleSettingsChanged(data);
+    _scheduleUpcomingRefresh();
   }
 
   void _handleSettingsChanged(SettingsData data) {
