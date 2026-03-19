@@ -193,28 +193,7 @@ class LaunchWallpaperEditorViewModel extends BaseViewModel {
   Future<Map<String, String>> _buildWallpaperPathById(
     List<LaunchWallpaperItem> items,
   ) async {
-    final List<MapEntry<String, String?>> entries = await Future.wait(
-      items.map((item) async {
-        final String? fileName = item.fileName;
-        if (fileName == null || fileName.isEmpty) {
-          return MapEntry<String, String?>(item.id, null);
-        }
-        final String? path =
-            await LaunchWallpaperFileService.resolveWallpaperPathByFileName(
-          fileName,
-        );
-        return MapEntry<String, String?>(item.id, path);
-      }),
-    );
-    final Map<String, String> result = <String, String>{};
-    for (final MapEntry<String, String?> entry in entries) {
-      final String? value = entry.value;
-      if (value == null || value.isEmpty) {
-        continue;
-      }
-      result[entry.key] = value;
-    }
-    return result;
+    return LaunchWallpaperFileService.resolveWallpaperPathByIdBatch(items);
   }
 
   LaunchWallpaperRef _buildRefFromItem(LaunchWallpaperItem item) {

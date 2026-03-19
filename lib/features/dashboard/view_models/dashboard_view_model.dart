@@ -57,6 +57,7 @@ class DashboardViewModel extends BaseViewModel {
   SchoolCalendarData? get calendar => _calendar;
   TimetableIndex? get timetableIndex => _timetableIndex;
   List<TimetableEntry> get timetableEntries => _timetableEntries;
+  // TODO 异常上报应该使用事件流
   Object? get studentError => _studentError;
   Object? get calendarError => _calendarError;
   Object? get timetableError => _timetableError;

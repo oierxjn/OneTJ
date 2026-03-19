@@ -36,6 +36,7 @@ class LaunchWallpaperFileService {
   static const Uuid _uuid = Uuid();
   static const String builtinSource = 'builtin';
   static const String importedSource = 'gallery';
+  static Future<Directory>? _cachedSupportDirectoryFuture;
 
   /// 内置壁纸项
   static const List<(String id, String name, String assetPath)> _builtinSeeds =
@@ -174,6 +175,33 @@ class LaunchWallpaperFileService {
     return file.path;
   }
 
+  /// 解析id到路径的映射
+  /// 
+  /// 返回的路径仅为用户的自定义壁纸路径，不包含内置壁纸路径
+  /// 
+  /// 出现异常时，返回空映射
+  static Future<Map<String, String>> resolveWallpaperPathByIdBatch(
+    List<LaunchWallpaperItem> items,
+  ) async {
+    final Directory filesDir = await _getFilesDirectory(create: false);
+    final Map<String, String> result = <String, String>{};
+    await Future.wait(
+      items.map((item) async {
+        final String? fileName = item.fileName;
+        if (fileName == null || fileName.isEmpty) {
+          return null;
+        }
+        final File file = File(p.join(filesDir.path, fileName));
+        if (!await file.exists()) {
+          return null;
+        }
+        result[item.id] = file.path;
+        return null;
+      }),
+    );
+    return result;
+  }
+
   static Future<void> renameWallpaper({
     required String wallpaperId,
     required String displayName,
@@ -298,12 +326,17 @@ class LaunchWallpaperFileService {
   }
 
   static Future<Directory> _getBaseDirectory({required bool create}) async {
-    final Directory supportDir = await getApplicationSupportDirectory();
+    final Directory supportDir = await _getSupportDirectory();
     final Directory base = Directory(p.join(supportDir.path, _folderName));
     if (create) {
       await base.create(recursive: true);
     }
     return base;
+  }
+
+  static Future<Directory> _getSupportDirectory() {
+    return _cachedSupportDirectoryFuture ??=
+        getApplicationSupportDirectory();
   }
 
   static Future<Directory> _getFilesDirectory({required bool create}) async {
