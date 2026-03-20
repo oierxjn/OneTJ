@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/services.dart';
 import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
-import 'package:open_filex/open_filex.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
@@ -28,6 +28,8 @@ class AppUpdateService {
 
   final AppUpdateApi _api;
   final AppUpdateStateRepository _repository;
+  static const MethodChannel _installChannel =
+      MethodChannel('onetj/app_update');
 
   static const Duration _defaultThrottleWindow = Duration(hours: 24);
 
@@ -189,14 +191,7 @@ class AppUpdateService {
       return;
     }
     if (Platform.isAndroid) {
-      final OpenResult result = await OpenFilex.open(file.path);
-      if (result.type != ResultType.done) {
-        throw AppException(
-          'UPDATE_PACKAGE_OPEN_FAILED',
-          'Failed to open update package',
-          cause: result.message,
-        );
-      }
+      await _installAndroidPackage(file);
       return;
     }
     throw AppException(
@@ -261,6 +256,32 @@ class AppUpdateService {
       // Keep raw text fallback.
     }
     return notes;
+  }
+
+  Future<void> _installAndroidPackage(File file) async {
+    try {
+      final Map<Object?, Object?>? result =
+          await _installChannel.invokeMethod<Map<Object?, Object?>>(
+        'installApk',
+        <String, Object?>{
+          'filePath': file.path,
+        },
+      );
+      final Object? status = result?['status'];
+      if (status != 'installer_started') {
+        throw AppException(
+          'UPDATE_PACKAGE_OPEN_FAILED',
+          'Failed to start Android package installer',
+          cause: result,
+        );
+      }
+    } on PlatformException catch (error) {
+      throw AppException(
+        error.code,
+        error.message ?? 'Failed to start Android package installer',
+        cause: error.details,
+      );
+    }
   }
 
   void logUpdateFailure(Object error, StackTrace stackTrace) {

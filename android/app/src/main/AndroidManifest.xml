@@ -1,9 +1,19 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
     <application
         android:label="一统同济"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.appupdate.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/app_update_file_paths" />
+        </provider>
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -41,6 +51,10 @@
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.INSTALL_PACKAGE"/>
+            <data android:mimeType="application/vnd.android.package-archive"/>
         </intent>
     </queries>
 </manifest>
