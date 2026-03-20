@@ -135,12 +135,19 @@ class _DashboardViewState extends State<DashboardView>
         return;
       }
       Navigator.of(context, rootNavigator: true).pop();
-      await _appUpdateService.installPackage(file);
+      final AppUpdateInstallResult result =
+          await _appUpdateService.installPackage(file);
       if (!mounted) {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.appUpdateInstallTriggered)),
+        SnackBar(
+          content: Text(
+            result == AppUpdateInstallResult.permissionRequired
+                ? l10n.appUpdateInstallPermissionRequired
+                : l10n.appUpdateInstallTriggered,
+          ),
+        ),
       );
     } catch (error, stackTrace) {
       if (mounted) {

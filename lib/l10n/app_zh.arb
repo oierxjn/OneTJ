@@ -271,6 +271,7 @@
     "appUpdateDownloadingTitle": "正在下载更新",
     "appUpdateDownloadingBody": "正在下载更新包并校验完整性...",
     "appUpdateInstallTriggered": "已拉起安装程序，请按系统提示完成安装",
+    "appUpdateInstallPermissionRequired": "请先在系统设置中允许安装未知应用，返回应用后将自动继续安装",
     "appUpdateFailed": "更新失败：{error}",
     "@appUpdateFailed": {
       "placeholders": {

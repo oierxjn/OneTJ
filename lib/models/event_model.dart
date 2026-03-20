@@ -41,6 +41,10 @@ class AppUpdateInstallTriggeredEvent extends UiEvent {
   const AppUpdateInstallTriggeredEvent();
 }
 
+class AppUpdateInstallPermissionRequiredEvent extends UiEvent {
+  const AppUpdateInstallPermissionRequiredEvent();
+}
+
 class AppUpdateFailedEvent extends UiEvent {
   const AppUpdateFailedEvent({
     required this.error,

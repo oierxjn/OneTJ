@@ -245,6 +245,13 @@ class _AboutViewState extends State<AboutView> {
       );
       return;
     }
+    if (event is AppUpdateInstallPermissionRequiredEvent) {
+      _dismissDownloadDialogIfNeeded();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.appUpdateInstallPermissionRequired)),
+      );
+      return;
+    }
     if (event is AppUpdateFailedEvent) {
       _dismissDownloadDialogIfNeeded();
       ScaffoldMessenger.of(context).showSnackBar(

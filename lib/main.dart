@@ -2,11 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
+import 'package:onetj/app/app_lifecycle_host.dart';
 import 'package:onetj/app/router/app_router.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const OneTJApp());
+  runApp(
+    const AppLifecycleHost(
+      child: OneTJApp(),
+    ),
+  );
 }
 
 class OneTJApp extends StatelessWidget {

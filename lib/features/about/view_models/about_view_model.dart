@@ -71,8 +71,13 @@ class AboutViewModel extends BaseViewModel {
     notifyListeners();
     try {
       final file = await _appUpdateService.downloadPackage(updateInfo);
-      await _appUpdateService.installPackage(file);
-      _eventController.add(const AppUpdateInstallTriggeredEvent());
+      final AppUpdateInstallResult result =
+          await _appUpdateService.installPackage(file);
+      if (result == AppUpdateInstallResult.permissionRequired) {
+        _eventController.add(const AppUpdateInstallPermissionRequiredEvent());
+      } else {
+        _eventController.add(const AppUpdateInstallTriggeredEvent());
+      }
     } catch (error, stackTrace) {
       _appUpdateService.logUpdateFailure(error, stackTrace);
       _eventController.add(

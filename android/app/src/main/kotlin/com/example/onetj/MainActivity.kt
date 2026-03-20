@@ -19,6 +19,10 @@ class MainActivity : FlutterActivity() {
             APP_UPDATE_CHANNEL,
         ).setMethodCallHandler { call, result ->
             when (call.method) {
+                METHOD_CAN_INSTALL_PACKAGES -> {
+                    result.success(canInstallPackages())
+                }
+
                 METHOD_INSTALL_APK -> {
                     val filePath = call.argument<String>("filePath")
                     if (filePath.isNullOrBlank()) {
@@ -51,9 +55,7 @@ class MainActivity : FlutterActivity() {
             return
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
-            !packageManager.canRequestPackageInstalls()
-        ) {
+        if (!canInstallPackages()) {
             val settingsIntent = Intent(
                 Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
                 Uri.parse("package:$packageName"),
@@ -61,10 +63,10 @@ class MainActivity : FlutterActivity() {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
             startActivity(settingsIntent)
-            result.error(
-                "INSTALL_PERMISSION_REQUIRED",
-                "Please allow installs from unknown apps for OneTJ, then try again.",
-                null,
+            result.success(
+                mapOf(
+                    "status" to "permission_required",
+                ),
             )
             return
         }
@@ -105,6 +107,12 @@ class MainActivity : FlutterActivity() {
 
     companion object {
         private const val APP_UPDATE_CHANNEL = "onetj/app_update"
+        private const val METHOD_CAN_INSTALL_PACKAGES = "canInstallPackages"
         private const val METHOD_INSTALL_APK = "installApk"
+    }
+
+    private fun canInstallPackages(): Boolean {
+        return Build.VERSION.SDK_INT < Build.VERSION_CODES.O ||
+            packageManager.canRequestPackageInstalls()
     }
 }

@@ -14,6 +14,11 @@ import 'package:onetj/models/app_update_info.dart';
 import 'package:onetj/repo/app_update_state_repository.dart';
 import 'package:onetj/services/app_update_api.dart';
 
+enum AppUpdateInstallResult {
+  installerStarted,
+  permissionRequired,
+}
+
 class AppUpdateService {
   AppUpdateService._({
     AppUpdateApi? api,
@@ -130,6 +135,11 @@ class AppUpdateService {
         file: file,
         expectedSha256: info.sha256,
       );
+      await _repository.savePendingInstall(
+        filePath: file.path,
+        versionTag: info.versionTag,
+        sha256: info.sha256,
+      );
       return file;
     } finally {
       client.close();
@@ -181,18 +191,21 @@ class AppUpdateService {
   /// throw:
   ///
   /// [AppException] 安装失败
-  Future<void> installPackage(File file) async {
+  Future<AppUpdateInstallResult> installPackage(File file) async {
     if (Platform.isWindows) {
       await Process.start(
         file.path,
         const <String>[],
         mode: ProcessStartMode.detached,
       );
-      return;
+      return AppUpdateInstallResult.installerStarted;
     }
     if (Platform.isAndroid) {
-      await _installAndroidPackage(file);
-      return;
+      final AppUpdateInstallResult result = await _installAndroidPackage(file);
+      await _repository.markPendingAwaitingInstallPermission(
+        result == AppUpdateInstallResult.permissionRequired,
+      );
+      return result;
     }
     throw AppException(
       'UPDATE_PLATFORM_UNSUPPORTED',
@@ -242,6 +255,53 @@ class AppUpdateService {
 
   String _resolveCurrentBuild() => oneTJAppBuildNumber;
 
+  Future<void> resumePendingInstallIfPossible() async {
+    if (!Platform.isAndroid) {
+      return;
+    }
+    final AppUpdateStateData state =
+        await _repository.getState(refreshFromStorage: true);
+    if (!state.pendingAwaitingInstallPermission) {
+      return;
+    }
+    final String? filePath = state.pendingFilePath;
+    if (filePath == null || filePath.isEmpty) {
+      await _repository.clearPendingInstall();
+      return;
+    }
+    final File file = File(filePath);
+    if (!await file.exists()) {
+      await _repository.clearPendingInstall();
+      return;
+    }
+    try {
+      await _verifySha256(
+        file: file,
+        expectedSha256: state.pendingSha256 ?? '',
+      );
+    } catch (error, stackTrace) {
+      await _repository.clearPendingInstall();
+      AppLogger.warning(
+        'Pending update package verification failed',
+        loggerName: 'AppUpdateService',
+        error: error,
+        stackTrace: stackTrace,
+        context: <String, Object?>{
+          'filePath': file.path,
+          'versionTag': state.pendingVersionTag,
+        },
+      );
+      return;
+    }
+    if (!await _canInstallAndroidPackages()) {
+      return;
+    }
+    final AppUpdateInstallResult result = await _installAndroidPackage(file);
+    await _repository.markPendingAwaitingInstallPermission(
+      result == AppUpdateInstallResult.permissionRequired,
+    );
+  }
+
   String formatReleaseNotes(AppUpdateInfo info) {
     final String notes = info.releaseNotes.trim();
     if (notes.isEmpty) {
@@ -258,7 +318,20 @@ class AppUpdateService {
     return notes;
   }
 
-  Future<void> _installAndroidPackage(File file) async {
+  Future<bool> _canInstallAndroidPackages() async {
+    try {
+      return await _installChannel.invokeMethod<bool>('canInstallPackages') ??
+          false;
+    } on PlatformException catch (error) {
+      throw AppException(
+        error.code,
+        error.message ?? 'Failed to query Android install permission',
+        cause: error.details,
+      );
+    }
+  }
+
+  Future<AppUpdateInstallResult> _installAndroidPackage(File file) async {
     try {
       final Map<Object?, Object?>? result =
           await _installChannel.invokeMethod<Map<Object?, Object?>>(
@@ -268,12 +341,17 @@ class AppUpdateService {
         },
       );
       final Object? status = result?['status'];
-      if (status != 'installer_started') {
-        throw AppException(
-          'UPDATE_PACKAGE_OPEN_FAILED',
-          'Failed to start Android package installer',
-          cause: result,
-        );
+      switch (status) {
+        case 'installer_started':
+          return AppUpdateInstallResult.installerStarted;
+        case 'permission_required':
+          return AppUpdateInstallResult.permissionRequired;
+        default:
+          throw AppException(
+            'UPDATE_PACKAGE_OPEN_FAILED',
+            'Failed to start Android package installer',
+            cause: result,
+          );
       }
     } on PlatformException catch (error) {
       throw AppException(

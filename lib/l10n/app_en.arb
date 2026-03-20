@@ -271,6 +271,7 @@
   "appUpdateDownloadingTitle": "Downloading update",
   "appUpdateDownloadingBody": "Downloading package and verifying integrity...",
   "appUpdateInstallTriggered": "Installer has been started, please follow system prompts",
+  "appUpdateInstallPermissionRequired": "Allow installs from unknown apps in system settings. Installation will resume automatically when you return.",
   "appUpdateFailed": "Update failed: {error}",
   "@appUpdateFailed": {
     "placeholders": {
