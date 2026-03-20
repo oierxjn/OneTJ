@@ -1,3 +1,3 @@
 const String oneTJAppName = 'OneTJ';
-const String oneTJAppVersion = '2.2.4';
-const String oneTJAppBuildNumber = '11';
+const String oneTJAppVersion = '2.3.0';
+const String oneTJAppBuildNumber = '12';
