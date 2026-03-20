@@ -656,6 +656,15 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "2.0.0"
+  open_filex:
+    dependency: "direct main"
+    description:
+      path: "."
+      ref: "br_v4.5.0_ohos"
+      resolved-ref: e7e2e4464a0fcd5eea56cbbbf984417fcfe49b3a
+      url: "https://gitcode.com/openharmony-sig/fluttertpc_open_filex.git"
+    source: git
+    version: "4.5.0"
   package_config:
     dependency: transitive
     description:

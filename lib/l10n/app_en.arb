@@ -254,5 +254,27 @@
   "aboutContributorsTitle": "Contributors",
   "aboutAcknowledgementsTitle": "Acknowledgements",
   "aboutAckFlutterDescription": "Flutter, Google's open-source cross-platform UI framework that serves as this project's foundation.",
-  "aboutAckTjpbDescription": "An internet team guided by the Information Office of Tongji University, providing technical support for this project."
+  "aboutAckTjpbDescription": "An internet team guided by the Information Office of Tongji University, providing technical support for this project.",
+  "appUpdateCheckTitle": "Check for updates",
+  "appUpdateCheckSubtitle": "Check the latest version and install package",
+  "appUpdateAlreadyLatest": "You are on the latest version",
+  "appUpdateDialogTitle": "New version available: {version}",
+  "@appUpdateDialogTitle": {
+    "placeholders": {
+      "version": {}
+    }
+  },
+  "appUpdateNotesEmpty": "No release notes",
+  "appUpdateNow": "Update now",
+  "appUpdateLater": "Later",
+  "appUpdateSkipVersion": "Skip this version",
+  "appUpdateDownloadingTitle": "Downloading update",
+  "appUpdateDownloadingBody": "Downloading package and verifying integrity...",
+  "appUpdateInstallTriggered": "Installer has been started, please follow system prompts",
+  "appUpdateFailed": "Update failed: {error}",
+  "@appUpdateFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  }
 }

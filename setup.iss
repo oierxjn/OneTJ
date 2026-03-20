@@ -9,6 +9,8 @@ OutputBaseFilename=OneTJSetup
 Compression=lzma
 SolidCompression=yes
 SetupIconFile=assets\icon\logo.ico
+CloseApplications=yes
+RestartApplications=no
 
 [Files]
 Source: "build\windows\x64\runner\Release\*"; DestDir: "{app}"; Flags: recursesubdirs ignoreversion

@@ -15,6 +15,8 @@
 - Do not edit generated files under `windows/flutter/ephemeral/`.
 - Do not modify Chinese text because of perceived garbling; treat it as an encoding artifact.
 - Do not manually edit or create `*.g.dart` files; use `build_runner` instead.
+- Use Chinese in the CLI.
+- When running scripts that operate on files, you may add `--Encoding utf-8` to prevent Chinese garbling.
 
 ## Optional: Windows warnings
 - To silence MSVC warning C4819 (encoding mismatch), add `/utf-8` in

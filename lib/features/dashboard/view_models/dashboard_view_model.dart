@@ -13,6 +13,7 @@ import 'package:onetj/repo/school_calendar_repository.dart';
 import 'package:onetj/repo/settings_repository.dart';
 import 'package:onetj/repo/student_info_repository.dart';
 import 'package:onetj/services/timetable_index_builder.dart';
+import 'package:onetj/services/app_update_service.dart';
 import 'package:onetj/services/user_collection_service.dart';
 import 'package:onetj/app/logging/logger.dart';
 
@@ -33,6 +34,7 @@ class DashboardViewModel extends BaseViewModel {
   final DashboardModel _model;
   final SettingsRepository _settingsRepository;
   final UserCollectionService _userCollectionService;
+  final AppUpdateService _appUpdateService = AppUpdateService.getInstance();
   final StreamController<UiEvent> _eventController;
   StreamSubscription<SettingsData>? _settingsSub;
   Timer? _upcomingRefreshTimer;
@@ -88,6 +90,7 @@ class DashboardViewModel extends BaseViewModel {
     _timetableLoading = true;
     _upcomingRefreshTimer?.cancel();
     notifyListeners();
+    unawaited(_checkUpdateInBackground());
     try {
       await Future.wait([
         loadSettings(),
@@ -98,6 +101,20 @@ class DashboardViewModel extends BaseViewModel {
       ]);
     } finally {
       _scheduleUpcomingRefresh();
+    }
+  }
+
+  Future<void> _checkUpdateInBackground() async {
+    try {
+      final result = await _appUpdateService.checkForUpdate(force: false);
+      if (!result.hasUpdate || result.updateInfo == null) {
+        return;
+      }
+      _eventController.add(
+        AppUpdateAvailableEvent(updateInfo: result.updateInfo!),
+      );
+    } catch (error, stackTrace) {
+      _appUpdateService.logUpdateFailure(error, stackTrace);
     }
   }
 

@@ -5,12 +5,14 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'package:onetj/features/dashboard/view_models/dashboard_view_model.dart';
 import 'package:onetj/features/dashboard/models/dashboard_model.dart';
+import 'package:onetj/models/app_update_info.dart';
 import 'package:onetj/models/dashboard_upcoming_mode.dart';
 import 'package:onetj/models/event_model.dart';
 import 'package:onetj/models/time_period_range.dart';
 import 'package:onetj/models/timetable_index.dart';
 import 'package:onetj/models/time_slot.dart';
 import 'package:onetj/repo/school_calendar_repository.dart';
+import 'package:onetj/services/app_update_service.dart';
 import 'package:onetj/widgets/course_detail_bottom_sheet.dart';
 
 const double _kUpcomingTimeBadgeWidth = 95;
@@ -28,7 +30,9 @@ class DashboardView extends StatefulWidget {
 class _DashboardViewState extends State<DashboardView>
     with WidgetsBindingObserver {
   late final DashboardViewModel _viewModel;
+  final AppUpdateService _appUpdateService = AppUpdateService.getInstance();
   StreamSubscription<UiEvent>? _eventSub;
+  bool _updateDialogVisible = false;
 
   @override
   void initState() {
@@ -42,6 +46,9 @@ class _DashboardViewState extends State<DashboardView>
           SnackBar(content: Text(event.message ?? '')),
         );
         return;
+      }
+      if (event is AppUpdateAvailableEvent) {
+        unawaited(_showAppUpdateDialog(event.updateInfo));
       }
     });
     _viewModel.load();
@@ -60,6 +67,90 @@ class _DashboardViewState extends State<DashboardView>
     _eventSub?.cancel();
     _viewModel.dispose();
     super.dispose();
+  }
+
+  /// 显示更新弹窗
+  /// 
+  /// [updateInfo] 更新信息
+  /// 
+  /// TODO: skipVersion应该被管理
+  Future<void> _showAppUpdateDialog(AppUpdateInfo updateInfo) async {
+    if (!mounted || _updateDialogVisible) {
+      return;
+    }
+    _updateDialogVisible = true;
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    final String notes = _appUpdateService.formatReleaseNotes(updateInfo);
+    final bool? updateNow = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: Text(l10n.appUpdateDialogTitle(updateInfo.versionTag)),
+          content: Text(
+            notes.isEmpty ? l10n.appUpdateNotesEmpty : notes,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text(l10n.appUpdateLater),
+            ),
+            TextButton(
+              onPressed: () {
+                unawaited(_appUpdateService.skipVersion(updateInfo.versionTag));
+                Navigator.of(dialogContext).pop(false);
+              },
+              child: Text(l10n.appUpdateSkipVersion),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: Text(l10n.appUpdateNow),
+            ),
+          ],
+        );
+      },
+    );
+    _updateDialogVisible = false;
+    if (updateNow != true || !mounted) {
+      return;
+    }
+    await _downloadAndInstallUpdate(updateInfo);
+  }
+
+  // TODO: UI及交互方式需要改进，需要支持取消下载、后台下载
+  Future<void> _downloadAndInstallUpdate(AppUpdateInfo info) async {
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: Text(l10n.appUpdateDownloadingTitle),
+          content: Text(l10n.appUpdateDownloadingBody),
+        );
+      },
+    );
+    try {
+      final file = await _appUpdateService.downloadPackage(info);
+      if (!mounted) {
+        return;
+      }
+      Navigator.of(context, rootNavigator: true).pop();
+      await _appUpdateService.installPackage(file);
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.appUpdateInstallTriggered)),
+      );
+    } catch (error, stackTrace) {
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.appUpdateFailed(error.toString()))),
+        );
+      }
+      _appUpdateService.logUpdateFailure(error, stackTrace);
+    }
   }
 
   @override

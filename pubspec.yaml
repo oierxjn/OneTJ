@@ -52,6 +52,10 @@ dependencies:
       url: "https://gitcode.com/openharmony-tpc/flutter_packages.git"
       ref: "br_image_picker-v1.1.2_ohos"
       path: "packages/image_picker/image_picker"
+  open_filex:
+    git:
+      url: "https://gitcode.com/openharmony-sig/fluttertpc_open_filex.git"
+      ref: "br_v4.5.0_ohos"
 
   flutter_inappwebview:
     path: ./local_packages/flutter_inappwebview/flutter_inappwebview
