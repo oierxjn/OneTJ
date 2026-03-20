@@ -39,7 +39,9 @@ class TimetableViewModel extends BaseViewModel {
   bool _isLoading = true;
   List<TimePeriodRangeData> _timeSlotRanges = kDefaultTimeSlotRanges;
   int _selectedDay = DateTime.now().weekday;
+  /// 本周
   int? _currentWeek;
+  /// 滚轮选中周数
   int? _selectedWeek;
   DateTime? _lastFetchedAt;
   TimetableDisplayMode _mode = TimetableDisplayMode.day;
@@ -106,6 +108,10 @@ class TimetableViewModel extends BaseViewModel {
     _eventController.add(const SyncWheelEvent());
   }
 
+  /// 处理设置变化
+  ///
+  /// 当 [_settingsRepository] 中的设置数据发生变化时，调用此方法。
+  /// 如果最大周数或时间槽范围发生变化，将更新 [_maxWeek]、[_timeSlotRanges]、[_availableWeeks] 并通知监听器。
   void _handleSettingsChanged(SettingsData data) {
     final int nextMaxWeek = data.maxWeek;
     final List<TimePeriodRangeData> nextTimeSlotRanges =
@@ -229,7 +235,7 @@ class TimetableViewModel extends BaseViewModel {
     }
   }
 
-  /// 同步选中的周数
+  /// 跳转到本周
   ///
   /// 如果当前周数在课表索引中，将选中周数设置为当前周数。
   /// 否则，将选中周数设置为第一周。

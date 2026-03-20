@@ -184,6 +184,33 @@
   },
   "settingsUserCollectionPolicySelectAll": "Select all",
   "settingsUserCollectionPolicyClearAll": "Clear all",
+  "settingsLaunchWallpaperTitle": "Launch Wallpaper",
+  "settingsLaunchWallpaperDefaultSummary": "Using built-in default wallpaper",
+  "settingsLaunchWallpaperCustomSummary": "Using custom wallpaper",
+  "settingsLaunchWallpaperEditorCurrentTitle": "Current selection",
+  "settingsLaunchWallpaperLibraryEmpty": "No local wallpapers yet",
+  "settingsLaunchWallpaperLoadingPreview": "Loading preview...",
+  "settingsLaunchWallpaperPreviewLoadFailed": "Preview failed to load",
+  "settingsLaunchWallpaperPreviewUnavailable": "Wallpaper file is unavailable",
+  "settingsLaunchWallpaperRenameAction": "Rename",
+  "settingsLaunchWallpaperRenameTitle": "Rename wallpaper",
+  "settingsLaunchWallpaperRenameHint": "Wallpaper name",
+  "settingsLaunchWallpaperDeleteAction": "Delete",
+  "settingsLaunchWallpaperDeleteTitle": "Delete wallpaper",
+  "settingsLaunchWallpaperDeleteBody": "Delete \"{name}\" from local wallpaper library?",
+  "@settingsLaunchWallpaperDeleteBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsLaunchWallpaperPickAction": "Choose from gallery",
+  "settingsLaunchWallpaperPickSubtitle": "Pick an image from the system gallery for the launch screen wallpaper",
+  "settingsLaunchWallpaperResetAction": "Restore default wallpaper",
+  "settingsLaunchWallpaperResetSubtitle": "Switch back to the built-in launch screen wallpaper",
+  "settingsLaunchWallpaperPickSuccess": "Custom launch wallpaper selected",
+  "settingsLaunchWallpaperResetDone": "Launch wallpaper restored to default",
   "settingsUserCollectionFieldUserid": "Student ID",
   "settingsUserCollectionFieldUsername": "Name",
   "settingsUserCollectionFieldClientVersion": "Client version",
@@ -227,5 +254,28 @@
   "aboutContributorsTitle": "Contributors",
   "aboutAcknowledgementsTitle": "Acknowledgements",
   "aboutAckFlutterDescription": "Flutter, Google's open-source cross-platform UI framework that serves as this project's foundation.",
-  "aboutAckTjpbDescription": "An internet team guided by the Information Office of Tongji University, providing technical support for this project."
+  "aboutAckTjpbDescription": "An internet team guided by the Information Office of Tongji University, providing technical support for this project.",
+  "appUpdateCheckTitle": "Check for updates",
+  "appUpdateCheckSubtitle": "Check the latest version and install package",
+  "appUpdateAlreadyLatest": "You are on the latest version",
+  "appUpdateDialogTitle": "New version available: {version}",
+  "@appUpdateDialogTitle": {
+    "placeholders": {
+      "version": {}
+    }
+  },
+  "appUpdateNotesEmpty": "No release notes",
+  "appUpdateNow": "Update now",
+  "appUpdateLater": "Later",
+  "appUpdateSkipVersion": "Skip this version",
+  "appUpdateDownloadingTitle": "Downloading update",
+  "appUpdateDownloadingBody": "Downloading package and verifying integrity...",
+  "appUpdateInstallTriggered": "Installer has been started, please follow system prompts",
+  "appUpdateInstallPermissionRequired": "Allow installs from unknown apps in system settings. Installation will resume automatically when you return.",
+  "appUpdateFailed": "Update failed: {error}",
+  "@appUpdateFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  }
 }

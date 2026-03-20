@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,12 +8,14 @@ import 'package:go_router/go_router.dart';
 import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/features/settings/models/event.dart';
+import 'package:onetj/features/settings/models/launch_wallpaper_editor_result.dart';
 import 'package:onetj/features/settings/view_models/settings_view_model.dart';
 import 'package:onetj/features/settings/views/widgets/settings_card.dart';
 import 'package:onetj/features/settings/views/widgets/settings_card_visual_state.dart';
 import 'package:onetj/features/settings/views/widgets/upcoming_courses_card.dart';
 import 'package:onetj/models/dashboard_upcoming_mode.dart';
 import 'package:onetj/models/event_model.dart';
+import 'package:onetj/models/launch_wallpaper_ref.dart';
 import 'package:onetj/models/time_period_range.dart';
 import 'package:onetj/models/time_slot.dart';
 import 'package:onetj/models/user_collection_field.dart';
@@ -315,6 +317,24 @@ class _SettingsViewState extends State<SettingsView> {
     _viewModel.updateUserCollectionFields(next);
   }
 
+  Future<void> _openLaunchWallpaperEditor() async {
+    final LaunchWallpaperEditorResult? result =
+        await context.push<LaunchWallpaperEditorResult>(
+      RoutePaths.homeSettingsLaunchWallpaper,
+      extra: _viewModel.draftLaunchWallpaperRef,
+    );
+    if (!mounted || result == null) {
+      return;
+    }
+    switch (result.action) {
+      case LaunchWallpaperEditorAction.unchanged:
+        return;
+      case LaunchWallpaperEditorAction.selected:
+        _viewModel.updateLaunchWallpaperSelection(result.wallpaperRef);
+        return;
+    }
+  }
+
   String _timeSlotSummary(AppLocalizations l10n) {
     final List<TimePeriodRangeData> ranges = _viewModel.draftTimeSlotRanges;
     if (ranges.isEmpty) {
@@ -348,6 +368,14 @@ class _SettingsViewState extends State<SettingsView> {
       selected,
       UserCollectionField.values.length,
     );
+  }
+
+  String _launchWallpaperSummary(AppLocalizations l10n) {
+    if (_viewModel.draftLaunchWallpaperRef.type ==
+        LaunchWallpaperRef.typeBuiltin) {
+      return l10n.settingsLaunchWallpaperDefaultSummary;
+    }
+    return l10n.settingsLaunchWallpaperCustomSummary;
   }
 
   bool get _settingsBusy => _viewModel.isBusy;
@@ -501,6 +529,21 @@ class _SettingsViewState extends State<SettingsView> {
     );
   }
 
+  Widget _buildLaunchWallpaperCard(AppLocalizations l10n) {
+    final SettingsCardStatus status = _resolveCardStatus(
+      isDirty: _viewModel.isLaunchWallpaperDirty,
+      hasError: false,
+    );
+    return SettingsCard(
+      status: status,
+      leading: const Icon(Icons.wallpaper_outlined),
+      title: Text(l10n.settingsLaunchWallpaperTitle),
+      subtitle: Text(_launchWallpaperSummary(l10n)),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: _settingsBusy ? null : _openLaunchWallpaperEditor,
+    );
+  }
+
   Widget _buildAboutCard(AppLocalizations l10n) {
     return SettingsCard(
       leading: const Icon(Icons.info_outline),
@@ -543,6 +586,8 @@ class _SettingsViewState extends State<SettingsView> {
         _buildDashboardUpcomingCard(l10n),
         const SizedBox(height: 12),
         _buildUserCollectionPolicyCard(l10n),
+        const SizedBox(height: 12),
+        _buildLaunchWallpaperCard(l10n),
         const SizedBox(height: 12),
         _buildAboutCard(l10n),
         const SizedBox(height: 24),

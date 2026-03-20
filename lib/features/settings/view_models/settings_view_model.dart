@@ -6,6 +6,7 @@ import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/app/logging/logger.dart';
 import 'package:onetj/models/dashboard_upcoming_mode.dart';
+import 'package:onetj/models/launch_wallpaper_ref.dart';
 import 'package:onetj/models/user_collection_field.dart';
 import 'package:onetj/features/settings/models/event.dart';
 import 'package:onetj/features/settings/models/settings_model.dart';
@@ -56,6 +57,7 @@ class SettingsViewModel extends BaseViewModel {
   late DashboardUpcomingMode _draftUpcomingMode;
   late String _draftDashboardUpcomingCountText;
   late Set<UserCollectionField> _draftUserCollectionFields;
+  late LaunchWallpaperRef _draftLaunchWallpaperRef;
 
   bool _hydrated = false;
   bool _settingsLoading = false;
@@ -81,6 +83,7 @@ class SettingsViewModel extends BaseViewModel {
       _draftDashboardUpcomingCountText;
   Set<UserCollectionField> get draftUserCollectionFields =>
       Set<UserCollectionField>.unmodifiable(_draftUserCollectionFields);
+  LaunchWallpaperRef get draftLaunchWallpaperRef => _draftLaunchWallpaperRef;
 
   bool get isHydrated => _hydrated;
   bool get settingsLoading => _settingsLoading;
@@ -120,6 +123,9 @@ class SettingsViewModel extends BaseViewModel {
     }
     return false;
   }
+
+  bool get isLaunchWallpaperDirty =>
+      _draftLaunchWallpaperRef != _savedSettings.selectedLaunchWallpaperRef;
 
   bool get isMaxWeekInvalid {
     try {
@@ -228,6 +234,14 @@ class SettingsViewModel extends BaseViewModel {
 
   void updateUserCollectionFields(Set<UserCollectionField> value) {
     _draftUserCollectionFields = Set<UserCollectionField>.from(value);
+    notifyListeners();
+  }
+
+  void updateLaunchWallpaperSelection(LaunchWallpaperRef value) {
+    if (_draftLaunchWallpaperRef == value) {
+      return;
+    }
+    _draftLaunchWallpaperRef = value;
     notifyListeners();
   }
 
@@ -369,6 +383,7 @@ class SettingsViewModel extends BaseViewModel {
         userCollectionFields: Set<UserCollectionField>.unmodifiable(
           _draftUserCollectionFields,
         ),
+        selectedLaunchWallpaperRef: _draftLaunchWallpaperRef,
       );
       await _settingsRepository.saveSettings(next);
       _savedSettings = next;
@@ -461,6 +476,7 @@ class SettingsViewModel extends BaseViewModel {
     _draftUserCollectionFields = Set<UserCollectionField>.from(
       data.userCollectionFields,
     );
+    _draftLaunchWallpaperRef = data.selectedLaunchWallpaperRef;
   }
 
   bool _sameTimeSlotRanges(

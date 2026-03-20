@@ -10,6 +10,8 @@ const int kMinDashboardUpcomingCount = 1;
 const int kMaxDashboardUpcomingCount = 20;
 const Set<UserCollectionField> kDefaultUserCollectionFields =
     <UserCollectionField>{};
+const String kDefaultLaunchWallpaperAsset = 'assets/pictures/1.jpg';
+const String kDefaultLaunchWallpaperId = 'builtin:1';
 
 const int kLegacyTimeSlotLastDurationMinutes = 45;
 

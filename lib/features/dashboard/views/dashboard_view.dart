@@ -5,12 +5,14 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'package:onetj/features/dashboard/view_models/dashboard_view_model.dart';
 import 'package:onetj/features/dashboard/models/dashboard_model.dart';
+import 'package:onetj/models/app_update_info.dart';
 import 'package:onetj/models/dashboard_upcoming_mode.dart';
 import 'package:onetj/models/event_model.dart';
 import 'package:onetj/models/time_period_range.dart';
 import 'package:onetj/models/timetable_index.dart';
 import 'package:onetj/models/time_slot.dart';
 import 'package:onetj/repo/school_calendar_repository.dart';
+import 'package:onetj/services/app_update_service.dart';
 import 'package:onetj/widgets/course_detail_bottom_sheet.dart';
 
 const double _kUpcomingTimeBadgeWidth = 95;
@@ -25,13 +27,17 @@ class DashboardView extends StatefulWidget {
   State<DashboardView> createState() => _DashboardViewState();
 }
 
-class _DashboardViewState extends State<DashboardView> {
+class _DashboardViewState extends State<DashboardView>
+    with WidgetsBindingObserver {
   late final DashboardViewModel _viewModel;
+  final AppUpdateService _appUpdateService = AppUpdateService.getInstance();
   StreamSubscription<UiEvent>? _eventSub;
+  bool _updateDialogVisible = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _viewModel = DashboardViewModel();
     _eventSub = _viewModel.events.listen((event) {
       if (event is ShowSnackBarEvent) {
@@ -41,15 +47,117 @@ class _DashboardViewState extends State<DashboardView> {
         );
         return;
       }
+      if (event is AppUpdateAvailableEvent) {
+        unawaited(_showAppUpdateDialog(event.updateInfo));
+      }
     });
     _viewModel.load();
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      unawaited(_viewModel.onAppResumed());
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _eventSub?.cancel();
     _viewModel.dispose();
     super.dispose();
+  }
+
+  /// 显示更新弹窗
+  /// 
+  /// [updateInfo] 更新信息
+  /// 
+  /// TODO: skipVersion应该被管理
+  Future<void> _showAppUpdateDialog(AppUpdateInfo updateInfo) async {
+    if (!mounted || _updateDialogVisible) {
+      return;
+    }
+    _updateDialogVisible = true;
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    final String notes = _appUpdateService.formatReleaseNotes(updateInfo);
+    final bool? updateNow = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: Text(l10n.appUpdateDialogTitle(updateInfo.versionTag)),
+          content: Text(
+            notes.isEmpty ? l10n.appUpdateNotesEmpty : notes,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text(l10n.appUpdateLater),
+            ),
+            TextButton(
+              onPressed: () {
+                unawaited(_appUpdateService.skipVersion(updateInfo.versionTag));
+                Navigator.of(dialogContext).pop(false);
+              },
+              child: Text(l10n.appUpdateSkipVersion),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: Text(l10n.appUpdateNow),
+            ),
+          ],
+        );
+      },
+    );
+    _updateDialogVisible = false;
+    if (updateNow != true || !mounted) {
+      return;
+    }
+    await _downloadAndInstallUpdate(updateInfo);
+  }
+
+  // TODO: UI及交互方式需要改进，需要支持取消下载、后台下载
+  Future<void> _downloadAndInstallUpdate(AppUpdateInfo info) async {
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: Text(l10n.appUpdateDownloadingTitle),
+          content: Text(l10n.appUpdateDownloadingBody),
+        );
+      },
+    );
+    try {
+      final file = await _appUpdateService.downloadPackage(info);
+      if (!mounted) {
+        return;
+      }
+      Navigator.of(context, rootNavigator: true).pop();
+      final AppUpdateInstallResult result =
+          await _appUpdateService.installPackage(file);
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            result == AppUpdateInstallResult.permissionRequired
+                ? l10n.appUpdateInstallPermissionRequired
+                : l10n.appUpdateInstallTriggered,
+          ),
+        ),
+      );
+    } catch (error, stackTrace) {
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.appUpdateFailed(error.toString()))),
+        );
+      }
+      _appUpdateService.logUpdateFailure(error, stackTrace);
+    }
   }
 
   @override
@@ -110,7 +218,6 @@ class _DashboardViewState extends State<DashboardView> {
     final SchoolCalendarData? calendar = _viewModel.calendar;
     final l10n = AppLocalizations.of(context);
 
-    // TODO 加载没有完成的时候，显示一个加载条
     final String department = _viewModel.departmentName ?? '';
     final bool isLoading =
         _viewModel.studentLoading || _viewModel.calendarLoading;
@@ -125,31 +232,65 @@ class _DashboardViewState extends State<DashboardView> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              termTitle,
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 6),
-            Text(
-              departmentLabel,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                _InfoPill(text: l10n.currentTeachingWeekText(weekNumber)),
-              ],
-            ),
-            if (isLoading) ...[
+        child: AnimatedSize(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          alignment: Alignment.topCenter,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                termTitle,
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                departmentLabel,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+              ),
               const SizedBox(height: 12),
-              const LinearProgressIndicator(),
+              Row(
+                children: [
+                  _InfoPill(text: l10n.currentTeachingWeekText(weekNumber)),
+                ],
+              ),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 520),
+                switchInCurve: Curves.easeOutCubic,
+                switchOutCurve: Curves.easeInCubic,
+                transitionBuilder: (child, animation) {
+                  final Animation<double> fade = CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeOut,
+                  );
+                  final Animation<double> scale = Tween<double>(
+                    begin: 0.98,
+                    end: 1,
+                  ).animate(
+                    CurvedAnimation(
+                      parent: animation,
+                      curve: Curves.easeOutCubic,
+                    ),
+                  );
+                  return FadeTransition(
+                    opacity: fade,
+                    child: ScaleTransition(
+                      scale: scale,
+                      child: child,
+                    ),
+                  );
+                },
+                child: isLoading
+                    ? const _HeroLoadingBlock(key: ValueKey('hero-loading'))
+                    : const SizedBox(
+                        key: ValueKey('hero-idle'),
+                        height: 16,
+                      ),
+              ),
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -178,8 +319,9 @@ class _DashboardViewState extends State<DashboardView> {
               roomLabel: item.entry.roomIdI18n.isNotEmpty
                   ? item.entry.roomIdI18n
                   : item.entry.roomLabel,
-              teacherLabel:
-                  item.entry.teacherName.isNotEmpty ? item.entry.teacherName : '-',
+              teacherLabel: item.entry.teacherName.isNotEmpty
+                  ? item.entry.teacherName
+                  : '-',
               isOngoing: item.isOngoing,
               onTap: () {
                 _showCourseDetails(item.entry);
@@ -281,6 +423,20 @@ class _InfoPill extends StatelessWidget {
               fontWeight: FontWeight.w600,
             ),
       ),
+    );
+  }
+}
+
+class _HeroLoadingBlock extends StatelessWidget {
+  const _HeroLoadingBlock({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      children: [
+        SizedBox(height: 12),
+        LinearProgressIndicator(),
+      ],
     );
   }
 }

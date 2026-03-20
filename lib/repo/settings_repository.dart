@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:onetj/models/dashboard_upcoming_mode.dart';
+import 'package:onetj/models/launch_wallpaper_ref.dart';
 import 'package:onetj/models/settings_defaults.dart';
 import 'package:onetj/models/settings_validation.dart' as settings_validation;
 import 'package:onetj/models/time_period_range.dart';
@@ -16,6 +17,7 @@ class SettingsData {
     required this.dashboardUpcomingMode,
     required this.dashboardUpcomingCount,
     required this.userCollectionFields,
+    required this.selectedLaunchWallpaperRef,
   });
 
   final int maxWeek;
@@ -23,6 +25,7 @@ class SettingsData {
   final DashboardUpcomingMode dashboardUpcomingMode;
   final int dashboardUpcomingCount;
   final Set<UserCollectionField> userCollectionFields;
+  final LaunchWallpaperRef selectedLaunchWallpaperRef;
 
   factory SettingsData.fromJson(Map<String, dynamic> json) {
     final int maxWeek = _readMaxWeekWithFallback(json);
@@ -34,6 +37,8 @@ class SettingsData {
       dashboardUpcomingMode: _readDashboardUpcomingModeWithFallback(json),
       dashboardUpcomingCount: _readDashboardUpcomingCountWithFallback(json),
       userCollectionFields: _readUserCollectionFieldsWithFallback(json),
+      selectedLaunchWallpaperRef:
+          _readSelectedLaunchWallpaperRefWithFallback(json),
     );
   }
 
@@ -47,7 +52,29 @@ class SettingsData {
           .where((field) => userCollectionFields.contains(field))
           .map((field) => field.jsonKey)
           .toList(growable: false),
+      'selectedLaunchWallpaperRef': selectedLaunchWallpaperRef.toJson(),
     };
+  }
+
+  SettingsData copyWith({
+    int? maxWeek,
+    List<TimePeriodRangeData>? timeSlotRanges,
+    DashboardUpcomingMode? dashboardUpcomingMode,
+    int? dashboardUpcomingCount,
+    Set<UserCollectionField>? userCollectionFields,
+    LaunchWallpaperRef? selectedLaunchWallpaperRef,
+  }) {
+    return SettingsData(
+      maxWeek: maxWeek ?? this.maxWeek,
+      timeSlotRanges: timeSlotRanges ?? this.timeSlotRanges,
+      dashboardUpcomingMode:
+          dashboardUpcomingMode ?? this.dashboardUpcomingMode,
+      dashboardUpcomingCount:
+          dashboardUpcomingCount ?? this.dashboardUpcomingCount,
+      userCollectionFields: userCollectionFields ?? this.userCollectionFields,
+      selectedLaunchWallpaperRef:
+          selectedLaunchWallpaperRef ?? this.selectedLaunchWallpaperRef,
+    );
   }
 
   static int _readMaxWeekWithFallback(Map<String, dynamic> json) {
@@ -133,6 +160,15 @@ class SettingsData {
         )
         .whereType<UserCollectionField>()
         .toSet();
+  }
+
+  static LaunchWallpaperRef _readSelectedLaunchWallpaperRefWithFallback(
+    Map<String, dynamic> json,
+  ) {
+    if (!json.containsKey('selectedLaunchWallpaperRef')) {
+      return LaunchWallpaperRef.defaultValue;
+    }
+    return LaunchWallpaperRef.fromJson(json['selectedLaunchWallpaperRef']);
   }
 
   static int _parseMaxWeek(Object? value) {
@@ -259,6 +295,7 @@ class SettingsRepository {
     dashboardUpcomingMode: kDefaultDashboardUpcomingMode,
     dashboardUpcomingCount: kDefaultDashboardUpcomingCount,
     userCollectionFields: kDefaultUserCollectionFields,
+    selectedLaunchWallpaperRef: LaunchWallpaperRef.defaultValue,
   );
 
   static SettingsRepository getInstance() {

@@ -1,11 +1,12 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'package:onetj/features/launcher/view_models/launcher_view_model.dart';
 import 'package:onetj/models/event_model.dart';
+import 'package:onetj/models/settings_defaults.dart';
 
 class LauncherView extends StatefulWidget {
   const LauncherView({super.key});
@@ -42,12 +43,39 @@ class _LauncherViewState extends State<LauncherView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(AppLocalizations.of(context).appTitle),
+      body: AnimatedBuilder(
+        animation: _viewModel,
+        builder: (context, _) => SizedBox.expand(
+          child: _buildWallpaper(),
+        ),
       ),
-      body: Center(
-        child: Image.asset('assets/icon/logo.jpg'),
-      ),
+    );
+  }
+
+  Widget _buildWallpaper() {
+    final String? assetPath = _viewModel.wallpaperAssetPath;
+    if (assetPath != null) {
+      return Image.asset(
+        assetPath,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _defaultWallpaper(),
+      );
+    }
+    final String? customPath = _viewModel.wallpaperFilePath;
+    if (customPath != null) {
+      return Image.file(
+        File(customPath),
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _defaultWallpaper(),
+      );
+    }
+    return _defaultWallpaper();
+  }
+
+  Widget _defaultWallpaper() {
+    return Image.asset(
+      kDefaultLaunchWallpaperAsset,
+      fit: BoxFit.cover,
     );
   }
 }

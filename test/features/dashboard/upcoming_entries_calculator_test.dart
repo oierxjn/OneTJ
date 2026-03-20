@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:onetj/features/dashboard/models/dashboard_model.dart';
 import 'package:onetj/features/dashboard/models/upcoming_entries_calculator.dart';
 import 'package:onetj/models/dashboard_upcoming_mode.dart';
 import 'package:onetj/models/time_period_range.dart';
@@ -56,10 +57,11 @@ void main() {
         count: 3,
       );
 
-      final List<TimetableEntry> result =
+      final List<DashboardUpcomingEntryData> result =
           UpcomingEntriesCalculator.calculate(query);
 
-      expect(result.map((e) => e.courseName), <String>['today-future']);
+      expect(result.map((e) => e.entry.courseName), <String>['today-future']);
+      expect(result.first.isOngoing, isFalse);
     });
 
     test('thisWeek mode returns remaining entries in current week', () {
@@ -79,10 +81,15 @@ void main() {
         count: 3,
       );
 
-      final List<TimetableEntry> result =
+      final List<DashboardUpcomingEntryData> result =
           UpcomingEntriesCalculator.calculate(query);
 
-      expect(result.map((e) => e.courseName), <String>['today-future', 'wed']);
+      expect(
+        result.map((e) => e.entry.courseName),
+        <String>['today-future', 'wed'],
+      );
+      expect(result.first.isOngoing, isFalse);
+      expect(result[1].isOngoing, isFalse);
     });
 
     test('count mode fills across weeks up to count', () {
@@ -102,13 +109,60 @@ void main() {
         count: 3,
       );
 
-      final List<TimetableEntry> result =
+      final List<DashboardUpcomingEntryData> result =
           UpcomingEntriesCalculator.calculate(query);
 
       expect(
-        result.map((e) => e.courseName),
+        result.map((e) => e.entry.courseName),
         <String>['w5-mon', 'w5-tue', 'w6-mon'],
       );
+      expect(result.first.isOngoing, isTrue);
+      expect(result[1].isOngoing, isFalse);
+      expect(result[2].isOngoing, isFalse);
+    });
+
+    test('first item is not ongoing when it is not today', () {
+      final List<TimetableEntry> entries = <TimetableEntry>[
+        entry(id: 'tomorrow-first', day: 2, start: 3, weeks: <int>[5]),
+        entry(id: 'wed-second', day: 3, start: 3, weeks: <int>[5]),
+      ];
+      final UpcomingEntriesQuery query = UpcomingEntriesQuery(
+        now: DateTime(2026, 1, 26, 10, 10), // Monday week 5
+        entries: entries,
+        timeSlotRanges: ranges,
+        currentWeek: 5,
+        maxWeek: 20,
+        mode: DashboardUpcomingMode.thisWeek,
+        count: 2,
+      );
+
+      final List<DashboardUpcomingEntryData> result =
+          UpcomingEntriesCalculator.calculate(query);
+
+      expect(
+        result.map((e) => e.entry.courseName),
+        <String>['tomorrow-first', 'wed-second'],
+      );
+      expect(result.first.isOngoing, isFalse);
+      expect(result[1].isOngoing, isFalse);
+    });
+
+    test('isEntryOngoing returns false when currentWeek does not match', () {
+      final TimetableEntry mondayWeekSix = entry(
+        id: 'w6-mon',
+        day: 1,
+        start: 3,
+        weeks: <int>[6],
+      );
+
+      final bool ongoing = UpcomingEntriesCalculator.isEntryOngoing(
+        entry: mondayWeekSix,
+        now: DateTime(2026, 1, 26, 10, 10), // Monday week 5 time in slot 3
+        currentWeek: 5,
+        timeSlotRanges: ranges,
+      );
+
+      expect(ongoing, isFalse);
     });
 
     test('count mode returns empty when currentWeek > maxWeek', () {
@@ -124,7 +178,7 @@ void main() {
         count: 3,
       );
 
-      final List<TimetableEntry> result =
+      final List<DashboardUpcomingEntryData> result =
           UpcomingEntriesCalculator.calculate(query);
 
       expect(result, isEmpty);

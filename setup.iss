@@ -1,7 +1,7 @@
 [Setup]
 AppId={{e52df8a9-9166-40d9-ad95-a4d5880b9a0f}}
 AppName=OneTJ
-AppVersion=2.2.4
+AppVersion=2.3.0
 DefaultDirName={localappdata}\Programs\OneTJ
 DefaultGroupName=OneTJ
 OutputDir=dist
@@ -9,6 +9,8 @@ OutputBaseFilename=OneTJSetup
 Compression=lzma
 SolidCompression=yes
 SetupIconFile=assets\icon\logo.ico
+CloseApplications=yes
+RestartApplications=no
 
 [Files]
 Source: "build\windows\x64\runner\Release\*"; DestDir: "{app}"; Flags: recursesubdirs ignoreversion

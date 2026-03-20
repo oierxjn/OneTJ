@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -5,6 +7,8 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:onetj/features/about/models/acknowledgement_model.dart';
 import 'package:onetj/features/about/models/contributor_model.dart';
 import 'package:onetj/features/about/view_models/about_view_model.dart';
+import 'package:onetj/models/app_update_info.dart';
+import 'package:onetj/models/event_model.dart';
 
 const String _kProjectRepoUrl = 'https://github.com/oierxjn/OneTJ';
 const String _kQqGroupId = '322324184';
@@ -19,6 +23,21 @@ class AboutView extends StatefulWidget {
 
 class _AboutViewState extends State<AboutView> {
   final AboutViewModel _viewModel = AboutViewModel();
+  StreamSubscription<UiEvent>? _eventSub;
+  bool _downloadDialogVisible = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _eventSub = _viewModel.events.listen(_handleEvent);
+  }
+
+  @override
+  void dispose() {
+    _eventSub?.cancel();
+    _viewModel.dispose();
+    super.dispose();
+  }
 
   Future<void> _copyRepoUrl(AppLocalizations l10n) async {
     await Clipboard.setData(const ClipboardData(text: _kProjectRepoUrl));
@@ -204,6 +223,101 @@ class _AboutViewState extends State<AboutView> {
     );
   }
 
+  Future<void> _handleEvent(UiEvent event) async {
+    if (!mounted) {
+      return;
+    }
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    if (event is AppUpdateAlreadyLatestEvent) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.appUpdateAlreadyLatest)),
+      );
+      return;
+    }
+    if (event is AppUpdateAvailableEvent && event.fromManualCheck) {
+      await _showManualUpdateDialog(l10n, event.updateInfo);
+      return;
+    }
+    if (event is AppUpdateInstallTriggeredEvent) {
+      _dismissDownloadDialogIfNeeded();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.appUpdateInstallTriggered)),
+      );
+      return;
+    }
+    if (event is AppUpdateInstallPermissionRequiredEvent) {
+      _dismissDownloadDialogIfNeeded();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.appUpdateInstallPermissionRequired)),
+      );
+      return;
+    }
+    if (event is AppUpdateFailedEvent) {
+      _dismissDownloadDialogIfNeeded();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.appUpdateFailed(event.error.toString()))),
+      );
+    }
+  }
+
+  Future<void> _showManualUpdateDialog(
+    AppLocalizations l10n,
+    AppUpdateInfo updateInfo,
+  ) async {
+    final String notes = _viewModel.formatReleaseNotes(updateInfo);
+    final bool? updateNow = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: Text(l10n.appUpdateDialogTitle(updateInfo.versionTag)),
+          content: Text(
+            notes.isEmpty ? l10n.appUpdateNotesEmpty : notes,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text(l10n.appUpdateLater),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: Text(l10n.appUpdateNow),
+            ),
+          ],
+        );
+      },
+    );
+    if (updateNow != true || !mounted) {
+      return;
+    }
+    _showDownloadDialog(l10n);
+    await _viewModel.downloadAndInstallUpdate(updateInfo);
+  }
+
+  // TODO: serious 下载的时候允许后台下载
+  void _showDownloadDialog(AppLocalizations l10n) {
+    if (_downloadDialogVisible || !mounted) {
+      return;
+    }
+    _downloadDialogVisible = true;
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: Text(l10n.appUpdateDownloadingTitle),
+        content: Text(l10n.appUpdateDownloadingBody),
+      ),
+    ).whenComplete(() {
+      _downloadDialogVisible = false;
+    });
+  }
+
+  void _dismissDownloadDialogIfNeeded() {
+    if (!_downloadDialogVisible || !mounted) {
+      return;
+    }
+    Navigator.of(context, rootNavigator: true).pop();
+  }
+
   @override
   Widget build(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context);
@@ -211,80 +325,101 @@ class _AboutViewState extends State<AboutView> {
       appBar: AppBar(
         title: Text(l10n.settingsAboutTitle),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          l10n.appTitle,
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          l10n.aboutDescription,
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                      ],
+      body: AnimatedBuilder(
+        animation: _viewModel,
+        builder: (context, _) => ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l10n.appTitle,
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            l10n.aboutDescription,
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.asset(
-                      'assets/icon/logo.jpg',
-                      width: 56,
-                      height: 56,
-                      fit: BoxFit.cover,
+                    const SizedBox(width: 12),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.asset(
+                        'assets/icon/logo.jpg',
+                        width: 56,
+                        height: 56,
+                        fit: BoxFit.cover,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 12),
-          _buildInfoCard(
-            icon: Icons.apps_outlined,
-            title: l10n.aboutAppNameLabel,
-            value: _viewModel.appName,
-          ),
-          const SizedBox(height: 12),
-          _buildInfoCard(
-            icon: Icons.new_releases_outlined,
-            title: l10n.aboutVersionLabel,
-            value: _viewModel.version,
-          ),
-          const SizedBox(height: 12),
-          _buildInfoCard(
-            icon: Icons.tag_outlined,
-            title: l10n.aboutBuildLabel,
-            value: _viewModel.buildNumber,
-          ),
-          const SizedBox(height: 12),
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.link_outlined),
-              title: Text(l10n.aboutRepoLabel),
-              subtitle: const Text(_kProjectRepoUrl),
-              trailing: const Icon(Icons.copy_outlined),
-              onTap: () => _copyRepoUrl(l10n),
+            const SizedBox(height: 12),
+            _buildInfoCard(
+              icon: Icons.apps_outlined,
+              title: l10n.aboutAppNameLabel,
+              value: _viewModel.appName,
             ),
-          ),
-          const SizedBox(height: 12),
-          _buildQqGroupCard(l10n),
-          const SizedBox(height: 12),
-          _buildContributorsCard(l10n),
-          const SizedBox(height: 12),
-          _buildAcknowledgementsCard(l10n),
-        ],
+            const SizedBox(height: 12),
+            _buildInfoCard(
+              icon: Icons.new_releases_outlined,
+              title: l10n.aboutVersionLabel,
+              value: _viewModel.version,
+            ),
+            const SizedBox(height: 12),
+            _buildInfoCard(
+              icon: Icons.tag_outlined,
+              title: l10n.aboutBuildLabel,
+              value: _viewModel.buildNumber,
+            ),
+            const SizedBox(height: 12),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.system_update_alt_outlined),
+                title: Text(l10n.appUpdateCheckTitle),
+                subtitle: Text(l10n.appUpdateCheckSubtitle),
+                trailing: _viewModel.isUpdateBusy
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.chevron_right),
+                onTap: _viewModel.isUpdateBusy
+                    ? null
+                    : _viewModel.checkForUpdateManually,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.link_outlined),
+                title: Text(l10n.aboutRepoLabel),
+                subtitle: const Text(_kProjectRepoUrl),
+                trailing: const Icon(Icons.copy_outlined),
+                onTap: () => _copyRepoUrl(l10n),
+              ),
+            ),
+            const SizedBox(height: 12),
+            _buildQqGroupCard(l10n),
+            const SizedBox(height: 12),
+            _buildContributorsCard(l10n),
+            const SizedBox(height: 12),
+            _buildAcknowledgementsCard(l10n),
+          ],
+        ),
       ),
     );
   }

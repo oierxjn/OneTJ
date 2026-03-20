@@ -3,10 +3,12 @@ import 'package:go_router/go_router.dart';
 import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/features/about/views/about_view.dart';
 import 'package:onetj/features/settings/views/developer_settings_view.dart';
+import 'package:onetj/features/settings/views/launch_wallpaper_editor_view.dart';
 import 'package:onetj/features/settings/views/log_viewer_view.dart';
 import 'package:onetj/features/settings/views/settings_view.dart';
 import 'package:onetj/features/settings/views/time_slot_editor_view.dart';
 import 'package:onetj/features/settings/views/user_collection_policy_view.dart';
+import 'package:onetj/models/launch_wallpaper_ref.dart';
 import 'package:onetj/models/settings_defaults.dart';
 import 'package:onetj/models/time_period_range.dart';
 import 'package:onetj/models/user_collection_field.dart';
@@ -44,6 +46,20 @@ final List<GoRoute> settingsRoutes = [
               : parsed;
           return TimeSlotEditorView(
             initialTimeSlotRanges: initialTimeSlots,
+          );
+        },
+      ),
+      GoRoute(
+        path: 'launch-wallpaper',
+        name: 'settings-launch-wallpaper',
+        builder: (context, state) {
+          final Object? extra = state.extra;
+          final LaunchWallpaperRef initialWallpaperRef = switch (extra) {
+            LaunchWallpaperRef value => value,
+            _ => LaunchWallpaperRef.defaultValue,
+          };
+          return LaunchWallpaperEditorView(
+            initialSelectedWallpaperRef: initialWallpaperRef,
           );
         },
       ),

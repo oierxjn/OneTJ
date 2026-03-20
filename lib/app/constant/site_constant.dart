@@ -25,6 +25,8 @@ const String studentTimetablePath = "/v1/rt/onetongji/student_timetable";
 const String undergraduateScorePath = "/v1/rt/onetongji/undergraduate_score";
 const String defaultDebugCollectionEndpoint =
     "http://127.0.0.1:8000/collector/v1/events";
+const String appUpdateServiceBaseUrl = "onetjapi.jkljkluiouio.top";
+const String appUpdateCheckPath = "/updater/v1/check";
 
 const String tongjiClientID = "authorization-xxb-onedottongji-yuchen";
 const String oneTJredirectUri = "https://fakeredir.jkljkluiouio.top";

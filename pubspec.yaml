@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 2.2.4+11
+version: 2.3.0+12
 
 environment:
   sdk: ^3.6.2
@@ -47,6 +47,15 @@ dependencies:
 
   uuid: ^4.4.2
   shared_preferences: ^2.3.2
+  image_picker:
+    git:
+      url: "https://gitcode.com/openharmony-tpc/flutter_packages.git"
+      ref: "br_image_picker-v1.1.2_ohos"
+      path: "packages/image_picker/image_picker"
+  open_filex:
+    git:
+      url: "https://gitcode.com/openharmony-sig/fluttertpc_open_filex.git"
+      ref: "br_v4.5.0_ohos"
 
   flutter_inappwebview:
     path: ./local_packages/flutter_inappwebview/flutter_inappwebview

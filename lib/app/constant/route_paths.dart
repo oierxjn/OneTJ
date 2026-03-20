@@ -8,6 +8,8 @@ class RoutePaths {
   static const String homeTimetable = '$home/timetable';
   static const String homeSettings = '$home/settings';
   static const String homeSettingsTimeSlots = '$homeSettings/time-slots';
+  static const String homeSettingsLaunchWallpaper =
+      '$homeSettings/launch-wallpaper';
   static const String homeSettingsUserCollectionPolicy =
       '$homeSettings/user-collection-policy';
   static const String homeSettingsAbout = '$homeSettings/about';
