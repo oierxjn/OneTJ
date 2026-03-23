@@ -255,7 +255,8 @@ class AppUpdateService {
 
   String _resolveCurrentBuild() => oneTJAppBuildNumber;
 
-  Future<void> resumePendingInstallIfPossible() async {
+  /// 尝试恢复待安装的更新
+  Future<void> resumePendingInstall() async {
     if (!Platform.isAndroid) {
       return;
     }

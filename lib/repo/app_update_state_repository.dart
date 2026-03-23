@@ -27,12 +27,17 @@ class AppUpdateStateData {
     return DateTime.fromMillisecondsSinceEpoch(millis);
   }
 
+  /// 复制当前状态数据
+  /// 
+  /// clearSkippedVersionTag: 是否清除已跳过的版本标签 [skippedVersionTag]
+  /// clearPendingInstall: 是否清除待安装的更新信息 [pendingFilePath, pendingVersionTag, pendingSha256, pendingAwaitingInstallPermission]
   AppUpdateStateData copyWith({
     int? lastCheckedAtMillis,
     String? skippedVersionTag,
     String? pendingFilePath,
     String? pendingVersionTag,
     String? pendingSha256,
+    // 安装流程因权限问题而被暂停
     bool? pendingAwaitingInstallPermission,
     bool clearSkippedVersionTag = false,
     bool clearPendingInstall = false,
@@ -133,6 +138,9 @@ class AppUpdateStateRepository {
     );
   }
 
+  /// 标记版本为已跳过
+  /// 
+  /// 用于记录用户已跳过的版本，避免重复提示
   Future<void> skipVersion(String versionTag) async {
     final AppUpdateStateData current = await getState();
     await saveState(current.copyWith(skippedVersionTag: versionTag));
@@ -160,6 +168,9 @@ class AppUpdateStateRepository {
     );
   }
 
+  /// 标记待安装的更新是否因权限问题而被暂停
+  /// 
+  /// 用于记录用户因权限问题而被暂停的更新
   Future<void> markPendingAwaitingInstallPermission(bool value) async {
     final AppUpdateStateData current = await getState();
     await saveState(
