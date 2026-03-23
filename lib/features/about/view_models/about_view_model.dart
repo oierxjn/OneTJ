@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:onetj/app/constant/app_version_constant.dart';
+import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/models/app_update_info.dart';
 import 'package:onetj/models/base_model.dart';
 import 'package:onetj/models/event_model.dart';
@@ -9,8 +10,8 @@ import 'package:onetj/services/app_update_service.dart';
 class AboutViewModel extends BaseViewModel {
   AboutViewModel({
     AppUpdateService? appUpdateService,
-  }) : _appUpdateService = appUpdateService ?? AppUpdateService.getInstance(),
-       _eventController = StreamController<UiEvent>.broadcast();
+  })  : _appUpdateService = appUpdateService ?? appLocator<AppUpdateService>(),
+        _eventController = StreamController<UiEvent>.broadcast();
 
   static const String _appName = oneTJAppName;
   static const String _version = oneTJAppVersion;
@@ -39,7 +40,8 @@ class AboutViewModel extends BaseViewModel {
     _isCheckingUpdate = true;
     notifyListeners();
     try {
-      final AppUpdateCheckResult result = await _appUpdateService.checkForUpdate(
+      final AppUpdateCheckResult result =
+          await _appUpdateService.checkForUpdate(
         force: true,
       );
       if (!result.hasUpdate || result.updateInfo == null) {

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
+import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/features/dashboard/view_models/dashboard_view_model.dart';
 import 'package:onetj/features/dashboard/models/dashboard_model.dart';
 import 'package:onetj/models/app_update_info.dart';
@@ -30,7 +31,7 @@ class DashboardView extends StatefulWidget {
 class _DashboardViewState extends State<DashboardView>
     with WidgetsBindingObserver {
   late final DashboardViewModel _viewModel;
-  final AppUpdateService _appUpdateService = AppUpdateService.getInstance();
+  late final AppUpdateService _appUpdateService;
   StreamSubscription<UiEvent>? _eventSub;
   bool _updateDialogVisible = false;
 
@@ -38,7 +39,8 @@ class _DashboardViewState extends State<DashboardView>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _viewModel = DashboardViewModel();
+    _appUpdateService = appLocator<AppUpdateService>();
+    _viewModel = DashboardViewModel(appUpdateService: _appUpdateService);
     _eventSub = _viewModel.events.listen((event) {
       if (event is ShowSnackBarEvent) {
         if (!mounted) return;
@@ -70,9 +72,9 @@ class _DashboardViewState extends State<DashboardView>
   }
 
   /// 显示更新弹窗
-  /// 
+  ///
   /// [updateInfo] 更新信息
-  /// 
+  ///
   /// TODO: skipVersion应该被管理
   Future<void> _showAppUpdateDialog(AppUpdateInfo updateInfo) async {
     if (!mounted || _updateDialogVisible) {

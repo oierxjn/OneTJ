@@ -5,9 +5,11 @@ import 'package:onetj/services/app_update_service.dart';
 class AppLifecycleHost extends StatefulWidget {
   const AppLifecycleHost({
     super.key,
+    required this.appUpdateService,
     required this.child,
   });
 
+  final AppUpdateService appUpdateService;
   final Widget child;
 
   @override
@@ -16,8 +18,6 @@ class AppLifecycleHost extends StatefulWidget {
 
 class _AppLifecycleHostState extends State<AppLifecycleHost>
     with WidgetsBindingObserver {
-  final AppUpdateService _appUpdateService = AppUpdateService.getInstance();
-
   @override
   void initState() {
     super.initState();
@@ -38,11 +38,11 @@ class _AppLifecycleHostState extends State<AppLifecycleHost>
   }
 
   void _resumePendingInstall() {
-    _appUpdateService.resumePendingInstallIfPossible().catchError((
+    widget.appUpdateService.resumePendingInstallIfPossible().catchError((
       Object error,
       StackTrace stackTrace,
     ) {
-      _appUpdateService.logUpdateFailure(error, stackTrace);
+      widget.appUpdateService.logUpdateFailure(error, stackTrace);
     });
   }
 

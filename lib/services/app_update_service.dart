@@ -20,7 +20,7 @@ enum AppUpdateInstallResult {
 }
 
 class AppUpdateService {
-  AppUpdateService._({
+  AppUpdateService({
     AppUpdateApi? api,
     AppUpdateStateRepository? repository,
   })  : _api = api ?? AppUpdateApi(),
@@ -28,7 +28,7 @@ class AppUpdateService {
 
   static AppUpdateService? _instance;
   static AppUpdateService getInstance() {
-    return _instance ??= AppUpdateService._();
+    return _instance ??= AppUpdateService();
   }
 
   final AppUpdateApi _api;
@@ -147,7 +147,7 @@ class AppUpdateService {
   }
 
   /// 构造文件名
-  /// 
+  ///
   /// 格式：`onetj_update_${platform}_${versionTag}`
   String _resolveDownloadFileName(Uri uri, AppUpdateInfo info) {
     final String fromPath = p.basename(uri.path);
@@ -162,7 +162,7 @@ class AppUpdateService {
   ///
   /// [file] 文件
   /// [expectedSha256] 预期的 SHA256 哈希
-  /// 
+  ///
   /// throw:
   ///
   /// [AppException] 哈希不匹配
@@ -187,7 +187,7 @@ class AppUpdateService {
   /// 安装更新包
   ///
   /// [file] 更新包文件
-  /// 
+  ///
   /// throw:
   ///
   /// [AppException] 安装失败

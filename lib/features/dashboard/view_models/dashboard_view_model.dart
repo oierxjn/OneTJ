@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:onetj/features/dashboard/models/dashboard_model.dart';
 import 'package:onetj/features/dashboard/models/upcoming_entries_calculator.dart';
+import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/models/base_model.dart';
 import 'package:onetj/models/dashboard_upcoming_mode.dart';
 import 'package:onetj/models/event_model.dart';
@@ -22,11 +23,13 @@ class DashboardViewModel extends BaseViewModel {
     DashboardModel? model,
     SettingsRepository? settingsRepository,
     UserCollectionService? userCollectionService,
+    AppUpdateService? appUpdateService,
   })  : _model = model ?? DashboardModel(),
         _settingsRepository =
             settingsRepository ?? SettingsRepository.getInstance(),
         _userCollectionService =
             userCollectionService ?? UserCollectionService(),
+        _appUpdateService = appUpdateService ?? appLocator<AppUpdateService>(),
         _eventController = StreamController<UiEvent>.broadcast() {
     _settingsSub = _settingsRepository.stream.listen(_listenSettingsChanged);
   }
@@ -34,7 +37,7 @@ class DashboardViewModel extends BaseViewModel {
   final DashboardModel _model;
   final SettingsRepository _settingsRepository;
   final UserCollectionService _userCollectionService;
-  final AppUpdateService _appUpdateService = AppUpdateService.getInstance();
+  final AppUpdateService _appUpdateService;
   final StreamController<UiEvent> _eventController;
   StreamSubscription<SettingsData>? _settingsSub;
   Timer? _upcomingRefreshTimer;
