@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/services.dart';
 import 'package:crypto/crypto.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -173,7 +173,7 @@ class AppUpdateService {
     if (expectedSha256.isEmpty) {
       return;
     }
-    final Digest digest = sha256.convert(await file.readAsBytes());
+    final Digest digest = await sha256.bind(file.openRead()).first;
     final String actual = digest.toString().toLowerCase();
     if (actual != expectedSha256.toLowerCase()) {
       throw AppException(
