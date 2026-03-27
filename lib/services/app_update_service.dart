@@ -110,6 +110,9 @@ class AppUpdateService {
   }) async {
     final Uri uri = Uri.parse(info.downloadUrl);
     final http.Client client = http.Client();
+    File? file;
+    IOSink? sink;
+    bool completed = false;
     try {
       final http.Request request = http.Request('GET', uri);
       final http.StreamedResponse response = await client.send(request);
@@ -118,19 +121,19 @@ class AppUpdateService {
       }
       final Directory dir = await getTemporaryDirectory();
       final String basename = _resolveDownloadFileName(uri, info);
-      final File file = File(p.join(dir.path, basename));
+      file = File(p.join(dir.path, basename));
       if (await file.exists()) {
         await file.delete();
       }
-      final IOSink sink = file.openWrite();
+      sink = file.openWrite();
       int received = 0;
       await for (final List<int> chunk in response.stream) {
         sink.add(chunk);
         received += chunk.length;
         onProgress?.call(received, response.contentLength);
       }
-      await sink.flush();
       await sink.close();
+      sink = null;
       await _verifySha256(
         file: file,
         expectedSha256: info.sha256,
@@ -140,9 +143,45 @@ class AppUpdateService {
         versionTag: info.versionTag,
         sha256: info.sha256,
       );
+      completed = true;
       return file;
     } finally {
+      await _closeSinkSafely(sink);
+      if (!completed && file != null) {
+        await _deleteFileSafely(file);
+      }
       client.close();
+    }
+  }
+
+  Future<void> _closeSinkSafely(IOSink? sink) async {
+    if (sink == null) {
+      return;
+    }
+    try {
+      await sink.close();
+    } catch (error, stackTrace) {
+      AppLogger.warning(
+        'Failed to close update download sink',
+        loggerName: 'AppUpdateService',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+  }
+
+  Future<void> _deleteFileSafely(File file) async {
+    try {
+      if (await file.exists()) {
+        await file.delete();
+      }
+    } catch (error, stackTrace) {
+      AppLogger.warning(
+        'Failed to delete incomplete update package',
+        loggerName: 'AppUpdateService',
+        error: error,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -233,6 +272,9 @@ class AppUpdateService {
     return 'unknown';
   }
 
+  /// 解析当前设备架构（windows）
+  ///
+  /// 若不为 windows 设备，直接返回 null
   String? _resolveCurrentArch() {
     if (!Platform.isWindows) {
       return null;
