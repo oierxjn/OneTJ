@@ -121,6 +121,19 @@ class DashboardViewModel extends BaseViewModel {
     }
   }
 
+  Future<bool> skipUpdateVersion(String versionTag) async {
+    try {
+      await _appUpdateService.skipVersion(versionTag);
+      return true;
+    } catch (error, stackTrace) {
+      _appUpdateService.logUpdateFailure(error, stackTrace);
+      _eventController.add(
+        AppUpdateFailedEvent(error: error, stackTrace: stackTrace),
+      );
+      return false;
+    }
+  }
+
   Future<void> loadSettings() async {
     try {
       final SettingsData data = await _settingsRepository.getSettings();

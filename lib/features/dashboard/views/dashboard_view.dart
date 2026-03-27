@@ -49,6 +49,19 @@ class _DashboardViewState extends State<DashboardView>
         );
         return;
       }
+      if (event is AppUpdateFailedEvent) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context).appUpdateFailed(
+                event.error.toString(),
+              ),
+            ),
+          ),
+        );
+        return;
+      }
       if (event is AppUpdateAvailableEvent) {
         unawaited(_showAppUpdateDialog(event.updateInfo));
       }
@@ -74,8 +87,6 @@ class _DashboardViewState extends State<DashboardView>
   /// 显示更新弹窗
   ///
   /// [updateInfo] 更新信息
-  ///
-  /// TODO: skipVersion应该被管理
   Future<void> _showAppUpdateDialog(AppUpdateInfo updateInfo) async {
     if (!mounted || _updateDialogVisible) {
       return;
@@ -83,31 +94,64 @@ class _DashboardViewState extends State<DashboardView>
     _updateDialogVisible = true;
     final AppLocalizations l10n = AppLocalizations.of(context);
     final String notes = _appUpdateService.formatReleaseNotes(updateInfo);
+    bool skipping = false;
     final bool? updateNow = await showDialog<bool>(
       context: context,
       builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: Text(l10n.appUpdateDialogTitle(updateInfo.versionTag)),
-          content: Text(
-            notes.isEmpty ? l10n.appUpdateNotesEmpty : notes,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: Text(l10n.appUpdateLater),
-            ),
-            TextButton(
-              onPressed: () {
-                unawaited(_appUpdateService.skipVersion(updateInfo.versionTag));
-                Navigator.of(dialogContext).pop(false);
-              },
-              child: Text(l10n.appUpdateSkipVersion),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: Text(l10n.appUpdateNow),
-            ),
-          ],
+        return StatefulBuilder(
+          builder: (BuildContext dialogContext, StateSetter setState) {
+            Future<void> handleSkipVersion() async {
+              if (skipping) {
+                return;
+              }
+              setState(() {
+                skipping = true;
+              });
+              final bool skipped =
+                  await _viewModel.skipUpdateVersion(updateInfo.versionTag);
+              if (!dialogContext.mounted) {
+                return;
+              }
+              setState(() {
+                skipping = false;
+              });
+              if (!skipped) {
+                return;
+              }
+              Navigator.of(dialogContext).pop(false);
+            }
+
+            return AlertDialog(
+              title: Text(l10n.appUpdateDialogTitle(updateInfo.versionTag)),
+              content: Text(
+                notes.isEmpty ? l10n.appUpdateNotesEmpty : notes,
+              ),
+              actions: [
+                TextButton(
+                  onPressed: skipping
+                      ? null
+                      : () => Navigator.of(dialogContext).pop(false),
+                  child: Text(l10n.appUpdateLater),
+                ),
+                TextButton(
+                  onPressed: skipping ? null : handleSkipVersion,
+                  child: skipping
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Text(l10n.appUpdateSkipVersion),
+                ),
+                FilledButton(
+                  onPressed: skipping
+                      ? null
+                      : () => Navigator.of(dialogContext).pop(true),
+                  child: Text(l10n.appUpdateNow),
+                ),
+              ],
+            );
+          },
         );
       },
     );
