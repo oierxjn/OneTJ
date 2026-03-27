@@ -34,6 +34,7 @@ class _DashboardViewState extends State<DashboardView>
   late final AppUpdateService _appUpdateService;
   StreamSubscription<UiEvent>? _eventSub;
   bool _updateDialogVisible = false;
+  bool _downloadDialogVisible = false;
 
   @override
   void initState() {
@@ -51,12 +52,37 @@ class _DashboardViewState extends State<DashboardView>
       }
       if (event is AppUpdateFailedEvent) {
         if (!mounted) return;
+        _dismissDownloadDialogIfNeeded();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
               AppLocalizations.of(context).appUpdateFailed(
                 event.error.toString(),
               ),
+            ),
+          ),
+        );
+        return;
+      }
+      if (event is AppUpdateInstallTriggeredEvent) {
+        if (!mounted) return;
+        _dismissDownloadDialogIfNeeded();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context).appUpdateInstallTriggered,
+            ),
+          ),
+        );
+        return;
+      }
+      if (event is AppUpdateInstallPermissionRequiredEvent) {
+        if (!mounted) return;
+        _dismissDownloadDialogIfNeeded();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context).appUpdateInstallPermissionRequired,
             ),
           ),
         );
@@ -159,51 +185,33 @@ class _DashboardViewState extends State<DashboardView>
     if (updateNow != true || !mounted) {
       return;
     }
-    await _downloadAndInstallUpdate(updateInfo);
+    _showDownloadDialog(l10n);
+    await _viewModel.downloadAndInstallUpdate(updateInfo);
   }
 
   // TODO: UI及交互方式需要改进，需要支持取消下载、后台下载
-  Future<void> _downloadAndInstallUpdate(AppUpdateInfo info) async {
-    final AppLocalizations l10n = AppLocalizations.of(context);
+  void _showDownloadDialog(AppLocalizations l10n) {
+    if (_downloadDialogVisible || !mounted) {
+      return;
+    }
+    _downloadDialogVisible = true;
     showDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: Text(l10n.appUpdateDownloadingTitle),
-          content: Text(l10n.appUpdateDownloadingBody),
-        );
-      },
-    );
-    try {
-      final file = await _appUpdateService.downloadPackage(info);
-      if (!mounted) {
-        return;
-      }
-      Navigator.of(context, rootNavigator: true).pop();
-      final AppUpdateInstallResult result =
-          await _appUpdateService.installPackage(file);
-      if (!mounted) {
-        return;
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            result == AppUpdateInstallResult.permissionRequired
-                ? l10n.appUpdateInstallPermissionRequired
-                : l10n.appUpdateInstallTriggered,
-          ),
-        ),
-      );
-    } catch (error, stackTrace) {
-      if (mounted) {
-        Navigator.of(context, rootNavigator: true).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.appUpdateFailed(error.toString()))),
-        );
-      }
-      _appUpdateService.logUpdateFailure(error, stackTrace);
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: Text(l10n.appUpdateDownloadingTitle),
+        content: Text(l10n.appUpdateDownloadingBody),
+      ),
+    ).whenComplete(() {
+      _downloadDialogVisible = false;
+    });
+  }
+
+  void _dismissDownloadDialogIfNeeded() {
+    if (!_downloadDialogVisible || !mounted) {
+      return;
     }
+    Navigator.of(context, rootNavigator: true).pop();
   }
 
   @override
