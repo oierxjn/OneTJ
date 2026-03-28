@@ -214,7 +214,7 @@ class LaunchWallpaperFileService {
     if (_isBuiltinWallpaperId(wallpaperId)) {
       // 该情况不应该发生，即内置壁纸不允许修改名字
       AppLogger.warning(
-        "Unexpect Exception: Failed to rename: Wallpaper $wallpaperId is builtin", 
+        "Cannot rename built-in wallpaper $wallpaperId; renaming is only allowed for custom wallpapers.", 
         loggerName: 'LaunchWallpaperFileService',
       );
       return;
