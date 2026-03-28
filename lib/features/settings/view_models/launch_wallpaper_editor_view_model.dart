@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:onetj/features/settings/models/launch_wallpaper_editor_result.dart';
 import 'package:onetj/models/base_model.dart';
 import 'package:onetj/models/event_model.dart';
@@ -27,7 +25,7 @@ class LaunchWallpaperEditorUiState {
   final String? selectedWallpaperPath;
 }
 
-class LaunchWallpaperEditorViewModel extends BaseViewModel {
+class LaunchWallpaperEditorViewModel extends BaseViewModel<UiEvent> {
   LaunchWallpaperEditorViewModel({
     required LaunchWallpaperRef? initialSelectedWallpaperRef,
   })  : _initialSelectedWallpaperRef =
@@ -35,8 +33,6 @@ class LaunchWallpaperEditorViewModel extends BaseViewModel {
         _draftSelectedWallpaperRef =
             initialSelectedWallpaperRef ?? LaunchWallpaperRef.defaultValue;
 
-  final StreamController<UiEvent> _eventController =
-      StreamController<UiEvent>.broadcast();
   final LaunchWallpaperRef _initialSelectedWallpaperRef;
 
   LaunchWallpaperRef _draftSelectedWallpaperRef;
@@ -47,8 +43,6 @@ class LaunchWallpaperEditorViewModel extends BaseViewModel {
   Map<String, String> _wallpaperPathById = <String, String>{};
   bool _loading = true;
   bool _busy = false;
-
-  Stream<UiEvent> get events => _eventController.stream;
 
   LaunchWallpaperEditorUiState get uiState => LaunchWallpaperEditorUiState(
         loading: _loading,
@@ -65,7 +59,7 @@ class LaunchWallpaperEditorViewModel extends BaseViewModel {
     try {
       await _refreshWallpapers();
     } catch (error) {
-      _eventController.add(
+      emit(
         ShowSnackBarEvent(message: 'Failed to load launch wallpapers: $error'),
       );
     }
@@ -91,7 +85,7 @@ class LaunchWallpaperEditorViewModel extends BaseViewModel {
         _selectedWallpaperPath = _wallpaperPathById[selectedId];
       }
     } catch (error) {
-      _eventController.add(
+      emit(
         ShowSnackBarEvent(message: 'Failed to select launch wallpaper: $error'),
       );
     } finally {
@@ -117,7 +111,7 @@ class LaunchWallpaperEditorViewModel extends BaseViewModel {
       );
       await _refreshWallpapers();
     } catch (error) {
-      _eventController.add(
+      emit(
         ShowSnackBarEvent(message: 'Failed to rename launch wallpaper: $error'),
       );
     } finally {
@@ -136,7 +130,7 @@ class LaunchWallpaperEditorViewModel extends BaseViewModel {
       await LaunchWallpaperFileService.deleteWallpaper(wallpaperId);
       await _refreshWallpapers();
     } catch (error) {
-      _eventController.add(
+      emit(
         ShowSnackBarEvent(message: 'Failed to delete launch wallpaper: $error'),
       );
     } finally {
@@ -213,11 +207,5 @@ class LaunchWallpaperEditorViewModel extends BaseViewModel {
       }
     }
     return null;
-  }
-
-  @override
-  void dispose() {
-    _eventController.close();
-    super.dispose();
   }
 }

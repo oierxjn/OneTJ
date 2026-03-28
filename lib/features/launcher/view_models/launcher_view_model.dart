@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/app/logging/logger.dart';
 import 'package:onetj/app/logging/logging_bootstrap.dart';
@@ -14,17 +12,13 @@ import 'package:onetj/services/launch_wallpaper_file_service.dart';
 import 'package:onetj/services/tongji.dart';
 import 'package:onetj/services/webview_environment_service.dart';
 
-class LauncherViewModel extends BaseViewModel {
-  LauncherViewModel()
-      : _eventController = StreamController<UiEvent>.broadcast(),
-        _hiveStorageService = HiveStorageService();
+class LauncherViewModel extends BaseViewModel<UiEvent> {
+  LauncherViewModel() : _hiveStorageService = HiveStorageService();
 
-  final StreamController<UiEvent> _eventController;
   final HiveStorageService _hiveStorageService;
   String? _wallpaperFilePath;
   String? _wallpaperAssetPath;
 
-  Stream<UiEvent> get events => _eventController.stream;
   String? get wallpaperFilePath => _wallpaperFilePath;
   String? get wallpaperAssetPath => _wallpaperAssetPath;
 
@@ -51,7 +45,7 @@ class LauncherViewModel extends BaseViewModel {
       to: route,
       context: const <String, Object?>{'phase': 'launcher_initialize'},
     );
-    _eventController.add(NavigateEvent(route));
+    emit(NavigateEvent(route));
   }
 
   /// 根据初始化状况返回初始路由
@@ -154,11 +148,5 @@ class LauncherViewModel extends BaseViewModel {
       context: const <String, Object?>{'route': RoutePaths.login},
     );
     return RoutePaths.login;
-  }
-
-  @override
-  void dispose() {
-    _eventController.close();
-    super.dispose();
   }
 }

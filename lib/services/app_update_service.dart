@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/services.dart';
 import 'package:crypto/crypto.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -19,8 +19,13 @@ enum AppUpdateInstallResult {
   permissionRequired,
 }
 
+enum AppUpdateDownloadStage {
+  downloading,
+  verifying,
+}
+
 class AppUpdateService {
-  AppUpdateService._({
+  AppUpdateService({
     AppUpdateApi? api,
     AppUpdateStateRepository? repository,
   })  : _api = api ?? AppUpdateApi(),
@@ -28,7 +33,7 @@ class AppUpdateService {
 
   static AppUpdateService? _instance;
   static AppUpdateService getInstance() {
-    return _instance ??= AppUpdateService._();
+    return _instance ??= AppUpdateService();
   }
 
   final AppUpdateApi _api;
@@ -107,9 +112,13 @@ class AppUpdateService {
   Future<File> downloadPackage(
     AppUpdateInfo info, {
     void Function(int receivedBytes, int? totalBytes)? onProgress,
+    void Function(AppUpdateDownloadStage stage)? onStageChanged,
   }) async {
     final Uri uri = Uri.parse(info.downloadUrl);
     final http.Client client = http.Client();
+    File? file;
+    IOSink? sink;
+    bool completed = false;
     try {
       final http.Request request = http.Request('GET', uri);
       final http.StreamedResponse response = await client.send(request);
@@ -118,19 +127,21 @@ class AppUpdateService {
       }
       final Directory dir = await getTemporaryDirectory();
       final String basename = _resolveDownloadFileName(uri, info);
-      final File file = File(p.join(dir.path, basename));
+      file = File(p.join(dir.path, basename));
       if (await file.exists()) {
         await file.delete();
       }
-      final IOSink sink = file.openWrite();
+      sink = file.openWrite();
       int received = 0;
+      onStageChanged?.call(AppUpdateDownloadStage.downloading);
       await for (final List<int> chunk in response.stream) {
         sink.add(chunk);
         received += chunk.length;
         onProgress?.call(received, response.contentLength);
       }
-      await sink.flush();
       await sink.close();
+      sink = null;
+      onStageChanged?.call(AppUpdateDownloadStage.verifying);
       await _verifySha256(
         file: file,
         expectedSha256: info.sha256,
@@ -140,14 +151,50 @@ class AppUpdateService {
         versionTag: info.versionTag,
         sha256: info.sha256,
       );
+      completed = true;
       return file;
     } finally {
+      await _closeSinkSafely(sink);
+      if (!completed && file != null) {
+        await _deleteFileSafely(file);
+      }
       client.close();
     }
   }
 
+  Future<void> _closeSinkSafely(IOSink? sink) async {
+    if (sink == null) {
+      return;
+    }
+    try {
+      await sink.close();
+    } catch (error, stackTrace) {
+      AppLogger.warning(
+        'Failed to close update download sink',
+        loggerName: 'AppUpdateService',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+  }
+
+  Future<void> _deleteFileSafely(File file) async {
+    try {
+      if (await file.exists()) {
+        await file.delete();
+      }
+    } catch (error, stackTrace) {
+      AppLogger.warning(
+        'Failed to delete incomplete update package',
+        loggerName: 'AppUpdateService',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+  }
+
   /// 构造文件名
-  /// 
+  ///
   /// 格式：`onetj_update_${platform}_${versionTag}`
   String _resolveDownloadFileName(Uri uri, AppUpdateInfo info) {
     final String fromPath = p.basename(uri.path);
@@ -162,7 +209,7 @@ class AppUpdateService {
   ///
   /// [file] 文件
   /// [expectedSha256] 预期的 SHA256 哈希
-  /// 
+  ///
   /// throw:
   ///
   /// [AppException] 哈希不匹配
@@ -173,7 +220,7 @@ class AppUpdateService {
     if (expectedSha256.isEmpty) {
       return;
     }
-    final Digest digest = sha256.convert(await file.readAsBytes());
+    final Digest digest = await sha256.bind(file.openRead()).first;
     final String actual = digest.toString().toLowerCase();
     if (actual != expectedSha256.toLowerCase()) {
       throw AppException(
@@ -187,7 +234,7 @@ class AppUpdateService {
   /// 安装更新包
   ///
   /// [file] 更新包文件
-  /// 
+  ///
   /// throw:
   ///
   /// [AppException] 安装失败
@@ -233,6 +280,9 @@ class AppUpdateService {
     return 'unknown';
   }
 
+  /// 解析当前设备架构（windows）
+  ///
+  /// 若不为 windows 设备，直接返回 null
   String? _resolveCurrentArch() {
     if (!Platform.isWindows) {
       return null;
@@ -255,7 +305,8 @@ class AppUpdateService {
 
   String _resolveCurrentBuild() => oneTJAppBuildNumber;
 
-  Future<void> resumePendingInstallIfPossible() async {
+  /// 尝试恢复待安装的更新
+  Future<void> resumePendingInstall() async {
     if (!Platform.isAndroid) {
       return;
     }

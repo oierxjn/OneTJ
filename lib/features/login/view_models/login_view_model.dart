@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
 import 'package:onetj/app/constant/route_paths.dart';
@@ -9,16 +7,12 @@ import 'package:onetj/models/event_model.dart';
 import 'package:onetj/features/login/models/login_model.dart';
 import 'package:onetj/models/base_model.dart';
 
-class LoginViewModel extends BaseViewModel {
+class LoginViewModel extends BaseViewModel<UiEvent> {
   LoginViewModel({
     LoginModel? model,
-  })  : _model = model ?? LoginModel(),
-        _eventController = StreamController<UiEvent>.broadcast();
+  }) : _model = model ?? LoginModel();
 
   final LoginModel _model;
-  final StreamController<UiEvent> _eventController;
-
-  Stream<UiEvent> get events => _eventController.stream;
 
   Uri get authUri => _model.buildAuthUri();
 
@@ -37,7 +31,7 @@ class LoginViewModel extends BaseViewModel {
           to: RoutePaths.home,
           context: const <String, Object?>{'source': 'handleRedirectUri'},
         );
-        _eventController.add(const NavigateEvent(RoutePaths.home));
+        emit(const NavigateEvent(RoutePaths.home));
         return NavigationActionPolicy.CANCEL;
       }
       return NavigationActionPolicy.ALLOW;
@@ -48,14 +42,8 @@ class LoginViewModel extends BaseViewModel {
         code: e.code,
         error: e,
       );
-      _eventController.add(ShowSnackBarEvent(message: e.message, code: e.code));
+      emit(ShowSnackBarEvent(message: e.message, code: e.code));
       return NavigationActionPolicy.CANCEL;
     }
-  }
-
-  @override
-  void dispose() {
-    _eventController.close();
-    super.dispose();
   }
 }

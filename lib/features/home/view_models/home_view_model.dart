@@ -8,7 +8,7 @@ import 'package:onetj/repo/school_calendar_repository.dart';
 import 'package:onetj/repo/course_schedule_repository.dart';
 import 'package:onetj/services/timetable_index_builder.dart';
 
-class HomeViewModel extends BaseViewModel {
+class HomeViewModel extends BaseViewModel<Never> {
   HomeViewModel({HomeModel? model})
       : _model = model ?? HomeModel(),
         _studentInfoController = StreamController<String>.broadcast(),

@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
+import 'package:onetj/app/di/dependencies.dart';
+import 'package:onetj/features/app_update/views/app_update_flow.dart';
 import 'package:onetj/features/dashboard/view_models/dashboard_view_model.dart';
 import 'package:onetj/features/dashboard/models/dashboard_model.dart';
 import 'package:onetj/models/app_update_info.dart';
@@ -30,7 +32,7 @@ class DashboardView extends StatefulWidget {
 class _DashboardViewState extends State<DashboardView>
     with WidgetsBindingObserver {
   late final DashboardViewModel _viewModel;
-  final AppUpdateService _appUpdateService = AppUpdateService.getInstance();
+  late final AppUpdateService _appUpdateService;
   StreamSubscription<UiEvent>? _eventSub;
   bool _updateDialogVisible = false;
 
@@ -38,12 +40,26 @@ class _DashboardViewState extends State<DashboardView>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _viewModel = DashboardViewModel();
+    _appUpdateService = appLocator<AppUpdateService>();
+    _viewModel = DashboardViewModel(appUpdateService: _appUpdateService);
     _eventSub = _viewModel.events.listen((event) {
       if (event is ShowSnackBarEvent) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(event.message ?? '')),
+        );
+        return;
+      }
+      if (event is AppUpdateFailedEvent) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context).appUpdateFailed(
+                event.error.toString(),
+              ),
+            ),
+          ),
         );
         return;
       }
@@ -70,93 +86,22 @@ class _DashboardViewState extends State<DashboardView>
   }
 
   /// 显示更新弹窗
-  /// 
+  ///
   /// [updateInfo] 更新信息
-  /// 
-  /// TODO: skipVersion应该被管理
   Future<void> _showAppUpdateDialog(AppUpdateInfo updateInfo) async {
     if (!mounted || _updateDialogVisible) {
       return;
     }
     _updateDialogVisible = true;
-    final AppLocalizations l10n = AppLocalizations.of(context);
-    final String notes = _appUpdateService.formatReleaseNotes(updateInfo);
-    final bool? updateNow = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: Text(l10n.appUpdateDialogTitle(updateInfo.versionTag)),
-          content: Text(
-            notes.isEmpty ? l10n.appUpdateNotesEmpty : notes,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: Text(l10n.appUpdateLater),
-            ),
-            TextButton(
-              onPressed: () {
-                unawaited(_appUpdateService.skipVersion(updateInfo.versionTag));
-                Navigator.of(dialogContext).pop(false);
-              },
-              child: Text(l10n.appUpdateSkipVersion),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: Text(l10n.appUpdateNow),
-            ),
-          ],
-        );
-      },
-    );
-    _updateDialogVisible = false;
-    if (updateNow != true || !mounted) {
-      return;
-    }
-    await _downloadAndInstallUpdate(updateInfo);
-  }
-
-  // TODO: UI及交互方式需要改进，需要支持取消下载、后台下载
-  Future<void> _downloadAndInstallUpdate(AppUpdateInfo info) async {
-    final AppLocalizations l10n = AppLocalizations.of(context);
-    showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: Text(l10n.appUpdateDownloadingTitle),
-          content: Text(l10n.appUpdateDownloadingBody),
-        );
-      },
-    );
     try {
-      final file = await _appUpdateService.downloadPackage(info);
-      if (!mounted) {
-        return;
-      }
-      Navigator.of(context, rootNavigator: true).pop();
-      final AppUpdateInstallResult result =
-          await _appUpdateService.installPackage(file);
-      if (!mounted) {
-        return;
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            result == AppUpdateInstallResult.permissionRequired
-                ? l10n.appUpdateInstallPermissionRequired
-                : l10n.appUpdateInstallTriggered,
-          ),
-        ),
+      await showAppUpdateFlow(
+        context,
+        updateInfo: updateInfo,
+        allowSkipVersion: true,
+        appUpdateService: _appUpdateService,
       );
-    } catch (error, stackTrace) {
-      if (mounted) {
-        Navigator.of(context, rootNavigator: true).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.appUpdateFailed(error.toString()))),
-        );
-      }
-      _appUpdateService.logUpdateFailure(error, stackTrace);
+    } finally {
+      _updateDialogVisible = false;
     }
   }
 

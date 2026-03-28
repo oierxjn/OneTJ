@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:onetj/features/dashboard/models/dashboard_model.dart';
 import 'package:onetj/features/dashboard/models/upcoming_entries_calculator.dart';
+import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/models/base_model.dart';
 import 'package:onetj/models/dashboard_upcoming_mode.dart';
 import 'package:onetj/models/event_model.dart';
@@ -17,31 +18,28 @@ import 'package:onetj/services/app_update_service.dart';
 import 'package:onetj/services/user_collection_service.dart';
 import 'package:onetj/app/logging/logger.dart';
 
-class DashboardViewModel extends BaseViewModel {
+class DashboardViewModel extends BaseViewModel<UiEvent> {
   DashboardViewModel({
     DashboardModel? model,
     SettingsRepository? settingsRepository,
     UserCollectionService? userCollectionService,
+    AppUpdateService? appUpdateService,
   })  : _model = model ?? DashboardModel(),
         _settingsRepository =
             settingsRepository ?? SettingsRepository.getInstance(),
         _userCollectionService =
             userCollectionService ?? UserCollectionService(),
-        _eventController = StreamController<UiEvent>.broadcast() {
+        _appUpdateService = appUpdateService ?? appLocator<AppUpdateService>() {
     _settingsSub = _settingsRepository.stream.listen(_listenSettingsChanged);
   }
 
   final DashboardModel _model;
   final SettingsRepository _settingsRepository;
   final UserCollectionService _userCollectionService;
-  final AppUpdateService _appUpdateService = AppUpdateService.getInstance();
-  final StreamController<UiEvent> _eventController;
+  final AppUpdateService _appUpdateService;
   StreamSubscription<SettingsData>? _settingsSub;
   Timer? _upcomingRefreshTimer;
   DateTime? _lastCalendarSyncDate;
-  bool _isDisposed = false;
-  Stream<UiEvent> get events => _eventController.stream;
-  bool get isDisposed => _isDisposed;
 
   String? _departmentName;
   SchoolCalendarData? _calendar;
@@ -110,11 +108,24 @@ class DashboardViewModel extends BaseViewModel {
       if (!result.hasUpdate || result.updateInfo == null) {
         return;
       }
-      _eventController.add(
+      emit(
         AppUpdateAvailableEvent(updateInfo: result.updateInfo!),
       );
     } catch (error, stackTrace) {
       _appUpdateService.logUpdateFailure(error, stackTrace);
+    }
+  }
+
+  Future<bool> skipUpdateVersion(String versionTag) async {
+    try {
+      await _appUpdateService.skipVersion(versionTag);
+      return true;
+    } catch (error, stackTrace) {
+      _appUpdateService.logUpdateFailure(error, stackTrace);
+      emit(
+        AppUpdateFailedEvent(error: error, stackTrace: stackTrace),
+      );
+      return false;
     }
   }
 
@@ -123,7 +134,7 @@ class DashboardViewModel extends BaseViewModel {
       final SettingsData data = await _settingsRepository.getSettings();
       _handleSettingsChanged(data);
     } catch (error) {
-      _eventController.add(
+      emit(
         ShowSnackBarEvent(message: 'Failed to load settings: $error'),
       );
     }
@@ -180,7 +191,7 @@ class DashboardViewModel extends BaseViewModel {
       final StudentInfoData data = await _model.getStudentInfo();
       _departmentName = data.deptName;
     } catch (error) {
-      _eventController.add(
+      emit(
         ShowSnackBarEvent(message: 'Failed to load student info: $error'),
       );
     } finally {
@@ -225,7 +236,7 @@ class DashboardViewModel extends BaseViewModel {
       _calendar = data;
       _lastCalendarSyncDate = now;
     } catch (error) {
-      _eventController.add(
+      emit(
         ShowSnackBarEvent(message: 'Failed to load school calendar: $error'),
       );
     } finally {
@@ -260,7 +271,7 @@ class DashboardViewModel extends BaseViewModel {
       _timetableIndex = index;
     } catch (error) {
       _timetableIndex = null;
-      _eventController.add(
+      emit(
         ShowSnackBarEvent(message: 'Failed to load timetable: $error'),
       );
     } finally {
@@ -284,7 +295,7 @@ class DashboardViewModel extends BaseViewModel {
 
   /// 计划下次即将到来的课程时间刷新
   void _scheduleUpcomingRefresh() {
-    if (_isDisposed) {
+    if (isDisposed) {
       return;
     }
     _upcomingRefreshTimer?.cancel();
@@ -301,7 +312,7 @@ class DashboardViewModel extends BaseViewModel {
 
   /// 刷新即将到来的课程时间
   Future<void> _onUpcomingRefreshTick() async {
-    if (_isDisposed) {
+    if (isDisposed) {
       return;
     }
     final DateTime now = DateTime.now();
@@ -368,10 +379,8 @@ class DashboardViewModel extends BaseViewModel {
 
   @override
   void dispose() {
-    _isDisposed = true;
     _upcomingRefreshTimer?.cancel();
     _settingsSub?.cancel();
-    _eventController.close();
     super.dispose();
   }
 }

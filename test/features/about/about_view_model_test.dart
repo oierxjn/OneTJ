@@ -15,7 +15,8 @@ void main() {
       final TestAppUpdateService service = TestAppUpdateService(
         onCheckForUpdate: ({required bool force}) => completer.future,
       );
-      final AboutViewModel viewModel = AboutViewModel(appUpdateService: service);
+      final AboutViewModel viewModel =
+          AboutViewModel(appUpdateService: service);
 
       final Future<UiEvent> nextEvent = viewModel.events.first;
       final Future<void> action = viewModel.checkForUpdateManually();
@@ -51,12 +52,13 @@ void main() {
       final TestAppUpdateService service = TestAppUpdateService(
         onCheckForUpdate: ({required bool force}) async =>
             const AppUpdateCheckResult(
-              checked: true,
-              hasUpdate: true,
-              updateInfo: updateInfo,
-            ),
+          checked: true,
+          hasUpdate: true,
+          updateInfo: updateInfo,
+        ),
       );
-      final AboutViewModel viewModel = AboutViewModel(appUpdateService: service);
+      final AboutViewModel viewModel =
+          AboutViewModel(appUpdateService: service);
 
       final UiEvent eventFuture = await (() async {
         final Future<UiEvent> nextEvent = viewModel.events.first;
@@ -77,7 +79,8 @@ void main() {
       final TestAppUpdateService service = TestAppUpdateService(
         onCheckForUpdate: ({required bool force}) async => throw error,
       );
-      final AboutViewModel viewModel = AboutViewModel(appUpdateService: service);
+      final AboutViewModel viewModel =
+          AboutViewModel(appUpdateService: service);
 
       final Future<UiEvent> nextEvent = viewModel.events.first;
       await viewModel.checkForUpdateManually();
@@ -109,12 +112,15 @@ void main() {
         onDownloadPackage: (info) => completer.future,
         onInstallPackage: (downloadedFile) async {
           expect(downloadedFile.path, file.path);
+          return AppUpdateInstallResult.installerStarted;
         },
       );
-      final AboutViewModel viewModel = AboutViewModel(appUpdateService: service);
+      final AboutViewModel viewModel =
+          AboutViewModel(appUpdateService: service);
 
       final Future<UiEvent> nextEvent = viewModel.events.first;
-      final Future<void> action = viewModel.downloadAndInstallUpdate(updateInfo);
+      final Future<void> action =
+          viewModel.downloadAndInstallUpdate(updateInfo);
 
       expect(viewModel.isInstallingUpdate, isTrue);
 
@@ -144,7 +150,8 @@ void main() {
         onDownloadPackage: (info) async => File('fake-installer.exe'),
         onInstallPackage: (downloadedFile) async => throw error,
       );
-      final AboutViewModel viewModel = AboutViewModel(appUpdateService: service);
+      final AboutViewModel viewModel =
+          AboutViewModel(appUpdateService: service);
 
       final Future<UiEvent> nextEvent = viewModel.events.first;
       await viewModel.downloadAndInstallUpdate(updateInfo);
@@ -158,10 +165,11 @@ void main() {
   });
 }
 
-typedef CheckForUpdateHandler =
-    Future<AppUpdateCheckResult> Function({required bool force});
+typedef CheckForUpdateHandler = Future<AppUpdateCheckResult> Function(
+    {required bool force});
 typedef DownloadPackageHandler = Future<File> Function(AppUpdateInfo info);
-typedef InstallPackageHandler = Future<void> Function(File file);
+typedef InstallPackageHandler = Future<AppUpdateInstallResult> Function(
+    File file);
 
 class TestAppUpdateService implements AppUpdateService {
   TestAppUpdateService({
@@ -198,8 +206,9 @@ class TestAppUpdateService implements AppUpdateService {
   }
 
   @override
-  Future<void> installPackage(File file) async {
-    await onInstallPackage?.call(file);
+  Future<AppUpdateInstallResult> installPackage(File file) async {
+    return await onInstallPackage?.call(file) ??
+        AppUpdateInstallResult.installerStarted;
   }
 
   @override

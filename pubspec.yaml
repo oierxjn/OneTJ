@@ -63,6 +63,7 @@ dependencies:
   crypto: ^3.0.6
   json_annotation: ^4.9.0
   logging: ^1.3.0
+  get_it: ^8.0.3
   # Keep the upstream constraint here; HarmonyOS builds are pinned below to an
   # OpenHarmony fork whose pubspec version still reports 9.1.0.
   device_info_plus: ^10.1.2

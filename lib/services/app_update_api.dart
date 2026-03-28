@@ -8,10 +8,13 @@ import 'package:onetj/app/logging/logger.dart';
 import 'package:onetj/models/app_update_info.dart';
 
 class AppUpdateApi {
-  AppUpdateApi._();
+  AppUpdateApi();
 
-  static final AppUpdateApi _instance = AppUpdateApi._();
-  factory AppUpdateApi() => _instance;
+  static AppUpdateApi? _instance;
+
+  static AppUpdateApi getInstance() {
+    return _instance ??= AppUpdateApi();
+  }
 
   Future<AppUpdateCheckResult> checkLatest({
     required String platform,

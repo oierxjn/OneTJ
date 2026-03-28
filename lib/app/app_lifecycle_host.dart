@@ -2,12 +2,17 @@ import 'package:flutter/material.dart';
 
 import 'package:onetj/services/app_update_service.dart';
 
+/// 负责监听应用生命周期
+/// 
+/// 应用恢复时，尝试恢复待安装的更新
 class AppLifecycleHost extends StatefulWidget {
   const AppLifecycleHost({
     super.key,
+    required this.appUpdateService,
     required this.child,
   });
 
+  final AppUpdateService appUpdateService;
   final Widget child;
 
   @override
@@ -16,8 +21,6 @@ class AppLifecycleHost extends StatefulWidget {
 
 class _AppLifecycleHostState extends State<AppLifecycleHost>
     with WidgetsBindingObserver {
-  final AppUpdateService _appUpdateService = AppUpdateService.getInstance();
-
   @override
   void initState() {
     super.initState();
@@ -37,12 +40,13 @@ class _AppLifecycleHostState extends State<AppLifecycleHost>
     }
   }
 
+  /// 尝试恢复待安装的更新
   void _resumePendingInstall() {
-    _appUpdateService.resumePendingInstallIfPossible().catchError((
+    widget.appUpdateService.resumePendingInstall().catchError((
       Object error,
       StackTrace stackTrace,
     ) {
-      _appUpdateService.logUpdateFailure(error, stackTrace);
+      widget.appUpdateService.logUpdateFailure(error, stackTrace);
     });
   }
 

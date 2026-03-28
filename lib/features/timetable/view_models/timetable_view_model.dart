@@ -15,7 +15,7 @@ enum TimetableDisplayMode {
   week,
 }
 
-class TimetableViewModel extends BaseViewModel {
+class TimetableViewModel extends BaseViewModel<UiEvent> {
   TimetableViewModel({
     TimetableModel? model,
     int maxWeek = 22,
@@ -23,15 +23,13 @@ class TimetableViewModel extends BaseViewModel {
   })  : _model = model ?? TimetableModel(),
         _settingsRepository =
             settingsRepository ?? SettingsRepository.getInstance(),
-        _maxWeek = maxWeek,
-        _eventController = StreamController<UiEvent>.broadcast() {
+        _maxWeek = maxWeek {
     _settingsSub = _settingsRepository.stream.listen(_handleSettingsChanged);
   }
 
   final TimetableModel _model;
   final SettingsRepository _settingsRepository;
   StreamSubscription<SettingsData>? _settingsSub;
-  final StreamController<UiEvent> _eventController;
   int _maxWeek;
 
   TimetableIndex? _index;
@@ -39,8 +37,10 @@ class TimetableViewModel extends BaseViewModel {
   bool _isLoading = true;
   List<TimePeriodRangeData> _timeSlotRanges = kDefaultTimeSlotRanges;
   int _selectedDay = DateTime.now().weekday;
+
   /// 本周
   int? _currentWeek;
+
   /// 滚轮选中周数
   int? _selectedWeek;
   DateTime? _lastFetchedAt;
@@ -57,7 +57,6 @@ class TimetableViewModel extends BaseViewModel {
   DateTime? get lastFetchedAt => _lastFetchedAt;
   TimetableDisplayMode get mode => _mode;
   List<int> get availableWeeks => _availableWeeks();
-  Stream<UiEvent> get events => _eventController.stream;
 
   Future<void> load() async {
     _isLoading = true;
@@ -105,7 +104,7 @@ class TimetableViewModel extends BaseViewModel {
       _selectedWeek = weeks.first;
     }
     notifyListeners();
-    _eventController.add(const SyncWheelEvent());
+    emit(const SyncWheelEvent());
   }
 
   /// 处理设置变化
@@ -127,7 +126,7 @@ class TimetableViewModel extends BaseViewModel {
     if (maxWeekChanged) {
       _maxWeek = nextMaxWeek;
       _syncSelectedWeek();
-      _eventController.add(const SyncWheelEvent());
+      emit(const SyncWheelEvent());
     }
     if (timeSlotChanged) {
       _timeSlotRanges = nextTimeSlotRanges;
@@ -147,7 +146,7 @@ class TimetableViewModel extends BaseViewModel {
       }
       _timeSlotRanges = List<TimePeriodRangeData>.from(data.timeSlotRanges);
     } catch (error) {
-      _eventController.add(
+      emit(
         ShowSnackBarEvent(message: _formatErrorMessage(error)),
       );
     }
@@ -205,7 +204,7 @@ class TimetableViewModel extends BaseViewModel {
       _currentWeek = await _model.getSchoolCalendarCurrentWeek();
     } catch (error) {
       _currentWeek = null;
-      _eventController.add(
+      emit(
         ShowSnackBarEvent(message: _formatErrorMessage(error)),
       );
     }
@@ -219,9 +218,9 @@ class TimetableViewModel extends BaseViewModel {
     try {
       _index = await _model.getTimetableIndex();
       _syncSelectedWeek();
-      _eventController.add(const SyncWheelEvent());
+      emit(const SyncWheelEvent());
     } catch (error) {
-      _eventController.add(
+      emit(
         ShowSnackBarEvent(message: _formatErrorMessage(error)),
       );
     }
@@ -275,7 +274,6 @@ class TimetableViewModel extends BaseViewModel {
   @override
   void dispose() {
     _settingsSub?.cancel();
-    _eventController.close();
     super.dispose();
   }
 }

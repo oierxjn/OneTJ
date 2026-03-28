@@ -270,6 +270,21 @@
     "appUpdateSkipVersion": "跳过此版本",
     "appUpdateDownloadingTitle": "正在下载更新",
     "appUpdateDownloadingBody": "正在下载更新包并校验完整性...",
+    "appUpdateVerifyingBody": "正在校验更新包完整性...",
+    "appUpdateInstallingBody": "正在启动安装程序...",
+    "appUpdateDownloadedBytesKnown": "{received} / {total}",
+    "@appUpdateDownloadedBytesKnown": {
+      "placeholders": {
+        "received": {},
+        "total": {}
+      }
+    },
+    "appUpdateDownloadedBytesUnknown": "已下载 {received}",
+    "@appUpdateDownloadedBytesUnknown": {
+      "placeholders": {
+        "received": {}
+      }
+    },
     "appUpdateInstallTriggered": "已拉起安装程序，请按系统提示完成安装",
     "appUpdateInstallPermissionRequired": "请先在系统设置中允许安装未知应用，返回应用后将自动继续安装",
     "appUpdateFailed": "更新失败：{error}",
