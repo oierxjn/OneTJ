@@ -31,7 +31,8 @@ class AppUpdateFlowState {
     if (total == null || total <= 0) {
       return null;
     }
-    return receivedBytes / total;
+    final int clampedReceived = receivedBytes.clamp(0, total);
+    return clampedReceived / total;
   }
 
   AppUpdateFlowState copyWith({
