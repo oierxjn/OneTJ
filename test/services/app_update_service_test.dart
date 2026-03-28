@@ -41,6 +41,8 @@ void main() {
   tearDown(() async {
     await server.close(force: true);
     await Hive.close();
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(pathProviderChannel, null);
     if (await tempDir.exists()) {
       await tempDir.delete(recursive: true);
     }
