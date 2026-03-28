@@ -36,7 +36,7 @@ class AppUpdateFlowCompletion {
   final StackTrace? stackTrace;
 }
 
-class AppUpdateFlowViewModel extends BaseViewModel {
+class AppUpdateFlowViewModel extends BaseViewModel<Never> {
   AppUpdateFlowViewModel({
     required AppUpdateService appUpdateService,
   }) : _appUpdateService = appUpdateService;
@@ -89,7 +89,7 @@ class AppUpdateFlowViewModel extends BaseViewModel {
   }
 
   /// 下载进度
-  /// 
+  ///
   /// [receivedBytes] 已接收的字节数
   /// [totalBytes] 总字节数
   void _handleProgress(int receivedBytes, int? totalBytes) {
@@ -106,7 +106,7 @@ class AppUpdateFlowViewModel extends BaseViewModel {
   }
 
   /// 下载阶段改变
-  /// 
+  ///
   /// [stage] 下载阶段
   void _handleStageChanged(AppUpdateDownloadStage stage) {
     switch (stage) {

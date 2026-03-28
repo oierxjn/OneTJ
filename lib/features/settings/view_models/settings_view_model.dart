@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
 import 'package:onetj/app/exception/app_exception.dart';
@@ -34,11 +32,10 @@ class SettingsUiState {
   final bool isSaving;
 }
 
-class SettingsViewModel extends BaseViewModel {
+class SettingsViewModel extends BaseViewModel<UiEvent> {
   SettingsViewModel({
     SettingsRepository? settingsRepository,
-  })  : _eventController = StreamController<UiEvent>.broadcast(),
-        _settingsRepository =
+  })  : _settingsRepository =
             settingsRepository ?? SettingsRepository.getInstance(),
         _hiveStorageService = HiveStorageService(),
         _webViewEnvironment = WebViewEnvironmentService.instance.environment {
@@ -46,7 +43,6 @@ class SettingsViewModel extends BaseViewModel {
     _applySavedToDraft(_savedSettings);
   }
 
-  final StreamController<UiEvent> _eventController;
   final SettingsRepository _settingsRepository;
   final HiveStorageService _hiveStorageService;
   final WebViewEnvironment? _webViewEnvironment;
@@ -65,8 +61,6 @@ class SettingsViewModel extends BaseViewModel {
   bool _legacyHiveDataAvailable = false;
   bool _hiveMigrationLoading = false;
   bool _hiveMigrationStateLoaded = false;
-
-  Stream<UiEvent> get events => _eventController.stream;
 
   SettingsUiState get uiState => SettingsUiState(
         isHydrated: _hydrated,
@@ -186,7 +180,7 @@ class SettingsViewModel extends BaseViewModel {
         loggerName: 'SettingsViewModel',
         error: error,
       );
-      _eventController.add(
+      emit(
         ShowSnackBarEvent(message: 'Failed to load settings: $error'),
       );
       _hydrated = true;
@@ -262,7 +256,7 @@ class SettingsViewModel extends BaseViewModel {
         to: RoutePaths.login,
         context: const <String, Object?>{'reason': 'logout'},
       );
-      _eventController.add(const NavigateEvent(RoutePaths.login));
+      emit(const NavigateEvent(RoutePaths.login));
     } catch (error) {
       final String message = 'Failed to log out: $error';
       errorMessage = message;
@@ -271,7 +265,7 @@ class SettingsViewModel extends BaseViewModel {
         loggerName: 'SettingsViewModel',
         error: error,
       );
-      _eventController.add(ShowSnackBarEvent(message: message));
+      emit(ShowSnackBarEvent(message: message));
     } finally {
       loading = false;
       notifyListeners();
@@ -309,7 +303,7 @@ class SettingsViewModel extends BaseViewModel {
       if (result == HiveDataMigrationResult.success) {
         _legacyHiveDataAvailable = false;
       }
-      _eventController.add(SettingsDataMigrationEvent(result: result));
+      emit(SettingsDataMigrationEvent(result: result));
     } catch (error, stackTrace) {
       AppLogger.error(
         'Migrate legacy hive data failed',
@@ -317,7 +311,7 @@ class SettingsViewModel extends BaseViewModel {
         error: error,
         stackTrace: stackTrace,
       );
-      _eventController.add(
+      emit(
         const SettingsDataMigrationFailedEvent(),
       );
     } finally {
@@ -342,7 +336,7 @@ class SettingsViewModel extends BaseViewModel {
         loggerName: 'SettingsViewModel',
         context: <String, Object?>{'result': result.name},
       );
-      _eventController.add(SettingsDataCleanupEvent(result: result));
+      emit(SettingsDataCleanupEvent(result: result));
     } catch (error, stackTrace) {
       AppLogger.error(
         'Cleanup legacy hive data failed',
@@ -350,7 +344,7 @@ class SettingsViewModel extends BaseViewModel {
         error: error,
         stackTrace: stackTrace,
       );
-      _eventController.add(const SettingsDataCleanupFailedEvent());
+      emit(const SettingsDataCleanupFailedEvent());
     } finally {
       _hiveMigrationLoading = false;
       notifyListeners();
@@ -399,7 +393,7 @@ class SettingsViewModel extends BaseViewModel {
         },
       );
       notifyListeners();
-      _eventController.add(SettingsSavedEvent(settings: next));
+      emit(SettingsSavedEvent(settings: next));
     } on SettingsValidationException catch (error) {
       errorMessage = error.message;
       AppLogger.warning(
@@ -408,7 +402,7 @@ class SettingsViewModel extends BaseViewModel {
         code: error.code,
         error: error,
       );
-      _eventController.add(
+      emit(
         ShowSnackBarEvent(message: error.message, code: error.code),
       );
     } catch (error) {
@@ -419,7 +413,7 @@ class SettingsViewModel extends BaseViewModel {
         loggerName: 'SettingsViewModel',
         error: error,
       );
-      _eventController.add(ShowSnackBarEvent(message: message));
+      emit(ShowSnackBarEvent(message: message));
     } finally {
       _settingsSaving = false;
       notifyListeners();
@@ -445,7 +439,7 @@ class SettingsViewModel extends BaseViewModel {
           'timeSlotCount': next.timeSlotRanges.length,
         },
       );
-      _eventController.add(SettingsResetEvent(settings: next));
+      emit(SettingsResetEvent(settings: next));
     } catch (error) {
       final String message = 'Failed to reset settings: $error';
       errorMessage = message;
@@ -454,7 +448,7 @@ class SettingsViewModel extends BaseViewModel {
         loggerName: 'SettingsViewModel',
         error: error,
       );
-      _eventController.add(ShowSnackBarEvent(message: message));
+      emit(ShowSnackBarEvent(message: message));
     } finally {
       _settingsSaving = false;
       notifyListeners();
@@ -493,11 +487,5 @@ class SettingsViewModel extends BaseViewModel {
       }
     }
     return true;
-  }
-
-  @override
-  void dispose() {
-    _eventController.close();
-    super.dispose();
   }
 }

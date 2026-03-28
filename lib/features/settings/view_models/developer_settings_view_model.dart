@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:onetj/app/constant/site_constant.dart';
 import 'package:onetj/features/settings/models/developer_settings_exception.dart';
 import 'package:onetj/features/settings/models/developer_settings_model.dart';
@@ -7,15 +5,11 @@ import 'package:onetj/features/settings/models/event.dart';
 import 'package:onetj/models/base_model.dart';
 import 'package:onetj/models/event_model.dart';
 
-class DeveloperSettingsViewModel extends BaseViewModel {
+class DeveloperSettingsViewModel extends BaseViewModel<UiEvent> {
   DeveloperSettingsViewModel({DeveloperSettingsModel? model})
-      : _model = model ?? DeveloperSettingsModel(),
-        _eventController = StreamController<UiEvent>.broadcast();
+      : _model = model ?? DeveloperSettingsModel();
 
   final DeveloperSettingsModel _model;
-  final StreamController<UiEvent> _eventController;
-
-  Stream<UiEvent> get events => _eventController.stream;
 
   bool _sendingDebug = false;
   bool get sendingDebug => _sendingDebug;
@@ -30,7 +24,7 @@ class DeveloperSettingsViewModel extends BaseViewModel {
     try {
       endpoint = _model.parseDebugEndpoint(rawEndpoint.trim());
     } on DeveloperDebugEndpointException catch (error) {
-      _eventController.add(DeveloperDebugEndpointInvalidEvent(type: error.code));
+      emit(DeveloperDebugEndpointInvalidEvent(type: error.code));
       return;
     }
     _debugCollectionEndpoint = endpoint.toString();
@@ -38,20 +32,14 @@ class DeveloperSettingsViewModel extends BaseViewModel {
     notifyListeners();
     try {
       await _model.sendDebugCollection(endpoint: endpoint);
-      _eventController.add(const DeveloperDebugUploadSuccessEvent());
+      emit(const DeveloperDebugUploadSuccessEvent());
     } catch (error) {
-      _eventController.add(
+      emit(
         DeveloperDebugUploadFailedEvent(message: error.toString()),
       );
     } finally {
       _sendingDebug = false;
       notifyListeners();
     }
-  }
-
-  @override
-  void dispose() {
-    _eventController.close();
-    super.dispose();
   }
 }

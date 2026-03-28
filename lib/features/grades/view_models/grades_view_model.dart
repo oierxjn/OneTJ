@@ -1,19 +1,12 @@
-import 'dart:async';
-
 import 'package:onetj/models/base_model.dart';
 import 'package:onetj/models/event_model.dart';
 import 'package:onetj/features/grades/models/grades_model.dart';
 import 'package:onetj/features/grades/models/grades_view_data.dart';
 
-class GradesViewModel extends BaseViewModel {
-  GradesViewModel({GradesModel? model})
-      : _model = model ?? GradesModel(),
-        _eventController = StreamController<UiEvent>.broadcast();
+class GradesViewModel extends BaseViewModel<UiEvent> {
+  GradesViewModel({GradesModel? model}) : _model = model ?? GradesModel();
 
   final GradesModel _model;
-  final StreamController<UiEvent> _eventController;
-
-  Stream<UiEvent> get events => _eventController.stream;
   GradesViewData? _viewData;
   int _selectedTermIndex = 0;
 
@@ -35,7 +28,7 @@ class GradesViewModel extends BaseViewModel {
     try {
       await _model.warmUpCache();
     } catch (error) {
-      _eventController.add(
+      emit(
         ShowSnackBarEvent(message: 'Failed to warm cache: $error'),
       );
     }
@@ -44,8 +37,9 @@ class GradesViewModel extends BaseViewModel {
       _viewData = GradesViewData.fromScoreData(data);
       _selectedTermIndex = 0;
     } catch (error) {
-      _eventController.add(
-        ShowSnackBarEvent(message: 'Failed to load grades: ${error.toString()}'),
+      emit(
+        ShowSnackBarEvent(
+            message: 'Failed to load grades: ${error.toString()}'),
       );
     } finally {
       loading = false;
@@ -61,8 +55,9 @@ class GradesViewModel extends BaseViewModel {
       _viewData = GradesViewData.fromScoreData(data);
       _selectedTermIndex = 0;
     } catch (error) {
-      _eventController.add(
-        ShowSnackBarEvent(message: 'Failed to refresh grades: ${error.toString()}'),
+      emit(
+        ShowSnackBarEvent(
+            message: 'Failed to refresh grades: ${error.toString()}'),
       );
     } finally {
       loading = false;
@@ -73,11 +68,5 @@ class GradesViewModel extends BaseViewModel {
   void selectTerm(int index) {
     _selectedTermIndex = index;
     notifyListeners();
-  }
-
-  @override
-  void dispose() {
-    _eventController.close();
-    super.dispose();
   }
 }
