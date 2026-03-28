@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'package:onetj/app/di/dependencies.dart';
+import 'package:onetj/features/app_update/views/app_update_flow.dart';
 import 'package:onetj/features/dashboard/view_models/dashboard_view_model.dart';
 import 'package:onetj/features/dashboard/models/dashboard_model.dart';
 import 'package:onetj/models/app_update_info.dart';
@@ -34,7 +35,6 @@ class _DashboardViewState extends State<DashboardView>
   late final AppUpdateService _appUpdateService;
   StreamSubscription<UiEvent>? _eventSub;
   bool _updateDialogVisible = false;
-  bool _downloadDialogVisible = false;
 
   @override
   void initState() {
@@ -52,37 +52,12 @@ class _DashboardViewState extends State<DashboardView>
       }
       if (event is AppUpdateFailedEvent) {
         if (!mounted) return;
-        _dismissDownloadDialogIfNeeded();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
               AppLocalizations.of(context).appUpdateFailed(
                 event.error.toString(),
               ),
-            ),
-          ),
-        );
-        return;
-      }
-      if (event is AppUpdateInstallTriggeredEvent) {
-        if (!mounted) return;
-        _dismissDownloadDialogIfNeeded();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              AppLocalizations.of(context).appUpdateInstallTriggered,
-            ),
-          ),
-        );
-        return;
-      }
-      if (event is AppUpdateInstallPermissionRequiredEvent) {
-        if (!mounted) return;
-        _dismissDownloadDialogIfNeeded();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              AppLocalizations.of(context).appUpdateInstallPermissionRequired,
             ),
           ),
         );
@@ -118,100 +93,16 @@ class _DashboardViewState extends State<DashboardView>
       return;
     }
     _updateDialogVisible = true;
-    final AppLocalizations l10n = AppLocalizations.of(context);
-    final String notes = _appUpdateService.formatReleaseNotes(updateInfo);
-    bool skipping = false;
-    final bool? updateNow = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return StatefulBuilder(
-          builder: (BuildContext dialogContext, StateSetter setState) {
-            Future<void> handleSkipVersion() async {
-              if (skipping) {
-                return;
-              }
-              setState(() {
-                skipping = true;
-              });
-              final bool skipped =
-                  await _viewModel.skipUpdateVersion(updateInfo.versionTag);
-              if (!dialogContext.mounted) {
-                return;
-              }
-              setState(() {
-                skipping = false;
-              });
-              if (!skipped) {
-                return;
-              }
-              Navigator.of(dialogContext).pop(false);
-            }
-
-            return AlertDialog(
-              title: Text(l10n.appUpdateDialogTitle(updateInfo.versionTag)),
-              content: Text(
-                notes.isEmpty ? l10n.appUpdateNotesEmpty : notes,
-              ),
-              actions: [
-                TextButton(
-                  onPressed: skipping
-                      ? null
-                      : () => Navigator.of(dialogContext).pop(false),
-                  child: Text(l10n.appUpdateLater),
-                ),
-                TextButton(
-                  onPressed: skipping ? null : handleSkipVersion,
-                  child: skipping
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Text(l10n.appUpdateSkipVersion),
-                ),
-                FilledButton(
-                  onPressed: skipping
-                      ? null
-                      : () => Navigator.of(dialogContext).pop(true),
-                  child: Text(l10n.appUpdateNow),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-    _updateDialogVisible = false;
-    if (updateNow != true || !mounted) {
-      return;
+    try {
+      await showAppUpdateFlow(
+        context,
+        updateInfo: updateInfo,
+        allowSkipVersion: true,
+        appUpdateService: _appUpdateService,
+      );
+    } finally {
+      _updateDialogVisible = false;
     }
-    _showDownloadDialog(l10n);
-    await _viewModel.downloadAndInstallUpdate(updateInfo);
-  }
-
-  // TODO: UI及交互方式需要改进，需要支持取消下载、后台下载
-  void _showDownloadDialog(AppLocalizations l10n) {
-    if (_downloadDialogVisible || !mounted) {
-      return;
-    }
-    _downloadDialogVisible = true;
-    showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext dialogContext) => AlertDialog(
-        title: Text(l10n.appUpdateDownloadingTitle),
-        content: Text(l10n.appUpdateDownloadingBody),
-      ),
-    ).whenComplete(() {
-      _downloadDialogVisible = false;
-    });
-  }
-
-  void _dismissDownloadDialogIfNeeded() {
-    if (!_downloadDialogVisible || !mounted) {
-      return;
-    }
-    Navigator.of(context, rootNavigator: true).pop();
   }
 
   @override

@@ -270,6 +270,21 @@
   "appUpdateSkipVersion": "Skip this version",
   "appUpdateDownloadingTitle": "Downloading update",
   "appUpdateDownloadingBody": "Downloading package and verifying integrity...",
+  "appUpdateVerifyingBody": "Verifying package integrity...",
+  "appUpdateInstallingBody": "Starting installer...",
+  "appUpdateDownloadedBytesKnown": "{received} / {total}",
+  "@appUpdateDownloadedBytesKnown": {
+    "placeholders": {
+      "received": {},
+      "total": {}
+    }
+  },
+  "appUpdateDownloadedBytesUnknown": "Downloaded {received}",
+  "@appUpdateDownloadedBytesUnknown": {
+    "placeholders": {
+      "received": {}
+    }
+  },
   "appUpdateInstallTriggered": "Installer has been started, please follow system prompts",
   "appUpdateInstallPermissionRequired": "Allow installs from unknown apps in system settings. Installation will resume automatically when you return.",
   "appUpdateFailed": "Update failed: {error}",

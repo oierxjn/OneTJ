@@ -7,6 +7,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:onetj/features/about/models/acknowledgement_model.dart';
 import 'package:onetj/features/about/models/contributor_model.dart';
 import 'package:onetj/features/about/view_models/about_view_model.dart';
+import 'package:onetj/features/app_update/views/app_update_flow.dart';
 import 'package:onetj/models/app_update_info.dart';
 import 'package:onetj/models/event_model.dart';
 
@@ -24,7 +25,6 @@ class AboutView extends StatefulWidget {
 class _AboutViewState extends State<AboutView> {
   final AboutViewModel _viewModel = AboutViewModel();
   StreamSubscription<UiEvent>? _eventSub;
-  bool _downloadDialogVisible = false;
 
   @override
   void initState() {
@@ -235,87 +235,22 @@ class _AboutViewState extends State<AboutView> {
       return;
     }
     if (event is AppUpdateAvailableEvent && event.fromManualCheck) {
-      await _showManualUpdateDialog(l10n, event.updateInfo);
-      return;
-    }
-    if (event is AppUpdateInstallTriggeredEvent) {
-      _dismissDownloadDialogIfNeeded();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.appUpdateInstallTriggered)),
-      );
-      return;
-    }
-    if (event is AppUpdateInstallPermissionRequiredEvent) {
-      _dismissDownloadDialogIfNeeded();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.appUpdateInstallPermissionRequired)),
-      );
+      await _showManualUpdateDialog(event.updateInfo);
       return;
     }
     if (event is AppUpdateFailedEvent) {
-      _dismissDownloadDialogIfNeeded();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.appUpdateFailed(event.error.toString()))),
       );
     }
   }
 
-  Future<void> _showManualUpdateDialog(
-    AppLocalizations l10n,
-    AppUpdateInfo updateInfo,
-  ) async {
-    final String notes = _viewModel.formatReleaseNotes(updateInfo);
-    final bool? updateNow = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: Text(l10n.appUpdateDialogTitle(updateInfo.versionTag)),
-          content: Text(
-            notes.isEmpty ? l10n.appUpdateNotesEmpty : notes,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: Text(l10n.appUpdateLater),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: Text(l10n.appUpdateNow),
-            ),
-          ],
-        );
-      },
+  Future<void> _showManualUpdateDialog(AppUpdateInfo updateInfo) async {
+    await showAppUpdateFlow(
+      context,
+      updateInfo: updateInfo,
+      allowSkipVersion: false,
     );
-    if (updateNow != true || !mounted) {
-      return;
-    }
-    _showDownloadDialog(l10n);
-    await _viewModel.downloadAndInstallUpdate(updateInfo);
-  }
-
-  // TODO: serious 下载的时候允许后台下载
-  void _showDownloadDialog(AppLocalizations l10n) {
-    if (_downloadDialogVisible || !mounted) {
-      return;
-    }
-    _downloadDialogVisible = true;
-    showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext dialogContext) => AlertDialog(
-        title: Text(l10n.appUpdateDownloadingTitle),
-        content: Text(l10n.appUpdateDownloadingBody),
-      ),
-    ).whenComplete(() {
-      _downloadDialogVisible = false;
-    });
-  }
-
-  void _dismissDownloadDialogIfNeeded() {
-    if (!_downloadDialogVisible || !mounted) {
-      return;
-    }
-    Navigator.of(context, rootNavigator: true).pop();
   }
 
   @override

@@ -19,6 +19,11 @@ enum AppUpdateInstallResult {
   permissionRequired,
 }
 
+enum AppUpdateDownloadStage {
+  downloading,
+  verifying,
+}
+
 class AppUpdateService {
   AppUpdateService({
     AppUpdateApi? api,
@@ -107,6 +112,7 @@ class AppUpdateService {
   Future<File> downloadPackage(
     AppUpdateInfo info, {
     void Function(int receivedBytes, int? totalBytes)? onProgress,
+    void Function(AppUpdateDownloadStage stage)? onStageChanged,
   }) async {
     final Uri uri = Uri.parse(info.downloadUrl);
     final http.Client client = http.Client();
@@ -127,6 +133,7 @@ class AppUpdateService {
       }
       sink = file.openWrite();
       int received = 0;
+      onStageChanged?.call(AppUpdateDownloadStage.downloading);
       await for (final List<int> chunk in response.stream) {
         sink.add(chunk);
         received += chunk.length;
@@ -134,6 +141,7 @@ class AppUpdateService {
       }
       await sink.close();
       sink = null;
+      onStageChanged?.call(AppUpdateDownloadStage.verifying);
       await _verifySha256(
         file: file,
         expectedSha256: info.sha256,

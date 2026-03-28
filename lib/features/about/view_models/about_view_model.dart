@@ -19,19 +19,13 @@ class AboutViewModel extends BaseViewModel {
   final AppUpdateService _appUpdateService;
   final StreamController<UiEvent> _eventController;
   bool _isCheckingUpdate = false;
-  bool _isInstallingUpdate = false;
 
   String get appName => _appName;
   String get version => _version;
   String get buildNumber => _buildNumber;
   Stream<UiEvent> get events => _eventController.stream;
   bool get isCheckingUpdate => _isCheckingUpdate;
-  bool get isInstallingUpdate => _isInstallingUpdate;
-  bool get isUpdateBusy => _isCheckingUpdate || _isInstallingUpdate;
-
-  String formatReleaseNotes(AppUpdateInfo info) {
-    return _appUpdateService.formatReleaseNotes(info);
-  }
+  bool get isUpdateBusy => _isCheckingUpdate;
 
   Future<void> checkForUpdateManually() async {
     if (_isCheckingUpdate) {
@@ -61,32 +55,6 @@ class AboutViewModel extends BaseViewModel {
       );
     } finally {
       _isCheckingUpdate = false;
-      notifyListeners();
-    }
-  }
-
-  Future<void> downloadAndInstallUpdate(AppUpdateInfo updateInfo) async {
-    if (_isInstallingUpdate) {
-      return;
-    }
-    _isInstallingUpdate = true;
-    notifyListeners();
-    try {
-      final file = await _appUpdateService.downloadPackage(updateInfo);
-      final AppUpdateInstallResult result =
-          await _appUpdateService.installPackage(file);
-      if (result == AppUpdateInstallResult.permissionRequired) {
-        _eventController.add(const AppUpdateInstallPermissionRequiredEvent());
-      } else {
-        _eventController.add(const AppUpdateInstallTriggeredEvent());
-      }
-    } catch (error, stackTrace) {
-      _appUpdateService.logUpdateFailure(error, stackTrace);
-      _eventController.add(
-        AppUpdateFailedEvent(error: error, stackTrace: stackTrace),
-      );
-    } finally {
-      _isInstallingUpdate = false;
       notifyListeners();
     }
   }

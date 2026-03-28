@@ -1,10 +1,8 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:onetj/features/dashboard/models/dashboard_model.dart';
 import 'package:onetj/features/dashboard/models/upcoming_entries_calculator.dart';
 import 'package:onetj/app/di/dependencies.dart';
-import 'package:onetj/models/app_update_info.dart';
 import 'package:onetj/models/base_model.dart';
 import 'package:onetj/models/dashboard_upcoming_mode.dart';
 import 'package:onetj/models/event_model.dart';
@@ -133,24 +131,6 @@ class DashboardViewModel extends BaseViewModel {
         AppUpdateFailedEvent(error: error, stackTrace: stackTrace),
       );
       return false;
-    }
-  }
-
-  Future<void> downloadAndInstallUpdate(AppUpdateInfo updateInfo) async {
-    try {
-      final File file = await _appUpdateService.downloadPackage(updateInfo);
-      final AppUpdateInstallResult result =
-          await _appUpdateService.installPackage(file);
-      if (result == AppUpdateInstallResult.permissionRequired) {
-        _eventController.add(const AppUpdateInstallPermissionRequiredEvent());
-      } else {
-        _eventController.add(const AppUpdateInstallTriggeredEvent());
-      }
-    } catch (error, stackTrace) {
-      _appUpdateService.logUpdateFailure(error, stackTrace);
-      _eventController.add(
-        AppUpdateFailedEvent(error: error, stackTrace: stackTrace),
-      );
     }
   }
 
