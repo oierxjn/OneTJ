@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -334,11 +334,12 @@ class _LaunchWallpaperEditorViewState extends State<LaunchWallpaperEditorView> {
                             }
                           },
                           itemBuilder: (context) => [
-                            PopupMenuItem<String>(
-                              value: 'rename',
-                              child: Text(
-                                  l10n.settingsLaunchWallpaperRenameAction),
-                            ),
+                            if (!isBuiltin)
+                              PopupMenuItem<String>(
+                                value: 'rename',
+                                child: Text(
+                                    l10n.settingsLaunchWallpaperRenameAction),
+                              ),
                             if (!isBuiltin)
                               PopupMenuItem<String>(
                                 value: 'delete',

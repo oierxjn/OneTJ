@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -37,7 +38,9 @@ class LaunchWallpaperFileService {
   static const String builtinSource = 'builtin';
   static const String importedSource = 'gallery';
   static Future<Directory>? _cachedSupportDirectoryFuture;
+  /// 缓存的用户自定义壁纸项索引
   static List<LaunchWallpaperItem>? _cachedIndexItems;
+  /// 缓存的全部壁纸项索引
   static List<LaunchWallpaperItem>? _cachedMergedItems;
   static Map<String, String>? _cachedPathById;
   static bool _cacheDirty = true;
@@ -55,6 +58,16 @@ class LaunchWallpaperFileService {
 
   static String get defaultWallpaperId => kDefaultLaunchWallpaperId;
 
+  @visibleForTesting
+  static void debugResetCache() {
+    _cachedSupportDirectoryFuture = null;
+    _cachedIndexItems = null;
+    _cachedMergedItems = null;
+    _cachedPathById = null;
+    _cacheDirty = true;
+    _cacheLoadingFuture = null;
+  }
+
   static Future<String?> importFromGallery() async {
     final XFile? picked = await ImagePicker().pickImage(
       source: ImageSource.gallery,
@@ -69,13 +82,14 @@ class LaunchWallpaperFileService {
     );
   }
 
+  /// 从文件路径导入自定义壁纸
   static Future<String> importFromFile({
     required String sourcePath,
     required String preferredDisplayName,
     required String source,
   }) async {
     final Directory filesDir = await _getFilesDirectory(create: true);
-    final List<LaunchWallpaperItem> items = await listWallpapers();
+    final List<LaunchWallpaperItem> items = await _getIndexItems();
     final DateTime now = DateTime.now();
 
     final String id = _uuid.v4();
@@ -111,6 +125,9 @@ class LaunchWallpaperFileService {
     return id;
   }
 
+  /// 列出所有需要渲染的壁纸项
+  /// 
+  /// 数据用于 UI 展示
   static Future<List<LaunchWallpaperItem>> listWallpapers({
     bool refreshFromDisk = false,
   }) async {
@@ -189,14 +206,23 @@ class LaunchWallpaperFileService {
     return file.path;
   }
 
-
+  /// 重命名自定义壁纸项
   static Future<void> renameWallpaper({
     required String wallpaperId,
     required String displayName,
   }) async {
+    if (_isBuiltinWallpaperId(wallpaperId)) {
+      // 该情况不应该发生，即内置壁纸不允许修改名字
+      AppLogger.warning(
+        "Unexpect Exception: Failed to rename: Wallpaper $wallpaperId is builtin", 
+        loggerName: 'LaunchWallpaperFileService',
+      );
+      return;
+    }
+
     final String normalized =
         _normalizeDisplayName(displayName, fallbackIndex: 0);
-    final List<LaunchWallpaperItem> items = await listWallpapers();
+    final List<LaunchWallpaperItem> items = await _getIndexItems();
     final int index = items.indexWhere((item) => item.id == wallpaperId);
     if (index < 0) {
       return;
@@ -209,15 +235,12 @@ class LaunchWallpaperFileService {
   }
 
   static Future<void> deleteWallpaper(String wallpaperId) async {
-    final List<LaunchWallpaperItem> items = await listWallpapers();
+    final List<LaunchWallpaperItem> items = await _getIndexItems();
     final int index = items.indexWhere((item) => item.id == wallpaperId);
     if (index < 0) {
       return;
     }
     final LaunchWallpaperItem removed = items.removeAt(index);
-    if (removed.source == builtinSource) {
-      return;
-    }
     await _saveIndex(items);
 
     final String? fileName = removed.fileName;
@@ -242,6 +265,10 @@ class LaunchWallpaperFileService {
     return null;
   }
 
+  /// 从文件读取用户自定义壁纸项索引
+  /// 
+  /// 旧版本的壁纸项索引格式返回的列表中可能会包含内置壁纸项
+  /// 所以这里需要过滤掉内置壁纸项
   static Future<List<LaunchWallpaperItem>> _readIndexItems() async {
     final File indexFile = await _getIndexFile(create: false);
     if (!await indexFile.exists()) {
@@ -260,11 +287,18 @@ class LaunchWallpaperFileService {
       if (item is! Map) {
         continue;
       }
-      items.add(LaunchWallpaperItem.fromJson(Map<String, dynamic>.from(item)));
+      final LaunchWallpaperItem parsed = LaunchWallpaperItem.fromJson(
+        Map<String, dynamic>.from(item),
+      );
+      if (parsed.source == builtinSource) {
+        continue;
+      }
+      items.add(parsed);
     }
     return items;
   }
 
+  /// 将内置壁纸项合并到用户自定义壁纸项中
   static List<LaunchWallpaperItem> _mergeBuiltinItems(
     List<LaunchWallpaperItem> items,
   ) {
@@ -289,20 +323,25 @@ class LaunchWallpaperFileService {
       final LaunchWallpaperItem current = merged[index];
       if (current.source != builtinSource) {
         merged[index] = current.copyWith(
+          displayName: name,
           source: builtinSource,
           fileName: null,
           assetPath: assetPath,
         );
         continue;
       }
-      if (current.assetPath != assetPath) {
-        merged[index] = current.copyWith(assetPath: assetPath);
+      if (current.assetPath != assetPath || current.displayName != name) {
+        merged[index] = current.copyWith(
+          displayName: name,
+          assetPath: assetPath,
+        );
       }
     }
     return merged;
   }
 
-  static String _normalizeDisplayName(String value, {required int fallbackIndex}) {
+  static String _normalizeDisplayName(String value,
+      {required int fallbackIndex}) {
     final String trimmed = value.trim();
     if (trimmed.isNotEmpty) {
       return trimmed;
@@ -323,8 +362,7 @@ class LaunchWallpaperFileService {
   }
 
   static Future<Directory> _getSupportDirectory() {
-    return _cachedSupportDirectoryFuture ??=
-        getApplicationSupportDirectory();
+    return _cachedSupportDirectoryFuture ??= getApplicationSupportDirectory();
   }
 
   static Future<Directory> _getFilesDirectory({required bool create}) async {
@@ -346,20 +384,38 @@ class LaunchWallpaperFileService {
     return File(p.join(filesDir.path, fileName));
   }
 
+  /// 保存用户自定义壁纸项索引
   static Future<void> _saveIndex(List<LaunchWallpaperItem> items) async {
+    final List<LaunchWallpaperItem> sanitizedItems = items
+        .where((item) => item.source != builtinSource)
+        .toList(growable: false);
     final File indexFile = await _getIndexFile(create: true);
     final String raw = jsonEncode(
-      items.map((item) => item.toJson()).toList(growable: false),
+      sanitizedItems.map((item) => item.toJson()).toList(growable: false),
     );
     await indexFile.writeAsString(raw);
-    await _updateCacheFromIndexItems(items);
+    await _updateCacheFromIndexItems(sanitizedItems);
     AppLogger.info(
       'Launch wallpaper index saved',
       loggerName: 'LaunchWallpaperFileService',
       context: <String, Object?>{
-        'count': items.length,
+        'count': sanitizedItems.length,
       },
     );
+  }
+
+  static Future<List<LaunchWallpaperItem>> _getIndexItems() async {
+    await _ensureCache(refreshFromDisk: false);
+    return List<LaunchWallpaperItem>.from(_cachedIndexItems!);
+  }
+
+  static bool _isBuiltinWallpaperId(String wallpaperId) {
+    for (final (String id, _, _) in _builtinSeeds) {
+      if (id == wallpaperId) {
+        return true;
+      }
+    }
+    return false;
   }
 
   static Future<void> _ensureCache({required bool refreshFromDisk}) async {
@@ -404,9 +460,9 @@ class LaunchWallpaperFileService {
   }
 
   /// 解析id到路径的映射
-  /// 
+  ///
   /// 返回的路径仅为用户的自定义壁纸路径，不包含内置壁纸路径
-  /// 
+  ///
   /// 出现异常时，返回空映射
   static Future<Map<String, String>> _buildPathByIdFromItems(
     List<LaunchWallpaperItem> items,
