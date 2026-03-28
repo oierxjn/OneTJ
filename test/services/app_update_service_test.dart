@@ -129,6 +129,9 @@ void main() {
           ),
         ),
       );
+
+      final File file = File(p.join(tempDir.path, 'onetj_installer.exe'));
+      expect(await file.exists(), isFalse);
     });
   });
 }
