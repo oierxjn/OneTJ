@@ -120,15 +120,18 @@ Future<void> showAppUpdateFlow(
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.appUpdateInstallTriggered)),
       );
+      break;
     case AppUpdateFlowCompletionType.permissionRequired:
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.appUpdateInstallPermissionRequired)),
       );
+      break;
     case AppUpdateFlowCompletionType.failed:
       final Object error = completion.error ?? 'unknown';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.appUpdateFailed(error.toString()))),
       );
+      break;
   }
 }
 
