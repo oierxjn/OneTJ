@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
+import 'package:onetj/features/physics_lab/features/michelson/models/michelson_input_preset.dart';
 import 'package:onetj/features/physics_lab/features/michelson/models/michelson_measurement_result.dart';
 import 'package:onetj/features/physics_lab/features/michelson/view_models/michelson_interferometer_view_model.dart';
 import 'package:onetj/features/physics_lab/widgets/physics_lab_formula.dart';
@@ -18,6 +19,13 @@ class _MichelsonInterferometerViewState
     extends State<MichelsonInterferometerView> {
   late final MichelsonInterferometerViewModel _viewModel;
   late final List<TextEditingController> _controllers;
+
+  MichelsonInputPreset get _defaultPreset {
+    return MichelsonInputPreset(
+      id: MichelsonInterferometerViewModel.defaultPreset.id,
+      values: MichelsonInterferometerViewModel.defaultPreset.values,
+    );
+  }
 
   @override
   void initState() {
@@ -51,6 +59,13 @@ class _MichelsonInterferometerViewState
             title: Text(l10n.physicsLabMichelsonTitle),
             actions: [
               IconButton(
+                tooltip: l10n.physicsLabMichelsonPresetFillLabel,
+                onPressed: () {
+                  _applyPreset(_defaultPreset);
+                },
+                icon: const Icon(Icons.playlist_add_outlined),
+              ),
+              IconButton(
                 tooltip: l10n.physicsLabMichelsonClearAllLabel,
                 onPressed: _clearAllInputs,
                 icon: const Icon(Icons.refresh),
@@ -72,7 +87,12 @@ class _MichelsonInterferometerViewState
                     ),
                     const SizedBox(height: 8),
                     const PhysicsLabFormula.block(
-                      tex: r'\lambda_n = \frac{\Delta d_n}{75}',
+                      tex:
+                          r'\overline{\Delta d} = \frac{1}{5}\sum_{n=1}^{5}\Delta d_n',
+                    ),
+                    const SizedBox(height: 8),
+                    const PhysicsLabFormula.block(
+                      tex: r'\lambda = \frac{\overline{\Delta d}}{75}',
                     ),
                   ],
                 ),
@@ -191,26 +211,21 @@ class _MichelsonInterferometerViewState
                         ),
                       ),
                     ),
-                  const SizedBox(height: 8),
-                  for (int index = 0;
-                      index < result.wavelengthsNm.length;
-                      index += 1)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: PhysicsLabFormula.block(
-                        tex: _wavelengthFormula(
-                          index,
-                          result,
-                        ),
-                      ),
-                    ),
                   const Divider(height: 24),
                   _ResultRow(
                     label: const PhysicsLabFormula.inline(
-                      tex: r'\text{平均 }\lambda',
+                      tex: r'\overline{\Delta d}',
                     ),
                     value:
-                        '${_formatNanometer(result.averageWavelengthNm)} ${l10n.physicsLabMichelsonNanometerUnit}',
+                        '${_formatMillimeter(result.averageDifferenceMm)} ${l10n.physicsLabMichelsonMillimeterUnit}',
+                  ),
+                  const SizedBox(height: 8),
+                  _ResultRow(
+                    label: const PhysicsLabFormula.inline(
+                      tex: r'\lambda',
+                    ),
+                    value:
+                        '${_formatNanometer(result.wavelengthNm)} ${l10n.physicsLabMichelsonNanometerUnit}',
                   ),
                   const SizedBox(height: 8),
                   _ResultRow(
@@ -241,6 +256,13 @@ class _MichelsonInterferometerViewState
     _viewModel.clearAll();
   }
 
+  void _applyPreset(MichelsonInputPreset preset) {
+    _viewModel.applyPreset(preset);
+    for (int index = 0; index < _controllers.length; index += 1) {
+      _controllers[index].text = preset.values[index];
+    }
+  }
+
   String _positionFormula(int index) {
     return 'd_{$index}';
   }
@@ -256,24 +278,8 @@ class _MichelsonInterferometerViewState
     final String earlierValue = _formatMillimeter(result.positions[index]);
     final String differenceValue = _formatMillimeter(result.differencesMm[index]);
     return '\\Delta d_{$differenceIndex} = d_{$laterIndex} - d_{$earlierIndex}'
-        ' = $laterValue - $earlierValue = $differenceValue\\,\\mathrm{mm}';
-  }
-
-  String _wavelengthFormula(
-    int index,
-    MichelsonMeasurementResult result,
-  ) {
-    final int wavelengthIndex = index + 1;
-    final String differenceValue = _formatMillimeter(result.differencesMm[index]);
-    final String wavelengthValue = _formatNanometer(result.wavelengthsNm[index]);
-    return '\\lambda_{$wavelengthIndex} = \\frac{\\Delta d_{$wavelengthIndex}}'
-        '{${_formatPlainNumber(MichelsonInterferometerViewModel.fringesPerStep)}}'
-        ' = $wavelengthValue\\,\\mathrm{nm}\\quad(\\Delta d_{$wavelengthIndex}'
-        '=$differenceValue\\,\\mathrm{mm})';
-  }
-
-  String _formatPlainNumber(double value) {
-    return value.toStringAsFixed(value.truncateToDouble() == value ? 0 : 2);
+        ' = ($laterValue - $earlierValue)\\,\\mathrm{mm} = '
+        '$differenceValue\\,\\mathrm{mm}';
   }
 
   String _formatMillimeter(double value) {
