@@ -178,10 +178,10 @@ class _MichelsonInterferometerViewState
                         l10n.physicsLabMichelsonDifferenceMmDetail(
                           index + 1,
                           index + 6,
-                          _formatNumber(result.positions[index + 5]),
+                          _formatMillimeter(result.positions[index + 5]),
                           index + 1,
-                          _formatNumber(result.positions[index]),
-                          _formatNumber(result.differencesMm[index]),
+                          _formatMillimeter(result.positions[index]),
+                          _formatMillimeter(result.differencesMm[index]),
                         ),
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
@@ -195,11 +195,11 @@ class _MichelsonInterferometerViewState
                       child: Text(
                         l10n.physicsLabMichelsonWavelengthNmDetail(
                           index + 1,
-                          _formatNumber(result.differencesMm[index]),
+                          _formatMillimeter(result.differencesMm[index]),
                           _formatNumber(
                             MichelsonInterferometerViewModel.fringesPerStep,
                           ),
-                          _formatNumber(result.wavelengthsNm[index]),
+                          _formatNanometer(result.wavelengthsNm[index]),
                         ),
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
@@ -208,17 +208,17 @@ class _MichelsonInterferometerViewState
                   _ResultRow(
                     label: l10n.physicsLabMichelsonAverageWavelengthLabel,
                     value:
-                        '${_formatNumber(result.averageWavelengthNm)} ${l10n.physicsLabMichelsonNanometerUnit}',
+                        '${_formatNanometer(result.averageWavelengthNm)} ${l10n.physicsLabMichelsonNanometerUnit}',
                   ),
                   const SizedBox(height: 8),
                   _ResultRow(
                     label: l10n.physicsLabMichelsonRelativeErrorLabel,
-                    value: '${_formatNumber(result.relativeErrorPercent)}%',
+                    value: '${_formatPercent(result.relativeErrorPercent)}%',
                   ),
                   const SizedBox(height: 8),
                   Text(
                     l10n.physicsLabMichelsonReferenceHint(
-                      '${_formatNumber(
+                      '${_formatNanometer(
                         MichelsonInterferometerViewModel.referenceValue,
                       )} ${l10n.physicsLabMichelsonNanometerUnit}',
                     ),
@@ -240,11 +240,19 @@ class _MichelsonInterferometerViewState
   }
 
   String _formatNumber(double value) {
-    return value.toStringAsFixed(value.abs() >= 1000
-        ? 1
-        : value.abs() >= 100
-            ? 2
-            : 3);
+    return value.toStringAsFixed(value.truncateToDouble() == value ? 0 : 2);
+  }
+
+  String _formatMillimeter(double value) {
+    return value.toStringAsFixed(5);
+  }
+
+  String _formatNanometer(double value) {
+    return value.toStringAsFixed(2);
+  }
+
+  String _formatPercent(double value) {
+    return value.toStringAsFixed(2);
   }
 }
 
