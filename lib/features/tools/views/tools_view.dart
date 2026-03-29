@@ -19,12 +19,18 @@ class ToolsView extends StatelessWidget {
         children: [
           const SizedBox(height: 12),
           Text(
-            'Coming soon',
+            l10n.toolsSubtitle,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
           ),
           const SizedBox(height: 16),
+          _ToolTile(
+            icon: Icons.science_outlined,
+            title: l10n.physicsLabTitle,
+            subtitle: l10n.physicsLabToolSubtitle,
+            onTap: () => context.push(RoutePaths.homePhysicsLab),
+          ),
           _ToolTile(
             icon: Icons.auto_graph_outlined,
             title: l10n.scoreInquiryTitle,

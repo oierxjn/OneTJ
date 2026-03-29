@@ -70,6 +70,95 @@
   },
   "scoreInquiryTitle": "Score Inquiry",
   "scoreInquirySubtitle": "View your undergraduate scores",
+  "toolsSubtitle": "Common tools and lab calculators will be collected here.",
+  "physicsLabTitle": "Physics Lab Calculator",
+  "physicsLabToolSubtitle": "Free up your hands to focus on the experiment",
+  "physicsLabSubtitle": "Choose an experiment to open its calculator page.",
+  "physicsLabMichelsonTitle": "Michelson Interferometer",
+  "physicsLabMichelsonSubtitle": "Calculate results from fringe positions",
+  "physicsLabMichelsonDescription": "Enter 10 measured positions for every 5 fringes in mm. The page computes the differences between item i+5 and item i, averages the 5 differences, divides the average difference by 75, converts the result to nm, and compares it against 623.8 nm.",
+  "physicsLabMichelsonIntroTitle": "Experiment",
+  "physicsLabMichelsonFormulaTitle": "Formula",
+  "physicsLabMichelsonFormulaBody": "Compute 5 differences by subtracting positions 1-5 from positions 6-10 in mm, average the 5 differences, divide the average difference by 75, convert the result to nm, then calculate the relative error against 623.8 nm.",
+  "physicsLabMichelsonInputSectionTitle": "Measurements",
+  "physicsLabMichelsonInputHint": "Fill in 10 position values in measurement order. Integers and decimals are supported.",
+  "physicsLabMichelsonClearAllLabel": "Clear",
+  "physicsLabMichelsonPresetFillLabel": "Fill Preset Values",
+  "physicsLabMichelsonMillimeterUnit": "mm",
+  "physicsLabMichelsonNanometerUnit": "nm",
+  "physicsLabMichelsonPositionLabel": "Position {index}",
+  "@physicsLabMichelsonPositionLabel": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
+  },
+  "physicsLabMichelsonIncompleteHint": "Fill in all 10 position values with valid numbers first.",
+  "physicsLabMichelsonResultSectionTitle": "Results",
+  "physicsLabMichelsonDifferenceLabel": "Difference {index}: {value}",
+  "@physicsLabMichelsonDifferenceLabel": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      },
+      "value": {}
+    }
+  },
+  "physicsLabMichelsonDifferenceDetail": "Difference {differenceIndex}: Position {laterIndex} {laterValue} - Position {earlierIndex} {earlierValue} = {differenceValue}",
+  "@physicsLabMichelsonDifferenceDetail": {
+    "placeholders": {
+      "differenceIndex": {
+        "type": "int"
+      },
+      "laterValue": {},
+      "laterIndex": {
+        "type": "int"
+      },
+      "earlierValue": {},
+      "earlierIndex": {
+        "type": "int"
+      },
+      "differenceValue": {}
+    }
+  },
+  "physicsLabMichelsonDifferenceMmDetail": "Difference {differenceIndex}: Position {laterIndex} {laterValue} - Position {earlierIndex} {earlierValue} = {differenceValue} mm",
+  "@physicsLabMichelsonDifferenceMmDetail": {
+    "placeholders": {
+      "differenceIndex": {
+        "type": "int"
+      },
+      "laterIndex": {
+        "type": "int"
+      },
+      "laterValue": {},
+      "earlierIndex": {
+        "type": "int"
+      },
+      "earlierValue": {},
+      "differenceValue": {}
+    }
+  },
+  "physicsLabMichelsonWavelengthNmDetail": "Wavelength {index}: {differenceValue} mm / {divider} = {wavelengthValue} nm",
+  "@physicsLabMichelsonWavelengthNmDetail": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      },
+      "differenceValue": {},
+      "divider": {},
+      "wavelengthValue": {}
+    }
+  },
+  "physicsLabMichelsonAverageLabel": "Average Difference",
+  "physicsLabMichelsonAverageWavelengthLabel": "Final Wavelength",
+  "physicsLabMichelsonRelativeErrorLabel": "Relative Error",
+  "physicsLabMichelsonReferenceHint": "Reference: {reference}",
+  "@physicsLabMichelsonReferenceHint": {
+    "placeholders": {
+      "reference": {}
+    }
+  },
   "scoresOverviewTitle": "Overview",
   "scoresListTitle": "Course Scores",
   "scoresSummaryGpa": "GPA",
