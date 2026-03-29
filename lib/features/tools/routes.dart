@@ -1,6 +1,7 @@
 import 'package:go_router/go_router.dart';
 
 import 'package:onetj/app/constant/route_paths.dart';
+import 'package:onetj/features/physics_lab/routes.dart';
 import 'package:onetj/features/tools/views/tools_view.dart';
 
 final List<GoRoute> toolsRoutes = [
@@ -8,5 +9,8 @@ final List<GoRoute> toolsRoutes = [
     path: RoutePaths.homeTools,
     name: 'tools',
     builder: (context, state) => const ToolsView(),
+    routes: [
+      ...physicsLabRoutes,
+    ],
   ),
 ];
