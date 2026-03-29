@@ -4,6 +4,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'package:onetj/features/physics_lab/features/michelson/models/michelson_measurement_result.dart';
 import 'package:onetj/features/physics_lab/features/michelson/view_models/michelson_interferometer_view_model.dart';
+import 'package:onetj/features/physics_lab/widgets/physics_lab_formula.dart';
 
 class MichelsonInterferometerView extends StatefulWidget {
   const MichelsonInterferometerView({super.key});
@@ -61,7 +62,20 @@ class _MichelsonInterferometerViewState
             children: [
               _InfoCard(
                 title: l10n.physicsLabMichelsonFormulaTitle,
-                body: l10n.physicsLabMichelsonFormulaBody,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(l10n.physicsLabMichelsonFormulaBody),
+                    const SizedBox(height: 12),
+                    const PhysicsLabFormula.block(
+                      tex: r'\Delta d_n = d_{n+5} - d_n',
+                    ),
+                    const SizedBox(height: 8),
+                    const PhysicsLabFormula.block(
+                      tex: r'\lambda_n = \frac{\Delta d_n}{75}',
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 8),
               _buildInputCard(l10n),
@@ -105,9 +119,7 @@ class _MichelsonInterferometerViewState
                           padding: const EdgeInsets.only(bottom: 12),
                           child: _PositionInputField(
                             controller: _controllers[index],
-                            label: l10n.physicsLabMichelsonPositionLabel(
-                              index + 1,
-                            ),
+                            label: _positionFormula(index + 1),
                             unit: l10n.physicsLabMichelsonMillimeterUnit,
                             onChanged: (value) {
                               _viewModel.updatePositionText(index, value);
@@ -126,9 +138,7 @@ class _MichelsonInterferometerViewState
                           padding: const EdgeInsets.only(bottom: 12),
                           child: _PositionInputField(
                             controller: _controllers[index],
-                            label: l10n.physicsLabMichelsonPositionLabel(
-                              index + 1,
-                            ),
+                            label: _positionFormula(index + 1),
                             unit: l10n.physicsLabMichelsonMillimeterUnit,
                             onChanged: (value) {
                               _viewModel.updatePositionText(index, value);
@@ -174,16 +184,11 @@ class _MichelsonInterferometerViewState
                       index += 1)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 10),
-                      child: Text(
-                        l10n.physicsLabMichelsonDifferenceMmDetail(
-                          index + 1,
-                          index + 6,
-                          _formatMillimeter(result.positions[index + 5]),
-                          index + 1,
-                          _formatMillimeter(result.positions[index]),
-                          _formatMillimeter(result.differencesMm[index]),
+                      child: PhysicsLabFormula.block(
+                        tex: _differenceFormula(
+                          index,
+                          result,
                         ),
-                        style: Theme.of(context).textTheme.bodyMedium,
                       ),
                     ),
                   const SizedBox(height: 8),
@@ -192,27 +197,24 @@ class _MichelsonInterferometerViewState
                       index += 1)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 10),
-                      child: Text(
-                        l10n.physicsLabMichelsonWavelengthNmDetail(
-                          index + 1,
-                          _formatMillimeter(result.differencesMm[index]),
-                          _formatNumber(
-                            MichelsonInterferometerViewModel.fringesPerStep,
-                          ),
-                          _formatNanometer(result.wavelengthsNm[index]),
+                      child: PhysicsLabFormula.block(
+                        tex: _wavelengthFormula(
+                          index,
+                          result,
                         ),
-                        style: Theme.of(context).textTheme.bodyMedium,
                       ),
                     ),
                   const Divider(height: 24),
                   _ResultRow(
-                    label: l10n.physicsLabMichelsonAverageWavelengthLabel,
+                    label: const PhysicsLabFormula.inline(
+                      tex: r'\text{平均 }\lambda',
+                    ),
                     value:
                         '${_formatNanometer(result.averageWavelengthNm)} ${l10n.physicsLabMichelsonNanometerUnit}',
                   ),
                   const SizedBox(height: 8),
                   _ResultRow(
-                    label: l10n.physicsLabMichelsonRelativeErrorLabel,
+                    label: Text(l10n.physicsLabMichelsonRelativeErrorLabel),
                     value: '${_formatPercent(result.relativeErrorPercent)}%',
                   ),
                   const SizedBox(height: 8),
@@ -239,7 +241,38 @@ class _MichelsonInterferometerViewState
     _viewModel.clearAll();
   }
 
-  String _formatNumber(double value) {
+  String _positionFormula(int index) {
+    return 'd_{$index}';
+  }
+
+  String _differenceFormula(
+    int index,
+    MichelsonMeasurementResult result,
+  ) {
+    final int differenceIndex = index + 1;
+    final int laterIndex = index + 6;
+    final int earlierIndex = index + 1;
+    final String laterValue = _formatMillimeter(result.positions[index + 5]);
+    final String earlierValue = _formatMillimeter(result.positions[index]);
+    final String differenceValue = _formatMillimeter(result.differencesMm[index]);
+    return '\\Delta d_{$differenceIndex} = d_{$laterIndex} - d_{$earlierIndex}'
+        ' = $laterValue - $earlierValue = $differenceValue\\,\\mathrm{mm}';
+  }
+
+  String _wavelengthFormula(
+    int index,
+    MichelsonMeasurementResult result,
+  ) {
+    final int wavelengthIndex = index + 1;
+    final String differenceValue = _formatMillimeter(result.differencesMm[index]);
+    final String wavelengthValue = _formatNanometer(result.wavelengthsNm[index]);
+    return '\\lambda_{$wavelengthIndex} = \\frac{\\Delta d_{$wavelengthIndex}}'
+        '{${_formatPlainNumber(MichelsonInterferometerViewModel.fringesPerStep)}}'
+        ' = $wavelengthValue\\,\\mathrm{nm}\\quad(\\Delta d_{$wavelengthIndex}'
+        '=$differenceValue\\,\\mathrm{mm})';
+  }
+
+  String _formatPlainNumber(double value) {
     return value.toStringAsFixed(value.truncateToDouble() == value ? 0 : 2);
   }
 
@@ -285,7 +318,9 @@ class _PositionInputField extends StatelessWidget {
       decoration: InputDecoration(
         border: const OutlineInputBorder(),
         isDense: true,
-        labelText: label,
+        label: PhysicsLabFormula.inline(
+          tex: label,
+        ),
         suffixText: unit,
       ),
       onChanged: onChanged,
@@ -296,11 +331,11 @@ class _PositionInputField extends StatelessWidget {
 class _InfoCard extends StatelessWidget {
   const _InfoCard({
     required this.title,
-    required this.body,
+    required this.child,
   });
 
   final String title;
-  final String body;
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
@@ -316,7 +351,7 @@ class _InfoCard extends StatelessWidget {
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
-            Text(body),
+            child,
           ],
         ),
       ),
@@ -330,7 +365,7 @@ class _ResultRow extends StatelessWidget {
     required this.value,
   });
 
-  final String label;
+  final Widget label;
   final String value;
 
   @override
@@ -338,10 +373,7 @@ class _ResultRow extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: Text(
-            label,
-            style: Theme.of(context).textTheme.bodyLarge,
-          ),
+          child: label,
         ),
         Text(
           value,
