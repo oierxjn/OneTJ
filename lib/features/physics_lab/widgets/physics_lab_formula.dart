@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 
+// TODO(oierxjn): Differentiate inline/block rendering semantics and wire up
+// selectable behavior once formula presentation requirements are finalized.
 class PhysicsLabFormula extends StatelessWidget {
   const PhysicsLabFormula.inline({
     super.key,

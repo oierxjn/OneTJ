@@ -5,11 +5,13 @@ class MichelsonInputPresetException extends AppException {
       'MICHELSON_INPUT_PRESET_INVALID_LENGTH';
 
   MichelsonInputPresetException.invalidLength({
+    required int expectedLength,
     required int actualLength,
     Object? cause,
   }) : super(
           invalidLengthCode,
-          'Michelson preset must contain exactly 10 values, got $actualLength.',
+          'Michelson preset must contain exactly $expectedLength values, got '
+          '$actualLength.',
           cause: cause,
         );
 }

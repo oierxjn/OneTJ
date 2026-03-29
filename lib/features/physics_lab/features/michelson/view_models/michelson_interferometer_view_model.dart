@@ -3,7 +3,7 @@ import 'package:onetj/features/physics_lab/features/michelson/models/michelson_m
 import 'package:onetj/models/base_model.dart';
 
 class MichelsonInterferometerViewModel extends BaseViewModel<Never> {
-  static const int positionCount = 10;
+  static const int positionCount = MichelsonInputPreset.expectedValueCount;
   static const int differenceOffset = 5;
   static const double referenceValue = 623.8;
   static const double fringesPerStep = 75;
