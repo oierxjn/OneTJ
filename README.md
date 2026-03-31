@@ -99,7 +99,6 @@ fvm flutter run
 
 - Do not edit generated files under `windows/flutter/ephemeral/`.
 - Do not manually edit `*.g.dart` files; regenerate them with `build_runner`.
-- Keep Chinese text intact even if terminal encoding looks incorrect.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for additional collaboration guidance.
 

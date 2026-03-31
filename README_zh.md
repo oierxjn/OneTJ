@@ -91,7 +91,6 @@ fvm flutter run
 
 - 不要修改 `windows/flutter/ephemeral/` 下的生成文件。
 - 不要手动编辑 `*.g.dart`，请通过 `build_runner` 重新生成。
-- 如果终端里中文显示异常，不要据此修改原文内容。
 
 更多协作约定见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 

@@ -1,4 +1,4 @@
-package com.example.onetj
+package com.oierxjn.onetj
 
 import android.content.ActivityNotFoundException
 import android.content.Intent
