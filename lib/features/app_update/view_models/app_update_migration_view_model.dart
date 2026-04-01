@@ -1,11 +1,12 @@
 import 'package:flutter/services.dart';
 
+import 'package:onetj/features/app_update/models/event.dart';
 import 'package:onetj/models/base_model.dart';
+import 'package:onetj/models/event_model.dart';
 import 'package:onetj/services/external_launcher_service.dart';
 
 enum AppUpdateMigrationActionResultType {
   launched,
-  copied,
   failed,
 }
 
@@ -18,9 +19,6 @@ class AppUpdateMigrationActionResult {
   const AppUpdateMigrationActionResult.launched()
       : this._(type: AppUpdateMigrationActionResultType.launched);
 
-  const AppUpdateMigrationActionResult.copied()
-      : this._(type: AppUpdateMigrationActionResultType.copied);
-
   const AppUpdateMigrationActionResult.failed({
     required String url,
   }) : this._(
@@ -32,7 +30,7 @@ class AppUpdateMigrationActionResult {
   final String? url;
 }
 
-class AppUpdateMigrationViewModel extends BaseViewModel<Never> {
+class AppUpdateMigrationViewModel extends BaseViewModel<UiEvent> {
   AppUpdateMigrationViewModel({
     ExternalLauncherService? externalLauncherService,
   }) : _externalLauncherService =
@@ -67,15 +65,16 @@ class AppUpdateMigrationViewModel extends BaseViewModel<Never> {
     }
   }
 
-  Future<AppUpdateMigrationActionResult> copyLink(String url) async {
+  Future<bool> copyLink(String url) async {
     if (_copying) {
-      return const AppUpdateMigrationActionResult.copied();
+      return false;
     }
     _copying = true;
     notifyListeners();
     try {
       await Clipboard.setData(ClipboardData(text: url));
-      return const AppUpdateMigrationActionResult.copied();
+      emit(const AppUpdateMigrationLinkCopiedEvent());
+      return true;
     } finally {
       _copying = false;
       notifyListeners();

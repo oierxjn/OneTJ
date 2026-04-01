@@ -5,10 +5,12 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/app/constant/app_version_constant.dart';
+import 'package:onetj/features/app_update/models/event.dart';
 import 'package:onetj/features/app_update/models/app_update_flow_state.dart';
 import 'package:onetj/features/app_update/view_models/app_update_flow_view_model.dart';
 import 'package:onetj/features/app_update/view_models/app_update_migration_view_model.dart';
 import 'package:onetj/models/app_update_info.dart';
+import 'package:onetj/models/event_model.dart';
 import 'package:onetj/services/app_update_service.dart';
 import 'package:onetj/services/external_launcher_service.dart';
 
@@ -20,6 +22,7 @@ Future<void> showAppUpdateFlow(
 }) async {
   final AppUpdateService service =
       appUpdateService ?? appLocator<AppUpdateService>();
+  final AppLocalizations l10n = AppLocalizations.of(context);
   if (service.requiresMigration(updateInfo)) {
     await _showMigrationFlow(
       context,
@@ -30,7 +33,6 @@ Future<void> showAppUpdateFlow(
     );
     return;
   }
-  final AppLocalizations l10n = AppLocalizations.of(context);
   final String notes = service.formatReleaseNotes(updateInfo);
   bool skipping = false;
   final bool? updateNow = await showDialog<bool>(
@@ -154,6 +156,17 @@ Future<void> _showMigrationFlow(
   required AppUpdateMigrationViewModel migrationViewModel,
 }) async {
   final AppLocalizations l10n = AppLocalizations.of(context);
+  final StreamSubscription<UiEvent> eventSub =
+      migrationViewModel.events.listen((UiEvent event) {
+        if (!context.mounted) {
+          return;
+        }
+        if (event is AppUpdateMigrationLinkCopiedEvent) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.appUpdateMigrationLinkCopied)),
+          );
+        }
+      });
   try {
     await showDialog<void>(
       context: context,
@@ -172,7 +185,6 @@ Future<void> _showMigrationFlow(
                 case AppUpdateMigrationActionResultType.launched:
                   return;
                 case AppUpdateMigrationActionResultType.failed:
-                case AppUpdateMigrationActionResultType.copied:
                   ScaffoldMessenger.of(dialogContext).showSnackBar(
                     SnackBar(
                       content: Text(
@@ -187,18 +199,7 @@ Future<void> _showMigrationFlow(
             }
 
             Future<void> handleCopyLink() async {
-              final AppUpdateMigrationActionResult result =
-                  await migrationViewModel.copyLink(updateInfo.downloadUrl);
-              if (!dialogContext.mounted) {
-                return;
-              }
-              if (result.type == AppUpdateMigrationActionResultType.copied) {
-                ScaffoldMessenger.of(dialogContext).showSnackBar(
-                  SnackBar(
-                    content: Text(l10n.appUpdateMigrationLinkCopied),
-                  ),
-                );
-              }
+              await migrationViewModel.copyLink(updateInfo.downloadUrl);
             }
 
             return AlertDialog(
@@ -273,6 +274,7 @@ Future<void> _showMigrationFlow(
       },
     );
   } finally {
+    await eventSub.cancel();
     migrationViewModel.dispose();
   }
 }

@@ -18,8 +18,6 @@ Original repository: [FlowerBlackG/OneTJ](https://github.com/FlowerBlackG/OneTJ)
 This project is under active development. Some features are complete enough for
 daily use, while others are still evolving.
 
-Current app version: `2.4.1+13`
-
 ## Features
 
 - WebView-based login flow for Tongji authentication
