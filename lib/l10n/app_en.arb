@@ -408,11 +408,5 @@
     "placeholders": {
       "url": {}
     }
-  },
-  "appUpdateMigrationHarmonyManualDownload": "HarmonyOS does not open the browser from inside the app for migration. Copy the link and download manually or use your existing distribution channel: {url}",
-  "@appUpdateMigrationHarmonyManualDownload": {
-    "placeholders": {
-      "url": {}
-    }
   }
 }

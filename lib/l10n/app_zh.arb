@@ -408,12 +408,6 @@
     "placeholders": {
       "url": {}
     }
-  },
-  "appUpdateMigrationHarmonyManualDownload": "鸿蒙版本无需应用内拉起浏览器，请复制链接后自行下载或通过既有渠道获取新包：{url}",
-  "@appUpdateMigrationHarmonyManualDownload": {
-    "placeholders": {
-      "url": {}
-    }
   }
 }
 
