@@ -2,8 +2,8 @@
   "app": {
     "bundleName": "com.oierxjn.onetj",
     "vendor": "tongji",
-    "versionCode": 2004001,
-    "versionName": "2.4.1",
+    "versionCode": 2004002,
+    "versionName": "2.4.2",
     "icon": "$media:layered_image",
     "label": "$string:app_name"
   }
