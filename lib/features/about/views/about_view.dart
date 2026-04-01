@@ -7,7 +7,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:onetj/features/about/models/acknowledgement_model.dart';
 import 'package:onetj/features/about/models/contributor_model.dart';
 import 'package:onetj/features/about/view_models/about_view_model.dart';
-import 'package:onetj/features/app_update/views/app_update_flow.dart';
+import 'package:onetj/features/app_update/app_update_flow_coordinator.dart';
 import 'package:onetj/models/app_update_info.dart';
 import 'package:onetj/models/event_model.dart';
 
@@ -24,6 +24,8 @@ class AboutView extends StatefulWidget {
 
 class _AboutViewState extends State<AboutView> {
   final AboutViewModel _viewModel = AboutViewModel();
+  final AppUpdateFlowCoordinator _appUpdateCoordinator =
+      AppUpdateFlowCoordinator();
   StreamSubscription<UiEvent>? _eventSub;
 
   @override
@@ -246,7 +248,7 @@ class _AboutViewState extends State<AboutView> {
   }
 
   Future<void> _showManualUpdateDialog(AppUpdateInfo updateInfo) async {
-    await showAppUpdateFlow(
+    await _appUpdateCoordinator.run(
       context,
       updateInfo: updateInfo,
       allowSkipVersion: false,

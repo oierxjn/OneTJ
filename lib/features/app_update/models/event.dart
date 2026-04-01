@@ -4,6 +4,16 @@ class AppUpdateMigrationLinkCopiedEvent extends UiEvent {
   const AppUpdateMigrationLinkCopiedEvent();
 }
 
+class AppUpdateSkipVersionFailedEvent extends UiEvent {
+  const AppUpdateSkipVersionFailedEvent({
+    required this.error,
+    this.stackTrace,
+  });
+
+  final Object error;
+  final StackTrace? stackTrace;
+}
+
 class AppUpdateMigrationLinkCopyFailedEvent extends UiEvent {
   const AppUpdateMigrationLinkCopyFailedEvent({
     required this.error,

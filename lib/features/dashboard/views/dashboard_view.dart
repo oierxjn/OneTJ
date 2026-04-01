@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'package:onetj/app/di/dependencies.dart';
-import 'package:onetj/features/app_update/views/app_update_flow.dart';
+import 'package:onetj/features/app_update/app_update_flow_coordinator.dart';
 import 'package:onetj/features/dashboard/view_models/dashboard_view_model.dart';
 import 'package:onetj/features/dashboard/models/dashboard_model.dart';
 import 'package:onetj/models/app_update_info.dart';
@@ -33,6 +33,7 @@ class _DashboardViewState extends State<DashboardView>
     with WidgetsBindingObserver {
   late final DashboardViewModel _viewModel;
   late final AppUpdateService _appUpdateService;
+  late final AppUpdateFlowCoordinator _appUpdateCoordinator;
   StreamSubscription<UiEvent>? _eventSub;
   bool _updateDialogVisible = false;
 
@@ -41,6 +42,9 @@ class _DashboardViewState extends State<DashboardView>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _appUpdateService = appLocator<AppUpdateService>();
+    _appUpdateCoordinator = AppUpdateFlowCoordinator(
+      appUpdateService: _appUpdateService,
+    );
     _viewModel = DashboardViewModel(appUpdateService: _appUpdateService);
     _eventSub = _viewModel.events.listen((event) {
       if (event is ShowSnackBarEvent) {
@@ -94,11 +98,10 @@ class _DashboardViewState extends State<DashboardView>
     }
     _updateDialogVisible = true;
     try {
-      await showAppUpdateFlow(
+      await _appUpdateCoordinator.run(
         context,
         updateInfo: updateInfo,
         allowSkipVersion: true,
-        appUpdateService: _appUpdateService,
       );
     } finally {
       _updateDialogVisible = false;
