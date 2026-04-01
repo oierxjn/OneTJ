@@ -171,6 +171,26 @@ Future<void> _showMigrationFlow(
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(l10n.appUpdateMigrationLinkCopied)),
           );
+          return;
+        }
+        if (event is AppUpdateMigrationLinkCopyFailedEvent) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                l10n.appUpdateFailed(event.error.toString()),
+              ),
+            ),
+          );
+          return;
+        }
+        if (event is AppUpdateMigrationDownloadOpenFailedEvent) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                l10n.appUpdateMigrationOpenDownloadFailed(event.url),
+              ),
+            ),
+          );
         }
       });
   try {
@@ -181,33 +201,6 @@ Future<void> _showMigrationFlow(
         return AnimatedBuilder(
           animation: migrationViewModel,
           builder: (BuildContext dialogContext, _) {
-            Future<void> handleDownload() async {
-              final AppUpdateMigrationActionResult result =
-                  await migrationViewModel.openDownload(updateInfo.downloadUrl);
-              if (!dialogContext.mounted) {
-                return;
-              }
-              switch (result.type) {
-                case AppUpdateMigrationActionResultType.launched:
-                  return;
-                case AppUpdateMigrationActionResultType.failed:
-                  ScaffoldMessenger.of(dialogContext).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        l10n.appUpdateMigrationOpenDownloadFailed(
-                          result.url ?? updateInfo.downloadUrl,
-                        ),
-                      ),
-                    ),
-                  );
-                  return;
-              }
-            }
-
-            Future<void> handleCopyLink() async {
-              await migrationViewModel.copyLink(updateInfo.downloadUrl);
-            }
-
             return AlertDialog(
               title: Text(
                 l10n.appUpdateMigrationTitle(updateInfo.versionTag),
@@ -254,7 +247,9 @@ Future<void> _showMigrationFlow(
                   child: Text(l10n.appUpdateLater),
                 ),
                 TextButton(
-                  onPressed: migrationViewModel.copying ? null : handleCopyLink,
+                  onPressed: migrationViewModel.copying
+                      ? null
+                      : () => migrationViewModel.copyLink(updateInfo.downloadUrl),
                   child: migrationViewModel.copying
                       ? const SizedBox(
                           width: 16,
@@ -266,7 +261,9 @@ Future<void> _showMigrationFlow(
                 FilledButton(
                   onPressed: !canDownloadNow || migrationViewModel.opening
                       ? null
-                      : handleDownload,
+                      : () => migrationViewModel.downloadNow(
+                            updateInfo.downloadUrl,
+                          ),
                   child: migrationViewModel.opening
                       ? const SizedBox(
                           width: 16,

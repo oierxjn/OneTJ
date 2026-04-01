@@ -1,34 +1,10 @@
 import 'package:flutter/services.dart';
 
+import 'package:onetj/app/logging/logger.dart';
 import 'package:onetj/features/app_update/models/event.dart';
 import 'package:onetj/models/base_model.dart';
 import 'package:onetj/models/event_model.dart';
 import 'package:onetj/services/external_launcher_service.dart';
-
-enum AppUpdateMigrationActionResultType {
-  launched,
-  failed,
-}
-
-class AppUpdateMigrationActionResult {
-  const AppUpdateMigrationActionResult._({
-    required this.type,
-    this.url,
-  });
-
-  const AppUpdateMigrationActionResult.launched()
-      : this._(type: AppUpdateMigrationActionResultType.launched);
-
-  const AppUpdateMigrationActionResult.failed({
-    required String url,
-  }) : this._(
-          type: AppUpdateMigrationActionResultType.failed,
-          url: url,
-        );
-
-  final AppUpdateMigrationActionResultType type;
-  final String? url;
-}
 
 class AppUpdateMigrationViewModel extends BaseViewModel<UiEvent> {
   AppUpdateMigrationViewModel({
@@ -44,20 +20,24 @@ class AppUpdateMigrationViewModel extends BaseViewModel<UiEvent> {
   bool get opening => _opening;
   bool get copying => _copying;
 
-  Future<AppUpdateMigrationActionResult> openDownload(String url) async {
+  Future<void> downloadNow(String url) async {
     if (_opening) {
-      return AppUpdateMigrationActionResult.failed(url: url);
+      return;
     }
     _opening = true;
     notifyListeners();
     try {
       final ExternalUrlLaunchResult result =
           await _externalLauncherService.openExternalUrl(url);
-      switch (result) {
-        case ExternalUrlLaunchResult.launched:
-          return const AppUpdateMigrationActionResult.launched();
-        case ExternalUrlLaunchResult.failed:
-          return AppUpdateMigrationActionResult.failed(url: url);
+      if (result == ExternalUrlLaunchResult.failed) {
+        AppLogger.warning(
+          'Failed to open migration download URL',
+          loggerName: 'AppUpdateMigrationViewModel',
+          context: <String, Object?>{
+            'url': url,
+          },
+        );
+        emit(AppUpdateMigrationDownloadOpenFailedEvent(url: url));
       }
     } finally {
       _opening = false;
@@ -65,16 +45,31 @@ class AppUpdateMigrationViewModel extends BaseViewModel<UiEvent> {
     }
   }
 
-  Future<bool> copyLink(String url) async {
+  Future<void> copyLink(String url) async {
     if (_copying) {
-      return false;
+      return;
     }
     _copying = true;
     notifyListeners();
     try {
       await Clipboard.setData(ClipboardData(text: url));
       emit(const AppUpdateMigrationLinkCopiedEvent());
-      return true;
+    } catch (error, stackTrace) {
+      AppLogger.warning(
+        'Failed to copy migration download URL',
+        loggerName: 'AppUpdateMigrationViewModel',
+        error: error,
+        stackTrace: stackTrace,
+        context: <String, Object?>{
+          'url': url,
+        },
+      );
+      emit(
+        AppUpdateMigrationLinkCopyFailedEvent(
+          error: error,
+          stackTrace: stackTrace,
+        ),
+      );
     } finally {
       _copying = false;
       notifyListeners();
