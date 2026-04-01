@@ -14,8 +14,20 @@ class ExternalLauncherService {
     return _instance ??= ExternalLauncherService();
   }
 
+  Uri? tryParseExternalUrl(String url) {
+    final String trimmed = url.trim();
+    if (trimmed.isEmpty) {
+      return null;
+    }
+    return Uri.tryParse(trimmed);
+  }
+
+  bool isValidExternalUrl(String url) {
+    return tryParseExternalUrl(url) != null;
+  }
+
   Future<ExternalUrlLaunchResult> openExternalUrl(String url) async {
-    final Uri? uri = Uri.tryParse(url);
+    final Uri? uri = tryParseExternalUrl(url);
     if (uri == null) {
       return ExternalUrlLaunchResult.failed;
     }

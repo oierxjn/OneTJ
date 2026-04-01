@@ -23,13 +23,17 @@ Future<void> showAppUpdateFlow(
   final AppUpdateService service =
       appUpdateService ?? appLocator<AppUpdateService>();
   final AppLocalizations l10n = AppLocalizations.of(context);
+  final ExternalLauncherService externalLauncherService =
+      appLocator<ExternalLauncherService>();
   if (service.requiresMigration(updateInfo)) {
     await _showMigrationFlow(
       context,
       updateInfo: updateInfo,
       migrationViewModel: AppUpdateMigrationViewModel(
-        externalLauncherService: appLocator<ExternalLauncherService>(),
+        externalLauncherService: externalLauncherService,
       ),
+      canDownloadNow:
+          externalLauncherService.isValidExternalUrl(updateInfo.downloadUrl),
     );
     return;
   }
@@ -40,6 +44,7 @@ Future<void> showAppUpdateFlow(
     builder: (BuildContext dialogContext) {
       return StatefulBuilder(
         builder: (BuildContext dialogContext, StateSetter setState) {
+          // TODO: 逻辑比较像viewmodel，可能需要下沉
           Future<void> handleSkipVersion() async {
             if (skipping) {
               return;
@@ -154,6 +159,7 @@ Future<void> _showMigrationFlow(
   BuildContext context, {
   required AppUpdateInfo updateInfo,
   required AppUpdateMigrationViewModel migrationViewModel,
+  required bool canDownloadNow,
 }) async {
   final AppLocalizations l10n = AppLocalizations.of(context);
   final StreamSubscription<UiEvent> eventSub =
@@ -258,7 +264,9 @@ Future<void> _showMigrationFlow(
                       : Text(l10n.appUpdateMigrationCopyLink),
                 ),
                 FilledButton(
-                  onPressed: migrationViewModel.opening ? null : handleDownload,
+                  onPressed: !canDownloadNow || migrationViewModel.opening
+                      ? null
+                      : handleDownload,
                   child: migrationViewModel.opening
                       ? const SizedBox(
                           width: 16,
