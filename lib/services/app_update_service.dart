@@ -305,6 +305,10 @@ class AppUpdateService {
 
   String _resolveCurrentBuild() => oneTJAppBuildNumber;
 
+  bool requiresMigration(AppUpdateInfo info) {
+    return info.requiresMigration(currentVersion: _resolveCurrentVersion());
+  }
+
   /// 尝试恢复待安装的更新
   Future<void> resumePendingInstall() async {
     if (!Platform.isAndroid) {

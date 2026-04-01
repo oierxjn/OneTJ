@@ -374,13 +374,40 @@
         "received": {}
       }
     },
-    "appUpdateInstallTriggered": "已拉起安装程序，请按系统提示完成安装",
-    "appUpdateInstallPermissionRequired": "请先在系统设置中允许安装未知应用，返回应用后将自动继续安装",
-    "appUpdateFailed": "更新失败：{error}",
-    "@appUpdateFailed": {
-      "placeholders": {
-        "error": {}
-      }
+  "appUpdateInstallTriggered": "已拉起安装程序，请按系统提示完成安装",
+  "appUpdateInstallPermissionRequired": "请先在系统设置中允许安装未知应用，返回应用后将自动继续安装",
+  "appUpdateFailed": "更新失败：{error}",
+  "@appUpdateFailed": {
+    "placeholders": {
+      "error": {}
     }
+  },
+  "appUpdateMigrationTitle": "需要迁移到新版本：{version}",
+  "@appUpdateMigrationTitle": {
+    "placeholders": {
+      "version": {}
+    }
+  },
+  "appUpdateMigrationSummary": "当前版本 {currentVersion} 已不再受支持。新版需要作为独立应用安装，无法直接覆盖升级。",
+  "@appUpdateMigrationSummary": {
+    "placeholders": {
+      "currentVersion": {}
+    }
+  },
+  "appUpdateMigrationStepsTitle": "请按以下顺序操作（建议截图保存每一步操作）：",
+  "appUpdateMigrationStepDownload": "1. 点击“下载新版”，使用系统浏览器下载新版安装包。",
+  "appUpdateMigrationStepLocate": "2. 下载完成后，请在浏览器下载列表或通知栏中找到安装包。",
+  "appUpdateMigrationStepUninstall": "3. 先卸载当前旧版应用。",
+  "appUpdateMigrationStepInstall": "4. 再打开刚下载的安装包，安装新版应用。",
+  "appUpdateMigrationRisk": "卸载旧版后，本地缓存、登录状态和已下载文件可能会丢失，请提前确认。",
+  "appUpdateMigrationCopyLink": "复制下载链接",
+  "appUpdateMigrationDownloadNow": "从外部下载新版",
+  "appUpdateMigrationLinkCopied": "已复制下载链接",
+  "appUpdateMigrationOpenDownloadFailed": "无法打开下载链接，请复制后自行在浏览器中打开：{url}",
+  "@appUpdateMigrationOpenDownloadFailed": {
+    "placeholders": {
+      "url": {}
+    }
+  }
 }
 

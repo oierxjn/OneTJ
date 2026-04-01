@@ -381,5 +381,32 @@
     "placeholders": {
       "error": {}
     }
+  },
+  "appUpdateMigrationTitle": "Migration required: {version}",
+  "@appUpdateMigrationTitle": {
+    "placeholders": {
+      "version": {}
+    }
+  },
+  "appUpdateMigrationSummary": "Your current version {currentVersion} is no longer supported. The new release must be installed as a separate app and cannot overwrite this one directly.",
+  "@appUpdateMigrationSummary": {
+    "placeholders": {
+      "currentVersion": {}
+    }
+  },
+  "appUpdateMigrationStepsTitle": "Please follow these steps (suggested to take screenshots of each step):",
+  "appUpdateMigrationStepDownload": "1. Tap \"Download new app\" to download the new installer in your browser.",
+  "appUpdateMigrationStepLocate": "2. After the download completes, find the installer in your browser downloads or notification tray.",
+  "appUpdateMigrationStepUninstall": "3. Uninstall the current old app first.",
+  "appUpdateMigrationStepInstall": "4. Then open the downloaded installer and install the new app.",
+  "appUpdateMigrationRisk": "After uninstalling the old app, local cache, login state, and downloaded files may be lost.",
+  "appUpdateMigrationCopyLink": "Copy download link",
+  "appUpdateMigrationDownloadNow": "Download new app from external source",
+  "appUpdateMigrationLinkCopied": "Download link copied",
+  "appUpdateMigrationOpenDownloadFailed": "Unable to open the download link. Copy and open it manually in your browser: {url}",
+  "@appUpdateMigrationOpenDownloadFailed": {
+    "placeholders": {
+      "url": {}
+    }
   }
 }

@@ -4,10 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'package:onetj/app/di/dependencies.dart';
+import 'package:onetj/app/constant/app_version_constant.dart';
+import 'package:onetj/features/app_update/models/event.dart';
 import 'package:onetj/features/app_update/models/app_update_flow_state.dart';
 import 'package:onetj/features/app_update/view_models/app_update_flow_view_model.dart';
+import 'package:onetj/features/app_update/view_models/app_update_migration_view_model.dart';
 import 'package:onetj/models/app_update_info.dart';
+import 'package:onetj/models/event_model.dart';
 import 'package:onetj/services/app_update_service.dart';
+import 'package:onetj/services/external_launcher_service.dart';
 
 Future<void> showAppUpdateFlow(
   BuildContext context, {
@@ -18,6 +23,20 @@ Future<void> showAppUpdateFlow(
   final AppUpdateService service =
       appUpdateService ?? appLocator<AppUpdateService>();
   final AppLocalizations l10n = AppLocalizations.of(context);
+  final ExternalLauncherService externalLauncherService =
+      appLocator<ExternalLauncherService>();
+  if (service.requiresMigration(updateInfo)) {
+    await _showMigrationFlow(
+      context,
+      updateInfo: updateInfo,
+      migrationViewModel: AppUpdateMigrationViewModel(
+        externalLauncherService: externalLauncherService,
+      ),
+      canDownloadNow:
+          externalLauncherService.isValidExternalUrl(updateInfo.downloadUrl),
+    );
+    return;
+  }
   final String notes = service.formatReleaseNotes(updateInfo);
   bool skipping = false;
   final bool? updateNow = await showDialog<bool>(
@@ -25,6 +44,7 @@ Future<void> showAppUpdateFlow(
     builder: (BuildContext dialogContext) {
       return StatefulBuilder(
         builder: (BuildContext dialogContext, StateSetter setState) {
+          // TODO: 逻辑比较像viewmodel，可能需要下沉
           Future<void> handleSkipVersion() async {
             if (skipping) {
               return;
@@ -132,6 +152,138 @@ Future<void> showAppUpdateFlow(
         SnackBar(content: Text(l10n.appUpdateFailed(error.toString()))),
       );
       break;
+  }
+}
+
+Future<void> _showMigrationFlow(
+  BuildContext context, {
+  required AppUpdateInfo updateInfo,
+  required AppUpdateMigrationViewModel migrationViewModel,
+  required bool canDownloadNow,
+}) async {
+  final AppLocalizations l10n = AppLocalizations.of(context);
+  final StreamSubscription<UiEvent> eventSub =
+      migrationViewModel.events.listen((UiEvent event) {
+        if (!context.mounted) {
+          return;
+        }
+        if (event is AppUpdateMigrationLinkCopiedEvent) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.appUpdateMigrationLinkCopied)),
+          );
+        }
+      });
+  try {
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext dialogContext) {
+        return AnimatedBuilder(
+          animation: migrationViewModel,
+          builder: (BuildContext dialogContext, _) {
+            Future<void> handleDownload() async {
+              final AppUpdateMigrationActionResult result =
+                  await migrationViewModel.openDownload(updateInfo.downloadUrl);
+              if (!dialogContext.mounted) {
+                return;
+              }
+              switch (result.type) {
+                case AppUpdateMigrationActionResultType.launched:
+                  return;
+                case AppUpdateMigrationActionResultType.failed:
+                  ScaffoldMessenger.of(dialogContext).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        l10n.appUpdateMigrationOpenDownloadFailed(
+                          result.url ?? updateInfo.downloadUrl,
+                        ),
+                      ),
+                    ),
+                  );
+                  return;
+              }
+            }
+
+            Future<void> handleCopyLink() async {
+              await migrationViewModel.copyLink(updateInfo.downloadUrl);
+            }
+
+            return AlertDialog(
+              title: Text(
+                l10n.appUpdateMigrationTitle(updateInfo.versionTag),
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.appUpdateMigrationSummary(oneTJAppVersion),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      l10n.appUpdateMigrationStepsTitle,
+                      style: Theme.of(dialogContext).textTheme.titleSmall,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(l10n.appUpdateMigrationStepDownload),
+                    const SizedBox(height: 4),
+                    Text(l10n.appUpdateMigrationStepLocate),
+                    const SizedBox(height: 4),
+                    Text(l10n.appUpdateMigrationStepUninstall),
+                    const SizedBox(height: 4),
+                    Text(l10n.appUpdateMigrationStepInstall),
+                    const SizedBox(height: 12),
+                    Text(
+                      l10n.appUpdateMigrationRisk,
+                      style: Theme.of(dialogContext).textTheme.bodySmall,
+                    ),
+                    if (updateInfo.downloadUrl.trim().isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      SelectableText(
+                        updateInfo.downloadUrl,
+                        style: Theme.of(dialogContext).textTheme.bodySmall,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: Text(l10n.appUpdateLater),
+                ),
+                TextButton(
+                  onPressed: migrationViewModel.copying ? null : handleCopyLink,
+                  child: migrationViewModel.copying
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Text(l10n.appUpdateMigrationCopyLink),
+                ),
+                FilledButton(
+                  onPressed: !canDownloadNow || migrationViewModel.opening
+                      ? null
+                      : handleDownload,
+                  child: migrationViewModel.opening
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Text(l10n.appUpdateMigrationDownloadNow),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  } finally {
+    await eventSub.cancel();
+    migrationViewModel.dispose();
   }
 }
 
