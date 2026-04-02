@@ -4,6 +4,7 @@ import 'package:onetj/app/constant/route_paths.dart';
 
 enum PhysicsLabExperiment {
   michelsonInterferometer,
+  diffractionGrating,
 }
 
 extension PhysicsLabExperimentMeta on PhysicsLabExperiment {
@@ -11,6 +12,8 @@ extension PhysicsLabExperimentMeta on PhysicsLabExperiment {
     switch (this) {
       case PhysicsLabExperiment.michelsonInterferometer:
         return Icons.waves_outlined;
+      case PhysicsLabExperiment.diffractionGrating:
+        return Icons.blur_on_outlined;
     }
   }
 
@@ -18,6 +21,8 @@ extension PhysicsLabExperimentMeta on PhysicsLabExperiment {
     switch (this) {
       case PhysicsLabExperiment.michelsonInterferometer:
         return RoutePaths.homePhysicsLabMichelson;
+      case PhysicsLabExperiment.diffractionGrating:
+        return RoutePaths.homePhysicsLabDiffractionGrating;
     }
   }
 }

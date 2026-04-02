@@ -76,7 +76,75 @@
     "physicsLabToolSubtitle": "解放你的双手",
     "physicsLabSubtitle": "选择具体实验后进入对应的计算页面。",
     "physicsLabMichelsonTitle": "迈克尔逊干涉仪",
-    "physicsLabMichelsonSubtitle": "通过条纹位置计算结果",
+    "physicsLabMichelsonSubtitle": "眼睛看瞎了",
+    "physicsLabDiffractionGratingTitle": "光栅衍射测定光波波长",
+    "physicsLabDiffractionGratingSubtitle": "记得开汞光灯！",
+    "physicsLabDiffractionGratingDescription": "第一组用于根据已知谱线求光栅常数 d，第二组和第三组分别使用该 d 计算待测谱线波长。每条记录均输入 4 个原始角度读数，系统会自动计算两组角差、γ、sinγ 以及最终结果。",
+    "physicsLabDiffractionGratingIntroTitle": "实验说明",
+    "physicsLabDiffractionGratingFormulaTitle": "计算规则",
+    "physicsLabDiffractionGratingFormulaBody": "对每条记录，先由两组原始读数分别求角差，再将两组角差相加后除以 4 得到 γ，之后按首组 d = kλ₀/sinγ、后两组 λ = dsinγ/k 计算。第二组和第三组各自使用组内两条记录求平均波长，并和填写的参考值比较相对误差。",
+    "physicsLabDiffractionGratingCalibrationSectionTitle": "第一组：求光栅常数 d",
+    "physicsLabDiffractionGratingCalibrationHint": "默认按两条 ±2 级记录求平均 d，校准参考波长可直接修改。",
+    "physicsLabDiffractionGratingCalibrationReferenceLabel": "校准参考波长",
+    "physicsLabDiffractionGratingCalibrationRowTitle": "记录 {index}（k = ±{order}）",
+    "@physicsLabDiffractionGratingCalibrationRowTitle": {
+      "placeholders": {
+        "index": {
+          "type": "int"
+        },
+        "order": {
+          "type": "int"
+        }
+      }
+    },
+    "physicsLabDiffractionGratingAverageGratingConstantLabel": "平均光栅常数",
+    "physicsLabDiffractionGratingCalibrationIncompleteHint": "请先填写完整的首组原始读数和校准参考波长。",
+    "physicsLabDiffractionGratingWavelengthSectionTitle": "第 {group} 组：求波长",
+    "@physicsLabDiffractionGratingWavelengthSectionTitle": {
+      "placeholders": {
+        "group": {
+          "type": "int"
+        }
+      }
+    },
+    "physicsLabDiffractionGratingWavelengthHint": "本组固定使用 ±1 和 ±2 两条记录，并自动引用第一组的平均 d。",
+    "physicsLabDiffractionGratingInheritedGratingConstant": "继承的平均 d",
+    "physicsLabDiffractionGratingReferenceLabel": "参考波长",
+    "physicsLabDiffractionGratingWavelengthRowTitle": "k = ±{order}",
+    "@physicsLabDiffractionGratingWavelengthRowTitle": {
+      "placeholders": {
+        "order": {
+          "type": "int"
+        }
+      }
+    },
+    "physicsLabDiffractionGratingAverageWavelengthLabel": "平均波长",
+    "physicsLabDiffractionGratingWavelengthIncompleteHint": "请先填写完整的原始读数和本组参考波长。",
+    "physicsLabDiffractionGratingNeedCalibrationHint": "请先完成第一组并得到有效的平均 d。",
+    "physicsLabDiffractionGratingReadingLabel": "ψ{index}",
+    "@physicsLabDiffractionGratingReadingLabel": {
+      "placeholders": {
+        "index": {
+          "type": "int"
+        }
+      }
+    },
+    "physicsLabDiffractionGratingReadingPrimeLabel": "ψ{index}'",
+    "@physicsLabDiffractionGratingReadingPrimeLabel": {
+      "placeholders": {
+        "index": {
+          "type": "int"
+        }
+      }
+    },
+    "physicsLabDiffractionGratingDifferenceOneLabel": "|ψ₂ - ψ₁|",
+    "physicsLabDiffractionGratingDifferenceTwoLabel": "|ψ₂' - ψ₁'|",
+    "physicsLabDiffractionGratingGammaLabel": "γ",
+    "physicsLabDiffractionGratingSinGammaLabel": "sinγ",
+    "physicsLabDiffractionGratingDegreeHint": "度",
+    "physicsLabDiffractionGratingMinuteHint": "分",
+    "physicsLabDiffractionGratingClearAllLabel": "清空",
+    "physicsLabDiffractionGratingPresetFillLabel": "填充预设值",
     "physicsLabMichelsonDescription": "请输入 10 个“每 5 级条纹位置”测量值，单位为 mm。系统会先计算第 i+5 个与第 i 个的差值，对 5 个差值求平均，再将平均差值除以 75 换算为波长并转成 nm，最后与 623.8 nm 比较相对误差。",
     "physicsLabMichelsonIntroTitle": "实验说明",
     "physicsLabMichelsonFormulaTitle": "计算规则",

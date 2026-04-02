@@ -75,7 +75,75 @@
   "physicsLabToolSubtitle": "Free up your hands to focus on the experiment",
   "physicsLabSubtitle": "Choose an experiment to open its calculator page.",
   "physicsLabMichelsonTitle": "Michelson Interferometer",
-  "physicsLabMichelsonSubtitle": "Calculate results from fringe positions",
+  "physicsLabMichelsonSubtitle": "Eyes are blind",
+  "physicsLabDiffractionGratingTitle": "Diffraction Grating Wavelength",
+  "physicsLabDiffractionGratingSubtitle": "Remember to turn on the mercury lamp!",
+  "physicsLabDiffractionGratingDescription": "The first section derives the grating constant d from a known spectral line. The second and third sections reuse that d to calculate the target wavelengths. Each record accepts four raw angle readings and automatically computes two angle differences, γ, sinγ, and the final result.",
+  "physicsLabDiffractionGratingIntroTitle": "Experiment",
+  "physicsLabDiffractionGratingFormulaTitle": "Formula",
+  "physicsLabDiffractionGratingFormulaBody": "For each record, compute two angle differences from the four raw readings, add them, divide by 4 to get γ, then use d = kλ₀/sinγ for the first section and λ = dsinγ/k for the second and third sections. Each wavelength section averages its two rows and compares the result against the entered reference wavelength.",
+  "physicsLabDiffractionGratingCalibrationSectionTitle": "Section 1: Solve for d",
+  "physicsLabDiffractionGratingCalibrationHint": "This section uses two fixed ±2 order rows to derive the average grating constant. The calibration wavelength can be edited directly.",
+  "physicsLabDiffractionGratingCalibrationReferenceLabel": "Calibration wavelength",
+  "physicsLabDiffractionGratingCalibrationRowTitle": "Record {index} (k = ±{order})",
+  "@physicsLabDiffractionGratingCalibrationRowTitle": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      },
+      "order": {
+        "type": "int"
+      }
+    }
+  },
+  "physicsLabDiffractionGratingAverageGratingConstantLabel": "Average Grating Constant",
+  "physicsLabDiffractionGratingCalibrationIncompleteHint": "Fill in all calibration readings and the calibration wavelength first.",
+  "physicsLabDiffractionGratingWavelengthSectionTitle": "Section {group}: Solve for λ",
+  "@physicsLabDiffractionGratingWavelengthSectionTitle": {
+    "placeholders": {
+      "group": {
+        "type": "int"
+      }
+    }
+  },
+  "physicsLabDiffractionGratingWavelengthHint": "Each section uses fixed ±1 and ±2 order rows and automatically reuses the average d from section 1.",
+  "physicsLabDiffractionGratingInheritedGratingConstant": "Inherited Average d",
+  "physicsLabDiffractionGratingReferenceLabel": "Reference Wavelength",
+  "physicsLabDiffractionGratingWavelengthRowTitle": "k = ±{order}",
+  "@physicsLabDiffractionGratingWavelengthRowTitle": {
+    "placeholders": {
+      "order": {
+        "type": "int"
+      }
+    }
+  },
+  "physicsLabDiffractionGratingAverageWavelengthLabel": "Average Wavelength",
+  "physicsLabDiffractionGratingWavelengthIncompleteHint": "Fill in all readings and the reference wavelength for this section first.",
+  "physicsLabDiffractionGratingNeedCalibrationHint": "Complete section 1 and obtain a valid average d first.",
+  "physicsLabDiffractionGratingReadingLabel": "ψ{index}",
+  "@physicsLabDiffractionGratingReadingLabel": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
+  },
+  "physicsLabDiffractionGratingReadingPrimeLabel": "ψ{index}'",
+  "@physicsLabDiffractionGratingReadingPrimeLabel": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
+  },
+  "physicsLabDiffractionGratingDifferenceOneLabel": "|ψ2 - ψ1|",
+  "physicsLabDiffractionGratingDifferenceTwoLabel": "|ψ2' - ψ1'|",
+  "physicsLabDiffractionGratingGammaLabel": "γ",
+  "physicsLabDiffractionGratingSinGammaLabel": "sinγ",
+  "physicsLabDiffractionGratingDegreeHint": "deg",
+  "physicsLabDiffractionGratingMinuteHint": "min",
+  "physicsLabDiffractionGratingClearAllLabel": "Clear",
+  "physicsLabDiffractionGratingPresetFillLabel": "Fill Preset Values",
   "physicsLabMichelsonDescription": "Enter 10 measured positions for every 5 fringes in mm. The page computes the differences between item i+5 and item i, averages the 5 differences, divides the average difference by 75, converts the result to nm, and compares it against 623.8 nm.",
   "physicsLabMichelsonIntroTitle": "Experiment",
   "physicsLabMichelsonFormulaTitle": "Formula",
