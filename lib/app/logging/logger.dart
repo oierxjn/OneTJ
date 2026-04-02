@@ -51,8 +51,8 @@ class AppLogger {
     return _fileSink.listLogFiles();
   }
 
-  static Future<String> readLogFile(String filePath) async {
-    return _fileSink.readLogFile(filePath);
+  static Future<String> readLogFile(AppLogFileInfo fileInfo) async {
+    return _fileSink.readLogFile(fileInfo);
   }
 
   static void debug(

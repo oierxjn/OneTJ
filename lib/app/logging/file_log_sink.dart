@@ -114,11 +114,23 @@ class AppFileLogSink {
     return files;
   }
 
-  Future<String> readLogFile(String filePath) async {
+  Future<String> readLogFile(AppLogFileInfo fileInfo) async {
     await init();
-    final File file = File(filePath);
+    final Directory? logDir = _logDir;
+    if (logDir == null) {
+      throw FileSystemException('Log directory unavailable');
+    }
+    if (_parseLogDate(fileInfo.name) == null) {
+      throw FileSystemException('Invalid log file name', fileInfo.name);
+    }
+    final String expectedPath = path.join(logDir.path, fileInfo.name);
+    if (path.normalize(fileInfo.path) != path.normalize(expectedPath)) {
+      throw FileSystemException(
+          'Log file path is outside log directory', fileInfo.path);
+    }
+    final File file = File(expectedPath);
     if (!await file.exists()) {
-      throw FileSystemException('Log file not found', filePath);
+      throw FileSystemException('Log file not found', expectedPath);
     }
     return file.readAsString();
   }

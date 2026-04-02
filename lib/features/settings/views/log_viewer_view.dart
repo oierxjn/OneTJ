@@ -79,7 +79,7 @@ class _LogViewerViewState extends State<LogViewerView> {
       _contentError = null;
     });
     try {
-      final String text = await AppLogger.readLogFile(file.path);
+      final String text = await AppLogger.readLogFile(file);
       if (!mounted) {
         return;
       }
