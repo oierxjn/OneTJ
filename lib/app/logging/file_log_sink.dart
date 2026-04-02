@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:onetj/app/logging/log_file_info.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 
@@ -70,6 +71,56 @@ class AppFileLogSink {
   Future<Directory?> logDirectory() async {
     await init();
     return _logDir;
+  }
+
+  Future<List<AppLogFileInfo>> listLogFiles() async {
+    await init();
+    if (_degraded) {
+      return const <AppLogFileInfo>[];
+    }
+    final Directory? logDir = _logDir;
+    if (logDir == null || !await logDir.exists()) {
+      return const <AppLogFileInfo>[];
+    }
+    final List<FileSystemEntity> entities = await logDir.list().toList();
+    final List<AppLogFileInfo> files = <AppLogFileInfo>[];
+    for (final FileSystemEntity entity in entities) {
+      if (entity is! File) {
+        continue;
+      }
+      final String name = path.basename(entity.path);
+      final DateTime? date = _parseLogDate(name);
+      if (date == null) {
+        continue;
+      }
+      final FileStat stat = await entity.stat();
+      files.add(
+        AppLogFileInfo(
+          name: name,
+          path: entity.path,
+          date: date,
+          sizeBytes: stat.size,
+          isCurrent: _currentDateKey == _formatDateKey(date),
+        ),
+      );
+    }
+    files.sort((a, b) {
+      final int dateCompare = b.date.compareTo(a.date);
+      if (dateCompare != 0) {
+        return dateCompare;
+      }
+      return b.name.compareTo(a.name);
+    });
+    return files;
+  }
+
+  Future<String> readLogFile(String filePath) async {
+    await init();
+    final File file = File(filePath);
+    if (!await file.exists()) {
+      throw FileSystemException('Log file not found', filePath);
+    }
+    return file.readAsString();
   }
 
   Future<void> writeLine(String line) async {

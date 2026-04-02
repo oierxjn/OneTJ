@@ -299,8 +299,17 @@
   "settingsDeveloperSubtitle": "Diagnostics and logs",
   "settingsDeveloperPageTitle": "Developer Options",
   "settingsLogsTitle": "Logs",
-  "settingsLogsSubtitle": "View recent application logs",
+  "settingsLogsSubtitle": "View application log files",
   "settingsLogsEmpty": "No logs yet",
+  "settingsLogsFileEmpty": "The selected log file is empty",
+  "settingsLogsCurrentFileLabel": "Current",
+  "settingsLogsSwitchFileAction": "Switch log file",
+  "settingsLogsLoadFailed": "Failed to load logs: {error}",
+  "@settingsLogsLoadFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
   "settingsDebugEndpointTitle": "Debug Upload Endpoint",
   "settingsDebugEndpointSubtitle": "Current endpoint: {endpoint}",
   "@settingsDebugEndpointSubtitle": {

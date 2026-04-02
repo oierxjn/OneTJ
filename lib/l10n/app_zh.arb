@@ -299,8 +299,17 @@
     "settingsDeveloperSubtitle": "诊断与日志",
     "settingsDeveloperPageTitle": "开发者选项",
     "settingsLogsTitle": "日志",
-    "settingsLogsSubtitle": "查看最近应用日志",
+    "settingsLogsSubtitle": "查看应用日志文件",
     "settingsLogsEmpty": "暂无日志",
+    "settingsLogsFileEmpty": "当前日志文件为空",
+    "settingsLogsCurrentFileLabel": "当前文件",
+    "settingsLogsSwitchFileAction": "切换日志文件",
+    "settingsLogsLoadFailed": "日志读取失败：{error}",
+    "@settingsLogsLoadFailed": {
+      "placeholders": {
+        "error": {}
+      }
+    },
     "settingsDebugEndpointTitle": "调试上传地址",
     "settingsDebugEndpointSubtitle": "当前地址：{endpoint}",
     "@settingsDebugEndpointSubtitle": {

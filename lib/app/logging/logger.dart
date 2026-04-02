@@ -6,6 +6,7 @@ import 'package:logging/logging.dart';
 import 'package:onetj/app/logging/file_log_sink.dart';
 import 'package:onetj/app/logging/log_buffer.dart';
 import 'package:onetj/app/logging/log_entry.dart';
+import 'package:onetj/app/logging/log_file_info.dart';
 import 'package:onetj/app/logging/log_formatter.dart';
 import 'package:onetj/app/logging/log_level.dart';
 
@@ -44,6 +45,14 @@ class AppLogger {
 
   static Future<String?> currentLogFilePath() async {
     return _fileSink.currentLogFilePath();
+  }
+
+  static Future<List<AppLogFileInfo>> listLogFiles() async {
+    return _fileSink.listLogFiles();
+  }
+
+  static Future<String> readLogFile(String filePath) async {
+    return _fileSink.readLogFile(filePath);
   }
 
   static void debug(
