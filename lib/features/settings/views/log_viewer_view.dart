@@ -16,6 +16,7 @@ class LogViewerView extends StatefulWidget {
 
 class _LogViewerViewState extends State<LogViewerView> {
   final ScrollController _scrollController = ScrollController();
+  int _contentRequestId = 0;
   bool _loadingFiles = true;
   bool _loadingContent = false;
   List<AppLogFileInfo> _files = const <AppLogFileInfo>[];
@@ -37,6 +38,7 @@ class _LogViewerViewState extends State<LogViewerView> {
   }
 
   Future<void> _loadFiles() async {
+    _contentRequestId++;
     setState(() {
       _loadingFiles = true;
       _filesError = null;
@@ -73,6 +75,7 @@ class _LogViewerViewState extends State<LogViewerView> {
   }
 
   Future<void> _loadContent(AppLogFileInfo file) async {
+    final int requestId = ++_contentRequestId;
     setState(() {
       _selectedFile = file;
       _loadingContent = true;
@@ -80,7 +83,7 @@ class _LogViewerViewState extends State<LogViewerView> {
     });
     try {
       final String text = await AppLogger.readLogFile(file);
-      if (!mounted) {
+      if (!mounted || requestId != _contentRequestId) {
         return;
       }
       setState(() {
@@ -88,7 +91,7 @@ class _LogViewerViewState extends State<LogViewerView> {
         _loadingContent = false;
       });
     } on FileSystemException catch (error) {
-      if (!mounted) {
+      if (!mounted || requestId != _contentRequestId) {
         return;
       }
       setState(() {
@@ -97,7 +100,7 @@ class _LogViewerViewState extends State<LogViewerView> {
         _contentError = error.message;
       });
     } catch (error) {
-      if (!mounted) {
+      if (!mounted || requestId != _contentRequestId) {
         return;
       }
       setState(() {
