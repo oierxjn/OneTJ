@@ -10,6 +10,7 @@ class PhysicsLabView extends StatelessWidget {
   static const List<PhysicsLabExperiment> _experiments =
       <PhysicsLabExperiment>[
     PhysicsLabExperiment.michelsonInterferometer,
+    PhysicsLabExperiment.diffractionGrating,
   ];
 
   @override
@@ -66,6 +67,8 @@ class _ExperimentTile extends StatelessWidget {
     switch (experiment) {
       case PhysicsLabExperiment.michelsonInterferometer:
         return l10n.physicsLabMichelsonTitle;
+      case PhysicsLabExperiment.diffractionGrating:
+        return l10n.physicsLabDiffractionGratingTitle;
     }
   }
 
@@ -73,6 +76,8 @@ class _ExperimentTile extends StatelessWidget {
     switch (experiment) {
       case PhysicsLabExperiment.michelsonInterferometer:
         return l10n.physicsLabMichelsonSubtitle;
+      case PhysicsLabExperiment.diffractionGrating:
+        return l10n.physicsLabDiffractionGratingSubtitle;
     }
   }
 }

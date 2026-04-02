@@ -2,6 +2,9 @@
 
 ## Build
 - Use `fvm flutter` for all Flutter commands (pub get, run, build, test).
+- On Windows, run Flutter tests via `scripts/flutter_test_no_proxy.ps1` so the
+  child process can clear proxy env vars that would otherwise break local
+  loopback WebSocket connections used by `flutter test`.
 
 ## Dependencies
 - HarmonyOS WebView package comes from the OpenHarmony fork of `flutter_inappwebview`
