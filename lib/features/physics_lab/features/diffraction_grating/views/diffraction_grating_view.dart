@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
+import 'package:onetj/features/physics_lab/features/diffraction_grating/models/diffraction_grating_angle.dart';
 import 'package:onetj/features/physics_lab/features/diffraction_grating/models/diffraction_grating_calibration_result.dart';
 import 'package:onetj/features/physics_lab/features/diffraction_grating/models/diffraction_grating_measurement_result.dart';
 import 'package:onetj/features/physics_lab/features/diffraction_grating/models/diffraction_grating_wavelength_result.dart';
@@ -130,7 +131,8 @@ class _DiffractionGratingViewState extends State<DiffractionGratingView> {
                     Text(l10n.physicsLabDiffractionGratingFormulaBody),
                     const SizedBox(height: 8),
                     const PhysicsLabFormula.block(
-                      tex: r'\gamma=\frac{\left|\alpha_2-\alpha_1\right|+\left|\alpha_2^\prime-\alpha_1^\prime\right|}{4}',
+                      tex:
+                          r'\gamma=\frac{\left|\alpha_2-\alpha_1\right|+\left|\alpha_2^\prime-\alpha_1^\prime\right|}{4}',
                     ),
                     const SizedBox(height: 8),
                     const PhysicsLabFormula.block(
@@ -622,17 +624,10 @@ List<String> _splitAngleParts(String text) {
 }
 
 String _formatDegreeText(double value) {
-  final int wholeDegrees = value.floor();
-  final double minutesRaw = (value - wholeDegrees) * 60;
-  final int wholeMinutes = minutesRaw.floor();
-  final int seconds = ((minutesRaw - wholeMinutes) * 60).round();
-  if (seconds == 60) {
-    return '$wholeDegrees$_degreeSymbol${wholeMinutes + 1}\'';
-  }
-  if (seconds == 0) {
-    return '$wholeDegrees$_degreeSymbol$wholeMinutes\'';
-  }
-  return '$wholeDegrees$_degreeSymbol$wholeMinutes\'$seconds"';
+  return DiffractionGratingAngle.formatDegrees(
+    value,
+    degreeSymbol: _degreeSymbol,
+  );
 }
 
 class _AngleInputField extends StatelessWidget {

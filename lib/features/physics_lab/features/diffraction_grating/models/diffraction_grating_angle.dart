@@ -38,8 +38,10 @@ class DiffractionGratingAngle {
 
     final bool negative = degreePart < 0;
     final double degreeMagnitude = degreePart.abs();
-    final double minutes = parts.length >= 2 ? double.tryParse(parts[1]) ?? -1 : 0;
-    final double seconds = parts.length >= 3 ? double.tryParse(parts[2]) ?? -1 : 0;
+    final double minutes =
+        parts.length >= 2 ? double.tryParse(parts[1]) ?? -1 : 0;
+    final double seconds =
+        parts.length >= 3 ? double.tryParse(parts[2]) ?? -1 : 0;
     if (minutes < 0 || minutes >= 60 || seconds < 0 || seconds >= 60) {
       return null;
     }
@@ -53,5 +55,20 @@ class DiffractionGratingAngle {
   static double circularDifferenceDegrees(double a, double b) {
     final double raw = (a - b).abs() % 360;
     return raw > 180 ? 360 - raw : raw;
+  }
+
+  static String formatDegrees(
+    double value, {
+    String degreeSymbol = '°',
+  }) {
+    final int totalSeconds = (value * 3600).round();
+    final int wholeDegrees = totalSeconds ~/ 3600;
+    final int remainingSeconds = totalSeconds % 3600;
+    final int wholeMinutes = remainingSeconds ~/ 60;
+    final int seconds = remainingSeconds % 60;
+    if (seconds == 0) {
+      return '$wholeDegrees$degreeSymbol$wholeMinutes\'';
+    }
+    return '$wholeDegrees$degreeSymbol$wholeMinutes\'$seconds"';
   }
 }
