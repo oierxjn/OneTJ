@@ -1,8 +1,9 @@
+import 'package:onetj/app/logging/logger.dart';
 import 'package:onetj/models/timetable_index.dart';
 import 'package:onetj/repo/course_schedule_repository.dart';
 
 /// 课程表索引构建器
-/// 
+///
 /// 用于构建课程表索引
 class TimetableIndexBuilder {
   const TimetableIndexBuilder();
@@ -10,10 +11,13 @@ class TimetableIndexBuilder {
   TimetableIndex buildIndex(CourseScheduleData data) {
     /// 索引：一周的星期`n` -> 课程列表
     final Map<int, List<TimetableEntry>> byDayOfWeek = {};
+
     /// 索引：第 `m` 周 -> 一周的星期 `n` -> 课程列表
     final Map<int, Map<int, List<TimetableEntry>>> byWeekThenDay = {};
+
     /// 所有课程条目
     final List<TimetableEntry> allEntries = [];
+
     /// 原始数据中，timeTableList为空的项
     final List<CourseScheduleItemData> nonTimetableItems = [];
 
@@ -32,8 +36,30 @@ class TimetableIndexBuilder {
         final CourseTimeTableItemData timeItem = timeTableList[timeIndex];
         // 将Timetable中每节课程都看作一个独立的课程，即使他们的课程代码、班级代码、班级名称相同
         final List<int> weeks = timeItem.weeks ?? const [];
-        // TODO(oierxjn): add logging/monitoring if backend returns missing
-        // dayOfWeek/timeStart/timeEnd; defaults below are a fallback only.
+        final List<String> missingFields = <String>[
+          if (timeItem.dayOfWeek == null) 'dayOfWeek',
+          if (timeItem.timeStart == null) 'timeStart',
+          if (timeItem.timeEnd == null) 'timeEnd',
+        ];
+        if (missingFields.isNotEmpty) {
+          AppLogger.warning(
+            'Course timetable entry missing required scheduling fields; using fallback defaults',
+            loggerName: 'TimetableIndexBuilder',
+            code: 'TIMETABLE_INDEX_MISSING_FIELDS',
+            context: <String, Object?>{
+              'missingFields': missingFields.join(','),
+              'courseName': item.courseName ?? timeItem.courseName ?? '',
+              'courseCode': item.courseCode ?? timeItem.courseCode ?? '',
+              'weekNum': timeItem.weekNum ?? '',
+              'weeks': weeks.join(','),
+              'sourceItemIndex': itemIndex,
+              'sourceTimeTableIndex': timeIndex,
+              'dayOfWeek': timeItem.dayOfWeek,
+              'timeStart': timeItem.timeStart,
+              'timeEnd': timeItem.timeEnd,
+            },
+          );
+        }
         final TimetableEntry entry = TimetableEntry(
           courseName: item.courseName ?? timeItem.courseName ?? '',
           courseCode: item.courseCode ?? timeItem.courseCode ?? '',
