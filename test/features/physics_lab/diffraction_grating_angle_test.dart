@@ -33,4 +33,20 @@ void main() {
       closeTo(15.0666666667, 1e-9),
     );
   });
+
+  group('DiffractionGratingAngle.formatDegrees', () {
+    test('carries rounded seconds into minutes', () {
+      expect(
+        DiffractionGratingAngle.formatDegrees(10 + 59 / 60 + 59.6 / 3600),
+        '11°0\'',
+      );
+    });
+
+    test('formats non-zero seconds after normalization', () {
+      expect(
+        DiffractionGratingAngle.formatDegrees(173 + 34 / 60 + 40 / 3600),
+        '173°34\'40"',
+      );
+    });
+  });
 }

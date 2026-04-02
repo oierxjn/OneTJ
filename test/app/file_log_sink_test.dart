@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:onetj/app/logging/file_log_sink.dart';
+import 'package:onetj/app/logging/log_file_info.dart';
 import 'package:path/path.dart' as p;
 
 void main() {
@@ -71,9 +72,57 @@ void main() {
       );
       await file.writeAsString('line 1\nline 2\n');
 
-      final content = await sink.readLogFile(file.path);
+      await sink.init();
+      final files = await sink.listLogFiles();
+      final content = await sink.readLogFile(files.single);
 
       expect(content, 'line 1\nline 2\n');
+    });
+
+    test('readLogFile rejects invalid log file names', () async {
+      final AppFileLogSink sink = AppFileLogSink(prefix: '[OneTJ]');
+      final Directory logDir = Directory(p.join(tempDir.path, 'logs'));
+      await logDir.create(recursive: true);
+
+      await sink.init();
+
+      expect(
+        () => sink.readLogFile(
+          AppLogFileInfo(
+            name: 'not-a-log.txt',
+            path: p.join(logDir.path, 'not-a-log.txt'),
+            date: DateTime.now(),
+            sizeBytes: 0,
+            isCurrent: false,
+          ),
+        ),
+        throwsA(isA<FileSystemException>()),
+      );
+    });
+
+    test('readLogFile rejects paths outside the log directory', () async {
+      final AppFileLogSink sink = AppFileLogSink(prefix: '[OneTJ]');
+      final Directory logDir = Directory(p.join(tempDir.path, 'logs'));
+      await logDir.create(recursive: true);
+      final Directory outsideDir = Directory(p.join(tempDir.path, 'outside'));
+      await outsideDir.create(recursive: true);
+      final String name = '[OneTJ]-${_dateKey(DateTime.now())}.log';
+      await File(p.join(outsideDir.path, name)).writeAsString('outside');
+
+      await sink.init();
+
+      expect(
+        () => sink.readLogFile(
+          AppLogFileInfo(
+            name: name,
+            path: p.join(outsideDir.path, name),
+            date: DateTime.now(),
+            sizeBytes: 7,
+            isCurrent: false,
+          ),
+        ),
+        throwsA(isA<FileSystemException>()),
+      );
     });
   });
 }
