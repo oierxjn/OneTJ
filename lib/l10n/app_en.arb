@@ -83,9 +83,9 @@
   "physicsLabDiffractionGratingFormulaTitle": "Formula",
   "physicsLabDiffractionGratingFormulaBody": "For each record, compute two angle differences from the four raw readings, add them, divide by 4 to get γ, then use d = kλ₀/sinγ for the first section and λ = dsinγ/k for the second and third sections. Each wavelength section averages its two rows and compares the result against the entered reference wavelength.",
   "physicsLabDiffractionGratingCalibrationSectionTitle": "Section 1: Solve for d",
-  "physicsLabDiffractionGratingCalibrationHint": "This section uses two fixed ±2 order rows to derive the average grating constant. The calibration wavelength can be edited directly.",
+  "physicsLabDiffractionGratingCalibrationHint": "This section uses one ±2 order record to calculate the grating constant d. The calibration wavelength can be edited directly.",
   "physicsLabDiffractionGratingCalibrationReferenceLabel": "Calibration wavelength",
-  "physicsLabDiffractionGratingCalibrationRowTitle": "Record {index} (k = ±{order})",
+  "physicsLabDiffractionGratingCalibrationRowTitle": "Measurement {index} (k = ±{order})",
   "@physicsLabDiffractionGratingCalibrationRowTitle": {
     "placeholders": {
       "index": {
@@ -96,7 +96,7 @@
       }
     }
   },
-  "physicsLabDiffractionGratingAverageGratingConstantLabel": "Average Grating Constant",
+  "physicsLabDiffractionGratingAverageGratingConstantLabel": "Grating Constant d",
   "physicsLabDiffractionGratingCalibrationIncompleteHint": "Fill in all calibration readings and the calibration wavelength first.",
   "physicsLabDiffractionGratingWavelengthSectionTitle": "Section {group}: Solve for λ",
   "@physicsLabDiffractionGratingWavelengthSectionTitle": {
@@ -106,8 +106,8 @@
       }
     }
   },
-  "physicsLabDiffractionGratingWavelengthHint": "Each section uses fixed ±1 and ±2 order rows and automatically reuses the average d from section 1.",
-  "physicsLabDiffractionGratingInheritedGratingConstant": "Inherited Average d",
+  "physicsLabDiffractionGratingWavelengthHint": "Each section uses fixed ±1 and ±2 order rows and automatically reuses the d from section 1.",
+  "physicsLabDiffractionGratingInheritedGratingConstant": "Inherited d",
   "physicsLabDiffractionGratingReferenceLabel": "Reference Wavelength",
   "physicsLabDiffractionGratingWavelengthRowTitle": "k = ±{order}",
   "@physicsLabDiffractionGratingWavelengthRowTitle": {
@@ -119,7 +119,7 @@
   },
   "physicsLabDiffractionGratingAverageWavelengthLabel": "Average Wavelength",
   "physicsLabDiffractionGratingWavelengthIncompleteHint": "Fill in all readings and the reference wavelength for this section first.",
-  "physicsLabDiffractionGratingNeedCalibrationHint": "Complete section 1 and obtain a valid average d first.",
+  "physicsLabDiffractionGratingNeedCalibrationHint": "Complete section 1 and obtain a valid d first.",
   "physicsLabDiffractionGratingReadingLabel": "ψ{index}",
   "@physicsLabDiffractionGratingReadingLabel": {
     "placeholders": {

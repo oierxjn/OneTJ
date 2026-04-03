@@ -8,17 +8,16 @@ import 'package:onetj/models/base_model.dart';
 
 class DiffractionGratingViewModel extends BaseViewModel<Never> {
   static const int readingCountPerRow = 4;
-  static const int calibrationRowCount = 2;
+  static const int calibrationRowCount = 1;
   static const int wavelengthGroupCount = 2;
   static const int wavelengthRowCount = 2;
-  static const List<int> calibrationOrders = <int>[2, 2];
+  static const List<int> calibrationOrders = <int>[2];
   static const List<int> wavelengthOrders = <int>[1, 2];
   static const double defaultCalibrationReferenceWavelengthNm = 546.07;
   static const double nmToMm = 1e-6;
 
   static const List<List<String>> defaultCalibrationPreset = <List<String>>[
-    <String>['153 03', '333 03', '191 07', '11 07'],
-    <String>['156 20', '336 20', '194 24', '14 24'],
+    <String>['159 03', '339 03', '197 34', '17 34'],
   ];
 
   static const List<List<List<String>>> defaultWavelengthPresets =
@@ -210,11 +209,7 @@ class DiffractionGratingViewModel extends BaseViewModel<Never> {
       );
     }
 
-    final double averageGratingConstantMm = rows
-            .map((DiffractionGratingCalibrationRowResult row) =>
-                row.gratingConstantMm)
-            .reduce((double a, double b) => a + b) /
-        rows.length;
+    final double averageGratingConstantMm = rows.first.gratingConstantMm;
     return DiffractionGratingCalibrationResult(
       referenceWavelengthNm: referenceNm,
       rows: List<DiffractionGratingCalibrationRowResult>.unmodifiable(rows),
