@@ -65,6 +65,17 @@ class DiffractionGratingViewModel extends BaseViewModel<Never> {
   DiffractionGratingCalibrationResult? get calibrationResult =>
       _buildCalibrationResult();
 
+  List<List<DiffractionGratingWavelengthRowResult?>> get wavelengthRowResults =>
+      List<List<DiffractionGratingWavelengthRowResult?>>.generate(
+        wavelengthGroupCount,
+        (int groupIndex) => List<DiffractionGratingWavelengthRowResult?>.generate(
+          wavelengthRowCount,
+          (int rowIndex) => _buildWavelengthRowResult(groupIndex, rowIndex),
+          growable: false,
+        ),
+        growable: false,
+      );
+
   List<DiffractionGratingWavelengthGroupResult?> get wavelengthResults =>
       List<DiffractionGratingWavelengthGroupResult?>.generate(
         wavelengthGroupCount,
@@ -224,33 +235,20 @@ class DiffractionGratingViewModel extends BaseViewModel<Never> {
     if (calibration == null) {
       return null;
     }
-
-    final double? referenceNm =
-        double.tryParse(_referenceWavelengthTexts[groupIndex].trim());
-    if (referenceNm == null || referenceNm <= 0) {
+    final double? referenceNm = _parseReferenceWavelength(groupIndex);
+    if (referenceNm == null) {
       return null;
     }
 
     final List<DiffractionGratingWavelengthRowResult> rows =
         <DiffractionGratingWavelengthRowResult>[];
     for (int rowIndex = 0; rowIndex < wavelengthRowCount; rowIndex += 1) {
-      final DiffractionGratingMeasurementResult? measurement =
-          _buildMeasurementResult(_wavelengthTexts[groupIndex][rowIndex]);
-      if (measurement == null) {
+      final DiffractionGratingWavelengthRowResult? rowResult =
+          _buildWavelengthRowResult(groupIndex, rowIndex);
+      if (rowResult == null) {
         return null;
       }
-      final int order = wavelengthOrders[rowIndex];
-      final double wavelengthNm =
-          (calibration.averageGratingConstantMm / nmToMm) *
-          measurement.sinGamma /
-          order;
-      rows.add(
-        DiffractionGratingWavelengthRowResult(
-          order: order,
-          measurement: measurement,
-          wavelengthNm: wavelengthNm,
-        ),
-      );
+      rows.add(rowResult);
     }
 
     final double averageWavelengthNm = rows
@@ -266,6 +264,47 @@ class DiffractionGratingViewModel extends BaseViewModel<Never> {
       averageWavelengthNm: averageWavelengthNm,
       relativeErrorPercent: relativeErrorPercent,
     );
+  }
+
+  DiffractionGratingWavelengthRowResult? _buildWavelengthRowResult(
+    int groupIndex,
+    int rowIndex,
+  ) {
+    final DiffractionGratingCalibrationResult? calibration = calibrationResult;
+    if (calibration == null) {
+      return null;
+    }
+    final double? referenceNm = _parseReferenceWavelength(groupIndex);
+    if (referenceNm == null) {
+      return null;
+    }
+    final DiffractionGratingMeasurementResult? measurement =
+        _buildMeasurementResult(_wavelengthTexts[groupIndex][rowIndex]);
+    if (measurement == null) {
+      return null;
+    }
+    final int order = wavelengthOrders[rowIndex];
+    final double wavelengthNm =
+        (calibration.averageGratingConstantMm / nmToMm) *
+        measurement.sinGamma /
+        order;
+    final double relativeErrorPercent =
+        ((wavelengthNm - referenceNm).abs() / referenceNm) * 100;
+    return DiffractionGratingWavelengthRowResult(
+      order: order,
+      measurement: measurement,
+      wavelengthNm: wavelengthNm,
+      relativeErrorPercent: relativeErrorPercent,
+    );
+  }
+
+  double? _parseReferenceWavelength(int groupIndex) {
+    final double? referenceNm =
+        double.tryParse(_referenceWavelengthTexts[groupIndex].trim());
+    if (referenceNm == null || referenceNm <= 0) {
+      return null;
+    }
+    return referenceNm;
   }
 
   DiffractionGratingMeasurementResult? _buildMeasurementResult(

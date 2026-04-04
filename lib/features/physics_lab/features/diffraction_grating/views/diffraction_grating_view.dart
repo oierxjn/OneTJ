@@ -4,7 +4,6 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'package:onetj/features/physics_lab/features/diffraction_grating/models/diffraction_grating_angle.dart';
 import 'package:onetj/features/physics_lab/features/diffraction_grating/models/diffraction_grating_calibration_result.dart';
-import 'package:onetj/features/physics_lab/features/diffraction_grating/models/diffraction_grating_measurement_result.dart';
 import 'package:onetj/features/physics_lab/features/diffraction_grating/models/diffraction_grating_wavelength_result.dart';
 import 'package:onetj/features/physics_lab/features/diffraction_grating/view_models/diffraction_grating_view_model.dart';
 import 'package:onetj/features/physics_lab/widgets/physics_lab_formula.dart';
@@ -97,6 +96,8 @@ class _DiffractionGratingViewState extends State<DiffractionGratingView> {
       builder: (BuildContext context, _) {
         final DiffractionGratingCalibrationResult? calibrationResult =
             _viewModel.calibrationResult;
+        final List<List<DiffractionGratingWavelengthRowResult?>>
+            wavelengthRowResults = _viewModel.wavelengthRowResults;
         final List<DiffractionGratingWavelengthGroupResult?> wavelengthResults =
             _viewModel.wavelengthResults;
         return Scaffold(
@@ -151,12 +152,14 @@ class _DiffractionGratingViewState extends State<DiffractionGratingView> {
               _buildWavelengthGroupCard(
                 l10n: l10n,
                 groupIndex: 0,
+                rowResults: wavelengthRowResults[0],
                 result: wavelengthResults[0],
               ),
               const SizedBox(height: 8),
               _buildWavelengthGroupCard(
                 l10n: l10n,
                 groupIndex: 1,
+                rowResults: wavelengthRowResults[1],
                 result: wavelengthResults[1],
               ),
             ],
@@ -220,13 +223,11 @@ class _DiffractionGratingViewState extends State<DiffractionGratingView> {
                       value,
                     );
                   },
-                  result: result?.rows[rowIndex].measurement,
-                  trailingValue: result == null
+                  result: result == null
                       ? null
-                      : _buildResultChip(
-                          label: 'd',
-                          value:
-                              '${_formatMillimeter(result.rows[rowIndex].gratingConstantMm)} ${l10n.physicsLabMichelsonMillimeterUnit}',
+                      : _buildCalibrationRowCardResult(
+                          l10n: l10n,
+                          rowResult: result.rows[rowIndex],
                         ),
                 ),
               ),
@@ -255,6 +256,7 @@ class _DiffractionGratingViewState extends State<DiffractionGratingView> {
   Widget _buildWavelengthGroupCard({
     required AppLocalizations l10n,
     required int groupIndex,
+    required List<DiffractionGratingWavelengthRowResult?> rowResults,
     required DiffractionGratingWavelengthGroupResult? result,
   }) {
     final DiffractionGratingCalibrationResult? calibrationResult =
@@ -321,13 +323,11 @@ class _DiffractionGratingViewState extends State<DiffractionGratingView> {
                       value,
                     );
                   },
-                  result: result?.rows[rowIndex].measurement,
-                  trailingValue: result == null
+                  result: rowResults[rowIndex] == null
                       ? null
-                      : _buildResultChip(
-                          label: r'\lambda',
-                          value:
-                              '${_formatNanometer(result.rows[rowIndex].wavelengthNm)} ${l10n.physicsLabMichelsonNanometerUnit}',
+                      : _buildWavelengthRowCardResult(
+                          l10n: l10n,
+                          rowResult: rowResults[rowIndex]!,
                         ),
                 ),
               ),
@@ -376,27 +376,6 @@ class _DiffractionGratingViewState extends State<DiffractionGratingView> {
       l10n.physicsLabDiffractionGratingReadingLabel(2),
       l10n.physicsLabDiffractionGratingReadingPrimeLabel(2),
     ];
-  }
-
-  Widget _buildResultChip({
-    required String label,
-    required String value,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          PhysicsLabFormula.inline(tex: label),
-          const SizedBox(width: 4),
-          Text(value),
-        ],
-      ),
-    );
   }
 
   void _clearAllInputs() {
@@ -452,6 +431,38 @@ class _DiffractionGratingViewState extends State<DiffractionGratingView> {
     }
   }
 
+  _MeasurementRowCardResult _buildCalibrationRowCardResult({
+    required AppLocalizations l10n,
+    required DiffractionGratingCalibrationRowResult rowResult,
+  }) {
+    return _MeasurementRowCardResult(
+      firstDifferenceDegrees: rowResult.measurement.firstDifferenceDegrees,
+      secondDifferenceDegrees: rowResult.measurement.secondDifferenceDegrees,
+      gammaDegrees: rowResult.measurement.gammaDegrees,
+      sinGamma: rowResult.measurement.sinGamma,
+      primaryFormulaTex: 'd',
+      primaryValueText:
+          '${_formatMillimeter(rowResult.gratingConstantMm)} ${l10n.physicsLabMichelsonMillimeterUnit}',
+    );
+  }
+
+  _MeasurementRowCardResult _buildWavelengthRowCardResult({
+    required AppLocalizations l10n,
+    required DiffractionGratingWavelengthRowResult rowResult,
+  }) {
+    return _MeasurementRowCardResult(
+      firstDifferenceDegrees: rowResult.measurement.firstDifferenceDegrees,
+      secondDifferenceDegrees: rowResult.measurement.secondDifferenceDegrees,
+      gammaDegrees: rowResult.measurement.gammaDegrees,
+      sinGamma: rowResult.measurement.sinGamma,
+      primaryFormulaTex: r'\lambda',
+      primaryValueText:
+          '${_formatNanometer(rowResult.wavelengthNm)} ${l10n.physicsLabMichelsonNanometerUnit}',
+      secondaryLabelText: l10n.physicsLabMichelsonRelativeErrorLabel,
+      secondaryValueText: '${_formatPercent(rowResult.relativeErrorPercent)}%',
+    );
+  }
+
   String _formatMillimeter(double value) {
     return value.toStringAsFixed(6);
   }
@@ -472,15 +483,13 @@ class _MeasurementRowCard extends StatelessWidget {
     required this.labels,
     required this.onChanged,
     required this.result,
-    this.trailingValue,
   });
 
   final String title;
   final List<_AngleFieldControllers> controllers;
   final List<String> labels;
   final void Function(int readingIndex, String value) onChanged;
-  final DiffractionGratingMeasurementResult? result;
-  final Widget? trailingValue;
+  final _MeasurementRowCardResult? result;
 
   @override
   Widget build(BuildContext context) {
@@ -494,17 +503,9 @@ class _MeasurementRowCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-              ),
-              if (trailingValue != null) trailingValue!,
-            ],
+          Text(
+            title,
+            style: Theme.of(context).textTheme.titleSmall,
           ),
           const SizedBox(height: 8),
           GridView.builder(
@@ -532,19 +533,38 @@ class _MeasurementRowCard extends StatelessWidget {
               runSpacing: 6,
               children: [
                 _SummaryBadge(
-                  label: l10n.physicsLabDiffractionGratingDifferenceOneLabel,
-                  value: _formatDegreeText(result!.firstDifferenceDegrees),
+                  label:
+                      PhysicsLabFormula.inline(tex: result!.primaryFormulaTex),
+                  value: result!.primaryValueText,
+                ),
+                if (result!.secondaryLabelText != null &&
+                    result!.secondaryValueText != null)
+                  _SummaryBadge(
+                    label: Text(result!.secondaryLabelText!),
+                    value: result!.secondaryValueText!,
+                  ),
+                _SummaryBadge(
+                  label: Text(
+                    l10n.physicsLabDiffractionGratingDifferenceOneLabel,
+                  ),
+                  value: _formatDegreeText(
+                    result!.firstDifferenceDegrees,
+                  ),
                 ),
                 _SummaryBadge(
-                  label: l10n.physicsLabDiffractionGratingDifferenceTwoLabel,
-                  value: _formatDegreeText(result!.secondDifferenceDegrees),
+                  label: Text(
+                    l10n.physicsLabDiffractionGratingDifferenceTwoLabel,
+                  ),
+                  value: _formatDegreeText(
+                    result!.secondDifferenceDegrees,
+                  ),
                 ),
                 _SummaryBadge(
-                  label: l10n.physicsLabDiffractionGratingGammaLabel,
+                  label: Text(l10n.physicsLabDiffractionGratingGammaLabel),
                   value: _formatDegreeText(result!.gammaDegrees),
                 ),
                 _SummaryBadge(
-                  label: l10n.physicsLabDiffractionGratingSinGammaLabel,
+                  label: Text(l10n.physicsLabDiffractionGratingSinGammaLabel),
                   value: result!.sinGamma.toStringAsFixed(4),
                 ),
               ],
@@ -554,6 +574,28 @@ class _MeasurementRowCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _MeasurementRowCardResult {
+  const _MeasurementRowCardResult({
+    required this.firstDifferenceDegrees,
+    required this.secondDifferenceDegrees,
+    required this.gammaDegrees,
+    required this.sinGamma,
+    required this.primaryFormulaTex,
+    required this.primaryValueText,
+    this.secondaryLabelText,
+    this.secondaryValueText,
+  });
+
+  final double firstDifferenceDegrees;
+  final double secondDifferenceDegrees;
+  final double gammaDegrees;
+  final double sinGamma;
+  final String primaryFormulaTex;
+  final String primaryValueText;
+  final String? secondaryLabelText;
+  final String? secondaryValueText;
 }
 
 class _AngleFieldControllers {
@@ -643,7 +685,6 @@ class _AngleInputField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final AppLocalizations l10n = AppLocalizations.of(context);
     return DecoratedBox(
       decoration: BoxDecoration(
         border: Border.all(
@@ -666,7 +707,7 @@ class _AngleInputField extends StatelessWidget {
             Expanded(
               child: _AnglePartField(
                 controller: controllers.degreeController,
-                hintText: l10n.physicsLabDiffractionGratingDegreeHint,
+                hintText: '',
                 onChanged: (_) => onChanged(controllers.combinedText),
               ),
             ),
@@ -676,7 +717,7 @@ class _AngleInputField extends StatelessWidget {
             Expanded(
               child: _AnglePartField(
                 controller: controllers.minuteController,
-                hintText: l10n.physicsLabDiffractionGratingMinuteHint,
+                hintText: '',
                 onChanged: (_) => onChanged(controllers.combinedText),
               ),
             ),
@@ -763,7 +804,7 @@ class _SummaryBadge extends StatelessWidget {
     required this.value,
   });
 
-  final String label;
+  final Widget label;
   final String value;
 
   @override
@@ -778,9 +819,9 @@ class _SummaryBadge extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            label,
-            style: Theme.of(context).textTheme.labelMedium,
+          DefaultTextStyle(
+            style: Theme.of(context).textTheme.labelMedium!,
+            child: label,
           ),
           const SizedBox(height: 1),
           Text(value),
