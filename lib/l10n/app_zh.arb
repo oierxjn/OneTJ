@@ -83,23 +83,11 @@
     "physicsLabDiffractionGratingIntroTitle": "实验说明",
     "physicsLabDiffractionGratingFormulaTitle": "计算规则",
     "physicsLabDiffractionGratingFormulaBody": "对每条记录，先由两组原始读数分别求角差，再将两组角差相加后除以 4 得到 γ，之后按首组 d = kλ₀/sinγ、后两组 λ = dsinγ/k 计算。第二组和第三组各自使用组内两条记录求平均波长，并和填写的参考值比较相对误差。",
-    "physicsLabDiffractionGratingCalibrationSectionTitle": "第一组：求光栅常数 d",
-    "physicsLabDiffractionGratingCalibrationHint": "本组使用一条 ±2 级记录计算光栅常数 d，校准参考波长可直接修改。",
+    "physicsLabDiffractionGratingCalibrationHint": "已知汞黄线波长后，本组用 k = ±2 的读数计算光栅常数 d。",
     "physicsLabDiffractionGratingCalibrationReferenceLabel": "校准参考波长",
-    "physicsLabDiffractionGratingCalibrationRowTitle": "第 {index} 次测量（k = ±{order}）",
-    "@physicsLabDiffractionGratingCalibrationRowTitle": {
-      "placeholders": {
-        "index": {
-          "type": "int"
-        },
-        "order": {
-          "type": "int"
-        }
-      }
-    },
     "physicsLabDiffractionGratingAverageGratingConstantLabel": "光栅常数 d",
     "physicsLabDiffractionGratingCalibrationIncompleteHint": "请先填写完整的首组原始读数和校准参考波长。",
-    "physicsLabDiffractionGratingWavelengthSectionTitle": "第 {group} 组：求波长",
+    "physicsLabDiffractionGratingWavelengthSectionTitle": "第 {group} 组",
     "@physicsLabDiffractionGratingWavelengthSectionTitle": {
       "placeholders": {
         "group": {
@@ -121,22 +109,6 @@
     "physicsLabDiffractionGratingAverageWavelengthLabel": "平均波长",
     "physicsLabDiffractionGratingWavelengthIncompleteHint": "请先填写完整的原始读数和本组参考波长。",
     "physicsLabDiffractionGratingNeedCalibrationHint": "请先完成第一组并得到有效的 d。",
-    "physicsLabDiffractionGratingReadingLabel": "ψ{index}",
-    "@physicsLabDiffractionGratingReadingLabel": {
-      "placeholders": {
-        "index": {
-          "type": "int"
-        }
-      }
-    },
-    "physicsLabDiffractionGratingReadingPrimeLabel": "ψ{index}'",
-    "@physicsLabDiffractionGratingReadingPrimeLabel": {
-      "placeholders": {
-        "index": {
-          "type": "int"
-        }
-      }
-    },
     "physicsLabDiffractionGratingDifferenceOneLabel": "|ψ₂ - ψ₁|",
     "physicsLabDiffractionGratingDifferenceTwoLabel": "|ψ₂' - ψ₁'|",
     "physicsLabDiffractionGratingGammaLabel": "γ",

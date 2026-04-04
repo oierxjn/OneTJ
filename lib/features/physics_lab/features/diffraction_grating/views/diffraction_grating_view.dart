@@ -120,15 +120,12 @@ class _DiffractionGratingViewState extends State<DiffractionGratingView> {
             padding: const EdgeInsets.all(6),
             children: [
               _InfoCard(
-                title: l10n.physicsLabDiffractionGratingIntroTitle,
-                child: Text(l10n.physicsLabDiffractionGratingDescription),
-              ),
-              const SizedBox(height: 8),
-              _InfoCard(
                 title: l10n.physicsLabDiffractionGratingFormulaTitle,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Text(l10n.physicsLabDiffractionGratingDescription),
+                    const SizedBox(height: 8),
                     Text(l10n.physicsLabDiffractionGratingFormulaBody),
                     const SizedBox(height: 8),
                     const PhysicsLabFormula.block(
@@ -173,6 +170,12 @@ class _DiffractionGratingViewState extends State<DiffractionGratingView> {
     AppLocalizations l10n,
     DiffractionGratingCalibrationResult? result,
   ) {
+    final _MeasurementRowCardResult? rowResult = result == null
+        ? null
+        : _buildCalibrationRowCardResult(
+            l10n: l10n,
+            rowResult: result.rows.first,
+          );
     return Card(
       elevation: 0,
       child: Padding(
@@ -181,7 +184,7 @@ class _DiffractionGratingViewState extends State<DiffractionGratingView> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              l10n.physicsLabDiffractionGratingCalibrationSectionTitle,
+              l10n.physicsLabDiffractionGratingWavelengthSectionTitle(1),
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
@@ -192,6 +195,7 @@ class _DiffractionGratingViewState extends State<DiffractionGratingView> {
                   ),
             ),
             const SizedBox(height: 8),
+            // 输入校准参考波长
             _NumericTextField(
               controller: _calibrationReferenceController,
               label: l10n.physicsLabDiffractionGratingCalibrationReferenceLabel,
@@ -199,38 +203,18 @@ class _DiffractionGratingViewState extends State<DiffractionGratingView> {
               onChanged: _viewModel.updateCalibrationReferenceText,
             ),
             const SizedBox(height: 8),
-            for (int rowIndex = 0;
-                rowIndex < DiffractionGratingViewModel.calibrationRowCount;
-                rowIndex += 1)
-              Padding(
-                padding: EdgeInsets.only(
-                  bottom: rowIndex + 1 ==
-                          DiffractionGratingViewModel.calibrationRowCount
-                      ? 0
-                      : 8,
-                ),
-                child: _MeasurementRowCard(
-                  title: l10n.physicsLabDiffractionGratingCalibrationRowTitle(
-                    rowIndex + 1,
-                    DiffractionGratingViewModel.calibrationOrders[rowIndex],
-                  ),
-                  controllers: _calibrationControllers[rowIndex],
-                  labels: _readingLabels(l10n),
-                  onChanged: (int readingIndex, String value) {
-                    _viewModel.updateCalibrationReading(
-                      rowIndex,
-                      readingIndex,
-                      value,
-                    );
-                  },
-                  result: result == null
-                      ? null
-                      : _buildCalibrationRowCardResult(
-                          l10n: l10n,
-                          rowResult: result.rows[rowIndex],
-                        ),
-                ),
+            _MeasurementRowCard(
+              title: l10n.physicsLabDiffractionGratingWavelengthRowTitle(
+                DiffractionGratingViewModel.calibrationOrders.first,
               ),
+              controllers: _calibrationControllers.first,
+              labels: _readingLabelTexes(),
+              onChanged: (int readingIndex, String value) {
+                _viewModel.updateCalibrationReading(0, readingIndex, value);
+              },
+              result: rowResult,
+              showPrimaryBadge: false,
+            ),
             const Divider(height: 20),
             if (result == null)
               Text(
@@ -314,7 +298,7 @@ class _DiffractionGratingViewState extends State<DiffractionGratingView> {
                     DiffractionGratingViewModel.wavelengthOrders[rowIndex],
                   ),
                   controllers: _groupControllers[groupIndex][rowIndex],
-                  labels: _readingLabels(l10n),
+                  labels: _readingLabelTexes(),
                   onChanged: (int readingIndex, String value) {
                     _viewModel.updateWavelengthReading(
                       groupIndex,
@@ -369,12 +353,12 @@ class _DiffractionGratingViewState extends State<DiffractionGratingView> {
     );
   }
 
-  List<String> _readingLabels(AppLocalizations l10n) {
-    return <String>[
-      l10n.physicsLabDiffractionGratingReadingLabel(1),
-      l10n.physicsLabDiffractionGratingReadingPrimeLabel(1),
-      l10n.physicsLabDiffractionGratingReadingLabel(2),
-      l10n.physicsLabDiffractionGratingReadingPrimeLabel(2),
+  List<String> _readingLabelTexes() {
+    return const <String>[
+      r'\psi_1',
+      r"\psi_1^{\prime}",
+      r'\psi_2',
+      r"\psi_2^{\prime}",
     ];
   }
 
@@ -483,6 +467,7 @@ class _MeasurementRowCard extends StatelessWidget {
     required this.labels,
     required this.onChanged,
     required this.result,
+    this.showPrimaryBadge = true,
   });
 
   final String title;
@@ -490,6 +475,7 @@ class _MeasurementRowCard extends StatelessWidget {
   final List<String> labels;
   final void Function(int readingIndex, String value) onChanged;
   final _MeasurementRowCardResult? result;
+  final bool showPrimaryBadge;
 
   @override
   Widget build(BuildContext context) {
@@ -521,7 +507,7 @@ class _MeasurementRowCard extends StatelessWidget {
             itemBuilder: (BuildContext context, int index) {
               return _AngleInputField(
                 controllers: controllers[index],
-                label: labels[index],
+                labelTex: labels[index],
                 onChanged: (String value) => onChanged(index, value),
               );
             },
@@ -532,11 +518,13 @@ class _MeasurementRowCard extends StatelessWidget {
               spacing: 8,
               runSpacing: 6,
               children: [
-                _SummaryBadge(
-                  label:
-                      PhysicsLabFormula.inline(tex: result!.primaryFormulaTex),
-                  value: result!.primaryValueText,
-                ),
+                if (showPrimaryBadge)
+                  _SummaryBadge(
+                    label: PhysicsLabFormula.inline(
+                      tex: result!.primaryFormulaTex,
+                    ),
+                    value: result!.primaryValueText,
+                  ),
                 if (result!.secondaryLabelText != null &&
                     result!.secondaryValueText != null)
                   _SummaryBadge(
@@ -672,59 +660,100 @@ String _formatDegreeText(double value) {
   );
 }
 
-class _AngleInputField extends StatelessWidget {
+class _AngleInputField extends StatefulWidget {
   const _AngleInputField({
     required this.controllers,
-    required this.label,
+    required this.labelTex,
     required this.onChanged,
   });
 
   final _AngleFieldControllers controllers;
-  final String label;
+  final String labelTex;
   final ValueChanged<String> onChanged;
 
   @override
+  State<_AngleInputField> createState() => _AngleInputFieldState();
+}
+
+class _AngleInputFieldState extends State<_AngleInputField> {
+  late final FocusNode _degreeFocusNode;
+  late final FocusNode _minuteFocusNode;
+
+  @override
+  void initState() {
+    super.initState();
+    _degreeFocusNode = FocusNode()..addListener(_handleFocusChanged);
+    _minuteFocusNode = FocusNode()..addListener(_handleFocusChanged);
+  }
+
+  @override
+  void dispose() {
+    _degreeFocusNode
+      ..removeListener(_handleFocusChanged)
+      ..dispose();
+    _minuteFocusNode
+      ..removeListener(_handleFocusChanged)
+      ..dispose();
+    super.dispose();
+  }
+
+  void _handleFocusChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: Theme.of(context).colorScheme.outline,
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    final bool isFocused =
+        _degreeFocusNode.hasFocus || _minuteFocusNode.hasFocus;
+    final bool isEmpty = widget.controllers.degreeController.text.trim().isEmpty &&
+        widget.controllers.minuteController.text.trim().isEmpty;
+    return InputDecorator(
+      isFocused: isFocused,
+      isEmpty: isEmpty,
+      decoration: InputDecoration(
+        border: const OutlineInputBorder(),
+        isDense: true,
+        label: PhysicsLabFormula.inline(
+          tex: widget.labelTex,
         ),
-        borderRadius: BorderRadius.circular(12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 10,
+        ),
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 34,
-              child: Text(
-                label,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _AnglePartField(
+              controller: widget.controllers.degreeController,
+              focusNode: _degreeFocusNode,
+              hintText: l10n.physicsLabDiffractionGratingDegreeHint,
+              onChanged: (_) => widget.onChanged(widget.controllers.combinedText),
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _AnglePartField(
-                controller: controllers.degreeController,
-                hintText: '',
-                onChanged: (_) => onChanged(controllers.combinedText),
-              ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            _degreeSymbol,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _AnglePartField(
+              controller: widget.controllers.minuteController,
+              focusNode: _minuteFocusNode,
+              hintText: l10n.physicsLabDiffractionGratingMinuteHint,
+              onChanged: (_) => widget.onChanged(widget.controllers.combinedText),
             ),
-            const SizedBox(width: 6),
-            Text(_degreeSymbol),
-            const SizedBox(width: 6),
-            Expanded(
-              child: _AnglePartField(
-                controller: controllers.minuteController,
-                hintText: '',
-                onChanged: (_) => onChanged(controllers.combinedText),
-              ),
-            ),
-            const SizedBox(width: 4),
-            const Text('\''),
-          ],
-        ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            '\'',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ],
       ),
     );
   }
@@ -733,11 +762,13 @@ class _AngleInputField extends StatelessWidget {
 class _AnglePartField extends StatelessWidget {
   const _AnglePartField({
     required this.controller,
+    required this.focusNode,
     required this.hintText,
     required this.onChanged,
   });
 
   final TextEditingController controller;
+  final FocusNode focusNode;
   final String hintText;
   final ValueChanged<String> onChanged;
 
@@ -745,6 +776,8 @@ class _AnglePartField extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextField(
       controller: controller,
+      focusNode: focusNode,
+      textAlign: TextAlign.end,
       keyboardType: const TextInputType.numberWithOptions(
         decimal: false,
         signed: false,
@@ -757,6 +790,9 @@ class _AnglePartField extends StatelessWidget {
         hintText: hintText,
         border: InputBorder.none,
         contentPadding: EdgeInsets.zero,
+        hintStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
       ),
       onChanged: onChanged,
     );
