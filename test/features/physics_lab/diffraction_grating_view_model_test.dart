@@ -10,16 +10,10 @@ void main() {
 
       viewModel.updateCalibrationReferenceText('546.07');
       _fillRow(viewModel.updateCalibrationReading, 0, <String>[
-        '153 03',
-        '333 03',
-        '191 07',
-        '11 07',
-      ]);
-      _fillRow(viewModel.updateCalibrationReading, 1, <String>[
-        '156 20',
-        '336 20',
-        '194 24',
-        '14 24',
+        '159 03',
+        '339 03',
+        '197 34',
+        '17 34',
       ]);
       viewModel.updateReferenceWavelengthText(0, '435.84');
       _fillGroupRow(viewModel, 0, 0, <String>[
@@ -50,42 +44,60 @@ void main() {
 
       final DiffractionGratingCalibrationResult? calibration =
           viewModel.calibrationResult;
+      final List<List<DiffractionGratingWavelengthRowResult?>>
+          wavelengthRowResults = viewModel.wavelengthRowResults;
       final List<DiffractionGratingWavelengthGroupResult?> wavelengthResults =
           viewModel.wavelengthResults;
 
       expect(calibration, isNotNull);
-      expect(calibration!.rows, hasLength(2));
+      expect(calibration!.rows, hasLength(1));
       expect(
         calibration.rows.first.measurement.firstDifferenceDegrees,
-        closeTo(38.0666666667, 1e-9),
+        closeTo(38.5166666667, 1e-9),
       );
       expect(
         calibration.averageGratingConstantMm,
-        closeTo(0.0033489086713, 1e-12),
+        closeTo(0.0033112414727, 1e-12),
       );
 
       expect(wavelengthResults[0], isNotNull);
       expect(
         wavelengthResults[0]!.rows.first.wavelengthNm,
-        closeTo(439.0518708503, 1e-9),
+        closeTo(434.1135892658, 1e-9),
       );
       expect(
         wavelengthResults[0]!.averageWavelengthNm,
-        closeTo(439.5078410093, 1e-9),
+        closeTo(434.5644308533, 1e-9),
       );
       expect(
         wavelengthResults[0]!.relativeErrorPercent,
-        closeTo(0.8415567661, 1e-9),
+        closeTo(0.2926691324, 1e-9),
+      );
+      expect(
+        wavelengthRowResults[0].first!.wavelengthNm,
+        closeTo(wavelengthResults[0]!.rows.first.wavelengthNm, 1e-9),
+      );
+      expect(
+        wavelengthRowResults[0][1]!.wavelengthNm,
+        closeTo(wavelengthResults[0]!.rows[1].wavelengthNm, 1e-9),
       );
 
       expect(wavelengthResults[1], isNotNull);
       expect(
         wavelengthResults[1]!.averageWavelengthNm,
-        closeTo(584.8953687025, 1e-9),
+        closeTo(578.3166972080, 1e-9),
       );
       expect(
         wavelengthResults[1]!.relativeErrorPercent,
-        closeTo(0.1782829808, 1e-9),
+        closeTo(1.3010381254, 1e-9),
+      );
+      expect(
+        wavelengthRowResults[1].first!.wavelengthNm,
+        closeTo(wavelengthResults[1]!.rows.first.wavelengthNm, 1e-9),
+      );
+      expect(
+        wavelengthRowResults[1][1]!.wavelengthNm,
+        closeTo(wavelengthResults[1]!.rows[1].wavelengthNm, 1e-9),
       );
 
       viewModel.dispose();
@@ -110,6 +122,44 @@ void main() {
 
       expect(viewModel.calibrationResult, isNull);
       expect(viewModel.wavelengthResults.first, isNull);
+
+      viewModel.dispose();
+    });
+
+    test('returns expected results for default preset', () {
+      final DiffractionGratingViewModel viewModel = DiffractionGratingViewModel();
+
+      viewModel.applyDefaultPreset();
+
+      final DiffractionGratingCalibrationResult? calibration =
+          viewModel.calibrationResult;
+      final List<DiffractionGratingWavelengthGroupResult?> wavelengthResults =
+          viewModel.wavelengthResults;
+
+      expect(calibration, isNotNull);
+      expect(
+        calibration!.averageGratingConstantMm,
+        closeTo(0.0033112414727, 1e-12),
+      );
+      expect(wavelengthResults, hasLength(2));
+      expect(wavelengthResults[0], isNotNull);
+      expect(
+        wavelengthResults[0]!.averageWavelengthNm,
+        closeTo(434.5644308533, 1e-9),
+      );
+      expect(
+        wavelengthResults[0]!.relativeErrorPercent,
+        closeTo(0.2926691324, 1e-9),
+      );
+      expect(wavelengthResults[1], isNotNull);
+      expect(
+        wavelengthResults[1]!.averageWavelengthNm,
+        closeTo(578.3166972080, 1e-9),
+      );
+      expect(
+        wavelengthResults[1]!.relativeErrorPercent,
+        closeTo(1.3010381254, 1e-9),
+      );
 
       viewModel.dispose();
     });

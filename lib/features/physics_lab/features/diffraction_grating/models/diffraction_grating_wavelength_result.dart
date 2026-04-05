@@ -5,11 +5,13 @@ class DiffractionGratingWavelengthRowResult {
     required this.order,
     required this.measurement,
     required this.wavelengthNm,
+    required this.relativeErrorPercent,
   });
 
   final int order;
   final DiffractionGratingMeasurementResult measurement;
   final double wavelengthNm;
+  final double relativeErrorPercent;
 }
 
 class DiffractionGratingWavelengthGroupResult {
