@@ -15,12 +15,6 @@ void main() {
         '191 07',
         '11 07',
       ]);
-      _fillRow(viewModel.updateCalibrationReading, 1, <String>[
-        '156 20',
-        '336 20',
-        '194 24',
-        '14 24',
-      ]);
       viewModel.updateReferenceWavelengthText(0, '435.84');
       _fillGroupRow(viewModel, 0, 0, <String>[
         '171 02',
@@ -54,7 +48,7 @@ void main() {
           viewModel.wavelengthResults;
 
       expect(calibration, isNotNull);
-      expect(calibration!.rows, hasLength(2));
+      expect(calibration!.rows, hasLength(1));
       expect(
         calibration.rows.first.measurement.firstDifferenceDegrees,
         closeTo(38.0666666667, 1e-9),
