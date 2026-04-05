@@ -855,8 +855,8 @@ class _SummaryBadge extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          DefaultTextStyle(
-            style: Theme.of(context).textTheme.labelMedium!,
+          DefaultTextStyle.merge(
+            style: Theme.of(context).textTheme.labelMedium,
             child: label,
           ),
           const SizedBox(height: 1),
