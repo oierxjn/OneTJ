@@ -44,6 +44,8 @@ void main() {
 
       final DiffractionGratingCalibrationResult? calibration =
           viewModel.calibrationResult;
+      final List<List<DiffractionGratingWavelengthRowResult?>>
+          wavelengthRowResults = viewModel.wavelengthRowResults;
       final List<DiffractionGratingWavelengthGroupResult?> wavelengthResults =
           viewModel.wavelengthResults;
 
@@ -71,6 +73,14 @@ void main() {
         wavelengthResults[0]!.relativeErrorPercent,
         closeTo(0.8415567661, 1e-9),
       );
+      expect(
+        wavelengthRowResults[0].first!.wavelengthNm,
+        closeTo(wavelengthResults[0]!.rows.first.wavelengthNm, 1e-9),
+      );
+      expect(
+        wavelengthRowResults[0][1]!.wavelengthNm,
+        closeTo(wavelengthResults[0]!.rows[1].wavelengthNm, 1e-9),
+      );
 
       expect(wavelengthResults[1], isNotNull);
       expect(
@@ -80,6 +90,14 @@ void main() {
       expect(
         wavelengthResults[1]!.relativeErrorPercent,
         closeTo(0.1782829808, 1e-9),
+      );
+      expect(
+        wavelengthRowResults[1].first!.wavelengthNm,
+        closeTo(wavelengthResults[1]!.rows.first.wavelengthNm, 1e-9),
+      );
+      expect(
+        wavelengthRowResults[1][1]!.wavelengthNm,
+        closeTo(wavelengthResults[1]!.rows[1].wavelengthNm, 1e-9),
       );
 
       viewModel.dispose();
