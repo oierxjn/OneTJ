@@ -56,6 +56,10 @@ dependencies:
     git:
       url: "https://gitcode.com/openharmony-sig/fluttertpc_open_filex.git"
       ref: "br_v4.5.0_ohos"
+  file_picker_ohos:
+    git:
+      url: "https://gitcode.com/openharmony-sig/fluttertpc_file_picker.git"
+      path: ohos
 
   flutter_inappwebview:
     path: ./local_packages/flutter_inappwebview/flutter_inappwebview
@@ -140,6 +144,12 @@ flutter_launcher_icons:
   image_path: "assets/icon/logo.jpg"
 
 dependency_overrides:
+  win32: 5.10.1
+  image_picker:
+    git:
+      url: "https://gitcode.com/openharmony-tpc/flutter_packages.git"
+      ref: "br_image_picker-v1.1.2_ohos"
+      path: "packages/image_picker/image_picker"
   path_provider:
     git:
       url: "https://gitcode.com/openharmony-tpc/flutter_packages.git"

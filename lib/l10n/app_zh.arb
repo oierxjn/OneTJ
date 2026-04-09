@@ -282,6 +282,27 @@
         "error": {}
       }
     },
+    "settingsLogsExportAction": "导出日志",
+    "settingsLogsExportSuccess": "日志已导出：{fileName}",
+    "@settingsLogsExportSuccess": {
+      "placeholders": {
+        "fileName": {}
+      }
+    },
+    "settingsLogsExportFailed": "日志导出失败：{error}",
+    "@settingsLogsExportFailed": {
+      "placeholders": {
+        "error": {}
+      }
+    },
+    "settingsLogsExportCanceled": "已取消导出日志",
+    "settingsLogsOpenFileAction": "打开文件",
+    "settingsLogsOpenFileFailed": "打开导出文件失败：{error}",
+    "@settingsLogsOpenFileFailed": {
+      "placeholders": {
+        "error": {}
+      }
+    },
     "settingsDebugEndpointTitle": "调试上传地址",
     "settingsDebugEndpointSubtitle": "当前地址：{endpoint}",
     "@settingsDebugEndpointSubtitle": {

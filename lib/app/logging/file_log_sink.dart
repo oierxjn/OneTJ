@@ -115,6 +115,11 @@ class AppFileLogSink {
   }
 
   Future<String> readLogFile(AppLogFileInfo fileInfo) async {
+    final File file = await resolveLogFile(fileInfo);
+    return file.readAsString();
+  }
+
+  Future<File> resolveLogFile(AppLogFileInfo fileInfo) async {
     await init();
     final Directory? logDir = _logDir;
     if (logDir == null) {
@@ -132,7 +137,7 @@ class AppFileLogSink {
     if (!await file.exists()) {
       throw FileSystemException('Log file not found', expectedPath);
     }
-    return file.readAsString();
+    return file;
   }
 
   Future<void> writeLine(String line) async {
