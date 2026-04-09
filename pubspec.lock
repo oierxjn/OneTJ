@@ -243,6 +243,15 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "7.0.1"
+  file_picker_ohos:
+    dependency: "direct main"
+    description:
+      path: ohos
+      ref: HEAD
+      resolved-ref: "2d732270bd172e7bf2b803ebff03d3f05f4e1595"
+      url: "https://gitcode.com/openharmony-sig/fluttertpc_file_picker.git"
+    source: git
+    version: "1.0.1"
   file_selector_linux:
     dependency: transitive
     description:
@@ -1172,7 +1181,7 @@ packages:
     source: hosted
     version: "3.0.3"
   win32:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
       name: win32
       sha256: daf97c9d80197ed7b619040e86c8ab9a9dad285e7671ee7390f9180cc828a51e

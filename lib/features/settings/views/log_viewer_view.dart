@@ -1,11 +1,14 @@
-import 'dart:io';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
+import 'package:path/path.dart' as path;
 
 import 'package:onetj/app/logging/log_file_info.dart';
-import 'package:onetj/app/logging/logger.dart';
+import 'package:onetj/features/settings/models/event.dart';
+import 'package:onetj/features/settings/view_models/log_viewer_view_model.dart';
+import 'package:onetj/models/event_model.dart';
 
 class LogViewerView extends StatefulWidget {
   const LogViewerView({super.key});
@@ -16,98 +19,71 @@ class LogViewerView extends StatefulWidget {
 
 class _LogViewerViewState extends State<LogViewerView> {
   final ScrollController _scrollController = ScrollController();
-  int _contentRequestId = 0;
-  bool _loadingFiles = true;
-  bool _loadingContent = false;
-  List<AppLogFileInfo> _files = const <AppLogFileInfo>[];
-  AppLogFileInfo? _selectedFile;
-  String? _content;
-  String? _filesError;
-  String? _contentError;
+  late final LogViewerViewModel _viewModel;
+  StreamSubscription<UiEvent>? _eventSub;
 
   @override
   void initState() {
     super.initState();
-    _loadFiles();
+    _viewModel = LogViewerViewModel();
+    _eventSub = _viewModel.events.listen(_handleEvent);
+    _viewModel.initialize();
   }
 
   @override
   void dispose() {
+    _eventSub?.cancel();
+    _viewModel.dispose();
     _scrollController.dispose();
     super.dispose();
   }
 
-  Future<void> _loadFiles() async {
-    _contentRequestId++;
-    setState(() {
-      _loadingFiles = true;
-      _filesError = null;
-    });
-    try {
-      final List<AppLogFileInfo> files = await AppLogger.listLogFiles();
-      final AppLogFileInfo? nextSelected = files.isEmpty ? null : files.first;
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _files = files;
-        _selectedFile = nextSelected;
-        _loadingFiles = false;
-        _content = null;
-        _contentError = null;
-      });
-      if (nextSelected != null) {
-        await _loadContent(nextSelected);
-      }
-    } catch (error) {
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _loadingFiles = false;
-        _files = const <AppLogFileInfo>[];
-        _selectedFile = null;
-        _filesError = error.toString();
-        _content = null;
-        _contentError = null;
-      });
+  Future<void> _handleEvent(UiEvent event) async {
+    if (!mounted) {
+      return;
     }
-  }
-
-  Future<void> _loadContent(AppLogFileInfo file) async {
-    final int requestId = ++_contentRequestId;
-    setState(() {
-      _selectedFile = file;
-      _loadingContent = true;
-      _contentError = null;
-    });
-    try {
-      final String text = await AppLogger.readLogFile(file);
-      if (!mounted || requestId != _contentRequestId) {
-        return;
-      }
-      setState(() {
-        _content = text;
-        _loadingContent = false;
-      });
-    } on FileSystemException catch (error) {
-      if (!mounted || requestId != _contentRequestId) {
-        return;
-      }
-      setState(() {
-        _content = null;
-        _loadingContent = false;
-        _contentError = error.message;
-      });
-    } catch (error) {
-      if (!mounted || requestId != _contentRequestId) {
-        return;
-      }
-      setState(() {
-        _content = null;
-        _loadingContent = false;
-        _contentError = error.toString();
-      });
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    if (event is LogExportCanceledEvent) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.settingsLogsExportCanceled)),
+      );
+      return;
+    }
+    if (event is LogExportFailedEvent) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            l10n.settingsLogsExportFailed(event.message ?? ''),
+          ),
+        ),
+      );
+      return;
+    }
+    if (event is LogExportSucceededEvent) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            l10n.settingsLogsExportSuccess(path.basename(event.path)),
+          ),
+          action: SnackBarAction(
+            label: l10n.settingsLogsOpenFileAction,
+            onPressed: () => _viewModel.openExportedFile(event.path),
+          ),
+        ),
+      );
+      return;
+    }
+    if (event is LogOpenFailedEvent) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            l10n.settingsLogsOpenFileFailed(event.message ?? ''),
+          ),
+        ),
+      );
+      return;
     }
   }
 
@@ -129,57 +105,57 @@ class _LogViewerViewState extends State<LogViewerView> {
     return '${mb.toStringAsFixed(mb >= 100 ? 0 : 1)} MB';
   }
 
-  Widget _buildBody(AppLocalizations l10n) {
-    if (_loadingFiles) {
+  Widget _buildBody(AppLocalizations l10n, LogViewerUiState state) {
+    if (state.loadingFiles) {
       return const Center(child: CircularProgressIndicator());
     }
-    if (_filesError != null) {
+    if (state.filesError != null) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Text(
-            l10n.settingsLogsLoadFailed(_filesError!),
+            l10n.settingsLogsLoadFailed(state.filesError!),
             textAlign: TextAlign.center,
           ),
         ),
       );
     }
-    if (_files.isEmpty) {
+    if (state.files.isEmpty) {
       return Center(
         child: Text(l10n.settingsLogsEmpty),
       );
     }
 
-    final AppLogFileInfo selectedFile = _selectedFile!;
+    final AppLogFileInfo selectedFile = state.selectedFile!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+          padding: const EdgeInsets.fromLTRB(6, 4, 6, 0),
           child: Card(
             child: ListTile(
               title: Text(_formatFileLabel(selectedFile)),
               subtitle: Text(
-                '${selectedFile.name} · ${_formatSize(selectedFile)}'
-                '${selectedFile.isCurrent ? ' · ${l10n.settingsLogsCurrentFileLabel}' : ''}',
+                '${selectedFile.name} | ${_formatSize(selectedFile)}'
+                '${selectedFile.isCurrent ? ' | ${l10n.settingsLogsCurrentFileLabel}' : ''}',
               ),
             ),
           ),
         ),
         Expanded(
-          child: _loadingContent
+          child: state.loadingContent
               ? const Center(child: CircularProgressIndicator())
-              : _contentError != null
+              : state.contentError != null
                   ? Center(
                       child: Padding(
                         padding: const EdgeInsets.all(24),
                         child: Text(
-                          l10n.settingsLogsLoadFailed(_contentError!),
+                          l10n.settingsLogsLoadFailed(state.contentError!),
                           textAlign: TextAlign.center,
                         ),
                       ),
                     )
-                  : (_content == null || _content!.trim().isEmpty)
+                  : (state.content == null || state.content!.trim().isEmpty)
                       ? Center(
                           child: Text(l10n.settingsLogsFileEmpty),
                         )
@@ -190,7 +166,7 @@ class _LogViewerViewState extends State<LogViewerView> {
                             padding: const EdgeInsets.all(12),
                             child: SelectionArea(
                               child: SelectableText(
-                                _content!,
+                                state.content!,
                                 style: const TextStyle(
                                   fontFamily: 'monospace',
                                   fontSize: 12,
@@ -208,38 +184,62 @@ class _LogViewerViewState extends State<LogViewerView> {
   @override
   Widget build(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.settingsLogsTitle),
-        actions: [
-          IconButton(
-            tooltip:
-                MaterialLocalizations.of(context).refreshIndicatorSemanticLabel,
-            onPressed: _loadingFiles ? null : _loadFiles,
-            icon: const Icon(Icons.refresh),
+    return AnimatedBuilder(
+      animation: _viewModel,
+      builder: (context, _) {
+        final LogViewerUiState state = _viewModel.uiState;
+        final bool canExport = !state.loadingFiles &&
+            !state.loadingContent &&
+            !state.exporting &&
+            state.selectedFile != null;
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(l10n.settingsLogsTitle),
+            actions: [
+              IconButton(
+                tooltip: MaterialLocalizations.of(context)
+                    .refreshIndicatorSemanticLabel,
+                onPressed: state.loadingFiles || state.exporting
+                    ? null
+                    : _viewModel.reloadFiles,
+                icon: const Icon(Icons.refresh),
+              ),
+              if (state.selectedFile != null)
+                IconButton(
+                  tooltip: l10n.settingsLogsExportAction,
+                  onPressed: canExport ? _viewModel.exportSelectedFile : null,
+                  icon: state.exporting
+                      ? const SizedBox.square(
+                          dimension: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.save_alt_outlined),
+                ),
+              if (state.files.isNotEmpty)
+                PopupMenuButton<AppLogFileInfo>(
+                  tooltip: l10n.settingsLogsSwitchFileAction,
+                  enabled: !state.exporting,
+                  icon: const Icon(Icons.folder_open_outlined),
+                  initialValue: state.selectedFile,
+                  onSelected: _viewModel.selectFile,
+                  itemBuilder: (context) => state.files
+                      .map(
+                        (file) => PopupMenuItem<AppLogFileInfo>(
+                          value: file,
+                          child: Text(
+                            file.isCurrent
+                                ? '${_formatFileLabel(file)} (${l10n.settingsLogsCurrentFileLabel})'
+                                : _formatFileLabel(file),
+                          ),
+                        ),
+                      )
+                      .toList(growable: false),
+                ),
+            ],
           ),
-          if (_files.isNotEmpty)
-            PopupMenuButton<AppLogFileInfo>(
-              tooltip: l10n.settingsLogsSwitchFileAction,
-              icon: const Icon(Icons.folder_open_outlined),
-              initialValue: _selectedFile,
-              onSelected: _loadContent,
-              itemBuilder: (context) => _files
-                  .map(
-                    (file) => PopupMenuItem<AppLogFileInfo>(
-                      value: file,
-                      child: Text(
-                        file.isCurrent
-                            ? '${_formatFileLabel(file)} (${l10n.settingsLogsCurrentFileLabel})'
-                            : _formatFileLabel(file),
-                      ),
-                    ),
-                  )
-                  .toList(growable: false),
-            ),
-        ],
-      ),
-      body: _buildBody(l10n),
+          body: _buildBody(l10n, state),
+        );
+      },
     );
   }
 }

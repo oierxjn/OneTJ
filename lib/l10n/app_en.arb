@@ -282,6 +282,27 @@
       "error": {}
     }
   },
+  "settingsLogsExportAction": "Export logs",
+  "settingsLogsExportSuccess": "Logs exported: {fileName}",
+  "@settingsLogsExportSuccess": {
+    "placeholders": {
+      "fileName": {}
+    }
+  },
+  "settingsLogsExportFailed": "Failed to export logs: {error}",
+  "@settingsLogsExportFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "settingsLogsExportCanceled": "Log export canceled",
+  "settingsLogsOpenFileAction": "Open file",
+  "settingsLogsOpenFileFailed": "Failed to open exported file: {error}",
+  "@settingsLogsOpenFileFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
   "settingsDebugEndpointTitle": "Debug Upload Endpoint",
   "settingsDebugEndpointSubtitle": "Current endpoint: {endpoint}",
   "@settingsDebugEndpointSubtitle": {

@@ -41,10 +41,34 @@ class DeveloperDebugUploadSuccessEvent extends UiEvent {
 class DeveloperDebugEndpointInvalidEvent extends UiEvent {
   const DeveloperDebugEndpointInvalidEvent({
     required this.type,
-  }): super(code: type);
+  }) : super(code: type);
   final String type;
 }
 
 class DeveloperDebugUploadFailedEvent extends UiEvent {
   const DeveloperDebugUploadFailedEvent({super.message});
+}
+
+class LogExportSucceededEvent extends UiEvent {
+  const LogExportSucceededEvent({required this.path});
+
+  final String path;
+}
+
+class LogExportCanceledEvent extends UiEvent {
+  const LogExportCanceledEvent();
+}
+
+class LogExportFailedEvent extends UiEvent {
+  const LogExportFailedEvent({super.message});
+}
+
+class LogOpenSucceededEvent extends UiEvent {
+  const LogOpenSucceededEvent({required this.path});
+
+  final String path;
+}
+
+class LogOpenFailedEvent extends UiEvent {
+  const LogOpenFailedEvent({super.message});
 }
