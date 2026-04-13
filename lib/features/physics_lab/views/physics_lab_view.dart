@@ -7,10 +7,10 @@ import 'package:onetj/features/physics_lab/models/physics_lab_experiment.dart';
 class PhysicsLabView extends StatelessWidget {
   const PhysicsLabView({super.key});
 
-  static const List<PhysicsLabExperiment> _experiments =
-      <PhysicsLabExperiment>[
+  static const List<PhysicsLabExperiment> _experiments = <PhysicsLabExperiment>[
     PhysicsLabExperiment.michelsonInterferometer,
     PhysicsLabExperiment.diffractionGrating,
+    PhysicsLabExperiment.franckHertz,
   ];
 
   @override
@@ -69,6 +69,8 @@ class _ExperimentTile extends StatelessWidget {
         return l10n.physicsLabMichelsonTitle;
       case PhysicsLabExperiment.diffractionGrating:
         return l10n.physicsLabDiffractionGratingTitle;
+      case PhysicsLabExperiment.franckHertz:
+        return l10n.physicsLabFranckHertzTitle;
     }
   }
 
@@ -78,6 +80,8 @@ class _ExperimentTile extends StatelessWidget {
         return l10n.physicsLabMichelsonSubtitle;
       case PhysicsLabExperiment.diffractionGrating:
         return l10n.physicsLabDiffractionGratingSubtitle;
+      case PhysicsLabExperiment.franckHertz:
+        return l10n.physicsLabFranckHertzSubtitle;
     }
   }
 }
