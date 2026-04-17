@@ -21,7 +21,7 @@ class PhysicsLabView extends StatelessWidget {
         title: Text(l10n.physicsLabTitle),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
         children: [
           Text(
             l10n.physicsLabSubtitle,
@@ -29,7 +29,7 @@ class PhysicsLabView extends StatelessWidget {
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 2),
           for (final PhysicsLabExperiment experiment in _experiments)
             _ExperimentTile(experiment: experiment),
         ],
