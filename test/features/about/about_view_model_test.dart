@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:onetj/features/about/view_models/about_view_model.dart';
@@ -92,95 +91,17 @@ void main() {
       expect(service.loggedErrors, hasLength(1));
     });
   });
-
-  group('AboutViewModel.downloadAndInstallUpdate', () {
-    test('emits install triggered event and resets installing state', () async {
-      const AppUpdateInfo updateInfo = AppUpdateInfo(
-        latestVersion: '2.3.0',
-        latestBuild: 12,
-        releaseNotes: 'notes',
-        publishedAt: null,
-        mandatory: false,
-        downloadUrl: 'https://example.com/onetj.exe',
-        sha256: '',
-        fileSize: null,
-        minSupportedVersion: null,
-      );
-      final File file = File('fake-installer.exe');
-      final Completer<File> completer = Completer<File>();
-      final TestAppUpdateService service = TestAppUpdateService(
-        onDownloadPackage: (info) => completer.future,
-        onInstallPackage: (downloadedFile) async {
-          expect(downloadedFile.path, file.path);
-          return AppUpdateInstallResult.installerStarted;
-        },
-      );
-      final AboutViewModel viewModel =
-          AboutViewModel(appUpdateService: service);
-
-      final Future<UiEvent> nextEvent = viewModel.events.first;
-      final Future<void> action =
-          viewModel.downloadAndInstallUpdate(updateInfo);
-
-      expect(viewModel.isInstallingUpdate, isTrue);
-
-      completer.complete(file);
-
-      final UiEvent event = await nextEvent;
-      await action;
-
-      expect(event, isA<AppUpdateInstallTriggeredEvent>());
-      expect(viewModel.isInstallingUpdate, isFalse);
-    });
-
-    test('emits failed event when install throws', () async {
-      const AppUpdateInfo updateInfo = AppUpdateInfo(
-        latestVersion: '2.3.0',
-        latestBuild: 12,
-        releaseNotes: 'notes',
-        publishedAt: null,
-        mandatory: false,
-        downloadUrl: 'https://example.com/onetj.exe',
-        sha256: '',
-        fileSize: null,
-        minSupportedVersion: null,
-      );
-      final Object error = Exception('install failed');
-      final TestAppUpdateService service = TestAppUpdateService(
-        onDownloadPackage: (info) async => File('fake-installer.exe'),
-        onInstallPackage: (downloadedFile) async => throw error,
-      );
-      final AboutViewModel viewModel =
-          AboutViewModel(appUpdateService: service);
-
-      final Future<UiEvent> nextEvent = viewModel.events.first;
-      await viewModel.downloadAndInstallUpdate(updateInfo);
-      final UiEvent event = await nextEvent;
-
-      expect(event, isA<AppUpdateFailedEvent>());
-      expect((event as AppUpdateFailedEvent).error, same(error));
-      expect(viewModel.isInstallingUpdate, isFalse);
-      expect(service.loggedErrors, hasLength(1));
-    });
-  });
 }
 
 typedef CheckForUpdateHandler = Future<AppUpdateCheckResult> Function(
     {required bool force});
-typedef DownloadPackageHandler = Future<File> Function(AppUpdateInfo info);
-typedef InstallPackageHandler = Future<AppUpdateInstallResult> Function(
-    File file);
 
 class TestAppUpdateService implements AppUpdateService {
   TestAppUpdateService({
     this.onCheckForUpdate,
-    this.onDownloadPackage,
-    this.onInstallPackage,
   });
 
   final CheckForUpdateHandler? onCheckForUpdate;
-  final DownloadPackageHandler? onDownloadPackage;
-  final InstallPackageHandler? onInstallPackage;
   final List<Object> loggedErrors = <Object>[];
 
   @override
@@ -193,22 +114,8 @@ class TestAppUpdateService implements AppUpdateService {
   }
 
   @override
-  Future<File> downloadPackage(
-    AppUpdateInfo info, {
-    void Function(int receivedBytes, int? totalBytes)? onProgress,
-  }) async {
-    return onDownloadPackage?.call(info) ?? File('default-installer.exe');
-  }
-
-  @override
   String formatReleaseNotes(AppUpdateInfo info) {
     return info.releaseNotes;
-  }
-
-  @override
-  Future<AppUpdateInstallResult> installPackage(File file) async {
-    return await onInstallPackage?.call(file) ??
-        AppUpdateInstallResult.installerStarted;
   }
 
   @override
