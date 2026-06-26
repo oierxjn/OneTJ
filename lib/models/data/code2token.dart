@@ -127,7 +127,7 @@ class Code2TokenData {
   /// 自定义 JSON 解析，对每个必填字段做 null 检查，
   /// 缺失时抛出 [Code2TokenParseException] 指明具体字段名。
   factory Code2TokenData.fromJson(Map<String, dynamic> json) {
-    String requiredString(Code2TokenField field, String jsonKey) {
+    T required<T extends Object>(Code2TokenField field, String jsonKey) {
       final dynamic value = json[jsonKey];
       if (value == null) {
         throw Code2TokenParseException(
@@ -136,26 +136,7 @@ class Code2TokenData {
           rawJson: json,
         );
       }
-      if (value is! String) {
-        throw Code2TokenParseException(
-          field: field,
-          reason: Code2TokenParseReason.typeMismatch,
-          rawJson: json,
-        );
-      }
-      return value;
-    }
-
-    num requiredNum(Code2TokenField field, String jsonKey) {
-      final dynamic value = json[jsonKey];
-      if (value == null) {
-        throw Code2TokenParseException(
-          field: field,
-          reason: Code2TokenParseReason.missing,
-          rawJson: json,
-        );
-      }
-      if (value is! num) {
+      if (value is! T) {
         throw Code2TokenParseException(
           field: field,
           reason: Code2TokenParseReason.typeMismatch,
@@ -166,34 +147,34 @@ class Code2TokenData {
     }
 
     return Code2TokenData(
-      accessToken: requiredString(
+      accessToken: required<String>(
         Code2TokenField.accessToken,
         'access_token',
       ),
-      tokenType: requiredString(
+      tokenType: required<String>(
         Code2TokenField.tokenType,
         'token_type',
       ),
-      expiresIn: requiredNum(
+      expiresIn: required<num>(
         Code2TokenField.expiresIn,
         'expires_in',
       ).toInt(),
-      refreshToken: requiredString(
+      refreshToken: required<String>(
         Code2TokenField.refreshToken,
         'refresh_token',
       ),
-      refreshExpiresIn: requiredNum(
+      refreshExpiresIn: required<num>(
         Code2TokenField.refreshExpiresIn,
         'refresh_expires_in',
       ).toInt(),
       notBeforePolicy:
           (json['not-before-policy'] as num?)?.toInt() ?? 0,
       idToken: (json['id_token'] as String?) ?? '',
-      scope: requiredString(
+      scope: required<String>(
         Code2TokenField.scope,
         'scope',
       ),
-      sessionState: requiredString(
+      sessionState: required<String>(
         Code2TokenField.sessionState,
         'session_state',
       ),
