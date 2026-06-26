@@ -114,11 +114,14 @@ namespace flutter_inappwebview_plugin
   template <typename T>
   static inline std::basic_string<T> join(const std::vector<std::basic_string<T>>& vec, const std::basic_string<T>& delim)
   {
-    return vec.empty() ? std::basic_string<T>{ "" } : /* leave early if there are no items in the list */
-      std::accumulate( /* otherwise, accumulate */
-        ++vec.begin(), vec.end(), /* the range 2nd to after-last */
-        *vec.begin(), /* and start accumulating with the first item */
-        [delim](auto& a, auto& b) { return a + delim + b; });
+    if (vec.empty()) {
+      return std::basic_string<T>();
+    }
+    std::basic_string<T> result = vec[0];
+    for (size_t i = 1; i < vec.size(); ++i) {
+      result += delim + vec[i];
+    }
+    return result;
   }
 
   template <typename T>
@@ -145,7 +148,7 @@ namespace flutter_inappwebview_plugin
   }
 
   template <typename T>
-  void to_lowercase(const std::basic_string<T>& s)
+  void to_lowercase(std::basic_string<T>& s)
   {
     std::transform(s.begin(), s.end(), s.begin(),
       [](const T v) { return static_cast<T>(std::tolower(v)); });
@@ -161,11 +164,10 @@ namespace flutter_inappwebview_plugin
   }
 
   template <typename T>
-  void to_uppercase(const std::basic_string<T>& s)
+  void to_uppercase(std::basic_string<T>& s)
   {
     std::transform(s.begin(), s.end(), s.begin(),
       [](const T v) { return static_cast<T>(std::toupper(v)); });
-    return s2;
   }
 
   template <typename T>
