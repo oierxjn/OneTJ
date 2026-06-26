@@ -1,3 +1,4 @@
+import 'package:onetj/app/logging/log_level.dart';
 import 'package:onetj/app/logging/logger.dart';
 
 class AppException implements Exception {
@@ -5,12 +6,16 @@ class AppException implements Exception {
   final String message;
   final Object? cause;
 
-  AppException(this.code, this.message, {this.cause}) {
+  AppException(this.code, this.message, {
+    this.cause,
+    AppLogLevel level = AppLogLevel.warning,
+  }) {
     try {
       AppLogger.logExceptionCreated(
         code: code,
         message: message,
         cause: cause,
+        level: level,
       );
     } catch (_) {
       // Keep exception construction side-effect safe.

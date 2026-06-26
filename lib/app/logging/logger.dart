@@ -150,9 +150,10 @@ class AppLogger {
     required String code,
     required String message,
     Object? cause,
+    AppLogLevel level = AppLogLevel.warning,
   }) {
     _append(
-      level: AppLogLevel.warning,
+      level: level,
       loggerName: 'Exception',
       message: message,
       code: code,

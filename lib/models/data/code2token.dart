@@ -1,4 +1,6 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'package:onetj/app/exception/app_exception.dart';
+import 'package:onetj/app/logging/log_level.dart';
 
 part 'code2token.g.dart';
 
@@ -39,12 +41,18 @@ enum Code2TokenParseReason {
 ///
 /// 相比泛泛的 `type 'Null' is not a subtype of type 'String'`，
 /// 调用方可以直接通过 [field] 和 [reason] 定位问题。
-class Code2TokenParseException implements Exception {
-  const Code2TokenParseException({
+class Code2TokenParseException extends AppException {
+  static const String errorCode = 'CODE2TOKEN_PARSE_ERROR';
+
+  Code2TokenParseException({
     required this.field,
     required this.reason,
     required this.rawJson,
-  });
+  }) : super(
+          errorCode,
+          'Code2Token parse failed: ${reason.name} on field "${field.name}"',
+          level: AppLogLevel.error,
+        );
 
   /// 出问题的字段
   final Code2TokenField field;
