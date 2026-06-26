@@ -98,7 +98,6 @@
     "physicsLabFranckHertzClearAllLabel": "清空",
     "physicsLabFranckHertzResultTitle": "计算结果",
     "physicsLabFranckHertzResultDescription": "系统会根据已填写的原始数据自动识别曲线特征，并分别给出峰值法、谷值法和综合结果。",
-    "physicsLabFranckHertzResultEmptyHint": "请先填写至少 5 组有效的原始数据",
     "physicsLabFranckHertzValidPointCountLabel": "有效数据点",
     "physicsLabFranckHertzSmoothedPointCountLabel": "平滑后数据点",
     "physicsLabFranckHertzPeakMethodTitle": "峰值法",

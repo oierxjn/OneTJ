@@ -97,7 +97,6 @@
   "physicsLabFranckHertzClearAllLabel": "Clear",
   "physicsLabFranckHertzResultTitle": "Results",
   "physicsLabFranckHertzResultDescription": "The page analyzes the completed raw measurements automatically and reports the peak-based, valley-based, and combined results.",
-  "physicsLabFranckHertzResultEmptyHint": "Enter at least 5 valid raw measurements.",
   "physicsLabFranckHertzValidPointCountLabel": "Valid points",
   "physicsLabFranckHertzSmoothedPointCountLabel": "Smoothed points",
   "physicsLabFranckHertzPeakMethodTitle": "Peak Method",
