@@ -88,7 +88,7 @@ void main() {
       );
     });
 
-    test('异常 toString 包含字段名和 JSON 内容', () {
+    test('异常 toString 脱敏 token 字段', () {
       Code2TokenParseException? caught;
       try {
         Code2TokenData.fromJson({
@@ -97,6 +97,7 @@ void main() {
           'expires_in': 3600,
           'refresh_token': 'refresh-456',
           'refresh_expires_in': 86400,
+          'id_token': 'id-789',
           'session_state': 's',
           // scope 缺失
         });
@@ -107,10 +108,14 @@ void main() {
       final msg = caught.toString();
       expect(msg, contains('scope'));
       expect(msg, contains('missing'));
-      expect(
-        msg,
-        contains('Code2TokenParseException'),
-      ); // 异常类名
+      expect(msg, contains('Code2TokenParseException'));
+      expect(msg, contains('<redacted>'));
+      expect(msg, isNot(contains('access-123')));
+      expect(msg, isNot(contains('refresh-456')));
+      expect(msg, isNot(contains('id-789')));
+      // 非敏感字段正常显示
+      expect(msg, contains('Bearer'));
+      expect(msg, contains('3600'));
     });
 
     test('可选字段缺失时使用默认值', () {
