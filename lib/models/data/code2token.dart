@@ -63,12 +63,23 @@ class Code2TokenParseException extends AppException {
   /// 原始 JSON 响应（便于调试）
   final Map<String, dynamic> rawJson;
 
+  static const Set<String> _sensitiveKeys = {
+    'access_token',
+    'refresh_token',
+    'id_token',
+  };
+
   @override
   String toString() {
     final String jsonKey = _jsonKeyForField(field);
-    return 'Code2TokenParseException: $reason '
+    return 'Code2TokenParseException: ${reason.name} '
         'on field "${field.name}" (JSON key: "$jsonKey") '
-        'in response: $rawJson';
+        'in response: ${_redact(rawJson)}';
+  }
+
+  static Map<String, dynamic> _redact(Map<String, dynamic> json) {
+    return json.map((key, value) =>
+        MapEntry(key, _sensitiveKeys.contains(key) ? '<redacted>' : value));
   }
 
   /// 将枚举值映射回 JSON key，方便报错信息阅读。
