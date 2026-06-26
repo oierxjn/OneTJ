@@ -3,11 +3,15 @@
 
 #include <optional>
 #include <string>
+#include <type_traits>
 #include <variant>
 #include <Windows.h>
 
 namespace flutter_inappwebview_plugin
 {
+  template<typename>
+  inline constexpr bool always_false_v = false;
+
   template<typename T>
   static inline std::optional<T> make_pointer_optional(const T* value)
   {
