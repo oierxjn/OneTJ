@@ -288,7 +288,7 @@ class _FranckHertzViewState extends State<FranckHertzView> {
     BuildContext context,
     AppLocalizations l10n,
   ) {
-    final FranckHertzAnalysisResult? result = _viewModel.analysisResult;
+    final FranckHertzAnalysisResult result = _viewModel.analysisResult;
     final TextStyle? hintStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
           color: Theme.of(context).colorScheme.onSurfaceVariant,
         );
@@ -309,55 +309,48 @@ class _FranckHertzViewState extends State<FranckHertzView> {
           onChanged: _viewModel.updateReferenceVoltageText,
         ),
         const SizedBox(height: 8),
-        if (result == null)
-          Text(
-            l10n.physicsLabFranckHertzResultEmptyHint,
-            style: hintStyle,
-          )
-        else ...[
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _ResultBadge(
-                label: l10n.physicsLabFranckHertzValidPointCountLabel,
-                value: result.validPoints.length.toString(),
-              ),
-              _ResultBadge(
-                label: l10n.physicsLabFranckHertzSmoothedPointCountLabel,
-                value: result.smoothedPoints.length.toString(),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          _MethodResultCard(
-            title: l10n.physicsLabFranckHertzPeakMethodTitle,
-            featureCountLabel: l10n.physicsLabFranckHertzPeakCountLabel,
-            intervalLabel: l10n.physicsLabFranckHertzAverageIntervalLabel,
-            featureUnit: l10n.physicsLabFranckHertzVoltUnit,
-            result: result.peakResult,
-            emptyHint: l10n.physicsLabFranckHertzPeakMethodIncompleteHint,
-          ),
-          const SizedBox(height: 2),
-          _MethodResultCard(
-            title: l10n.physicsLabFranckHertzValleyMethodTitle,
-            featureCountLabel: l10n.physicsLabFranckHertzValleyCountLabel,
-            intervalLabel: l10n.physicsLabFranckHertzAverageIntervalLabel,
-            featureUnit: l10n.physicsLabFranckHertzVoltUnit,
-            result: result.valleyResult,
-            emptyHint: l10n.physicsLabFranckHertzValleyMethodIncompleteHint,
-          ),
-          const SizedBox(height: 2),
-          _FinalResultCard(
-            finalResultLabel:
-                l10n.physicsLabFranckHertzFinalExcitationPotentialLabel,
-            referenceLabel: l10n.physicsLabFranckHertzReferenceVoltageLabel,
-            relativeErrorLabel: l10n.physicsLabMichelsonRelativeErrorLabel,
-            voltageUnit: l10n.physicsLabFranckHertzVoltUnit,
-            result: result,
-            emptyHint: l10n.physicsLabFranckHertzFinalResultIncompleteHint,
-          ),
-        ],
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _ResultBadge(
+              label: l10n.physicsLabFranckHertzValidPointCountLabel,
+              value: result.validPoints.length.toString(),
+            ),
+            _ResultBadge(
+              label: l10n.physicsLabFranckHertzSmoothedPointCountLabel,
+              value: result.smoothedPoints.length.toString(),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        _MethodResultCard(
+          title: l10n.physicsLabFranckHertzPeakMethodTitle,
+          featureCountLabel: l10n.physicsLabFranckHertzPeakCountLabel,
+          intervalLabel: l10n.physicsLabFranckHertzAverageIntervalLabel,
+          featureUnit: l10n.physicsLabFranckHertzVoltUnit,
+          result: result.peakResult,
+          emptyHint: l10n.physicsLabFranckHertzPeakMethodIncompleteHint,
+        ),
+        const SizedBox(height: 2),
+        _MethodResultCard(
+          title: l10n.physicsLabFranckHertzValleyMethodTitle,
+          featureCountLabel: l10n.physicsLabFranckHertzValleyCountLabel,
+          intervalLabel: l10n.physicsLabFranckHertzAverageIntervalLabel,
+          featureUnit: l10n.physicsLabFranckHertzVoltUnit,
+          result: result.valleyResult,
+          emptyHint: l10n.physicsLabFranckHertzValleyMethodIncompleteHint,
+        ),
+        const SizedBox(height: 2),
+        _FinalResultCard(
+          finalResultLabel:
+              l10n.physicsLabFranckHertzFinalExcitationPotentialLabel,
+          referenceLabel: l10n.physicsLabFranckHertzReferenceVoltageLabel,
+          relativeErrorLabel: l10n.physicsLabMichelsonRelativeErrorLabel,
+          voltageUnit: l10n.physicsLabFranckHertzVoltUnit,
+          result: result,
+          emptyHint: l10n.physicsLabFranckHertzFinalResultIncompleteHint,
+        ),
       ],
     );
   }

@@ -197,7 +197,7 @@ class FranckHertzViewModel extends BaseViewModel<Never> {
 
   List<FranckHertzMeasurementRow> get rows =>
       List<FranckHertzMeasurementRow>.unmodifiable(_rows);
-  FranckHertzAnalysisResult? get analysisResult => _buildAnalysisResult();
+  FranckHertzAnalysisResult get analysisResult => _buildAnalysisResult();
 
   bool get hasAnyInput {
     if (metadata.hasAnyInput) {
@@ -372,12 +372,8 @@ class FranckHertzViewModel extends BaseViewModel<Never> {
     return rowIndex >= 0 && rowIndex < _rows.length;
   }
 
-  FranckHertzAnalysisResult? _buildAnalysisResult() {
+  FranckHertzAnalysisResult _buildAnalysisResult() {
     final List<FranckHertzDataPoint> validPoints = _buildValidPoints();
-    if (validPoints.isEmpty) {
-      return null;
-    }
-
     final List<FranckHertzSmoothedPoint> smoothedPoints =
         _buildSmoothedPoints(validPoints);
     final FranckHertzMethodResult? peakResult = _buildMethodResult(

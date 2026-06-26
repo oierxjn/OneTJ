@@ -19,7 +19,7 @@ void main() {
         viewModel.referenceVoltageText,
         FranckHertzViewModel.defaultReferenceVoltageText,
       );
-      expect(viewModel.analysisResult, isNull);
+      expect(viewModel.analysisResult.validPoints, isEmpty);
       expect(viewModel.hasAnyInput, isFalse);
 
       viewModel.dispose();
@@ -129,8 +129,7 @@ void main() {
       }
 
       final analysisResult = viewModel.analysisResult;
-      expect(analysisResult, isNotNull);
-      expect(analysisResult!.validPoints.first.voltage, 10);
+      expect(analysisResult.validPoints.first.voltage, 10);
       expect(analysisResult.validPoints.last.voltage, 20);
       expect(analysisResult.smoothedPoints, hasLength(7));
       expect(analysisResult.peakResult, isNotNull);
@@ -178,8 +177,7 @@ void main() {
       viewModel.updateReferenceVoltageText('2.00');
 
       final analysisResult = viewModel.analysisResult;
-      expect(analysisResult, isNotNull);
-      expect(analysisResult!.referenceVoltage, 2);
+      expect(analysisResult.referenceVoltage, 2);
       expect(analysisResult.finalExcitationPotential, 2);
       expect(analysisResult.relativeErrorPercent, 0);
 
@@ -196,8 +194,7 @@ void main() {
       }
 
       final analysisResult = viewModel.analysisResult;
-      expect(analysisResult, isNotNull);
-      expect(analysisResult!.smoothedPoints, hasLength(3));
+      expect(analysisResult.smoothedPoints, hasLength(3));
       expect(analysisResult.peakResult, isNull);
       expect(analysisResult.valleyResult, isNull);
       expect(analysisResult.finalExcitationPotential, isNull);
@@ -225,8 +222,7 @@ void main() {
       expect(viewModel.rows[1].ipText, '0');
       expect(viewModel.rows.last.vg2kText, '82');
       expect(viewModel.rows.last.ipText, '2.777');
-      expect(viewModel.analysisResult, isNotNull);
-      expect(viewModel.analysisResult!.validPoints.length, viewModel.rows.length);
+      expect(viewModel.analysisResult.validPoints.length, viewModel.rows.length);
 
       viewModel.dispose();
     });
