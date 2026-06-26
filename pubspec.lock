@@ -247,8 +247,8 @@ packages:
     dependency: "direct main"
     description:
       path: ohos
-      ref: HEAD
-      resolved-ref: "2d732270bd172e7bf2b803ebff03d3f05f4e1595"
+      ref: "10.2.0-ohos-1.0.0-beta.1"
+      resolved-ref: aae2f8828ea4d631362d6252e78d2773412747ff
       url: "https://gitcode.com/openharmony-sig/fluttertpc_file_picker.git"
     source: git
     version: "1.0.1"
