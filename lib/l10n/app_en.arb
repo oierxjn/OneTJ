@@ -313,6 +313,16 @@
   "colorPickerLightSecondary": "Light secondary",
   "colorPickerDarkSeed": "Dark primary",
   "colorPickerDarkSecondary": "Dark secondary",
+  "colorPickerPresetNameHint": "Preset name",
+  "colorPickerDeletePreset": "Delete preset",
+  "colorPickerPresetNameDefault": "Preset {n}",
+  "@colorPickerPresetNameDefault": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "settingsAboutTitle": "About",
   "settingsAboutSubtitle": "App info and project link",
   "settingsDeveloperTitle": "Developer Options",
