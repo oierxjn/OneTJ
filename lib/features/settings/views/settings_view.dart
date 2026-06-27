@@ -12,6 +12,7 @@ import 'package:onetj/features/settings/models/launch_wallpaper_editor_result.da
 import 'package:onetj/features/settings/view_models/settings_view_model.dart';
 import 'package:onetj/features/settings/views/widgets/settings_card.dart';
 import 'package:onetj/features/settings/views/widgets/settings_card_visual_state.dart';
+import 'package:onetj/features/settings/views/widgets/theme_color_card.dart';
 import 'package:onetj/features/settings/views/widgets/upcoming_courses_card.dart';
 import 'package:onetj/models/dashboard_upcoming_mode.dart';
 import 'package:onetj/models/event_model.dart';
@@ -468,6 +469,22 @@ class _SettingsViewState extends State<SettingsView> {
     );
   }
 
+  Widget _buildAppearanceSectionTitle(AppLocalizations l10n) {
+    return Text(
+      l10n.settingsAppearanceSectionTitle,
+      style: Theme.of(context).textTheme.titleMedium,
+    );
+  }
+
+  Widget _buildThemeColorCard(AppLocalizations l10n) {
+    return ThemeColorCard(
+      l10n: l10n,
+      color: _viewModel.themeColor,
+      enabled: !_settingsBusy,
+      onColorChanged: _viewModel.setThemeColor,
+    );
+  }
+
   Widget _buildAdvancedSectionTitle(AppLocalizations l10n) {
     return Text(
       l10n.settingsAdvancedSectionTitle,
@@ -590,6 +607,10 @@ class _SettingsViewState extends State<SettingsView> {
         _buildLaunchWallpaperCard(l10n),
         const SizedBox(height: 12),
         _buildAboutCard(l10n),
+        const SizedBox(height: 24),
+        _buildAppearanceSectionTitle(l10n),
+        const SizedBox(height: 8),
+        _buildThemeColorCard(l10n),
         const SizedBox(height: 24),
         _buildAdvancedSectionTitle(l10n),
         const SizedBox(height: 8),

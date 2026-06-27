@@ -298,6 +298,11 @@
 
     "settingsAdvancedSectionTitle": "高级",
     "settingsCommonSectionTitle": "通用",
+    "settingsAppearanceSectionTitle": "外观",
+    "settingsAppearanceThemeColorTitle": "主题色",
+    "settingsAppearanceThemeColorSystem": "跟随系统",
+    "settingsAppearanceThemeColorLight": "浅色",
+    "settingsAppearanceThemeColorDark": "深色",
     "settingsAboutTitle": "关于",
     "settingsAboutSubtitle": "应用信息与项目链接",
     "settingsDeveloperTitle": "开发者选项",

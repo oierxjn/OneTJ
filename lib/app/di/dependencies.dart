@@ -1,5 +1,6 @@
 import 'package:get_it/get_it.dart';
 
+import 'package:onetj/app/theme/theme_change_notifier.dart';
 import 'package:onetj/repo/app_update_state_repository.dart';
 import 'package:onetj/services/app_update_api.dart';
 import 'package:onetj/services/app_update_service.dart';
@@ -8,6 +9,13 @@ import 'package:onetj/services/external_launcher_service.dart';
 final GetIt appLocator = GetIt.instance;
 
 void configureDependencies() {
+  // ThemeChangeNotifier
+  // 单例 —— 管理主题配色和深色模式
+  if (!appLocator.isRegistered<ThemeChangeNotifier>()) {
+    appLocator.registerLazySingleton<ThemeChangeNotifier>(
+      () => ThemeChangeNotifier(),
+    );
+  }
   // AppUpdateStateRepository
   // 单例
   if (!appLocator.isRegistered<AppUpdateStateRepository>()) {
