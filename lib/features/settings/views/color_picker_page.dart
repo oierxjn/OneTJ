@@ -149,11 +149,8 @@ class _ColorPresetsTab extends StatelessWidget {
 
   /// 根据背景色计算对勾颜色：浅色底深对勾，深色底浅对勾
   static Color _checkColorOn(Color background) {
-    // 相对亮度（ITU-R BT.709 加权）
-    final double luminance = (0.2126 * background.r +
-            0.7152 * background.g +
-            0.0722 * background.b) *
-        background.a;
-    return luminance > 0.6 ? Colors.black87 : Colors.white;
+    return ThemeData.estimateBrightnessForColor(background) == Brightness.light
+        ? Colors.black87
+        : Colors.white;
   }
 }
