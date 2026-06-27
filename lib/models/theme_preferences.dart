@@ -4,14 +4,14 @@ import 'package:flutter/material.dart';
 
 /// 用户主题偏好设置
 ///
-/// 包含主色、辅色、主题模式等配置，支持 JSON 序列化以持久化到 Hive。
+/// 所有颜色字段均为非空
 class ThemePreferences {
   const ThemePreferences({
     this.name = '',
     required this.lightSeedColor,
-    this.lightSecondaryColor,
-    this.darkSeedColor,
-    this.darkSecondaryColor,
+    this.lightSecondaryColor = kDefaultSeedColor,
+    this.darkSeedColor = kDefaultSeedColor,
+    this.darkSecondaryColor = kDefaultSeedColor,
     this.themeMode = ThemeMode.system,
   });
 
@@ -21,14 +21,14 @@ class ThemePreferences {
   /// 亮色模式主色
   final Color lightSeedColor;
 
-  /// 亮色模式辅色（可选，null 表示不启用辅色定制）
-  final Color? lightSecondaryColor;
+  /// 亮色模式辅色
+  final Color lightSecondaryColor;
 
-  /// 暗色模式主色（可选，null 表示沿用亮色主色）
-  final Color? darkSeedColor;
+  /// 暗色模式主色
+  final Color darkSeedColor;
 
-  /// 暗色模式辅色（可选，null 表示沿用亮色辅色）
-  final Color? darkSecondaryColor;
+  /// 暗色模式辅色
+  final Color darkSecondaryColor;
 
   /// 主题模式
   final ThemeMode themeMode;
@@ -46,17 +46,6 @@ class ThemePreferences {
   );
 
   // ============================================================
-  // 派生属性
-  // ============================================================
-
-  /// 暗色模式实际使用的主色
-  Color get effectiveDarkSeedColor => darkSeedColor ?? lightSeedColor;
-
-  /// 暗色模式实际使用的辅色
-  Color? get effectiveDarkSecondaryColor =>
-      darkSecondaryColor ?? lightSecondaryColor;
-
-  // ============================================================
   // JSON 序列化
   // ============================================================
 
@@ -68,9 +57,18 @@ class ThemePreferences {
         json['lightSeedColor'],
         kDefaultSeedColor,
       ),
-      lightSecondaryColor: _nullableColorFromJson(json['lightSecondaryColor']),
-      darkSeedColor: _nullableColorFromJson(json['darkSeedColor']),
-      darkSecondaryColor: _nullableColorFromJson(json['darkSecondaryColor']),
+      lightSecondaryColor: _colorFromJson(
+        json['lightSecondaryColor'],
+        kDefaultSeedColor,
+      ),
+      darkSeedColor: _colorFromJson(
+        json['darkSeedColor'],
+        kDefaultSeedColor,
+      ),
+      darkSecondaryColor: _colorFromJson(
+        json['darkSecondaryColor'],
+        kDefaultSeedColor,
+      ),
       themeMode: _themeModeFromJson(
         json['themeMode'],
         ThemeMode.system,
@@ -82,13 +80,10 @@ class ThemePreferences {
   Map<String, dynamic> toJson() {
     return {
       'name': name,
-      'lightSeedColor': _colorToInt(lightSeedColor),
-      'lightSecondaryColor':
-          lightSecondaryColor != null ? _colorToInt(lightSecondaryColor!) : null,
-      'darkSeedColor':
-          darkSeedColor != null ? _colorToInt(darkSeedColor!) : null,
-      'darkSecondaryColor':
-          darkSecondaryColor != null ? _colorToInt(darkSecondaryColor!) : null,
+      'lightSeedColor': colorToInt(lightSeedColor),
+      'lightSecondaryColor': colorToInt(lightSecondaryColor),
+      'darkSeedColor': colorToInt(darkSeedColor),
+      'darkSecondaryColor': colorToInt(darkSecondaryColor),
       'themeMode': _themeModeToString(themeMode),
     };
   }
@@ -109,29 +104,24 @@ class ThemePreferences {
 
   ThemePreferences copyWith({
     String? name,
-    Color? lightSeedColor,
-    Color? lightSecondaryColor,
-    Color? darkSeedColor,
-    Color? darkSecondaryColor,
+    Object? lightSeedColor,
+    Object? lightSecondaryColor,
+    Object? darkSeedColor,
+    Object? darkSecondaryColor,
     ThemeMode? themeMode,
-    /// 传 true 可将 lightSecondaryColor 置为 null
-    bool clearLightSecondaryColor = false,
-    /// 传 true 可将 darkSeedColor 置为 null
-    bool clearDarkSeedColor = false,
-    /// 传 true 可将 darkSecondaryColor 置为 null
-    bool clearDarkSecondaryColor = false,
   }) {
     return ThemePreferences(
       name: name ?? this.name,
-      lightSeedColor: lightSeedColor ?? this.lightSeedColor,
-      lightSecondaryColor: clearLightSecondaryColor
-          ? null
-          : (lightSecondaryColor ?? this.lightSecondaryColor),
+      lightSeedColor:
+          lightSeedColor is Color ? lightSeedColor : this.lightSeedColor,
+      lightSecondaryColor: lightSecondaryColor is Color
+          ? lightSecondaryColor
+          : this.lightSecondaryColor,
       darkSeedColor:
-          clearDarkSeedColor ? null : (darkSeedColor ?? this.darkSeedColor),
-      darkSecondaryColor: clearDarkSecondaryColor
-          ? null
-          : (darkSecondaryColor ?? this.darkSecondaryColor),
+          darkSeedColor is Color ? darkSeedColor : this.darkSeedColor,
+      darkSecondaryColor: darkSecondaryColor is Color
+          ? darkSecondaryColor
+          : this.darkSecondaryColor,
       themeMode: themeMode ?? this.themeMode,
     );
   }
@@ -185,22 +175,18 @@ class ThemePreferences {
   // 内部辅助方法
   // ============================================================
 
-  // 忽略 Color.value 的弃用警告，因为 toARGB32() 在此 SDK 版本中不可用
-  // ignore: deprecated_member_use
-  static int _colorToInt(Color color) => color.value;
+  static int colorToInt(Color color) {
+    return ((color.a * 255).round() << 24) |
+        ((color.r * 255).round() << 16) |
+        ((color.g * 255).round() << 8) |
+        (color.b * 255).round();
+  }
 
   static Color _colorFromJson(dynamic value, Color fallback) {
     if (value is int) {
       return Color(value);
     }
     return fallback;
-  }
-
-  static Color? _nullableColorFromJson(dynamic value) {
-    if (value is int) {
-      return Color(value);
-    }
-    return null;
   }
 
   static ThemeMode _themeModeFromJson(dynamic value, ThemeMode fallback) {

@@ -36,6 +36,33 @@ class _ColorPickerPageState extends State<ColorPickerPage>
     super.dispose();
   }
 
+  Future<void> _showImportDialog(
+    BuildContext context,
+    ColorPickerViewModel viewModel,
+    AppLocalizations l10n,
+  ) async {
+    final bool? didImport = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return _ImportDialog(l10n: l10n, viewModel: viewModel);
+      },
+    );
+
+    if (!context.mounted) {
+      return;
+    }
+    if (didImport == true) {
+      _tabController.animateTo(1);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l10n.colorPickerImportSuccess),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      await viewModel.applyCurrent();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context);
@@ -66,6 +93,11 @@ class _ColorPickerPageState extends State<ColorPickerPage>
               );
             },
           ),
+          IconButton(
+            tooltip: l10n.colorPickerImport,
+            icon: const Icon(Icons.file_download_outlined),
+            onPressed: () => _showImportDialog(context, viewModel, l10n),
+          ),
         ],
         bottom: TabBar(
           controller: _tabController,
@@ -80,13 +112,90 @@ class _ColorPickerPageState extends State<ColorPickerPage>
         children: [
           _ColorPresetsTab(l10n: l10n, viewModel: viewModel),
           CustomColorTab(
-          l10n: l10n,
-          viewModel: viewModel,
-          onSaved: () => Navigator.of(context).pop(),
-        ),
+            l10n: l10n,
+            viewModel: viewModel,
+            onSaved: () => Navigator.of(context).pop(),
+          ),
         ],
       ),
     );
+  }
+}
+
+class _ImportDialog extends StatefulWidget {
+  const _ImportDialog({
+    required this.l10n,
+    required this.viewModel,
+  });
+
+  final AppLocalizations l10n;
+  final ColorPickerViewModel viewModel;
+
+  @override
+  State<_ImportDialog> createState() => _ImportDialogState();
+}
+
+class _ImportDialogState extends State<_ImportDialog> {
+  late final TextEditingController _controller;
+  String? _errorText;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(widget.l10n.colorPickerImportTitle),
+      content: TextField(
+        controller: _controller,
+        decoration: InputDecoration(
+          hintText: widget.l10n.colorPickerImportHint,
+          errorText: _errorText,
+          border: const OutlineInputBorder(),
+        ),
+        maxLines: 2,
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(widget.l10n.cancelLabel),
+        ),
+        FilledButton(
+          onPressed: () {
+            final ImportColorResult result =
+                widget.viewModel.importFromText(_controller.text);
+            if (result == ImportColorResult.success) {
+              Navigator.of(context).pop(true);
+            } else {
+              setState(() => _errorText = _errorForResult(result));
+            }
+          },
+          child: Text(widget.l10n.colorPickerImportConfirm),
+        ),
+      ],
+    );
+  }
+
+  String _errorForResult(ImportColorResult result) {
+    switch (result) {
+      case ImportColorResult.emptyInput:
+        return widget.l10n.colorPickerImportHint;
+      case ImportColorResult.invalidFormat:
+        return widget.l10n.colorPickerImportInvalidFormat;
+      case ImportColorResult.invalidLightSeed:
+        return widget.l10n.colorPickerImportInvalidLightSeed;
+      case ImportColorResult.success:
+        return '';
+    }
   }
 }
 

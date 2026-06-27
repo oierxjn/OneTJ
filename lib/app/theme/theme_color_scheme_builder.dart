@@ -14,13 +14,17 @@ class ThemeColorSchemeBuilder {
     required ThemePreferences preferences,
     required Brightness brightness,
   }) {
-    final Color seedColor = brightness == Brightness.light
+    final bool isLight = brightness == Brightness.light;
+    final Color seedColor = isLight
         ? preferences.lightSeedColor
-        : preferences.effectiveDarkSeedColor;
+        : preferences.darkSeedColor;
 
-    final Color? secondaryColor = brightness == Brightness.light
-        ? preferences.lightSecondaryColor
-        : preferences.effectiveDarkSecondaryColor;
+    final Color secondaryColor;
+    if (isLight) {
+      secondaryColor = preferences.lightSecondaryColor;
+    } else {
+      secondaryColor = preferences.darkSecondaryColor;
+    }
 
     return ColorScheme.fromSeed(
       seedColor: seedColor,
