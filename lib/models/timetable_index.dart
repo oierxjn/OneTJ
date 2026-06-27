@@ -1,7 +1,7 @@
 import 'package:onetj/repo/course_schedule_repository.dart';
 
 /// 课程条目
-/// 
+///
 /// 用于UI数据源，包含课程的所有信息
 class TimetableEntry {
   const TimetableEntry({
@@ -46,7 +46,7 @@ class TimetableEntry {
 }
 
 /// 课程表索引
-/// 
+///
 /// 用于UI数据源，快速查询课程
 class TimetableIndex {
   const TimetableIndex({

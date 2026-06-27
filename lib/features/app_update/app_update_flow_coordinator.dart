@@ -17,8 +17,8 @@ class AppUpdateFlowCoordinator {
     AppUpdateService? appUpdateService,
     ExternalLauncherService? externalLauncherService,
   })  : _appUpdateService = appUpdateService ?? appLocator<AppUpdateService>(),
-        _externalLauncherService = externalLauncherService ??
-            appLocator<ExternalLauncherService>();
+        _externalLauncherService =
+            externalLauncherService ?? appLocator<ExternalLauncherService>();
 
   final AppUpdateService _appUpdateService;
   final ExternalLauncherService _externalLauncherService;

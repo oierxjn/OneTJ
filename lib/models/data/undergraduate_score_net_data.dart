@@ -131,10 +131,12 @@ class UndergraduateScoreCreditInfoNetData {
     this.scoreSourrce,
   });
 
-  factory UndergraduateScoreCreditInfoNetData.fromJson(Map<String, dynamic> json) =>
+  factory UndergraduateScoreCreditInfoNetData.fromJson(
+          Map<String, dynamic> json) =>
       _$UndergraduateScoreCreditInfoNetDataFromJson(json);
 
-  Map<String, dynamic> toJson() => _$UndergraduateScoreCreditInfoNetDataToJson(this);
+  Map<String, dynamic> toJson() =>
+      _$UndergraduateScoreCreditInfoNetDataToJson(this);
 }
 
 Object? _readScoreExamType(Map json, String key) =>

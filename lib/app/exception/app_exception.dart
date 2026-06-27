@@ -6,7 +6,9 @@ class AppException implements Exception {
   final String message;
   final Object? cause;
 
-  AppException(this.code, this.message, {
+  AppException(
+    this.code,
+    this.message, {
     this.cause,
     AppLogLevel level = AppLogLevel.warning,
   }) {

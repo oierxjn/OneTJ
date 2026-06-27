@@ -38,8 +38,10 @@ class LaunchWallpaperFileService {
   static const String builtinSource = 'builtin';
   static const String importedSource = 'gallery';
   static Future<Directory>? _cachedSupportDirectoryFuture;
+
   /// 缓存的用户自定义壁纸项索引
   static List<LaunchWallpaperItem>? _cachedIndexItems;
+
   /// 缓存的全部壁纸项索引
   static List<LaunchWallpaperItem>? _cachedMergedItems;
   static Map<String, String>? _cachedPathById;
@@ -126,7 +128,7 @@ class LaunchWallpaperFileService {
   }
 
   /// 列出所有需要渲染的壁纸项
-  /// 
+  ///
   /// 数据用于 UI 展示
   static Future<List<LaunchWallpaperItem>> listWallpapers({
     bool refreshFromDisk = false,
@@ -214,7 +216,7 @@ class LaunchWallpaperFileService {
     if (_isBuiltinWallpaperId(wallpaperId)) {
       // 该情况不应该发生，即内置壁纸不允许修改名字
       AppLogger.warning(
-        "Cannot rename built-in wallpaper $wallpaperId; renaming is only allowed for custom wallpapers.", 
+        "Cannot rename built-in wallpaper $wallpaperId; renaming is only allowed for custom wallpapers.",
         loggerName: 'LaunchWallpaperFileService',
       );
       return;
@@ -266,7 +268,7 @@ class LaunchWallpaperFileService {
   }
 
   /// 从文件读取用户自定义壁纸项索引
-  /// 
+  ///
   /// 旧版本的壁纸项索引格式返回的列表中可能会包含内置壁纸项
   /// 所以这里需要过滤掉内置壁纸项
   static Future<List<LaunchWallpaperItem>> _readIndexItems() async {

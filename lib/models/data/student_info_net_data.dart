@@ -9,6 +9,7 @@ class StudentInfoNetData {
 
   /// 创建时间
   final String createTime;
+
   /// 当前年级
   final int currentGrade;
   final String deptCode;

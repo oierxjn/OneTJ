@@ -236,11 +236,11 @@ class InMemorySchoolCalendarStorage implements SchoolCalendarStorage {
   }
 }
 
-class SchoolCalendarRepository extends BaseNetCachedRepository<SchoolCalendarData,
-    SchoolCalendarCacheMeta, SchoolCalendarStorage> {
+class SchoolCalendarRepository extends BaseNetCachedRepository<
+    SchoolCalendarData, SchoolCalendarCacheMeta, SchoolCalendarStorage> {
   SchoolCalendarRepository._({
     required SchoolCalendarStorage storage,
-  })  : super(storage);
+  }) : super(storage);
 
   static SchoolCalendarRepository? _instance;
   int? _fetchedWeekBeginDay;
@@ -257,7 +257,6 @@ class SchoolCalendarRepository extends BaseNetCachedRepository<SchoolCalendarDat
     _instance = repo;
     return repo;
   }
-
 
   @visibleForTesting
   static void resetInstanceForTest() {
@@ -302,8 +301,7 @@ class SchoolCalendarRepository extends BaseNetCachedRepository<SchoolCalendarDat
       fetchedAt.month,
       fetchedAt.day,
     );
-    int daysUntilNextWeekBoundary =
-        (weekBeginDay - fetchedAt.weekday + 7) % 7;
+    int daysUntilNextWeekBoundary = (weekBeginDay - fetchedAt.weekday + 7) % 7;
     if (daysUntilNextWeekBoundary == 0) {
       daysUntilNextWeekBoundary = 7;
     }

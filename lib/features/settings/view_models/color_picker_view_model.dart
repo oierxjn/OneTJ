@@ -81,8 +81,7 @@ class ColorPickerViewModel extends ChangeNotifier {
       List<ThemePreferences>.unmodifiable(_userPresets);
 
   /// 该预设是否为用户自定义预设（可删除）
-  bool isUserPreset(int index) =>
-      index < _userPresets.length;
+  bool isUserPreset(int index) => index < _userPresets.length;
 
   /// 判断预设是否与当前编辑的配色一致
   bool isPresetSelected(ThemePreferences preset) =>
@@ -95,6 +94,7 @@ class ColorPickerViewModel extends ChangeNotifier {
       final int rgba = ThemePreferences.colorToInt(c);
       return rgba.toRadixString(16).padLeft(8, '0');
     }
+
     return '#${hexOf(_current.lightSeedColor)}'
         '#${hexOf(_current.lightSecondaryColor)}'
         '#${hexOf(_current.darkSeedColor)}'

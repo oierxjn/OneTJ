@@ -104,7 +104,9 @@ class _GradesViewState extends State<GradesView> {
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
-          if (data == null || selectedTerm == null || selectedTerm.courses.isEmpty)
+          if (data == null ||
+              selectedTerm == null ||
+              selectedTerm.courses.isEmpty)
             _EmptyState(message: l10n.scoresEmpty),
           if (selectedTerm != null)
             ...selectedTerm.courses.map(
@@ -258,7 +260,7 @@ class _GradeRow extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-              'GPA $gradePoint · $credit · $courseType',
+                'GPA $gradePoint · $credit · $courseType',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: colors.onSurfaceVariant,
                     ),

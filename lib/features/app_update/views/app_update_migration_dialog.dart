@@ -123,7 +123,8 @@ class _AppUpdateMigrationDialogState extends State<AppUpdateMigrationDialog> {
             TextButton(
               onPressed: widget.viewModel.copying
                   ? null
-                  : () => widget.viewModel.copyLink(widget.updateInfo.downloadUrl),
+                  : () =>
+                      widget.viewModel.copyLink(widget.updateInfo.downloadUrl),
               child: widget.viewModel.copying
                   ? const SizedBox(
                       width: 16,

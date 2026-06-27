@@ -34,7 +34,7 @@ class LoginModel {
   }
 
   /// 处理重定向URI，提取code并交换token
-  /// 
+  ///
   /// 如果URI不是重定向URI，返回false。
   /// 如果state不匹配，抛出[AuthStateMismatchException]。
   /// 否则，调用[TongjiApi.code2token]交换token，并返回true。
@@ -51,5 +51,4 @@ class LoginModel {
     await api.code2token(code);
     return true;
   }
-
 }

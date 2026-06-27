@@ -10,10 +10,8 @@ class GradesViewData {
   final List<GradesTerm> terms;
 
   factory GradesViewData.fromScoreData(UndergraduateScoreData data) {
-    final List<GradesTerm> terms = data.term
-            ?.map(GradesTerm.fromScoreTerm)
-            .toList() ??
-        const [];
+    final List<GradesTerm> terms =
+        data.term?.map(GradesTerm.fromScoreTerm).toList() ?? const [];
     return GradesViewData(
       summary: GradesSummary.fromScoreData(data),
       terms: terms,
@@ -56,10 +54,8 @@ class GradesTerm {
   final List<GradesCourse> courses;
 
   factory GradesTerm.fromScoreTerm(UndergraduateScoreTermData data) {
-    final List<GradesCourse> courses = data.creditInfo
-            ?.map(GradesCourse.fromScoreCourse)
-            .toList() ??
-        const [];
+    final List<GradesCourse> courses =
+        data.creditInfo?.map(GradesCourse.fromScoreCourse).toList() ?? const [];
     return GradesTerm(
       termName: data.termName ?? '--',
       averagePoint: data.averagePoint ?? '--',
