@@ -31,6 +31,14 @@ const List<ThemePreferences> kPresetColorThemes = [
   ),
 ];
 
+/// 导入配色结果
+enum ImportColorResult {
+  success,
+  emptyInput,
+  invalidFormat,
+  invalidLightSeed,
+}
+
 /// 取色器页面的 ViewModel
 ///
 /// 进入页面时快照当前主题偏好，支持实时预览、撤销回退、预设保存/删除。
@@ -83,12 +91,8 @@ class ColorPickerViewModel extends ChangeNotifier {
   /// 生成分享文本，格式：#亮色主色#亮色辅色#暗色主色#暗色辅色
   /// 每个 # 后跟 8 位十六进制色号，null 留空
   String get shareText {
-    String hexOf(Color? c) {
-      if (c == null) return '';
-      final int rgba = ((c.a * 255).round() << 24) |
-          ((c.r * 255).round() << 16) |
-          ((c.g * 255).round() << 8) |
-          (c.b * 255).round();
+    String hexOf(Color c) {
+      final int rgba = ThemePreferences.colorToInt(c);
       return rgba.toRadixString(16).padLeft(8, '0');
     }
     return '#${hexOf(_current.lightSeedColor)}'
@@ -115,6 +119,51 @@ class ColorPickerViewModel extends ChangeNotifier {
     }
   }
 
+  /// 从分享文本导入配色
+  ///
+  /// 格式：#亮色主色#亮色辅色#暗色主色#暗色辅色
+  /// 每段为 8 位十六进制 ARGB，空段表示不改动对应颜色。
+  ImportColorResult importFromText(String text) {
+    final String trimmed = text.trim();
+    if (trimmed.isEmpty) {
+      return ImportColorResult.emptyInput;
+    }
+
+    // 按 # 分割，第一段为空（文本以 # 开头），取后 4 段
+    final List<String> parts = trimmed.split('#');
+    if (parts.length < 5) {
+      return ImportColorResult.invalidFormat;
+    }
+
+    final Color? lightSeed = _parseHexColor(parts[1]);
+    if (lightSeed == null) {
+      return ImportColorResult.invalidLightSeed;
+    }
+
+    final Color? lightSecondary = _parseHexColor(parts[2]);
+    final Color? darkSeed = _parseHexColor(parts[3]);
+    final Color? darkSecondary = _parseHexColor(parts[4]);
+
+    // 空段不传参，表示不改动
+    _current = _current.copyWith(
+      lightSeedColor: lightSeed,
+      lightSecondaryColor: lightSecondary,
+      darkSeedColor: darkSeed,
+      darkSecondaryColor: darkSecondary,
+    );
+    _presetName = '';
+    return ImportColorResult.success;
+  }
+
+  /// 解析 8 位十六进制色号，返回 null 表示空字符串或格式错误
+  Color? _parseHexColor(String hex) {
+    if (hex.isEmpty) return null;
+    if (hex.length != 8) return null;
+    final int? value = int.tryParse(hex, radix: 16);
+    if (value == null) return null;
+    return Color(value);
+  }
+
   void _generateDefaultName() {
     final int total = _userPresets.length;
     _presetName = '预设${total + 1}';
@@ -133,19 +182,16 @@ class ColorPickerViewModel extends ChangeNotifier {
   }
 
   /// 选择预设方案
-  void selectPreset(ThemePreferences preset) {
+  Future<void> selectPreset(ThemePreferences preset) async {
     _presetName = preset.name;
     _current = _current.copyWith(
       name: preset.name,
       lightSeedColor: preset.lightSeedColor,
       lightSecondaryColor: preset.lightSecondaryColor,
-      clearLightSecondaryColor: preset.lightSecondaryColor == null,
       darkSeedColor: preset.darkSeedColor,
-      clearDarkSeedColor: preset.darkSeedColor == null,
       darkSecondaryColor: preset.darkSecondaryColor,
-      clearDarkSecondaryColor: preset.darkSecondaryColor == null,
     );
-    _applyCurrent();
+    await applyCurrent();
   }
 
   /// 将当前方案保存为自定义预设
@@ -157,7 +203,7 @@ class ColorPickerViewModel extends ChangeNotifier {
     await _presetRepository.savePreset(preset);
     _userPresets.add(preset);
     _current = preset;
-    _applyCurrent();
+    await applyCurrent();
     notifyListeners();
   }
 
@@ -172,49 +218,38 @@ class ColorPickerViewModel extends ChangeNotifier {
   }
 
   /// 更新亮色主色
-  void updateLightSeedColor(Color color) {
+  Future<void> updateLightSeedColor(Color color) async {
     _current = _current.copyWith(lightSeedColor: color);
-    _applyCurrent();
+    await applyCurrent();
   }
 
   /// 更新亮色辅色
-  void updateLightSecondaryColor(Color? color) {
-    if (color == null) {
-      _current = _current.copyWith(clearLightSecondaryColor: true);
-    } else {
-      _current = _current.copyWith(lightSecondaryColor: color);
-    }
-    _applyCurrent();
+  Future<void> updateLightSecondaryColor(Color color) async {
+    _current = _current.copyWith(lightSecondaryColor: color);
+    await applyCurrent();
   }
 
   /// 更新暗色主色
-  void updateDarkSeedColor(Color? color) {
-    if (color == null) {
-      _current = _current.copyWith(clearDarkSeedColor: true);
-    } else {
-      _current = _current.copyWith(darkSeedColor: color);
-    }
-    _applyCurrent();
+  Future<void> updateDarkSeedColor(Color color) async {
+    _current = _current.copyWith(darkSeedColor: color);
+    await applyCurrent();
   }
 
   /// 更新暗色辅色
-  void updateDarkSecondaryColor(Color? color) {
-    if (color == null) {
-      _current = _current.copyWith(clearDarkSecondaryColor: true);
-    } else {
-      _current = _current.copyWith(darkSecondaryColor: color);
-    }
-    _applyCurrent();
+  Future<void> updateDarkSecondaryColor(Color color) async {
+    _current = _current.copyWith(darkSecondaryColor: color);
+    await applyCurrent();
   }
 
   /// 撤销：恢复到进入页面时的快照
-  void undo() {
+  Future<void> undo() async {
     _current = _snapshot;
-    _applyCurrent();
+    await applyCurrent();
   }
 
-  void _applyCurrent() {
-    _themeChangeNotifier.updatePreferences(_current);
+  /// 手动应用当前编辑的配色到主题
+  Future<void> applyCurrent() async {
+    await _themeChangeNotifier.updatePreferences(_current);
     notifyListeners();
   }
 }

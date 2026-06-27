@@ -163,29 +163,17 @@ class ThemeRepository extends ChangeNotifier {
   }
 
   /// 更新亮色辅色
-  Future<void> setLightSecondaryColor(Color? color) async {
-    if (color == null) {
-      await save(_preferences.copyWith(clearLightSecondaryColor: true));
-    } else {
-      await save(_preferences.copyWith(lightSecondaryColor: color));
-    }
+  Future<void> setLightSecondaryColor(Color color) async {
+    await save(_preferences.copyWith(lightSecondaryColor: color));
   }
 
   /// 更新暗色主色
-  Future<void> setDarkSeedColor(Color? color) async {
-    if (color == null) {
-      await save(_preferences.copyWith(clearDarkSeedColor: true));
-    } else {
-      await save(_preferences.copyWith(darkSeedColor: color));
-    }
+  Future<void> setDarkSeedColor(Color color) async {
+    await save(_preferences.copyWith(darkSeedColor: color));
   }
 
   /// 更新暗色辅色
-  Future<void> setDarkSecondaryColor(Color? color) async {
-    if (color == null) {
-      await save(_preferences.copyWith(clearDarkSecondaryColor: true));
-    } else {
-      await save(_preferences.copyWith(darkSecondaryColor: color));
-    }
+  Future<void> setDarkSecondaryColor(Color color) async {
+    await save(_preferences.copyWith(darkSecondaryColor: color));
   }
 }

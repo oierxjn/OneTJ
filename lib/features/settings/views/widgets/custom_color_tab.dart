@@ -103,15 +103,15 @@ class _CustomColorTabState extends State<CustomColorTab> {
                     ),
                     _buildColorPicker(
                       _EditableColor.lightSecondary,
-                      viewModel.current.lightSecondaryColor ?? viewModel.current.lightSeedColor,
+                      viewModel.current.lightSecondaryColor,
                     ),
                     _buildColorPicker(
                       _EditableColor.darkSeed,
-                      viewModel.current.effectiveDarkSeedColor,
+                      viewModel.current.darkSeedColor,
                     ),
                     _buildColorPicker(
                       _EditableColor.darkSecondary,
-                      viewModel.current.effectiveDarkSecondaryColor ?? viewModel.current.effectiveDarkSeedColor,
+                      viewModel.current.darkSecondaryColor,
                     ),
                   ],
                 ),
@@ -184,13 +184,14 @@ class _CustomColorTabState extends State<CustomColorTab> {
   }
 
   void _onColorCleared(_EditableColor target) {
+    final Color lightSeed = viewModel.current.lightSeedColor;
     switch (target) {
       case _EditableColor.lightSecondary:
-        viewModel.updateLightSecondaryColor(null);
+        viewModel.updateLightSecondaryColor(lightSeed);
       case _EditableColor.darkSeed:
-        viewModel.updateDarkSeedColor(null);
+        viewModel.updateDarkSeedColor(lightSeed);
       case _EditableColor.darkSecondary:
-        viewModel.updateDarkSecondaryColor(null);
+        viewModel.updateDarkSecondaryColor(lightSeed);
       case _EditableColor.lightSeed:
         // 主色不允许清空
         break;

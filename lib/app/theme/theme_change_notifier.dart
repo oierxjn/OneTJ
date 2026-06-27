@@ -65,17 +65,17 @@ class ThemeChangeNotifier extends ChangeNotifier {
   }
 
   /// 设置亮色辅色
-  Future<void> setLightSecondaryColor(Color? color) async {
+  Future<void> setLightSecondaryColor(Color color) async {
     await _repository.setLightSecondaryColor(color);
   }
 
   /// 设置暗色主色
-  Future<void> setDarkSeedColor(Color? color) async {
+  Future<void> setDarkSeedColor(Color color) async {
     await _repository.setDarkSeedColor(color);
   }
 
   /// 设置暗色辅色
-  Future<void> setDarkSecondaryColor(Color? color) async {
+  Future<void> setDarkSecondaryColor(Color color) async {
     await _repository.setDarkSecondaryColor(color);
   }
 
