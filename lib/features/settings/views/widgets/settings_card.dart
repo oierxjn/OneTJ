@@ -30,14 +30,13 @@ class SettingsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final SettingsCardVisualState visual =
         SettingsCardVisualState.fromStatus(context, status);
-    final Widget content = 
-        ListTile(
-          leading: leading,
-          title: title,
-          subtitle: subtitle,
-          trailing: trailing,
-          onTap: onTap,
-        );
+    final Widget content = ListTile(
+      leading: leading,
+      title: title,
+      subtitle: subtitle,
+      trailing: trailing,
+      onTap: onTap,
+    );
     return Card(
       color: visual.color,
       shape: visual.shape,

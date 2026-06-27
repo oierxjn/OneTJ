@@ -289,9 +289,10 @@ class _FranckHertzViewState extends State<FranckHertzView> {
     AppLocalizations l10n,
   ) {
     final FranckHertzAnalysisResult result = _viewModel.analysisResult;
-    final TextStyle? hintStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
-        );
+    final TextStyle? hintStyle =
+        Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

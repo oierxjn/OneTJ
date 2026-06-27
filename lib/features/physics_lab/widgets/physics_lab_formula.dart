@@ -25,8 +25,8 @@ class PhysicsLabFormula extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final TextStyle baseStyle = Theme.of(context).textTheme.bodyMedium ??
-        const TextStyle();
+    final TextStyle baseStyle =
+        Theme.of(context).textTheme.bodyMedium ?? const TextStyle();
     final TextStyle textStyle = baseStyle.copyWith(
       color: color,
       fontSize: fontSize,

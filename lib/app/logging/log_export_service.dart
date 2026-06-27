@@ -53,7 +53,7 @@ class AppLogExportService {
   final AppSupportDirectoryProvider _supportDirectoryProvider;
 
   /// 导出日志文件
-  /// 
+  ///
   /// 可能抛出FilePicker的未知异常
   Future<AppLogExportResult?> exportLogFile(AppLogFileInfo fileInfo) async {
     AppLogger.info(

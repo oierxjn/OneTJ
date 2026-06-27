@@ -61,6 +61,5 @@ class SchoolCalendarItemNetData {
   factory SchoolCalendarItemNetData.fromJson(Map<String, dynamic> json) =>
       _$SchoolCalendarItemNetDataFromJson(json);
 
-  Map<String, dynamic> toJson() =>
-      _$SchoolCalendarItemNetDataToJson(this);
+  Map<String, dynamic> toJson() => _$SchoolCalendarItemNetDataToJson(this);
 }

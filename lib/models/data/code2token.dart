@@ -186,8 +186,7 @@ class Code2TokenData {
         Code2TokenField.refreshExpiresIn,
         'refresh_expires_in',
       ).toInt(),
-      notBeforePolicy:
-          (json['not-before-policy'] as num?)?.toInt() ?? 0,
+      notBeforePolicy: (json['not-before-policy'] as num?)?.toInt() ?? 0,
       idToken: (json['id_token'] as String?) ?? '',
       scope: required<String>(
         Code2TokenField.scope,

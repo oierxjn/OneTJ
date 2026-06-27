@@ -388,7 +388,8 @@ class FranckHertzViewModel extends BaseViewModel<Never> {
         peakResult == null || valleyResult == null
             ? null
             : (peakResult.averageInterval + valleyResult.averageInterval) / 2;
-    final double? referenceVoltage = _parsePositiveDouble(_referenceVoltageText);
+    final double? referenceVoltage =
+        _parsePositiveDouble(_referenceVoltageText);
     final double? relativeErrorPercent =
         finalExcitationPotential == null || referenceVoltage == null
             ? null
@@ -468,8 +469,7 @@ class FranckHertzViewModel extends BaseViewModel<Never> {
       final FranckHertzSmoothedPoint current = smoothedPoints[index];
       final FranckHertzSmoothedPoint next = smoothedPoints[index + 1];
       final bool isTargetFeature = isPeak
-          ? current.current > previous.current &&
-              current.current > next.current
+          ? current.current > previous.current && current.current > next.current
           : current.current < previous.current &&
               current.current < next.current;
       if (!isTargetFeature) {
@@ -489,7 +489,8 @@ class FranckHertzViewModel extends BaseViewModel<Never> {
 
     final List<double> intervals = <double>[];
     for (int index = 1; index < featurePoints.length; index += 1) {
-      intervals.add(featurePoints[index].voltage - featurePoints[index - 1].voltage);
+      intervals
+          .add(featurePoints[index].voltage - featurePoints[index - 1].voltage);
     }
     final double averageInterval =
         intervals.reduce((double a, double b) => a + b) / intervals.length;

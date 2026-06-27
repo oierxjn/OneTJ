@@ -56,8 +56,9 @@ class AppUpdateInfo {
 int compareVersionStrings(String left, String right) {
   final List<int> leftParts = _parseVersionParts(left);
   final List<int> rightParts = _parseVersionParts(right);
-  final int length =
-      leftParts.length > rightParts.length ? leftParts.length : rightParts.length;
+  final int length = leftParts.length > rightParts.length
+      ? leftParts.length
+      : rightParts.length;
   for (int i = 0; i < length; i += 1) {
     final int leftPart = i < leftParts.length ? leftParts[i] : 0;
     final int rightPart = i < rightParts.length ? rightParts[i] : 0;
@@ -69,8 +70,11 @@ int compareVersionStrings(String left, String right) {
 }
 
 List<int> _parseVersionParts(String version) {
-  final List<String> rawParts =
-      version.trim().split(RegExp(r'[^\d]+')).where((part) => part.isNotEmpty).toList();
+  final List<String> rawParts = version
+      .trim()
+      .split(RegExp(r'[^\d]+'))
+      .where((part) => part.isNotEmpty)
+      .toList();
   if (rawParts.isEmpty) {
     return const <int>[0];
   }

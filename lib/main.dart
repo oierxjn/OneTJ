@@ -24,8 +24,7 @@ class OneTJApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeChangeNotifier themeNotifier =
-        appLocator<ThemeChangeNotifier>();
+    final ThemeChangeNotifier themeNotifier = appLocator<ThemeChangeNotifier>();
     return ListenableBuilder(
       listenable: themeNotifier,
       builder: (BuildContext context, Widget? child) {

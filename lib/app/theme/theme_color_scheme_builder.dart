@@ -15,9 +15,8 @@ class ThemeColorSchemeBuilder {
     required Brightness brightness,
   }) {
     final bool isLight = brightness == Brightness.light;
-    final Color seedColor = isLight
-        ? preferences.lightSeedColor
-        : preferences.darkSeedColor;
+    final Color seedColor =
+        isLight ? preferences.lightSeedColor : preferences.darkSeedColor;
 
     final Color secondaryColor;
     if (isLight) {

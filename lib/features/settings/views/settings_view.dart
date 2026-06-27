@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -490,7 +490,9 @@ class _SettingsViewState extends State<SettingsView> {
       leading: const Icon(Icons.colorize),
       title: Text(l10n.settingsAppearanceCustomColorTitle),
       trailing: const Icon(Icons.chevron_right),
-      onTap: _settingsBusy ? null : () => context.push(RoutePaths.homeSettingsColorPicker),
+      onTap: _settingsBusy
+          ? null
+          : () => context.push(RoutePaths.homeSettingsColorPicker),
     );
   }
 

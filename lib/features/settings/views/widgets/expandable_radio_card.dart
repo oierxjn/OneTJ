@@ -139,9 +139,8 @@ class _ExpandableRadioCardState<T> extends State<ExpandableRadioCard<T>>
         mainAxisSize: MainAxisSize.min,
         children: [
           ListTile(
-            leading: widget.leadingIcon != null
-                ? Icon(widget.leadingIcon)
-                : null,
+            leading:
+                widget.leadingIcon != null ? Icon(widget.leadingIcon) : null,
             title: Text(widget.title),
             subtitle: Text(widget.summaryText),
             trailing: AnimatedRotation(

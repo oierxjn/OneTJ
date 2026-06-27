@@ -708,8 +708,9 @@ class _AngleInputFieldState extends State<_AngleInputField> {
     final AppLocalizations l10n = AppLocalizations.of(context);
     final bool isFocused =
         _degreeFocusNode.hasFocus || _minuteFocusNode.hasFocus;
-    final bool isEmpty = widget.controllers.degreeController.text.trim().isEmpty &&
-        widget.controllers.minuteController.text.trim().isEmpty;
+    final bool isEmpty =
+        widget.controllers.degreeController.text.trim().isEmpty &&
+            widget.controllers.minuteController.text.trim().isEmpty;
     return InputDecorator(
       isFocused: isFocused,
       isEmpty: isEmpty,
@@ -731,7 +732,8 @@ class _AngleInputFieldState extends State<_AngleInputField> {
               controller: widget.controllers.degreeController,
               focusNode: _degreeFocusNode,
               hintText: l10n.physicsLabDiffractionGratingDegreeHint,
-              onChanged: (_) => widget.onChanged(widget.controllers.combinedText),
+              onChanged: (_) =>
+                  widget.onChanged(widget.controllers.combinedText),
             ),
           ),
           const SizedBox(width: 8),
@@ -745,7 +747,8 @@ class _AngleInputFieldState extends State<_AngleInputField> {
               controller: widget.controllers.minuteController,
               focusNode: _minuteFocusNode,
               hintText: l10n.physicsLabDiffractionGratingMinuteHint,
-              onChanged: (_) => widget.onChanged(widget.controllers.combinedText),
+              onChanged: (_) =>
+                  widget.onChanged(widget.controllers.combinedText),
             ),
           ),
           const SizedBox(width: 6),

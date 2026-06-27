@@ -261,7 +261,8 @@ class _TimetableViewState extends State<TimetableView> {
         }
         return;
       }
-      AppLogger.error("Failed to sync wheel controllers", loggerName: "TimetableView");
+      AppLogger.error("Failed to sync wheel controllers",
+          loggerName: "TimetableView");
     });
   }
 

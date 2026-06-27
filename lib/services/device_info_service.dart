@@ -14,7 +14,8 @@ class DeviceInfoData {
 }
 
 class DeviceInfoService {
-  DeviceInfoService({DeviceInfoPlugin? plugin}) : _plugin = plugin ?? DeviceInfoPlugin();
+  DeviceInfoService({DeviceInfoPlugin? plugin})
+      : _plugin = plugin ?? DeviceInfoPlugin();
 
   final DeviceInfoPlugin _plugin;
 
@@ -94,7 +95,8 @@ class DeviceInfoService {
         final LinuxDeviceInfo info = await _plugin.linuxInfo;
         return DeviceInfoData(
           brand: _pickFirstNonBlank(<String?>[info.name], 'linux'),
-          model: _pickFirstNonBlank(<String?>[info.prettyName, info.version], 'linux'),
+          model: _pickFirstNonBlank(
+              <String?>[info.prettyName, info.version], 'linux'),
           platform: 'linux',
         );
       case TargetPlatform.fuchsia:

@@ -534,19 +534,24 @@ class CourseScheduleRepository extends BaseNetCachedRepository<
   }) async {
     _pendingTermKey ??= termKey;
     final CourseScheduleData data;
-    try{
+    try {
       data = await super.getOrFetch(
         now: now,
         fetcher: fetcher,
         ttl: ttl,
       );
       return data;
-    } finally{
+    } finally {
       _pendingTermKey = null;
     }
   }
 
-  @override bool shouldFetch({required DateTime now, required Duration ttl, required CourseScheduleData? cached, required CourseScheduleCacheMeta? meta}) {
+  @override
+  bool shouldFetch(
+      {required DateTime now,
+      required Duration ttl,
+      required CourseScheduleData? cached,
+      required CourseScheduleCacheMeta? meta}) {
     if (meta == null || meta.termKey != _pendingTermKey) {
       return true;
     }

@@ -153,7 +153,9 @@ class _MichelsonInterferometerViewState
                 Expanded(
                   child: Column(
                     children: [
-                      for (int index = 5; index < _controllers.length; index += 1)
+                      for (int index = 5;
+                          index < _controllers.length;
+                          index += 1)
                         Padding(
                           padding: const EdgeInsets.only(bottom: 12),
                           child: _PositionInputField(
@@ -276,7 +278,8 @@ class _MichelsonInterferometerViewState
     final int earlierIndex = index + 1;
     final String laterValue = _formatMillimeter(result.positions[index + 5]);
     final String earlierValue = _formatMillimeter(result.positions[index]);
-    final String differenceValue = _formatMillimeter(result.differencesMm[index]);
+    final String differenceValue =
+        _formatMillimeter(result.differencesMm[index]);
     return '\\Delta d_{$differenceIndex} = d_{$laterIndex} - d_{$earlierIndex}'
         ' = ($laterValue - $earlierValue)\\,\\mathrm{mm} = '
         '$differenceValue\\,\\mathrm{mm}';

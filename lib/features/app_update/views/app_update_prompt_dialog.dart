@@ -92,7 +92,8 @@ class _AppUpdatePromptDialogState extends State<AppUpdatePromptDialog> {
             ),
             if (widget.allowSkipVersion)
               TextButton(
-                onPressed: widget.viewModel.skipping ? null : _handleSkipVersion,
+                onPressed:
+                    widget.viewModel.skipping ? null : _handleSkipVersion,
                 child: widget.viewModel.skipping
                     ? const SizedBox(
                         width: 16,

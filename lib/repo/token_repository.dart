@@ -28,12 +28,14 @@ class TokenData {
   final DateTime issuedAt;
 
   bool isAccessTokenExpired({Duration skew = Duration.zero}) {
-    final DateTime accessTokenExpiresAt = issuedAt.add(Duration(seconds: accessTokenExpiresIn));
+    final DateTime accessTokenExpiresAt =
+        issuedAt.add(Duration(seconds: accessTokenExpiresIn));
     return DateTime.now().add(skew).isAfter(accessTokenExpiresAt);
   }
 
   bool isRefreshTokenExpired({Duration skew = Duration.zero}) {
-    final DateTime refreshTokenExpiresAt = issuedAt.add(Duration(seconds: refreshTokenExpiresIn));
+    final DateTime refreshTokenExpiresAt =
+        issuedAt.add(Duration(seconds: refreshTokenExpiresIn));
     return DateTime.now().add(skew).isAfter(refreshTokenExpiresAt);
   }
 
@@ -143,7 +145,7 @@ class InMemoryTokenStorage implements TokenStorage {
 }
 
 /// 用于存储和管理认证令牌的仓库类。
-/// 
+///
 /// 使用 getInstance 方法获取单例实例。
 class TokenRepository {
   TokenRepository._({required TokenStorage storage}) : _storage = storage;
@@ -177,7 +179,8 @@ class TokenRepository {
     await _storage.save(token);
   }
 
-  Future<void> saveFromCode2Token(Code2TokenData data, {DateTime? issuedAt}) async {
+  Future<void> saveFromCode2Token(Code2TokenData data,
+      {DateTime? issuedAt}) async {
     final TokenData token = TokenData.fromCode2TokenData(data, now: issuedAt);
     await saveToken(token);
   }

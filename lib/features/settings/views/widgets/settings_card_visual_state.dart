@@ -24,9 +24,7 @@ class SettingsCardVisualState {
       case SettingsCardStatus.normal:
         return const SettingsCardVisualState();
       case SettingsCardStatus.dirty:
-        return SettingsCardVisualState(
-          color: colors.secondaryContainer
-        );
+        return SettingsCardVisualState(color: colors.secondaryContainer);
       case SettingsCardStatus.error:
         return SettingsCardVisualState(
           color: colors.errorContainer,

@@ -108,7 +108,7 @@ class TemplateRepository extends BaseNetCachedRepository<TemplateData,
     TemplateCacheMeta, TemplateStorage> {
   TemplateRepository._({
     required TemplateStorage storage,
-  })  : super(storage);
+  }) : super(storage);
 
   static TemplateRepository? _instance;
 
@@ -125,12 +125,10 @@ class TemplateRepository extends BaseNetCachedRepository<TemplateData,
     return repo;
   }
 
-
   @visibleForTesting
   static void resetInstanceForTest() {
     _instance = null;
   }
-
 
   @override
   TemplateCacheMeta buildMeta(DateTime now) {
