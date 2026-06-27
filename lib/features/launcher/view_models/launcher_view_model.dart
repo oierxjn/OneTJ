@@ -1,6 +1,8 @@
 import 'package:onetj/app/constant/route_paths.dart';
+import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/app/logging/logger.dart';
 import 'package:onetj/app/logging/logging_bootstrap.dart';
+import 'package:onetj/app/theme/theme_change_notifier.dart';
 import 'package:onetj/models/base_model.dart';
 import 'package:onetj/models/data/code2token.dart';
 import 'package:onetj/models/event_model.dart';
@@ -51,6 +53,10 @@ class LauncherViewModel extends BaseViewModel<UiEvent> {
   /// 根据初始化状况返回初始路由
   Future<String> _initialize() async {
     await _hiveStorageService.initializeHive();
+
+    // 在 Hive 路径正确初始化后立即加载主题偏好
+    await appLocator<ThemeChangeNotifier>().initialize();
+
     final Future<void> webViewInitFuture =
         WebViewEnvironmentService.instance.initialize();
     final Future<SettingsData> settingsFuture =
