@@ -165,6 +165,16 @@ class Code2TokenData {
       return value;
     }
 
+    /// 容错解析整型：尝试将任意值转为 int，失败则返回 0。
+    ///
+    /// 用于后端可能传入非预期类型（如 String）的可选字段。
+    int tryParseInt(dynamic value) {
+      if (value is int) return value;
+      if (value is num) return value.toInt();
+      if (value is String) return int.tryParse(value) ?? 0;
+      return 0;
+    }
+
     return Code2TokenData(
       accessToken: required<String>(
         Code2TokenField.accessToken,
@@ -186,7 +196,7 @@ class Code2TokenData {
         Code2TokenField.refreshExpiresIn,
         'refresh_expires_in',
       ).toInt(),
-      notBeforePolicy: (json['not-before-policy'] as num?)?.toInt() ?? 0,
+      notBeforePolicy: tryParseInt(json['not-before-policy']),
       idToken: (json['id_token'] as String?) ?? '',
       scope: required<String>(
         Code2TokenField.scope,
@@ -200,4 +210,8 @@ class Code2TokenData {
   }
 
   Map<String, dynamic> toJson() => _$Code2TokenDataToJson(this);
+
+  @Deprecated('Use [fromJson] instead.')
+  factory Code2TokenData.fromJsonDeprecated(Map<String, dynamic> json) =>
+      _$Code2TokenDataFromJson(json);
 }
