@@ -53,6 +53,10 @@ class _CustomColorTabState extends State<CustomColorTab> {
     return ListenableBuilder(
       listenable: viewModel,
       builder: (BuildContext context, Widget? child) {
+        // 同步 ViewModel 预设名称
+        if (_nameController.text != viewModel.presetName) {
+          _nameController.text = viewModel.presetName;
+        }
         return DefaultTabController(
           length: 4,
           child: Column(
