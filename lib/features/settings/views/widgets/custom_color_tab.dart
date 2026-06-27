@@ -15,7 +15,7 @@ enum _EditableColor {
 /// 自定义调色 Tab
 ///
 /// 包含子 Tab 切换四个颜色属性，每个属性对应一个取色器。
-class CustomColorTab extends StatelessWidget {
+class CustomColorTab extends StatefulWidget {
   const CustomColorTab({
     required this.l10n,
     required this.viewModel,
@@ -26,6 +26,27 @@ class CustomColorTab extends StatelessWidget {
   final AppLocalizations l10n;
   final ColorPickerViewModel viewModel;
   final VoidCallback? onSaved;
+
+  @override
+  State<CustomColorTab> createState() => _CustomColorTabState();
+}
+
+class _CustomColorTabState extends State<CustomColorTab> {
+  late final TextEditingController _nameController;
+
+  ColorPickerViewModel get viewModel => widget.viewModel;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: viewModel.presetName);
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,14 +64,11 @@ class CustomColorTab extends StatelessWidget {
                   children: [
                     Expanded(
                       child: TextField(
-                        key: ValueKey<String>(viewModel.presetName),
-                        controller: TextEditingController(
-                          text: viewModel.presetName,
-                        ),
+                        controller: _nameController,
                         onChanged: viewModel.updatePresetName,
                         decoration: InputDecoration(
                           isDense: true,
-                          hintText: l10n.colorPickerPresetNameHint,
+                          hintText: widget.l10n.colorPickerPresetNameHint,
                           border: const OutlineInputBorder(),
                         ),
                       ),
@@ -59,9 +77,9 @@ class CustomColorTab extends StatelessWidget {
                     FilledButton(
                       onPressed: () async {
                         await viewModel.savePreset();
-                        onSaved?.call();
+                        widget.onSaved?.call();
                       },
-                      child: Text(l10n.saveLabel),
+                      child: Text(widget.l10n.saveLabel),
                     ),
                   ],
                 ),
@@ -70,10 +88,10 @@ class CustomColorTab extends StatelessWidget {
               TabBar(
                 isScrollable: true,
                 tabs: [
-                  Tab(text: l10n.colorPickerLightSeed),
-                  Tab(text: l10n.colorPickerLightSecondary),
-                  Tab(text: l10n.colorPickerDarkSeed),
-                  Tab(text: l10n.colorPickerDarkSecondary),
+                  Tab(text: widget.l10n.colorPickerLightSeed),
+                  Tab(text: widget.l10n.colorPickerLightSecondary),
+                  Tab(text: widget.l10n.colorPickerDarkSeed),
+                  Tab(text: widget.l10n.colorPickerDarkSecondary),
                 ],
               ),
               Expanded(
@@ -144,7 +162,7 @@ class CustomColorTab extends StatelessWidget {
               padding: const EdgeInsets.only(top: 8),
               child: TextButton(
                 onPressed: () => _onColorCleared(target),
-                child: Text(l10n.settingsLaunchWallpaperResetAction),
+                child: Text(widget.l10n.settingsLaunchWallpaperResetAction),
               ),
             ),
         ],
