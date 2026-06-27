@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'package:onetj/app/di/dependencies.dart';
+import 'package:onetj/app/logging/logger.dart';
 import 'package:onetj/app/theme/theme_change_notifier.dart';
 import 'package:onetj/models/theme_preferences.dart';
 import 'package:onetj/repo/color_preset_repository.dart';
@@ -77,6 +79,41 @@ class ColorPickerViewModel extends ChangeNotifier {
   /// 判断预设是否与当前编辑的配色一致
   bool isPresetSelected(ThemePreferences preset) =>
       _current.hasSameColor(preset);
+
+  /// 生成分享文本，格式：#亮色主色#亮色辅色#暗色主色#暗色辅色
+  /// 每个 # 后跟 8 位十六进制色号，null 留空
+  String get shareText {
+    String hexOf(Color? c) {
+      if (c == null) return '';
+      final int rgba = ((c.a * 255).round() << 24) |
+          ((c.r * 255).round() << 16) |
+          ((c.g * 255).round() << 8) |
+          (c.b * 255).round();
+      return rgba.toRadixString(16).padLeft(8, '0');
+    }
+    return '#${hexOf(_current.lightSeedColor)}'
+        '#${hexOf(_current.lightSecondaryColor)}'
+        '#${hexOf(_current.darkSeedColor)}'
+        '#${hexOf(_current.darkSecondaryColor)}';
+  }
+
+  /// 复制分享文本到剪贴板
+  /// 返回 true 表示复制成功
+  Future<bool> copyShareText() async {
+    final String text = shareText;
+    try {
+      await Clipboard.setData(ClipboardData(text: text));
+      return true;
+    } catch (error, stackTrace) {
+      AppLogger.warning(
+        'Failed to copy color preset to clipboard',
+        loggerName: 'ColorPickerViewModel',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      return false;
+    }
+  }
 
   void _generateDefaultName() {
     final int total = _userPresets.length;
