@@ -23,14 +23,14 @@
 
 ## Git Worktrees
 - The default branch for this repo is `main`; the active development branch is `develop`.
-- `EnterWorktree`工具默认基于 `origin/main` 创建 worktree，但我们需要的是 `develop` 分支。
-- **进入 worktree 后，第一件事就是用 `git log --oneline -3` 检查当前 HEAD。**
-  - 如果 HEAD 是 `origin/main` 的最新 commit（常见特征是 merge PR 到 main 的提交），而你需要的代码（如最近的 feature 文件）不存在，说明拉到了 `main`。此时退出 worktree 并手动通过命令行创建：
+- `EnterWorktree` defaults to `origin/main` as the base ref, but work should be based on `develop`.
+- **After entering a worktree, always check the current HEAD with `git log --oneline -3`.**
+  - If HEAD points to the latest `origin/main` commit (typically a merge PR to main) and the code you need (e.g. recent feature files) is missing, you're on `main`. Exit the worktree and create one manually:
     ```
     git fetch origin develop && git worktree add --track -b <branch-name> <path> origin/develop
     ```
-    然后用 `EnterWorktree` 传入 `path` 参数进入。
-- 多 agent 并行时，不要删除其他 agent 创建的工作树（`.claude/worktrees/*`），即使它们看起来是孤儿或损坏的。（会话结束时的清理会处理。）
+    Then enter it with `EnterWorktree` using the `path` parameter.
+- When multiple agents run in parallel, do not delete worktrees created by other agents (`.claude/worktrees/*`), even if they appear orphaned or broken. Session cleanup handles them.
 
 ## Optional: Windows warnings
 - To silence MSVC warning C4819 (encoding mismatch), add `/utf-8` in
