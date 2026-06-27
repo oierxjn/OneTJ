@@ -323,6 +323,7 @@
     "colorPickerPresetNameHint": "预设名称",
     "colorPickerDeletePreset": "删除预设",
     "colorPickerPresetNameDefault": "预设{n}",
+    "colorPickerResetToPrimary": "重置为主色",
     "@colorPickerPresetNameDefault": {
       "placeholders": {
         "n": {

@@ -323,6 +323,7 @@
   "colorPickerPresetNameHint": "Preset name",
   "colorPickerDeletePreset": "Delete preset",
   "colorPickerPresetNameDefault": "Preset {n}",
+  "colorPickerResetToPrimary": "Reset to primary",
   "@colorPickerPresetNameDefault": {
     "placeholders": {
       "n": {

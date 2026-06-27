@@ -162,7 +162,7 @@ class _CustomColorTabState extends State<CustomColorTab> {
               padding: const EdgeInsets.only(top: 8),
               child: TextButton(
                 onPressed: () => _onColorCleared(target),
-                child: Text(widget.l10n.settingsLaunchWallpaperResetAction),
+                child: Text(widget.l10n.colorPickerResetToPrimary),
               ),
             ),
         ],
