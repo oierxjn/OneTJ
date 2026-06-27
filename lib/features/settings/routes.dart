@@ -2,6 +2,8 @@ import 'package:go_router/go_router.dart';
 
 import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/features/about/views/about_view.dart';
+import 'package:onetj/features/settings/view_models/color_picker_view_model.dart';
+import 'package:onetj/features/settings/views/color_picker_page.dart';
 import 'package:onetj/features/settings/views/developer_settings_view.dart';
 import 'package:onetj/features/settings/views/launch_wallpaper_editor_view.dart';
 import 'package:onetj/features/settings/views/log_viewer_view.dart';
@@ -88,6 +90,15 @@ final List<GoRoute> settingsRoutes = [
           };
           return UserCollectionPolicyView(
             initialSelectedFields: initialSelectedFields,
+          );
+        },
+      ),
+      GoRoute(
+        path: 'color-picker',
+        name: 'settings-color-picker',
+        builder: (context, state) {
+          return ColorPickerPage(
+            viewModel: ColorPickerViewModel(),
           );
         },
       ),

@@ -485,6 +485,15 @@ class _SettingsViewState extends State<SettingsView> {
     );
   }
 
+  Widget _buildCustomColorCard(AppLocalizations l10n) {
+    return SettingsCard(
+      leading: const Icon(Icons.colorize),
+      title: Text(l10n.settingsAppearanceCustomColorTitle),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: _settingsBusy ? null : () => context.push(RoutePaths.homeSettingsColorPicker),
+    );
+  }
+
   Widget _buildAdvancedSectionTitle(AppLocalizations l10n) {
     return Text(
       l10n.settingsAdvancedSectionTitle,
@@ -611,6 +620,8 @@ class _SettingsViewState extends State<SettingsView> {
         _buildAppearanceSectionTitle(l10n),
         const SizedBox(height: 8),
         _buildThemeColorCard(l10n),
+        const SizedBox(height: 12),
+        _buildCustomColorCard(l10n),
         const SizedBox(height: 24),
         _buildAdvancedSectionTitle(l10n),
         const SizedBox(height: 8),

@@ -15,6 +15,7 @@ class RoutePaths {
   static const String homeSettingsAbout = '$homeSettings/about';
   static const String homeSettingsDeveloper = '$homeSettings/developer';
   static const String homeSettingsDeveloperLogs = '$homeSettingsDeveloper/logs';
+  static const String homeSettingsColorPicker = '$homeSettings/color-picker';
   static const String homeTools = '$home/tools';
   static const String homePhysicsLab = '$homeTools/physics-lab';
   static const String homePhysicsLabMichelson = '$homePhysicsLab/michelson';
