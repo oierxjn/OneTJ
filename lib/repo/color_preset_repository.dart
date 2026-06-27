@@ -72,11 +72,11 @@ class InMemoryColorPresetStorage implements ColorPresetStorage {
   List<ThemePreferences>? _cache;
 
   @override
-  Future<List<ThemePreferences>> read() async => _cache ?? [];
+  Future<List<ThemePreferences>> read() async => _cache?.toList() ?? [];
 
   @override
   Future<void> save(List<ThemePreferences> presets) async {
-    _cache = presets;
+    _cache = presets.toList();
   }
 
   @override
