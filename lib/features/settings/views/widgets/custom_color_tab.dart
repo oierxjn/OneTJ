@@ -19,11 +19,13 @@ class CustomColorTab extends StatelessWidget {
   const CustomColorTab({
     required this.l10n,
     required this.viewModel,
+    this.onSaved,
     super.key,
   });
 
   final AppLocalizations l10n;
   final ColorPickerViewModel viewModel;
+  final VoidCallback? onSaved;
 
   @override
   Widget build(BuildContext context) {
@@ -34,6 +36,37 @@ class CustomColorTab extends StatelessWidget {
           length: 4,
           child: Column(
             children: [
+              // 预设名称输入 + 保存按钮
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        key: ValueKey<String>(viewModel.presetName),
+                        controller: TextEditingController(
+                          text: viewModel.presetName,
+                        ),
+                        onChanged: viewModel.updatePresetName,
+                        decoration: InputDecoration(
+                          isDense: true,
+                          hintText: l10n.colorPickerPresetNameHint,
+                          border: const OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    FilledButton(
+                      onPressed: () async {
+                        await viewModel.savePreset();
+                        onSaved?.call();
+                      },
+                      child: Text(l10n.saveLabel),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
               TabBar(
                 isScrollable: true,
                 tabs: [

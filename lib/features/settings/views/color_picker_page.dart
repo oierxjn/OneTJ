@@ -69,7 +69,11 @@ class _ColorPickerPageState extends State<ColorPickerPage>
         controller: _tabController,
         children: [
           _ColorPresetsTab(l10n: l10n, viewModel: viewModel),
-          CustomColorTab(l10n: l10n, viewModel: viewModel),
+          CustomColorTab(
+          l10n: l10n,
+          viewModel: viewModel,
+          onSaved: () => Navigator.of(context).pop(),
+        ),
         ],
       ),
     );
@@ -87,24 +91,34 @@ class _ColorPresetsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final List<ThemePreferences> presets = viewModel.presets;
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: presets.length,
-      itemBuilder: (BuildContext context, int index) {
-        final ThemePreferences preset = presets[index];
-        return Card(
-          margin: const EdgeInsets.only(bottom: 8),
-          child: ListTile(
-            leading: CircleAvatar(
-              backgroundColor: preset.lightSeedColor,
-            ),
-            title: Text(preset.name ?? ''),
-            trailing: ElevatedButton(
-              onPressed: () => viewModel.selectPreset(preset),
-              child: Text(l10n.confirmLabel),
-            ),
-          ),
+    return ListenableBuilder(
+      listenable: viewModel,
+      builder: (BuildContext context, Widget? child) {
+        final List<ThemePreferences> presets = viewModel.presets;
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: presets.length,
+          itemBuilder: (BuildContext context, int index) {
+            final ThemePreferences preset = presets[index];
+            final bool isUser = viewModel.isUserPreset(index);
+            return Card(
+              margin: const EdgeInsets.only(bottom: 8),
+              child: ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: preset.lightSeedColor,
+                ),
+                title: Text(preset.name),
+                trailing: isUser
+                    ? IconButton(
+                        tooltip: l10n.colorPickerDeletePreset,
+                        icon: const Icon(Icons.delete_outline),
+                        onPressed: () => viewModel.deletePreset(index),
+                      )
+                    : null,
+                onTap: () => viewModel.selectPreset(preset),
+              ),
+            );
+          },
         );
       },
     );

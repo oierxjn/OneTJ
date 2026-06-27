@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 /// 包含主色、辅色、主题模式等配置，支持 JSON 序列化以持久化到 Hive。
 class ThemePreferences {
   const ThemePreferences({
-    this.name,
+    this.name = '',
     required this.lightSeedColor,
     this.lightSecondaryColor,
     this.darkSeedColor,
@@ -15,8 +15,8 @@ class ThemePreferences {
     this.themeMode = ThemeMode.system,
   });
 
-  /// 方案名称（预设使用，自定义方案为 null）
-  final String? name;
+  /// 方案名称
+  final String name;
 
   /// 亮色模式主色
   final Color lightSeedColor;
@@ -63,7 +63,7 @@ class ThemePreferences {
   /// 从 JSON Map 反序列化
   factory ThemePreferences.fromJson(Map<String, dynamic> json) {
     return ThemePreferences(
-      name: json['name'] as String?,
+      name: json['name'] as String? ?? '',
       lightSeedColor: _colorFromJson(
         json['lightSeedColor'],
         kDefaultSeedColor,

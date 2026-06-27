@@ -313,6 +313,16 @@
     "colorPickerLightSecondary": "亮色辅色",
     "colorPickerDarkSeed": "暗色主色",
     "colorPickerDarkSecondary": "暗色辅色",
+    "colorPickerPresetNameHint": "预设名称",
+    "colorPickerDeletePreset": "删除预设",
+    "colorPickerPresetNameDefault": "预设{n}",
+    "@colorPickerPresetNameDefault": {
+      "placeholders": {
+        "n": {
+          "type": "int"
+        }
+      }
+    },
     "settingsAboutTitle": "关于",
     "settingsAboutSubtitle": "应用信息与项目链接",
     "settingsDeveloperTitle": "开发者选项",
