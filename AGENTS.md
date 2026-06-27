@@ -21,6 +21,17 @@
 - Use Chinese in the CLI.
 - When running scripts that operate on files, you may add `--Encoding utf-8` to prevent Chinese garbling.
 
+## Git Worktrees
+- The default branch for this repo is `main`; the active development branch is `develop`.
+- `EnterWorktree`工具默认基于 `origin/main` 创建 worktree，但我们需要的是 `develop` 分支。
+- **进入 worktree 后，第一件事就是用 `git log --oneline -3` 检查当前 HEAD。**
+  - 如果 HEAD 是 `origin/main` 的最新 commit（常见特征是 merge PR 到 main 的提交），而你需要的代码（如最近的 feature 文件）不存在，说明拉到了 `main`。此时退出 worktree 并手动通过命令行创建：
+    ```
+    git fetch origin develop && git worktree add --track -b <branch-name> <path> origin/develop
+    ```
+    然后用 `EnterWorktree` 传入 `path` 参数进入。
+- 多 agent 并行时，不要删除其他 agent 创建的工作树（`.claude/worktrees/*`），即使它们看起来是孤儿或损坏的。（会话结束时的清理会处理。）
+
 ## Optional: Windows warnings
 - To silence MSVC warning C4819 (encoding mismatch), add `/utf-8` in
   `local_packages/flutter_inappwebview/flutter_inappwebview_windows/windows/CMakeLists.txt`
