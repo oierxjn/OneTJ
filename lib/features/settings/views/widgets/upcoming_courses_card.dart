@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
+import 'package:onetj/features/settings/views/widgets/expandable_radio_card.dart';
 import 'package:onetj/features/settings/views/widgets/settings_card_visual_state.dart';
 import 'package:onetj/models/dashboard_upcoming_mode.dart';
 
-class UpcomingCoursesCard extends StatefulWidget {
+/// 即将到来的课程选择卡片
+class UpcomingCoursesCard extends StatelessWidget {
   const UpcomingCoursesCard({
     required this.l10n,
     required this.mode,
@@ -27,140 +29,55 @@ class UpcomingCoursesCard extends StatefulWidget {
   final ValueChanged<String> onCountChanged;
   final SettingsCardStatus status;
 
-  @override
-  State<UpcomingCoursesCard> createState() => _UpcomingCoursesCardState();
-}
-
-class _UpcomingCoursesCardState extends State<UpcomingCoursesCard>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _expandController;
-  late final Animation<double> _expandAnimation;
-  bool _expanded = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _expandController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 180),
-    );
-    _expandAnimation = CurvedAnimation(
-      parent: _expandController,
-      curve: Curves.easeInOut,
-    );
-  }
-
-  @override
-  void dispose() {
-    _expandController.dispose();
-    super.dispose();
-  }
-
-  void _toggleExpanded() {
-    setState(() {
-      _expanded = !_expanded;
-    });
-    if (_expanded) {
-      _expandController.forward();
-      return;
-    }
-    _expandController.reverse();
-  }
-
-  void _onModeChanged(DashboardUpcomingMode? value) {
-    if (value == null) {
-      return;
-    }
-    widget.onModeChanged(value);
-  }
-
-  Widget _buildModeOption({
-    required DashboardUpcomingMode value,
-    required String title,
-  }) {
-    return RadioListTile<DashboardUpcomingMode>(
-      contentPadding: EdgeInsets.zero,
-      value: value,
-      groupValue: widget.mode,
-      onChanged: widget.enabled ? _onModeChanged : null,
-      title: Text(title),
-    );
+  List<RadioOption<DashboardUpcomingMode>> _buildOptions() {
+    return [
+      RadioOption(
+        value: DashboardUpcomingMode.thisWeek,
+        title: l10n.settingsDashboardUpcomingModeThisWeek,
+      ),
+      RadioOption(
+        value: DashboardUpcomingMode.today,
+        title: l10n.settingsDashboardUpcomingModeToday,
+      ),
+      RadioOption(
+        value: DashboardUpcomingMode.count,
+        title: l10n.settingsDashboardUpcomingModeCount,
+      ),
+    ];
   }
 
   Widget _buildCountField() {
-    return TextField(
-      controller: widget.countController,
-      onChanged: widget.onCountChanged,
-      keyboardType: TextInputType.number,
-      inputFormatters: [
-        FilteringTextInputFormatter.digitsOnly,
-      ],
-      enabled: widget.enabled,
-      decoration: InputDecoration(
-        isDense: true,
-        border: const OutlineInputBorder(),
-        labelText: widget.l10n.settingsDashboardUpcomingCountLabel,
-        helperText: widget.l10n.settingsDashboardUpcomingCountHint,
-      ),
-    );
-  }
-
-  Widget _buildExpandedContent() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 8),
-          _buildModeOption(
-            value: DashboardUpcomingMode.thisWeek,
-            title: widget.l10n.settingsDashboardUpcomingModeThisWeek,
-          ),
-          _buildModeOption(
-            value: DashboardUpcomingMode.today,
-            title: widget.l10n.settingsDashboardUpcomingModeToday,
-          ),
-          _buildModeOption(
-            value: DashboardUpcomingMode.count,
-            title: widget.l10n.settingsDashboardUpcomingModeCount,
-          ),
-          _CountFieldSection(
-            visible: widget.mode == DashboardUpcomingMode.count,
-            child: _buildCountField(),
-          ),
+    return _CountFieldSection(
+      visible: mode == DashboardUpcomingMode.count,
+      child: TextField(
+        controller: countController,
+        onChanged: onCountChanged,
+        keyboardType: TextInputType.number,
+        inputFormatters: [
+          FilteringTextInputFormatter.digitsOnly,
         ],
+        enabled: enabled,
+        decoration: InputDecoration(
+          isDense: true,
+          border: const OutlineInputBorder(),
+          labelText: l10n.settingsDashboardUpcomingCountLabel,
+          helperText: l10n.settingsDashboardUpcomingCountHint,
+        ),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final SettingsCardVisualState visual =
-        SettingsCardVisualState.fromStatus(context, widget.status);
-    return Card(
-      color: visual.color,
-      shape: visual.shape,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ListTile(
-            title: Text(widget.l10n.settingsDashboardUpcomingTitle),
-            subtitle: Text(widget.summaryText),
-            trailing: AnimatedRotation(
-              turns: _expanded ? 0.5 : 0,
-              duration: const Duration(milliseconds: 180),
-              curve: Curves.easeInOut,
-              child: const Icon(Icons.expand_more),
-            ),
-            onTap: _toggleExpanded,
-          ),
-          SizeTransition(
-            sizeFactor: _expandAnimation,
-            axisAlignment: -1.0,
-            child: _buildExpandedContent(),
-          ),
-        ],
-      ),
+    return ExpandableRadioCard<DashboardUpcomingMode>(
+      title: l10n.settingsDashboardUpcomingTitle,
+      summaryText: summaryText,
+      value: mode,
+      options: _buildOptions(),
+      onChanged: onModeChanged,
+      enabled: enabled,
+      status: status,
+      extraContent: _buildCountField(),
     );
   }
 }

@@ -1,8 +1,11 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
+import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/app/logging/logger.dart';
+import 'package:onetj/app/theme/theme_change_notifier.dart';
 import 'package:onetj/models/dashboard_upcoming_mode.dart';
 import 'package:onetj/models/launch_wallpaper_ref.dart';
 import 'package:onetj/models/user_collection_field.dart';
@@ -35,15 +38,20 @@ class SettingsUiState {
 class SettingsViewModel extends BaseViewModel<UiEvent> {
   SettingsViewModel({
     SettingsRepository? settingsRepository,
+    ThemeChangeNotifier? themeChangeNotifier,
   })  : _settingsRepository =
             settingsRepository ?? SettingsRepository.getInstance(),
+        _themeChangeNotifier =
+            themeChangeNotifier ?? appLocator<ThemeChangeNotifier>(),
         _hiveStorageService = HiveStorageService(),
         _webViewEnvironment = WebViewEnvironmentService.instance.environment {
     _savedSettings = _settingsRepository.peekCachedOrDefault();
     _applySavedToDraft(_savedSettings);
+    _themeChangeNotifier.addListener(_onThemeChanged);
   }
 
   final SettingsRepository _settingsRepository;
+  final ThemeChangeNotifier _themeChangeNotifier;
   final HiveStorageService _hiveStorageService;
   final WebViewEnvironment? _webViewEnvironment;
 
@@ -78,6 +86,8 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
   Set<UserCollectionField> get draftUserCollectionFields =>
       Set<UserCollectionField>.unmodifiable(_draftUserCollectionFields);
   LaunchWallpaperRef get draftLaunchWallpaperRef => _draftLaunchWallpaperRef;
+
+  ThemeMode get themeColor => _themeChangeNotifier.themeMode;
 
   bool get isHydrated => _hydrated;
   bool get settingsLoading => _settingsLoading;
@@ -487,5 +497,19 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
       }
     }
     return true;
+  }
+
+  Future<void> setThemeColor(ThemeMode color) async {
+    await _themeChangeNotifier.setThemeMode(color);
+  }
+
+  void _onThemeChanged() {
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _themeChangeNotifier.removeListener(_onThemeChanged);
+    super.dispose();
   }
 }

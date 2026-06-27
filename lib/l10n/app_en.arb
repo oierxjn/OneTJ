@@ -298,6 +298,11 @@
 
   "settingsAdvancedSectionTitle": "Advanced",
   "settingsCommonSectionTitle": "Common",
+  "settingsAppearanceSectionTitle": "Appearance",
+  "settingsAppearanceThemeColorTitle": "Theme color",
+  "settingsAppearanceThemeColorSystem": "Follow system",
+  "settingsAppearanceThemeColorLight": "Light",
+  "settingsAppearanceThemeColorDark": "Dark",
   "settingsAboutTitle": "About",
   "settingsAboutSubtitle": "App info and project link",
   "settingsDeveloperTitle": "Developer Options",
