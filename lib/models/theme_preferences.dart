@@ -140,6 +140,14 @@ class ThemePreferences {
   // 相等性
   // ============================================================
 
+  /// 仅比较颜色属性是否相同（忽略名称与主题模式）
+  bool hasSameColor(ThemePreferences other) {
+    return lightSeedColor == other.lightSeedColor &&
+        lightSecondaryColor == other.lightSecondaryColor &&
+        darkSeedColor == other.darkSeedColor &&
+        darkSecondaryColor == other.darkSecondaryColor;
+  }
+
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
