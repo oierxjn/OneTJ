@@ -101,13 +101,36 @@ class _ColorPresetsTab extends StatelessWidget {
           itemBuilder: (BuildContext context, int index) {
             final ThemePreferences preset = presets[index];
             final bool isUser = viewModel.isUserPreset(index);
+            final bool isSelected = viewModel.isPresetSelected(preset);
             return Card(
               margin: const EdgeInsets.only(bottom: 8),
+              color: isSelected
+                  ? Theme.of(context).colorScheme.primaryContainer
+                  : null,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: isSelected
+                    ? BorderSide(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .primary
+                            .withAlpha(100),
+                        width: 2,
+                      )
+                    : BorderSide.none,
+              ),
               child: ListTile(
                 leading: CircleAvatar(
                   backgroundColor: preset.lightSeedColor,
+                  child: isSelected
+                      ? Icon(
+                          Icons.check,
+                          color: _checkColorOn(preset.lightSeedColor),
+                        )
+                      : null,
                 ),
                 title: Text(preset.name),
+                selected: isSelected,
                 trailing: isUser
                     ? IconButton(
                         tooltip: l10n.colorPickerDeletePreset,
@@ -122,5 +145,15 @@ class _ColorPresetsTab extends StatelessWidget {
         );
       },
     );
+  }
+
+  /// 根据背景色计算对勾颜色：浅色底深对勾，深色底浅对勾
+  static Color _checkColorOn(Color background) {
+    // 相对亮度（ITU-R BT.709 加权）
+    final double luminance = (0.2126 * background.r +
+            0.7152 * background.g +
+            0.0722 * background.b) *
+        background.a;
+    return luminance > 0.6 ? Colors.black87 : Colors.white;
   }
 }

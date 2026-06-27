@@ -74,6 +74,10 @@ class ColorPickerViewModel extends ChangeNotifier {
   bool isUserPreset(int index) =>
       index < _userPresets.length;
 
+  /// 判断预设是否与当前编辑的配色一致
+  bool isPresetSelected(ThemePreferences preset) =>
+      _current.hasSameColor(preset);
+
   void _generateDefaultName() {
     final int total = _userPresets.length;
     _presetName = '预设${total + 1}';
