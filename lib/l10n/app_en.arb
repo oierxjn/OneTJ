@@ -462,6 +462,8 @@
   "aboutVersionLabel": "Version",
   "aboutBuildLabel": "Build Number",
   "aboutRepoLabel": "Project Repository",
+  "copiedToClipboard": "Copied to clipboard",
+  "copyFailed": "Copy failed",
   "aboutCopied": "Repository link copied",
   "aboutQqGroupTitle": "QQ Discussion Group",
   "aboutQqGroupSubtitle": "Tap to view the QR code",

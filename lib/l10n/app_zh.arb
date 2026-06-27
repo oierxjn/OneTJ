@@ -462,6 +462,8 @@
     "aboutVersionLabel": "版本号",
     "aboutBuildLabel": "构建号",
     "aboutRepoLabel": "项目仓库",
+    "copiedToClipboard": "已复制到剪贴板",
+    "copyFailed": "复制失败",
     "aboutCopied": "已复制仓库链接",
     "aboutQqGroupTitle": "QQ讨论群",
     "aboutQqGroupSubtitle": "点击查看二维码",

@@ -50,12 +50,22 @@ class _ColorPickerPageState extends State<ColorPickerPage>
             icon: const Icon(Icons.undo),
             onPressed: () => viewModel.undo(),
           ),
-          // TODO 分享功能
-          // IconButton(
-          //   tooltip: l10n.colorPickerShare,
-          //   icon: const Icon(Icons.share),
-          //   onPressed: () {},
-          // ),
+          IconButton(
+            tooltip: l10n.colorPickerShare,
+            icon: const Icon(Icons.share),
+            onPressed: () async {
+              final bool ok = await viewModel.copyShareText();
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    ok ? l10n.copiedToClipboard : l10n.copyFailed,
+                  ),
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            },
+          ),
         ],
         bottom: TabBar(
           controller: _tabController,
