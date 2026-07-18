@@ -17,6 +17,7 @@ void main() {
         expect(prefs.darkSecondaryColor, ThemePreferences.kDefaultSeedColor);
         expect(prefs.name, '');
         expect(prefs.themeMode, ThemeMode.system);
+        expect(prefs.homeLayout, HomeLayout.bottomNavigation);
       });
     });
 
@@ -29,6 +30,7 @@ void main() {
           darkSeedColor: Color(0xFF000000),
           darkSecondaryColor: Color(0xFFFFFFFF),
           themeMode: ThemeMode.dark,
+          homeLayout: HomeLayout.functionGrid,
         );
 
         final json = prefs.toJson();
@@ -51,11 +53,21 @@ void main() {
         final restored = ThemePreferences.fromJson(<String, dynamic>{});
 
         expect(restored.lightSeedColor, ThemePreferences.kDefaultSeedColor);
-        expect(restored.lightSecondaryColor, ThemePreferences.kDefaultSeedColor);
+        expect(
+            restored.lightSecondaryColor, ThemePreferences.kDefaultSeedColor);
         expect(restored.darkSeedColor, ThemePreferences.kDefaultSeedColor);
         expect(restored.darkSecondaryColor, ThemePreferences.kDefaultSeedColor);
         expect(restored.name, '');
         expect(restored.themeMode, ThemeMode.system);
+        expect(restored.homeLayout, HomeLayout.bottomNavigation);
+      });
+
+      test('fromJson 非法主页布局使用默认值', () {
+        final restored = ThemePreferences.fromJson({
+          'homeLayout': 'unknown',
+        });
+
+        expect(restored.homeLayout, HomeLayout.bottomNavigation);
       });
 
       test('fromJson 非法颜色值使用默认值', () {
@@ -65,7 +77,8 @@ void main() {
         });
 
         expect(restored.lightSeedColor, ThemePreferences.kDefaultSeedColor);
-        expect(restored.lightSecondaryColor, ThemePreferences.kDefaultSeedColor);
+        expect(
+            restored.lightSecondaryColor, ThemePreferences.kDefaultSeedColor);
       });
 
       test('fromJson 非法 themeMode 使用默认值', () {
@@ -114,10 +127,12 @@ void main() {
         final updated = prefs.copyWith(
           name: '新名称',
           themeMode: ThemeMode.dark,
+          homeLayout: HomeLayout.functionGrid,
         );
 
         expect(updated.name, '新名称');
         expect(updated.themeMode, ThemeMode.dark);
+        expect(updated.homeLayout, HomeLayout.functionGrid);
       });
 
       test('传入 null 保留原值', () {
@@ -205,11 +220,13 @@ void main() {
       });
 
       test('黑色', () {
-        expect(ThemePreferences.colorToInt(const Color(0xFF000000)), 0xFF000000);
+        expect(
+            ThemePreferences.colorToInt(const Color(0xFF000000)), 0xFF000000);
       });
 
       test('白色', () {
-        expect(ThemePreferences.colorToInt(const Color(0xFFFFFFFF)), 0xFFFFFFFF);
+        expect(
+            ThemePreferences.colorToInt(const Color(0xFFFFFFFF)), 0xFFFFFFFF);
       });
     });
   });

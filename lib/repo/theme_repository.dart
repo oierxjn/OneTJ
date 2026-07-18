@@ -157,6 +157,11 @@ class ThemeRepository extends ChangeNotifier {
     await save(_preferences.copyWith(themeMode: mode));
   }
 
+  /// 更新主页导航布局
+  Future<void> setHomeLayout(HomeLayout layout) async {
+    await save(_preferences.copyWith(homeLayout: layout));
+  }
+
   /// 更新亮色主色
   Future<void> setLightSeedColor(Color color) async {
     await save(_preferences.copyWith(lightSeedColor: color));

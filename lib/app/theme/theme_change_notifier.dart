@@ -59,6 +59,11 @@ class ThemeChangeNotifier extends ChangeNotifier {
     await _repository.setThemeMode(mode);
   }
 
+  /// 设置主页导航布局
+  Future<void> setHomeLayout(HomeLayout layout) async {
+    await _repository.setHomeLayout(layout);
+  }
+
   /// 设置亮色主色
   Future<void> setLightSeedColor(Color color) async {
     await _repository.setLightSeedColor(color);

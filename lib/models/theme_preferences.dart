@@ -2,6 +2,9 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 
+/// 应用主页的导航布局。
+enum HomeLayout { bottomNavigation, functionGrid }
+
 /// 用户主题偏好设置
 ///
 /// 所有颜色字段均为非空
@@ -13,6 +16,7 @@ class ThemePreferences {
     this.darkSeedColor = kDefaultSeedColor,
     this.darkSecondaryColor = kDefaultSeedColor,
     this.themeMode = ThemeMode.system,
+    this.homeLayout = HomeLayout.bottomNavigation,
   });
 
   /// 方案名称
@@ -32,6 +36,9 @@ class ThemePreferences {
 
   /// 主题模式
   final ThemeMode themeMode;
+
+  /// 主页导航布局
+  final HomeLayout homeLayout;
 
   // ============================================================
   // 默认值
@@ -73,6 +80,10 @@ class ThemePreferences {
         json['themeMode'],
         ThemeMode.system,
       ),
+      homeLayout: _homeLayoutFromJson(
+        json['homeLayout'],
+        HomeLayout.bottomNavigation,
+      ),
     );
   }
 
@@ -85,6 +96,7 @@ class ThemePreferences {
       'darkSeedColor': colorToInt(darkSeedColor),
       'darkSecondaryColor': colorToInt(darkSecondaryColor),
       'themeMode': _themeModeToString(themeMode),
+      'homeLayout': _homeLayoutToString(homeLayout),
     };
   }
 
@@ -109,6 +121,7 @@ class ThemePreferences {
     Object? darkSeedColor,
     Object? darkSecondaryColor,
     ThemeMode? themeMode,
+    HomeLayout? homeLayout,
   }) {
     return ThemePreferences(
       name: name ?? this.name,
@@ -123,6 +136,7 @@ class ThemePreferences {
           ? darkSecondaryColor
           : this.darkSecondaryColor,
       themeMode: themeMode ?? this.themeMode,
+      homeLayout: homeLayout ?? this.homeLayout,
     );
   }
 
@@ -147,7 +161,8 @@ class ThemePreferences {
         other.lightSecondaryColor == lightSecondaryColor &&
         other.darkSeedColor == darkSeedColor &&
         other.darkSecondaryColor == darkSecondaryColor &&
-        other.themeMode == themeMode;
+        other.themeMode == themeMode &&
+        other.homeLayout == homeLayout;
   }
 
   @override
@@ -158,6 +173,7 @@ class ThemePreferences {
         darkSeedColor,
         darkSecondaryColor,
         themeMode,
+        homeLayout,
       );
 
   @override
@@ -168,7 +184,8 @@ class ThemePreferences {
         'lightSecondaryColor=$lightSecondaryColor, '
         'darkSeedColor=$darkSeedColor, '
         'darkSecondaryColor=$darkSecondaryColor, '
-        'themeMode=$themeMode)';
+        'themeMode=$themeMode, '
+        'homeLayout=$homeLayout)';
   }
 
   // ============================================================
@@ -216,6 +233,30 @@ class ThemePreferences {
         return 'dark';
       case ThemeMode.system:
         return 'system';
+    }
+  }
+
+  static HomeLayout _homeLayoutFromJson(
+    dynamic value,
+    HomeLayout fallback,
+  ) {
+    if (value is String) {
+      switch (value) {
+        case 'bottomNavigation':
+          return HomeLayout.bottomNavigation;
+        case 'functionGrid':
+          return HomeLayout.functionGrid;
+      }
+    }
+    return fallback;
+  }
+
+  static String _homeLayoutToString(HomeLayout layout) {
+    switch (layout) {
+      case HomeLayout.bottomNavigation:
+        return 'bottomNavigation';
+      case HomeLayout.functionGrid:
+        return 'functionGrid';
     }
   }
 }
