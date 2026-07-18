@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:onetj/app/theme/grid_home_back_button.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:onetj/app/constant/route_paths.dart';
@@ -653,32 +654,37 @@ class _SettingsViewState extends State<SettingsView> {
   @override
   Widget build(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.tabSettings),
-        actions: [
-          AnimatedBuilder(
-            animation: _viewModel,
-            builder: (context, _) => IconButton(
-              tooltip: l10n.saveLabel,
-              icon: const Icon(Icons.save),
-              onPressed: !_viewModel.uiState.isHydrated || _settingsBusy
-                  ? null
-                  : _submitSettings,
-            ),
-          ),
-        ],
-      ),
-      body: AnimatedBuilder(
-        animation: _viewModel,
-        builder: (context, _) {
-          if (!_viewModel.uiState.isHydrated) {
-            return _buildLoadingBody();
-          }
+    return AnimatedBuilder(
+      animation: _viewModel,
+      builder: (context, _) {
+        final Widget? homeBackButton = buildGridHomeBackButton(context);
+        final Widget body;
+        if (!_viewModel.uiState.isHydrated) {
+          body = _buildLoadingBody();
+        } else {
           _syncControllersFromViewModel();
-          return _buildLoadedBody(l10n);
-        },
-      ),
+          body = _buildLoadedBody(l10n);
+        }
+
+        return Scaffold(
+          appBar: AppBar(
+            leading: homeBackButton,
+            leadingWidth:
+                homeBackButton == null ? null : gridHomeBackButtonLeadingWidth,
+            title: Text(l10n.tabSettings),
+            actions: [
+              IconButton(
+                tooltip: l10n.saveLabel,
+                icon: const Icon(Icons.save),
+                onPressed: !_viewModel.uiState.isHydrated || _settingsBusy
+                    ? null
+                    : _submitSettings,
+              ),
+            ],
+          ),
+          body: body,
+        );
+      },
     );
   }
 }

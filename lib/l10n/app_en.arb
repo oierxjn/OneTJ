@@ -307,6 +307,7 @@
   "settingsAppearanceHomeLayoutTitle": "Home layout",
   "settingsAppearanceHomeLayoutBottomNavigation": "Bottom navigation",
   "settingsAppearanceHomeLayoutFunctionGrid": "Function grid home",
+  "gridHomeBackToHome": "Back to home",
   "colorPickerTitle": "Color themes",
   "colorPickerUndo": "Undo",
   "colorPickerShare": "Share",

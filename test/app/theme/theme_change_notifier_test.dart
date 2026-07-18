@@ -94,6 +94,16 @@ void main() {
         expect(notifier.themeMode, ThemeMode.dark);
       });
 
+      test('setHomeLayout 通知并更新主页布局', () async {
+        int notifyCount = 0;
+        notifier.addListener(() => notifyCount++);
+
+        await notifier.setHomeLayout(HomeLayout.functionGrid);
+
+        expect(notifier.preferences.homeLayout, HomeLayout.functionGrid);
+        expect(notifyCount, 1);
+      });
+
       test('setLightSeedColor', () async {
         const color = Color(0xFF112233);
         await notifier.setLightSeedColor(color);

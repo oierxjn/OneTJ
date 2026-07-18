@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:onetj/app/theme/grid_home_back_button.dart';
 import 'package:onetj/app/logging/logger.dart';
 
 import 'package:onetj/features/timetable/view_models/timetable_view_model.dart';
@@ -111,8 +112,12 @@ class _TimetableViewState extends State<TimetableView> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final Widget? homeBackButton = buildGridHomeBackButton(context);
     return Scaffold(
       appBar: AppBar(
+        leading: homeBackButton,
+        leadingWidth:
+            homeBackButton == null ? null : gridHomeBackButtonLeadingWidth,
         title: Text(l10n.tabTimetable),
         actions: [
           AnimatedBuilder(

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:onetj/app/theme/grid_home_back_button.dart';
 
 import 'package:onetj/features/about/models/acknowledgement_model.dart';
 import 'package:onetj/features/about/models/contributor_model.dart';
@@ -258,8 +259,12 @@ class _AboutViewState extends State<AboutView> {
   @override
   Widget build(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context);
+    final Widget? homeBackButton = buildGridHomeBackButton(context);
     return Scaffold(
       appBar: AppBar(
+        leading: homeBackButton,
+        leadingWidth:
+            homeBackButton == null ? null : gridHomeBackButtonLeadingWidth,
         title: Text(l10n.settingsAboutTitle),
       ),
       body: AnimatedBuilder(

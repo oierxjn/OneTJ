@@ -108,6 +108,13 @@ void main() {
         expect(repo.preferences.themeMode, ThemeMode.dark);
       });
 
+      test('setHomeLayout 更新主页布局', () async {
+        await repo.setHomeLayout(HomeLayout.functionGrid);
+
+        expect(repo.preferences.homeLayout, HomeLayout.functionGrid);
+        expect((await storage.read())!.homeLayout, HomeLayout.functionGrid);
+      });
+
       test('setLightSeedColor 更新亮色主色', () async {
         const color = Color(0xFF112233);
         await repo.setLightSeedColor(color);

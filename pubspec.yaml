@@ -81,6 +81,7 @@ dependencies:
   # Keep the upstream constraint here; HarmonyOS builds are pinned below to an
   # OpenHarmony fork whose pubspec version still reports 9.1.0.
   device_info_plus: ^10.1.2
+  flutter_svg: ^2.2.0
 
 
 dev_dependencies:
@@ -111,6 +112,7 @@ flutter:
     - assets/icon/logo.jpg
     - assets/media/
     - assets/pictures/1.jpg
+    - assets/icons/fluentemoji/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
