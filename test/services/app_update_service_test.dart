@@ -27,8 +27,10 @@ void main() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(pathProviderChannel,
             (MethodCall methodCall) async {
-      if (methodCall.method == 'getTemporaryDirectory') {
-        return tempDir.path;
+      switch (methodCall.method) {
+        case 'getTemporaryDirectory':
+        case 'getApplicationSupportDirectory':
+          return tempDir.path;
       }
       return null;
     });
@@ -68,7 +70,9 @@ void main() {
         minSupportedVersion: null,
       );
 
-      final File file = await service.downloadPackage(info);
+      final File file = await _runWithRealHttpClient(
+        () => service.downloadPackage(info),
+      );
 
       expect(await file.exists(), isTrue);
       expect(await file.readAsBytes(), payload);
@@ -99,7 +103,9 @@ void main() {
         minSupportedVersion: null,
       );
 
-      final File file = await service.downloadPackage(info);
+      final File file = await _runWithRealHttpClient(
+        () => service.downloadPackage(info),
+      );
 
       expect(await file.exists(), isTrue);
       expect(await file.readAsBytes(), payload);
@@ -121,13 +127,15 @@ void main() {
         minSupportedVersion: null,
       );
 
-      await expectLater(
-        service.downloadPackage(info),
-        throwsA(
-          isA<AppException>().having(
-            (AppException error) => error.code,
-            'code',
-            'UPDATE_PACKAGE_HASH_MISMATCH',
+      await _runWithRealHttpClient(
+        () => expectLater(
+          service.downloadPackage(info),
+          throwsA(
+            isA<AppException>().having(
+              (AppException error) => error.code,
+              'code',
+              'UPDATE_PACKAGE_HASH_MISMATCH',
+            ),
           ),
         ),
       );
@@ -142,6 +150,13 @@ String _buildUrl(HttpServer server, String path) {
   return 'http://${server.address.host}:${server.port}$path';
 }
 
+Future<T> _runWithRealHttpClient<T>(Future<T> Function() body) {
+  return HttpOverrides.runWithHttpOverrides(
+    body,
+    _RealHttpOverrides(),
+  );
+}
+
 void _servePayload(HttpServer server, List<int> payload) {
   server.listen((HttpRequest request) async {
     request.response.statusCode = HttpStatus.ok;
@@ -150,3 +165,5 @@ void _servePayload(HttpServer server, List<int> payload) {
     await request.response.close();
   });
 }
+
+class _RealHttpOverrides extends HttpOverrides {}
