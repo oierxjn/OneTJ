@@ -7,6 +7,7 @@ import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/app/logging/logger.dart';
 import 'package:onetj/app/theme/theme_change_notifier.dart';
 import 'package:onetj/models/dashboard_upcoming_mode.dart';
+import 'package:onetj/models/theme_preferences.dart';
 import 'package:onetj/models/launch_wallpaper_ref.dart';
 import 'package:onetj/models/user_collection_field.dart';
 import 'package:onetj/features/settings/models/event.dart';
@@ -88,6 +89,7 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
   LaunchWallpaperRef get draftLaunchWallpaperRef => _draftLaunchWallpaperRef;
 
   ThemeMode get themeColor => _themeChangeNotifier.themeMode;
+  HomeLayout get homeLayout => _themeChangeNotifier.preferences.homeLayout;
 
   bool get isHydrated => _hydrated;
   bool get settingsLoading => _settingsLoading;
@@ -501,6 +503,10 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
 
   Future<void> setThemeColor(ThemeMode color) async {
     await _themeChangeNotifier.setThemeMode(color);
+  }
+
+  Future<void> setHomeLayout(HomeLayout layout) async {
+    await _themeChangeNotifier.setHomeLayout(layout);
   }
 
   void _onThemeChanged() {

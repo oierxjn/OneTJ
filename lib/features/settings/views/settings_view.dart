@@ -13,6 +13,7 @@ import 'package:onetj/features/settings/view_models/settings_view_model.dart';
 import 'package:onetj/features/settings/views/widgets/settings_card.dart';
 import 'package:onetj/features/settings/views/widgets/settings_card_visual_state.dart';
 import 'package:onetj/features/settings/views/widgets/theme_color_card.dart';
+import 'package:onetj/features/settings/views/widgets/home_layout_card.dart';
 import 'package:onetj/features/settings/views/widgets/upcoming_courses_card.dart';
 import 'package:onetj/models/dashboard_upcoming_mode.dart';
 import 'package:onetj/models/event_model.dart';
@@ -485,6 +486,15 @@ class _SettingsViewState extends State<SettingsView> {
     );
   }
 
+  Widget _buildHomeLayoutCard(AppLocalizations l10n) {
+    return HomeLayoutCard(
+      l10n: l10n,
+      layout: _viewModel.homeLayout,
+      enabled: !_settingsBusy,
+      onChanged: _viewModel.setHomeLayout,
+    );
+  }
+
   Widget _buildCustomColorCard(AppLocalizations l10n) {
     return SettingsCard(
       leading: const Icon(Icons.colorize),
@@ -622,6 +632,8 @@ class _SettingsViewState extends State<SettingsView> {
         _buildAppearanceSectionTitle(l10n),
         const SizedBox(height: 8),
         _buildThemeColorCard(l10n),
+        const SizedBox(height: 12),
+        _buildHomeLayoutCard(l10n),
         const SizedBox(height: 12),
         _buildCustomColorCard(l10n),
         const SizedBox(height: 24),
