@@ -14,9 +14,13 @@ class AppRouter {
     routes: [
       ...launcherRoutes,
       ...loginRoutes,
-      ...gradesRoutes,
-      ...physicsLabRoutes,
+
+      // Shell 外的独立详情页面。
+      ...gradesDetailRoutes,
+      ...physicsLabDetailRoutes,
       ...settingsDetailRoutes,
+
+      // Shell 内的首页、课表、工具与设置一级页面。
       homeShellRoute,
     ],
   );

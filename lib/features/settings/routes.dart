@@ -16,7 +16,7 @@ import 'package:onetj/models/time_period_range.dart';
 import 'package:onetj/models/user_collection_field.dart';
 
 /// 主页 Shell 中的设置一级页面。
-final List<GoRoute> settingsRoutes = [
+final List<GoRoute> settingsShellRoutes = [
   GoRoute(
     path: RoutePaths.homeSettings,
     name: 'settings',

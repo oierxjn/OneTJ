@@ -7,7 +7,8 @@ import 'package:onetj/features/physics_lab/features/franck_hertz/views/franck_he
 import 'package:onetj/features/physics_lab/features/michelson/views/michelson_interferometer_view.dart';
 import 'package:onetj/features/physics_lab/views/physics_lab_view.dart';
 
-final List<GoRoute> physicsLabRoutes = [
+/// 物理实验及其子实验的 Shell 外详情页面。
+final List<GoRoute> physicsLabDetailRoutes = [
   GoRoute(
     path: RoutePaths.homePhysicsLab,
     name: 'physics-lab',
