@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:onetj/features/home/views/widgets/home_shell_back_button.dart';
 
 import 'package:onetj/features/about/models/acknowledgement_model.dart';
 import 'package:onetj/features/about/models/contributor_model.dart';
@@ -259,12 +258,8 @@ class _AboutViewState extends State<AboutView> {
   @override
   Widget build(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context);
-    final Widget? homeBackButton = buildHomeShellBackButton(context);
     return Scaffold(
       appBar: AppBar(
-        leading: homeBackButton,
-        leadingWidth:
-            homeBackButton == null ? null : homeShellBackButtonLeadingWidth,
         title: Text(l10n.settingsAboutTitle),
       ),
       body: AnimatedBuilder(

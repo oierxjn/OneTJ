@@ -172,11 +172,12 @@ class _DashboardViewState extends State<DashboardView>
       toolsLabel: l10n.tabTools,
       aboutLabel: l10n.settingsAboutTitle,
       onTimetableTap: () => context.go(RoutePaths.homeTimetable),
-      onPhysicsLabTap: () => context.go(RoutePaths.homePhysicsLab),
+      // 二级详情路由位于主页 Shell 外，使用 push 保留返回一级主页的栈。
+      onPhysicsLabTap: () => context.push(RoutePaths.homePhysicsLab),
       onSettingsTap: () => context.go(RoutePaths.homeSettings),
-      onGradesTap: () => context.go(RoutePaths.homeGrades),
+      onGradesTap: () => context.push(RoutePaths.homeGrades),
       onToolsTap: () => context.go(RoutePaths.homeTools),
-      onAboutTap: () => context.go(RoutePaths.homeSettingsAbout),
+      onAboutTap: () => context.push(RoutePaths.homeSettingsAbout),
     );
   }
 
