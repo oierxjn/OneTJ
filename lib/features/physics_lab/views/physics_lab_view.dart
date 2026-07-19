@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:onetj/app/theme/grid_home_back_button.dart';
+import 'package:onetj/features/home/views/widgets/home_shell_back_button.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:onetj/features/physics_lab/models/physics_lab_experiment.dart';
@@ -17,12 +17,12 @@ class PhysicsLabView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context);
-    final Widget? homeBackButton = buildGridHomeBackButton(context);
+    final Widget? homeBackButton = buildHomeShellBackButton(context);
     return Scaffold(
       appBar: AppBar(
         leading: homeBackButton,
         leadingWidth:
-            homeBackButton == null ? null : gridHomeBackButtonLeadingWidth,
+            homeBackButton == null ? null : homeShellBackButtonLeadingWidth,
         title: Text(l10n.physicsLabTitle),
       ),
       body: ListView(

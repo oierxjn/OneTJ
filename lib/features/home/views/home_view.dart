@@ -4,6 +4,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/app/di/dependencies.dart';
+import 'package:onetj/features/home/views/widgets/home_shell_layout_scope.dart';
 import 'package:onetj/app/theme/theme_change_notifier.dart';
 import 'package:onetj/models/theme_preferences.dart';
 
@@ -60,32 +61,35 @@ class HomeView extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeChangeNotifier themeChangeNotifier =
         appLocator<ThemeChangeNotifier>();
-    return AnimatedBuilder(
-      animation: themeChangeNotifier,
-      builder: (context, _) {
-        final int currentIndex = navigationShell.currentIndex;
-        final bool useBottomNavigation =
-            themeChangeNotifier.preferences.homeLayout ==
-                HomeLayout.bottomNavigation;
+    return HomeShellLayoutScope(
+      notifier: themeChangeNotifier,
+      child: AnimatedBuilder(
+        animation: themeChangeNotifier,
+        builder: (context, _) {
+          final int currentIndex = navigationShell.currentIndex;
+          final bool useBottomNavigation =
+              themeChangeNotifier.preferences.homeLayout ==
+                  HomeLayout.bottomNavigation;
 
-        return Scaffold(
-          body: navigationShell,
-          bottomNavigationBar: useBottomNavigation
-              ? NavigationBar(
-                  selectedIndex: currentIndex,
-                  onDestinationSelected: navigationShell.goBranch,
-                  destinations: [
-                    for (final tab in _tabs)
-                      NavigationDestination(
-                        icon: Icon(tab.icon),
-                        selectedIcon: Icon(tab.selectedIcon),
-                        label: tab.labelBuilder(context),
-                      ),
-                  ],
-                )
-              : null,
-        );
-      },
+          return Scaffold(
+            body: navigationShell,
+            bottomNavigationBar: useBottomNavigation
+                ? NavigationBar(
+                    selectedIndex: currentIndex,
+                    onDestinationSelected: navigationShell.goBranch,
+                    destinations: [
+                      for (final tab in _tabs)
+                        NavigationDestination(
+                          icon: Icon(tab.icon),
+                          selectedIcon: Icon(tab.selectedIcon),
+                          label: tab.labelBuilder(context),
+                        ),
+                    ],
+                  )
+                : null,
+          );
+        },
+      ),
     );
   }
 }

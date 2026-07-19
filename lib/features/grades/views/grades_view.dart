@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:onetj/app/theme/grid_home_back_button.dart';
+import 'package:onetj/features/home/views/widgets/home_shell_back_button.dart';
 
 import 'package:onetj/features/grades/view_models/grades_view_model.dart';
 import 'package:onetj/models/event_model.dart';
@@ -43,12 +43,12 @@ class _GradesViewState extends State<GradesView> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final Widget? homeBackButton = buildGridHomeBackButton(context);
+    final Widget? homeBackButton = buildHomeShellBackButton(context);
     return Scaffold(
       appBar: AppBar(
         leading: homeBackButton,
         leadingWidth:
-            homeBackButton == null ? null : gridHomeBackButtonLeadingWidth,
+            homeBackButton == null ? null : homeShellBackButtonLeadingWidth,
         title: Text(l10n.scoreInquiryTitle),
         actions: [
           AnimatedBuilder(

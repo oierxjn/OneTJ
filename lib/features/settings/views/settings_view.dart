@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:onetj/app/theme/grid_home_back_button.dart';
+import 'package:onetj/features/home/views/widgets/home_shell_back_button.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:onetj/app/constant/route_paths.dart';
@@ -657,7 +657,7 @@ class _SettingsViewState extends State<SettingsView> {
     return AnimatedBuilder(
       animation: _viewModel,
       builder: (context, _) {
-        final Widget? homeBackButton = buildGridHomeBackButton(context);
+        final Widget? homeBackButton = buildHomeShellBackButton(context);
         final Widget body;
         if (!_viewModel.uiState.isHydrated) {
           body = _buildLoadingBody();
@@ -670,7 +670,7 @@ class _SettingsViewState extends State<SettingsView> {
           appBar: AppBar(
             leading: homeBackButton,
             leadingWidth:
-                homeBackButton == null ? null : gridHomeBackButtonLeadingWidth,
+                homeBackButton == null ? null : homeShellBackButtonLeadingWidth,
             title: Text(l10n.tabSettings),
             actions: [
               IconButton(
