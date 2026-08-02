@@ -57,6 +57,12 @@ add_subdirectory("runner")
 # them to the application.
 include(flutter/generated_plugins.cmake)
 
+# quickjs_engine contains UTF-8 source and inherits /WX from the standard
+# plugin settings. Compile that plugin with the matching source encoding.
+if(TARGET quickjs_engine_plugin)
+  target_compile_options(quickjs_engine_plugin PRIVATE /utf-8)
+endif()
+
 
 # === Installation ===
 # Support files are copied into place next to the executable, so that it can

@@ -27,6 +27,14 @@ target_compile_definitions(${BINARY_NAME} PRIVATE "FLUTTER_VERSION_MINOR=${FLUTT
 target_compile_definitions(${BINARY_NAME} PRIVATE "FLUTTER_VERSION_PATCH=${FLUTTER_VERSION_PATCH}")
 target_compile_definitions(${BINARY_NAME} PRIVATE "FLUTTER_VERSION_BUILD=${FLUTTER_VERSION_BUILD}")
 
+# quickjs_engine 0.1.2 declares QuickjsEnginePlugin in its plugin metadata,
+# while its Windows header exports the C API registration symbol instead.
+set_source_files_properties(
+  "${FLUTTER_MANAGED_DIR}/generated_plugin_registrant.cc"
+  PROPERTIES COMPILE_DEFINITIONS
+    "QuickjsEnginePluginRegisterWithRegistrar=QuickjsEnginePluginCApiRegisterWithRegistrar"
+)
+
 # Disable Windows macros that collide with C++ standard library functions.
 target_compile_definitions(${BINARY_NAME} PRIVATE "NOMINMAX")
 
