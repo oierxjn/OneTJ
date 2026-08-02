@@ -63,6 +63,60 @@ void main() {
       expect(files.last.isCurrent, isFalse);
     });
 
+    test('writeLine appends lines to the current log file in call order',
+        () async {
+      final AppFileLogSink sink = AppFileLogSink(prefix: '[OneTJ]');
+
+      await Future.wait(<Future<void>>[
+        sink.writeLine('first line'),
+        sink.writeLine('second line'),
+      ]);
+
+      final Directory? logDirectory = await sink.logDirectory();
+      final String? currentPath = await sink.currentLogFilePath();
+
+      expect(logDirectory, isNotNull);
+      expect(await logDirectory!.exists(), isTrue);
+      expect(currentPath, isNotNull);
+      expect(
+        await File(currentPath!).readAsString(),
+        'first line\nsecond line\n',
+      );
+    });
+
+    test('cleanupOldFiles keeps retained logs and removes stale files',
+        () async {
+      final AppFileLogSink sink = AppFileLogSink(
+        prefix: '[OneTJ]',
+        retainDays: 7,
+      );
+      await sink.init();
+      final Directory logDir = (await sink.logDirectory())!;
+      final DateTime now = DateTime.now();
+      final File retained = File(
+        p.join(
+          logDir.path,
+          '[OneTJ]-${_dateKey(now.subtract(const Duration(days: 1)))}.log',
+        ),
+      );
+      final File stale = File(
+        p.join(
+          logDir.path,
+          '[OneTJ]-${_dateKey(now.subtract(const Duration(days: 10)))}.log',
+        ),
+      );
+      final File invalid = File(p.join(logDir.path, 'not-a-log.txt'));
+      await retained.writeAsString('retained');
+      await stale.writeAsString('stale');
+      await invalid.writeAsString('invalid');
+
+      await sink.cleanupOldFiles();
+
+      expect(await retained.exists(), isTrue);
+      expect(await stale.exists(), isFalse);
+      expect(await invalid.exists(), isFalse);
+    });
+
     test('readLogFile returns file content for selected log file', () async {
       final AppFileLogSink sink = AppFileLogSink(prefix: '[OneTJ]');
       final Directory logDir = Directory(p.join(tempDir.path, 'logs'));
