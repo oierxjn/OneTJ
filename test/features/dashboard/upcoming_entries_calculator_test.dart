@@ -94,7 +94,7 @@ void main() {
 
     test('count mode fills across weeks up to count', () {
       final List<TimetableEntry> entries = <TimetableEntry>[
-        entry(id: 'w5-mon', day: 1, start: 3, weeks: <int>[5]),
+        entry(id: 'w5-mon', day: 1, start: 2, weeks: <int>[5]),
         entry(id: 'w5-tue', day: 2, start: 1, weeks: <int>[5]),
         entry(id: 'w6-mon', day: 1, start: 1, weeks: <int>[6]),
         entry(id: 'w6-wed', day: 3, start: 1, weeks: <int>[6]),

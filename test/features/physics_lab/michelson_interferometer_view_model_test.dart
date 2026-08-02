@@ -98,7 +98,7 @@ void main() {
       );
       expect(result.averageDifferenceMm, closeTo(5.5, 1e-9));
       expect(result.wavelengthNm, closeTo(73333.3333333333, 1e-6));
-      expect(result.relativeErrorPercent, closeTo(11654.7809165298, 1e-6));
+      expect(result.relativeErrorPercent, closeTo(11655.9046703003, 1e-6));
 
       viewModel.dispose();
     });

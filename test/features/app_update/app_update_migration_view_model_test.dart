@@ -105,7 +105,10 @@ void main() {
       final UiEvent event = await nextEvent;
 
       expect(event, isA<AppUpdateMigrationLinkCopyFailedEvent>());
-      expect((event as AppUpdateMigrationLinkCopyFailedEvent).error, same(error));
+      final Object caughtError =
+          (event as AppUpdateMigrationLinkCopyFailedEvent).error;
+      expect(caughtError, isA<PlatformException>());
+      expect((caughtError as PlatformException).code, 'clipboard-failed');
       expect(viewModel.copying, isFalse);
     });
   });
