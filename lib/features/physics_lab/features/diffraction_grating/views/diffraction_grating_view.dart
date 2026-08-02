@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:onetj/l10n/app_localizations.dart';
 
 import 'package:onetj/features/physics_lab/features/diffraction_grating/models/diffraction_grating_angle.dart';
 import 'package:onetj/features/physics_lab/features/diffraction_grating/models/diffraction_grating_calibration_result.dart';

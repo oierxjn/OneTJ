@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:onetj/l10n/app_localizations.dart';
 
 import 'package:onetj/features/grades/view_models/grades_view_model.dart';
 import 'package:onetj/models/event_model.dart';

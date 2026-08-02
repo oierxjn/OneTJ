@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:onetj/l10n/app_localizations.dart';
 
 import 'package:onetj/features/physics_lab/features/franck_hertz/models/franck_hertz_analysis_result.dart';
 import 'package:onetj/features/physics_lab/features/franck_hertz/view_models/franck_hertz_view_model.dart';

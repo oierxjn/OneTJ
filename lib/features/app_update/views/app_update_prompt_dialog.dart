@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:onetj/l10n/app_localizations.dart';
 
 import 'package:onetj/features/app_update/models/event.dart';
 import 'package:onetj/features/app_update/view_models/app_update_prompt_view_model.dart';

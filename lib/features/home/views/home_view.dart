@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:onetj/l10n/app_localizations.dart';
 
 import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/app/di/dependencies.dart';

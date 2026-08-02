@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:onetj/l10n/app_localizations.dart';
 
 import 'package:onetj/features/settings/models/launch_wallpaper_editor_result.dart';
 import 'package:onetj/features/settings/view_models/launch_wallpaper_editor_view_model.dart';

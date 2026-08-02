@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:full_svg_flutter/full_svg_flutter.dart';
 
 /// 功能网格首页的一级功能入口。
 class FunctionGrid extends StatelessWidget {
@@ -117,7 +117,7 @@ class _FunctionGridCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Expanded(
-                  child: SvgPicture.asset(
+                  child: FSvgPicture.asset(
                     item.assetPath,
                     excludeFromSemantics: true,
                   ),

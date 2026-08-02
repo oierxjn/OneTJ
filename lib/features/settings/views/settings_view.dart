@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:onetj/l10n/app_localizations.dart';
 import 'package:onetj/features/home/views/widgets/home_shell_back_button.dart';
 import 'package:go_router/go_router.dart';
 
