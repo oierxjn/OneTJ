@@ -41,10 +41,6 @@ void main() {
             );
           },
         ),
-        GoRoute(
-          path: '/home/dashboard',
-          builder: (context, state) => const Scaffold(body: Text('dashboard')),
-        ),
       ],
     );
     return tester.pumpWidget(
@@ -76,20 +72,13 @@ void main() {
     expect(exception, isA<FlutterError>());
     expect(exception.toString(), contains('HomeShellLayoutScope'));
   });
-  testWidgets('布局切换后会重建已挂载页面的返回主页按钮', (tester) async {
+  testWidgets('布局切换后会在应用栏显示返回入口', (tester) async {
     await pumpTestApp(tester);
-    final homeButton = find.byWidgetPredicate(
-      (Widget widget) => widget is TextButton,
-    );
-    expect(homeButton, findsNothing);
+    final appBarFinder = find.byType(AppBar);
+    expect(tester.widget<AppBar>(appBarFinder).leading, isNull);
 
     await themeChangeNotifier.setHomeLayout(HomeLayout.functionGrid);
     await tester.pump();
-    expect(homeButton, findsOneWidget);
-
-    await tester.tap(homeButton);
-    await tester.pumpAndSettle();
-
-    expect(find.text('dashboard'), findsOneWidget);
+    expect(tester.widget<AppBar>(appBarFinder).leading, isNotNull);
   });
 }
