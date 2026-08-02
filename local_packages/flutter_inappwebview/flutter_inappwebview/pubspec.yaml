@@ -45,6 +45,11 @@ dependencies:
       url: "https://gitcode.com/openharmony-sig/flutter_inappwebview.git"
       path: "flutter_inappwebview_web"
       ref: "br_v6.1.5_ohos"
+  flutter_inappwebview_windows:
+    git:
+      url: "https://gitcode.com/openharmony-sig/flutter_inappwebview.git"
+      path: "flutter_inappwebview_windows"
+      ref: "br_v6.1.5_ohos"
   flutter_inappwebview_ohos:
     git:
       url: "https://gitcode.com/openharmony-sig/flutter_inappwebview.git"
