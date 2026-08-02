@@ -33,6 +33,39 @@ git clone -b oh-3.35.7-release https://gitcode.com/CPF-Flutter/flutter_flutter.g
 
 运行 `fvm flutter doctor` 检查环境是否配置正确。
 
+#### Windows：Visual Studio 2026（18.x）兼容补丁
+
+当前使用的 OpenHarmony Flutter 3.35.8 工具只显式识别 Visual Studio 2022
+（17.x），在检测到 Visual Studio 2026（18.x）时会错误地回退到 CMake
+生成器 `Visual Studio 16 2019`。若 `fvm flutter doctor` 显示已安装
+Visual Studio 2026，需要在 FVM SDK 中应用以下本地补丁：
+
+- 文件：`<FVM SDK>/packages/flutter_tools/lib/src/windows/visual_studio.dart`
+- 在 `cmakeGenerator` 的 `switch (_majorVersion)` 中添加：
+
+  ```dart
+  18 => 'Visual Studio 18 2026',
+  ```
+
+Flutter 工具会使用已编译的快照，因此修改后还需删除以下可再生文件，使其
+根据修改后的源码重建：
+
+```powershell
+Remove-Item <FVM SDK>\bin\cache\flutter_tools.snapshot
+Remove-Item <FVM SDK>\bin\cache\flutter_tools.stamp
+fvm flutter --version
+```
+
+最后删除旧的 Windows CMake 缓存并重新构建：
+
+```powershell
+Remove-Item build\windows\x64 -Recurse -Force
+fvm flutter build windows --debug
+```
+
+这是 SDK 的本地补丁，不会被项目 Git 管理；重新安装或升级 SDK 后需要重新
+应用。上游 SDK 正式支持 Visual Studio 18 后，应删除此补丁。
+
 一般来说，你还需要下载鸿蒙的 [Command Line Tools](https://developer.huawei.com/consumer/cn/download/command-line-tools-for-hmos)，将${Command Line Tools解压路径}\command-line-tools\bin目录配置到系统或者用户的PATH变量中。  
 
 构建中遇到问题，请及时联系项目维护者（已经快忘记怎么配了）
