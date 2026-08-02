@@ -77,11 +77,11 @@ dependencies:
   flutter_math_fork:
     git:
       url: "https://gitcode.com/openharmony-sig/flutter_math_fork.git"
-      ref: "br_v0.7.4_ohos"
+      ref: "br_v0.7.4_flutter3.35.7_ohos"
   # Keep the upstream constraint here; HarmonyOS builds are pinned below to an
   # OpenHarmony fork whose pubspec version still reports 9.1.0.
   device_info_plus: ^10.1.2
-  flutter_svg: ^2.2.0
+  full_svg_flutter: 1.2.0
 
 
 dev_dependencies:

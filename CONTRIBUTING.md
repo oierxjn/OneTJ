@@ -25,10 +25,11 @@
 下载本项目需要的 Flutter 鸿蒙版本：
 
 ```bash
-git clone -b oh-3.27.4-dev https://gitcode.com/openharmony-tpc/flutter_flutter.git
+git clone -b oh-3.35.7-release https://gitcode.com/CPF-Flutter/flutter_flutter.git
 ```
 
-将其放入 FVM 的版本文件夹中。使用 `fvm list` 查看是否已经添加，再用 `fvm use <版本名>` 切换到该版本。
+将其放入 FVM 的版本文件夹中并命名为 `ohos_flutter_3.35.7`。项目通过
+`.fvmrc` 固定使用该 SDK；使用 `fvm flutter --version` 确认版本后再继续。
 
 运行 `fvm flutter doctor` 检查环境是否配置正确。
 
