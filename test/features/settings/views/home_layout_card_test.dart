@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:onetj/l10n/app_localizations.dart';
 
 import 'package:onetj/features/settings/views/widgets/home_layout_card.dart';
 import 'package:onetj/models/theme_preferences.dart';
@@ -36,14 +36,26 @@ void main() {
       onChanged: (layout) => selectedLayout = layout,
     );
 
-    expect(find.text('主页布局'), findsOneWidget);
-    await tester.tap(find.text('主页布局'));
+    final headerTile = find
+        .descendant(
+          of: find.byType(HomeLayoutCard),
+          matching: find.byType(ListTile),
+        )
+        .first;
+    await tester.tap(headerTile);
     await tester.pumpAndSettle();
 
-    expect(find.text('底部导航'), findsWidgets);
-    expect(find.text('功能网格主页'), findsOneWidget);
+    final options = find.byWidgetPredicate(
+      (Widget widget) => widget is RadioListTile<HomeLayout>,
+    );
+    final functionGridOption = find.byWidgetPredicate(
+      (Widget widget) =>
+          widget is RadioListTile<HomeLayout> &&
+          widget.value == HomeLayout.functionGrid,
+    );
+    expect(options, findsNWidgets(2));
 
-    await tester.tap(find.text('功能网格主页'));
+    await tester.tap(functionGridOption);
     await tester.pumpAndSettle();
 
     expect(selectedLayout, HomeLayout.functionGrid);

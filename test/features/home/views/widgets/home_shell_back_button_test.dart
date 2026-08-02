@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:onetj/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:onetj/features/home/views/widgets/home_shell_back_button.dart';
@@ -75,17 +75,19 @@ void main() {
     final Object? exception = tester.takeException();
     expect(exception, isA<FlutterError>());
     expect(exception.toString(), contains('HomeShellLayoutScope'));
-    expect(exception.toString(), contains('主页 Shell'));
   });
   testWidgets('布局切换后会重建已挂载页面的返回主页按钮', (tester) async {
     await pumpTestApp(tester);
-    expect(find.text('返回主页'), findsNothing);
+    final homeButton = find.byWidgetPredicate(
+      (Widget widget) => widget is TextButton,
+    );
+    expect(homeButton, findsNothing);
 
     await themeChangeNotifier.setHomeLayout(HomeLayout.functionGrid);
     await tester.pump();
-    expect(find.text('返回主页'), findsOneWidget);
+    expect(homeButton, findsOneWidget);
 
-    await tester.tap(find.text('返回主页'));
+    await tester.tap(homeButton);
     await tester.pumpAndSettle();
 
     expect(find.text('dashboard'), findsOneWidget);

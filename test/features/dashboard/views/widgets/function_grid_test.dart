@@ -10,18 +10,18 @@ void main() {
       MaterialApp(
         home: Scaffold(
           body: FunctionGrid(
-            timetableLabel: '课表',
-            physicsLabLabel: '物理实验',
-            settingsLabel: '设置',
-            gradesLabel: '成绩查询',
-            toolsLabel: '工具',
-            aboutLabel: '关于',
-            onTimetableTap: () => selected = '课表',
-            onPhysicsLabTap: () => selected = '物理实验',
-            onSettingsTap: () => selected = '设置',
-            onGradesTap: () => selected = '成绩查询',
-            onToolsTap: () => selected = '工具',
-            onAboutTap: () => selected = '关于',
+            timetableLabel: 'timetable',
+            physicsLabLabel: 'physics-lab',
+            settingsLabel: 'settings',
+            gradesLabel: 'grades',
+            toolsLabel: 'tools',
+            aboutLabel: 'about',
+            onTimetableTap: () => selected = 'timetable',
+            onPhysicsLabTap: () => selected = 'physics-lab',
+            onSettingsTap: () => selected = 'settings',
+            onGradesTap: () => selected = 'grades',
+            onToolsTap: () => selected = 'tools',
+            onAboutTap: () => selected = 'about',
           ),
         ),
       ),
@@ -29,19 +29,19 @@ void main() {
 
     expect(find.byType(GridView), findsOneWidget);
     expect(find.byType(Card), findsNWidgets(6));
-    final Offset timetablePosition = tester.getTopLeft(find.text('课表'));
-    final Offset physicsLabPosition = tester.getTopLeft(find.text('物理实验'));
-    final Offset settingsPosition = tester.getTopLeft(find.text('设置'));
-    final Offset gradesPosition = tester.getTopLeft(find.text('成绩查询'));
-    final Offset toolsPosition = tester.getTopLeft(find.text('工具'));
-    final Offset aboutPosition = tester.getTopLeft(find.text('关于'));
+    final Offset timetablePosition = tester.getTopLeft(find.text('timetable'));
+    final Offset physicsLabPosition = tester.getTopLeft(find.text('physics-lab'));
+    final Offset settingsPosition = tester.getTopLeft(find.text('settings'));
+    final Offset gradesPosition = tester.getTopLeft(find.text('grades'));
+    final Offset toolsPosition = tester.getTopLeft(find.text('tools'));
+    final Offset aboutPosition = tester.getTopLeft(find.text('about'));
     expect(physicsLabPosition.dy, timetablePosition.dy);
     expect(settingsPosition.dy, greaterThan(timetablePosition.dy));
     expect(gradesPosition.dy, settingsPosition.dy);
     expect(toolsPosition.dy, greaterThan(settingsPosition.dy));
     expect(aboutPosition.dy, toolsPosition.dy);
 
-    await tester.tap(find.text('成绩查询'));
-    expect(selected, '成绩查询');
+    await tester.tap(find.text('grades'));
+    expect(selected, 'grades');
   });
 }
