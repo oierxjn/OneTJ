@@ -66,6 +66,19 @@ fvm flutter build windows --debug
 这是 SDK 的本地补丁，不会被项目 Git 管理；重新安装或升级 SDK 后需要重新
 应用。上游 SDK 正式支持 Visual Studio 18 后，应删除此补丁。
 
+#### OpenHarmony Flutter 的 `meta` 1.17 兼容补丁
+
+`full_svg_flutter 1.3.1` 依赖 `meta ^1.17.0`，但当前 OpenHarmony Flutter
+SDK 的 framework 与 `flutter_test` 仍将它精确固定为 `1.16.0`，导致项目无法
+同时解析该 SVG 依赖与 Flutter 测试 SDK。为使用该版本的 SVG 渲染器，在 FVM SDK
+中将以下两处改为 `meta: 1.17.0`：
+
+- `<FVM SDK>/packages/flutter/pubspec.yaml`
+- `<FVM SDK>/packages/flutter_test/pubspec.yaml`
+
+这同样是 SDK 的本地补丁。重新安装或升级 SDK 后需要重新应用；上游将 framework
+与 `flutter_test` 的固定版本更新到 1.17 后，应删除此补丁。
+
 一般来说，你还需要下载鸿蒙的 [Command Line Tools](https://developer.huawei.com/consumer/cn/download/command-line-tools-for-hmos)，将${Command Line Tools解压路径}\command-line-tools\bin目录配置到系统或者用户的PATH变量中。  
 
 构建中遇到问题，请及时联系项目维护者（已经快忘记怎么配了）
