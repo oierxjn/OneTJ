@@ -443,11 +443,12 @@ packages:
   full_svg_flutter:
     dependency: "direct main"
     description:
-      name: full_svg_flutter
-      sha256: "67b175a9f7ccc7edd07e63ac993ce1e9493a243631d82bdfbea3174c860cdb80"
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "1.2.0"
+      path: "."
+      ref: fbdda67126a56c88f1197d2b0a8ad250d634c561
+      resolved-ref: fbdda67126a56c88f1197d2b0a8ad250d634c561
+      url: "https://github.com/oierxjn/full_svg_flutter_runtime.git"
+    source: git
+    version: "1.3.1+oier.1"
   get_it:
     dependency: "direct main"
     description:
@@ -694,10 +695,10 @@ packages:
     dependency: transitive
     description:
       name: meta
-      sha256: e3641ec5d63ebf0d9b41bd43201a66e3fc79a65db5f61fc181f04cd27aab950c
+      sha256: "23f08335362185a5ea2ad3a4e597f1375e78bce8a040df5c600c8d3552ef2394"
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "1.16.0"
+    version: "1.17.0"
   mime:
     dependency: transitive
     description:

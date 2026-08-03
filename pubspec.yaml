@@ -81,7 +81,10 @@ dependencies:
   # Keep the upstream constraint here; HarmonyOS builds are pinned below to an
   # OpenHarmony fork whose pubspec version still reports 9.1.0.
   device_info_plus: ^10.1.2
-  full_svg_flutter: 1.2.0
+  full_svg_flutter:
+    git:
+      url: https://github.com/oierxjn/full_svg_flutter_runtime.git
+      ref: fbdda67126a56c88f1197d2b0a8ad250d634c561
 
 
 dev_dependencies:
