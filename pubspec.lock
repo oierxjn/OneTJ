@@ -719,11 +719,11 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: "br_v4.5.0_ohos"
-      resolved-ref: e7e2e4464a0fcd5eea56cbbbf984417fcfe49b3a
+      ref: "br_v4.7.0_ohos"
+      resolved-ref: "63830409bc2aa4e86e1ebec30bb25c4e813a307c"
       url: "https://gitcode.com/openharmony-sig/fluttertpc_open_filex.git"
     source: git
-    version: "4.5.0"
+    version: "4.7.0"
   package_config:
     dependency: transitive
     description:
