@@ -124,9 +124,14 @@ class _FunctionGridCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Expanded(
-                  child: FSvgPicture.asset(
-                    item.assetPath,
-                    excludeFromSemantics: true,
+                  child: LayoutBuilder(
+                    builder: (context, constraints) => FSvgPicture.asset(
+                      item.assetPath,
+                      width: constraints.maxWidth,
+                      height: constraints.maxHeight,
+                      fit: BoxFit.contain,
+                      excludeFromSemantics: true,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 8),

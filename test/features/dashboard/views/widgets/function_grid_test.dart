@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:full_svg_flutter/full_svg_flutter.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:onetj/features/dashboard/views/widgets/function_grid.dart';
@@ -59,6 +60,20 @@ void main() {
     expect(selected, 'grades');
   });
 
+  testWidgets('宽屏图标会随卡片可用空间扩大', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(buildFunctionGrid(onTap: (_) {}));
+
+    final List<FSvgPicture> icons =
+        tester.widgetList<FSvgPicture>(find.byType(FSvgPicture)).toList();
+    expect(icons, hasLength(6));
+    for (final FSvgPicture icon in icons) {
+      expect(icon.width, greaterThan(96));
+      expect(icon.height, greaterThan(96));
+      expect(icon.fit, BoxFit.contain);
+    }
+  });
   testWidgets('宽屏按三列展示功能入口', (tester) async {
     await tester.binding.setSurfaceSize(const Size(1200, 800));
     addTearDown(() => tester.binding.setSurfaceSize(null));
