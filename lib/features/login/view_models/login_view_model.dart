@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
 import 'package:onetj/app/constant/route_paths.dart';
@@ -16,12 +17,22 @@ class LoginViewModel extends BaseViewModel<UiEvent> {
 
   Uri get authUri => _model.buildAuthUri();
 
+  @visibleForTesting
+  static Map<String, Object?> redirectUriLogContext(WebUri uri) {
+    return <String, Object?>{
+      'scheme': uri.scheme,
+      'host': uri.host,
+      'path': uri.path,
+      'queryParameterNames': uri.queryParameters.keys.toList(growable: false),
+    };
+  }
+
   Future<NavigationActionPolicy> handleRedirectUri(
       InAppWebViewController controller, WebUri uri) async {
     AppLogger.debug(
       'Handle redirect uri',
       loggerName: 'LoginViewModel',
-      context: <String, Object?>{'uri': uri.toString()},
+      context: redirectUriLogContext(uri),
     );
     try {
       final bool shouldNavigate = await _model.exchangeCodeIfRedirect(uri);
