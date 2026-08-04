@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
 import 'package:onetj/app/constant/route_paths.dart';
@@ -17,7 +16,6 @@ class LoginViewModel extends BaseViewModel<UiEvent> {
 
   Uri get authUri => _model.buildAuthUri();
 
-  @visibleForTesting
   static Map<String, Object?> redirectUriLogContext(WebUri uri) {
     return <String, Object?>{
       'scheme': uri.scheme,
