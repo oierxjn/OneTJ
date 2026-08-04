@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:full_svg_flutter/full_svg_flutter.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:full_svg_flutter/full_svg_flutter.dart';
 
 import 'package:onetj/features/dashboard/views/widgets/function_grid.dart';
 
@@ -60,19 +60,30 @@ void main() {
     expect(selected, 'grades');
   });
 
-  testWidgets('宽屏图标会随卡片可用空间扩大', (tester) async {
+  testWidgets('宽屏使用预渲染位图而不是运行时 SVG', (tester) async {
     await tester.binding.setSurfaceSize(const Size(1200, 800));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(buildFunctionGrid(onTap: (_) {}));
 
-    final List<FSvgPicture> icons =
-        tester.widgetList<FSvgPicture>(find.byType(FSvgPicture)).toList();
-    expect(icons, hasLength(6));
-    for (final FSvgPicture icon in icons) {
-      expect(icon.width, greaterThan(96));
-      expect(icon.height, greaterThan(96));
-      expect(icon.fit, BoxFit.contain);
-    }
+    expect(find.byType(FSvgPicture), findsNothing);
+    expect(find.byType(Icon), findsNothing);
+
+    final List<Image> images =
+        tester.widgetList<Image>(find.byType(Image)).toList();
+    expect(images, hasLength(6));
+    expect(
+      images
+          .map((Image image) => (image.image as AssetImage).assetName)
+          .toList(),
+      <String>[
+        'assets/icons/function_grid/alarm_clock_3d.png',
+        'assets/icons/function_grid/memo_3d.png',
+        'assets/icons/function_grid/gear_3d.png',
+        'assets/icons/function_grid/anguished_face_3d.png',
+        'assets/icons/function_grid/desktop_computer_3d.png',
+        'assets/icons/function_grid/teddy_bear_3d.png',
+      ],
+    );
   });
   testWidgets('宽屏按三列展示功能入口', (tester) async {
     await tester.binding.setSurfaceSize(const Size(1200, 800));
