@@ -21,7 +21,8 @@ void main() {
     expect(tappedEntry, same(entry));
   });
 
-  testWidgets('renders fallback title and non-empty course details', (tester) async {
+  testWidgets('renders fallback title and non-empty course details',
+      (tester) async {
     await _pumpCourseCard(
       tester,
       entry: _entry(courseName: '', classCode: 'C01'),
@@ -42,6 +43,35 @@ void main() {
     );
 
     expect(_cardTexts(tester), <String>['Linear Algebra']);
+  });
+
+  testWidgets('does not create a nested scroll view', (tester) async {
+    await _pumpCourseCard(
+      tester,
+      entry: _entry(classCode: 'C01'),
+      room: 'Room 101',
+      teacher: 'Professor Wang',
+    );
+
+    expect(
+      find.descendant(
+        of: find.byType(CourseCard),
+        matching: find.byType(SingleChildScrollView),
+      ),
+      findsNothing,
+    );
+  });
+
+  testWidgets('clips overflowing details in a short card', (tester) async {
+    await _pumpCourseCard(
+      tester,
+      entry: _entry(classCode: 'C01'),
+      room: 'Room 101',
+      teacher: 'Professor Wang',
+      height: 40,
+    );
+
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('uses padding tiers for narrow and wide cards', (tester) async {
@@ -83,6 +113,7 @@ Future<void> _pumpCourseCard(
   String room = '',
   String teacher = '',
   double width = 180,
+  double height = 120,
   VoidCallback? onTap,
 }) {
   return tester.pumpWidget(
@@ -90,7 +121,7 @@ Future<void> _pumpCourseCard(
       home: Scaffold(
         body: SizedBox(
           width: width,
-          height: 120,
+          height: height,
           child: CourseCard(
             entry: entry,
             roomBuilder: (_) => room,

@@ -55,7 +55,7 @@ dependencies:
   open_filex:
     git:
       url: "https://gitcode.com/openharmony-sig/fluttertpc_open_filex.git"
-      ref: "br_v4.5.0_ohos"
+      ref: "br_v4.7.0_ohos"
   file_picker_ohos:
     git:
       url: "https://gitcode.com/openharmony-sig/fluttertpc_file_picker.git"
@@ -116,6 +116,7 @@ flutter:
     - assets/media/
     - assets/pictures/1.jpg
     - assets/icons/fluentemoji/
+    - assets/icons/function_grid/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

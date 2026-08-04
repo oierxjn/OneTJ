@@ -1,36 +1,51 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:full_svg_flutter/full_svg_flutter.dart';
 
 import 'package:onetj/features/dashboard/views/widgets/function_grid.dart';
 
 void main() {
-  testWidgets('按既定顺序展示六个功能入口并分发点击事件', (tester) async {
-    String? selected;
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: FunctionGrid(
-            timetableLabel: 'timetable',
-            physicsLabLabel: 'physics-lab',
-            settingsLabel: 'settings',
-            gradesLabel: 'grades',
-            toolsLabel: 'tools',
-            aboutLabel: 'about',
-            onTimetableTap: () => selected = 'timetable',
-            onPhysicsLabTap: () => selected = 'physics-lab',
-            onSettingsTap: () => selected = 'settings',
-            onGradesTap: () => selected = 'grades',
-            onToolsTap: () => selected = 'tools',
-            onAboutTap: () => selected = 'about',
-          ),
+  Widget buildFunctionGrid({required void Function(String) onTap}) {
+    return MaterialApp(
+      home: Scaffold(
+        body: FunctionGrid(
+          timetableLabel: 'timetable',
+          physicsLabLabel: 'physics-lab',
+          settingsLabel: 'settings',
+          gradesLabel: 'grades',
+          toolsLabel: 'tools',
+          aboutLabel: 'about',
+          onTimetableTap: () => onTap('timetable'),
+          onPhysicsLabTap: () => onTap('physics-lab'),
+          onSettingsTap: () => onTap('settings'),
+          onGradesTap: () => onTap('grades'),
+          onToolsTap: () => onTap('tools'),
+          onAboutTap: () => onTap('about'),
         ),
       ),
     );
+  }
+
+  int crossAxisCount(WidgetTester tester) {
+    final GridView gridView = tester.widget<GridView>(find.byType(GridView));
+    return (gridView.gridDelegate as SliverGridDelegateWithFixedCrossAxisCount)
+        .crossAxisCount;
+  }
+
+  testWidgets('窄屏按两列展示六个功能入口并分发点击事件', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(640, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    String? selected;
+    await tester
+        .pumpWidget(buildFunctionGrid(onTap: (value) => selected = value));
 
     expect(find.byType(GridView), findsOneWidget);
     expect(find.byType(Card), findsNWidgets(6));
+    expect(crossAxisCount(tester), 2);
+
     final Offset timetablePosition = tester.getTopLeft(find.text('timetable'));
-    final Offset physicsLabPosition = tester.getTopLeft(find.text('physics-lab'));
+    final Offset physicsLabPosition =
+        tester.getTopLeft(find.text('physics-lab'));
     final Offset settingsPosition = tester.getTopLeft(find.text('settings'));
     final Offset gradesPosition = tester.getTopLeft(find.text('grades'));
     final Offset toolsPosition = tester.getTopLeft(find.text('tools'));
@@ -43,5 +58,47 @@ void main() {
 
     await tester.tap(find.text('grades'));
     expect(selected, 'grades');
+  });
+
+  testWidgets('宽屏使用预渲染位图而不是运行时 SVG', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(buildFunctionGrid(onTap: (_) {}));
+
+    expect(find.byType(FSvgPicture), findsNothing);
+    expect(find.byType(Icon), findsNothing);
+
+    final List<Image> images =
+        tester.widgetList<Image>(find.byType(Image)).toList();
+    expect(images, hasLength(6));
+    expect(
+      images
+          .map((Image image) => (image.image as AssetImage).assetName)
+          .toList(),
+      <String>[
+        'assets/icons/function_grid/alarm_clock_3d.png',
+        'assets/icons/function_grid/memo_3d.png',
+        'assets/icons/function_grid/gear_3d.png',
+        'assets/icons/function_grid/anguished_face_3d.png',
+        'assets/icons/function_grid/desktop_computer_3d.png',
+        'assets/icons/function_grid/teddy_bear_3d.png',
+      ],
+    );
+  });
+  testWidgets('宽屏按三列展示功能入口', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(buildFunctionGrid(onTap: (_) {}));
+
+    expect(crossAxisCount(tester), 3);
+
+    final Offset timetablePosition = tester.getTopLeft(find.text('timetable'));
+    final Offset physicsLabPosition =
+        tester.getTopLeft(find.text('physics-lab'));
+    final Offset settingsPosition = tester.getTopLeft(find.text('settings'));
+    final Offset gradesPosition = tester.getTopLeft(find.text('grades'));
+    expect(physicsLabPosition.dy, timetablePosition.dy);
+    expect(settingsPosition.dy, timetablePosition.dy);
+    expect(gradesPosition.dy, greaterThan(timetablePosition.dy));
   });
 }

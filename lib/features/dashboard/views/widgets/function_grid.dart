@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:full_svg_flutter/full_svg_flutter.dart';
 
 /// 功能网格首页的一级功能入口。
 class FunctionGrid extends StatelessWidget {
@@ -37,47 +36,54 @@ class FunctionGrid extends StatelessWidget {
     final List<_FunctionGridItem> items = <_FunctionGridItem>[
       _FunctionGridItem(
         label: timetableLabel,
-        assetPath: 'assets/icons/fluentemoji/alarm_clock_color.svg',
+        assetPath: 'assets/icons/function_grid/alarm_clock_3d.png',
         onTap: onTimetableTap,
       ),
       _FunctionGridItem(
         label: physicsLabLabel,
-        assetPath: 'assets/icons/fluentemoji/memo_color.svg',
+        assetPath: 'assets/icons/function_grid/memo_3d.png',
         onTap: onPhysicsLabTap,
       ),
       _FunctionGridItem(
         label: settingsLabel,
-        assetPath: 'assets/icons/fluentemoji/gear_color.svg',
+        assetPath: 'assets/icons/function_grid/gear_3d.png',
         onTap: onSettingsTap,
       ),
       _FunctionGridItem(
         label: gradesLabel,
-        assetPath: 'assets/icons/fluentemoji/anguished_face_color.svg',
+        assetPath: 'assets/icons/function_grid/anguished_face_3d.png',
         onTap: onGradesTap,
       ),
       _FunctionGridItem(
         label: toolsLabel,
-        assetPath: 'assets/icons/fluentemoji/desktop_computer_color.svg',
+        assetPath: 'assets/icons/function_grid/desktop_computer_3d.png',
         onTap: onToolsTap,
       ),
       _FunctionGridItem(
         label: aboutLabel,
-        assetPath: 'assets/icons/fluentemoji/teddy_bear_color.svg',
+        assetPath: 'assets/icons/function_grid/teddy_bear_3d.png',
         onTap: onAboutTap,
       ),
     ];
 
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: items.length,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        childAspectRatio: 1.45,
-      ),
-      itemBuilder: (context, index) => _FunctionGridCard(item: items[index]),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool useThreeColumns = constraints.maxWidth >= 720;
+
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: items.length,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: useThreeColumns ? 3 : 2,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: useThreeColumns ? 1.2 : 1.1,
+          ),
+          itemBuilder: (context, index) =>
+              _FunctionGridCard(item: items[index]),
+        );
+      },
     );
   }
 }
@@ -117,8 +123,10 @@ class _FunctionGridCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Expanded(
-                  child: FSvgPicture.asset(
+                  child: Image.asset(
                     item.assetPath,
+                    fit: BoxFit.contain,
+                    filterQuality: FilterQuality.medium,
                     excludeFromSemantics: true,
                   ),
                 ),

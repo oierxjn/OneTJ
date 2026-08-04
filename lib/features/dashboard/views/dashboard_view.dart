@@ -133,29 +133,37 @@ class _DashboardViewState extends State<DashboardView>
   Widget _buildBody(BuildContext context, AppLocalizations l10n) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildHeroCard(context),
-          const SizedBox(height: 24),
-          if (_themeChangeNotifier.preferences.homeLayout ==
-              HomeLayout.functionGrid) ...[
-            _buildFunctionGrid(context, l10n),
-            const SizedBox(height: 24),
-          ],
-          Text(
-            l10n.dashboardUpcomingTitle,
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          if (_viewModel.timetableLoading || _viewModel.calendarLoading)
-            const LinearProgressIndicator()
-          else
-            _buildUpcomingSection(
-              context,
-              entries: _viewModel.buildUpcomingEntries(),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1120),
+          child: SizedBox(
+            width: double.infinity,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeroCard(context),
+                const SizedBox(height: 24),
+                if (_themeChangeNotifier.preferences.homeLayout ==
+                    HomeLayout.functionGrid) ...[
+                  _buildFunctionGrid(context, l10n),
+                  const SizedBox(height: 24),
+                ],
+                Text(
+                  l10n.dashboardUpcomingTitle,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                if (_viewModel.timetableLoading || _viewModel.calendarLoading)
+                  const LinearProgressIndicator()
+                else
+                  _buildUpcomingSection(
+                    context,
+                    entries: _viewModel.buildUpcomingEntries(),
+                  ),
+              ],
             ),
-        ],
+          ),
+        ),
       ),
     );
   }
