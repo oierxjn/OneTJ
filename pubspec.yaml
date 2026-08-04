@@ -116,6 +116,7 @@ flutter:
     - assets/media/
     - assets/pictures/1.jpg
     - assets/icons/fluentemoji/
+    - assets/icons/function_grid/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
