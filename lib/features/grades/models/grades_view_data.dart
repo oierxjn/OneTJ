@@ -1,4 +1,4 @@
-import 'package:onetj/repo/undergraduate_score_repository.dart';
+import 'package:onetj/models/undergraduate_score_data.dart';
 
 class GradesViewData {
   const GradesViewData({

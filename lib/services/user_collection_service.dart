@@ -8,8 +8,8 @@ import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/app/logging/logger.dart';
 import 'package:onetj/models/user_collection_field.dart';
 import 'package:onetj/models/user_collection_payload.dart';
-import 'package:onetj/repo/settings_repository.dart';
-import 'package:onetj/repo/student_info_repository.dart';
+import 'package:onetj/models/settings_data.dart';
+import 'package:onetj/models/student_info_data.dart';
 import 'package:onetj/services/device_info_service.dart';
 
 class UserCollectionService {

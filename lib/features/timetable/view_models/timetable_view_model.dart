@@ -9,6 +9,7 @@ import 'package:onetj/models/event_model.dart';
 import 'package:onetj/models/settings_defaults.dart';
 import 'package:onetj/models/time_period_range.dart';
 import 'package:onetj/models/timetable_index.dart';
+import 'package:onetj/models/settings_data.dart';
 import 'package:onetj/repo/settings_repository.dart';
 
 enum TimetableDisplayMode {

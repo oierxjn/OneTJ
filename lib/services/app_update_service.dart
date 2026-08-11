@@ -12,6 +12,7 @@ import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/app/logging/logger.dart';
 import 'package:onetj/models/app_update_info.dart';
+import 'package:onetj/models/app_update_state_data.dart';
 import 'package:onetj/repo/app_update_state_repository.dart';
 import 'package:onetj/services/app_update_api.dart';
 

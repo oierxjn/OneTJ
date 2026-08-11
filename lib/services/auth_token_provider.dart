@@ -6,6 +6,7 @@ import 'package:onetj/app/constant/site_constant.dart';
 import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/models/data/code2token.dart';
+import 'package:onetj/models/token_data.dart';
 import 'package:onetj/repo/token_repository.dart';
 import 'package:onetj/services/logged_http.dart';
 

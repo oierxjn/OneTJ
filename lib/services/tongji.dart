@@ -7,14 +7,14 @@ import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/app/logging/logger.dart';
 import 'package:onetj/models/api_response.dart';
+import 'package:onetj/models/course_schedule_data.dart';
 import 'package:onetj/models/data/course_schedule_net_data.dart';
 import 'package:onetj/models/data/school_calendar_net_data.dart';
 import 'package:onetj/models/data/student_info_net_data.dart';
 import 'package:onetj/models/data/undergraduate_score_net_data.dart';
-import 'package:onetj/repo/course_schedule_repository.dart';
-import 'package:onetj/repo/school_calendar_repository.dart';
-import 'package:onetj/repo/student_info_repository.dart';
-import 'package:onetj/repo/undergraduate_score_repository.dart';
+import 'package:onetj/models/school_calendar_data.dart';
+import 'package:onetj/models/student_info_data.dart';
+import 'package:onetj/models/undergraduate_score_data.dart';
 import 'package:onetj/services/auth_token_provider.dart';
 import 'package:onetj/services/logged_http.dart';
 

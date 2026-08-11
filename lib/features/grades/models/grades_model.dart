@@ -1,5 +1,6 @@
 import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/services/tongji.dart';
+import 'package:onetj/models/undergraduate_score_data.dart';
 import 'package:onetj/repo/undergraduate_score_repository.dart';
 
 class GradesModel {

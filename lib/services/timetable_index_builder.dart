@@ -1,6 +1,6 @@
 import 'package:onetj/app/logging/logger.dart';
 import 'package:onetj/models/timetable_index.dart';
-import 'package:onetj/repo/course_schedule_repository.dart';
+import 'package:onetj/models/course_schedule_data.dart';
 
 /// 课程表索引构建器
 ///

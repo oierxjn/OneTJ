@@ -1,5 +1,6 @@
 import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/features/settings/models/developer_settings_exception.dart';
+import 'package:onetj/models/student_info_data.dart';
 import 'package:onetj/repo/student_info_repository.dart';
 import 'package:onetj/services/tongji.dart';
 import 'package:onetj/services/user_collection_service.dart';

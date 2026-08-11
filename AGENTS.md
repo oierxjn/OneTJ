@@ -40,7 +40,7 @@
 ## Project structure
 - `lib/app/`: app-level constants and exceptions.
 - `lib/features/`: feature modules (e.g. `launcher`, `login`) with `models/`, `view_models/`, `views/`.
-- `lib/models/`: shared data models (including API response models).
+- `lib/models/`: shared data models (including API response models and domain `*Data` classes used by repositories).
 - `lib/repo/`: repositories for persistence/cache (e.g. token repo).
 - `lib/services/`: API/services layer (e.g. `TongjiApi`, `AuthTokenProvider` for token lifecycle).
 - `lib/l10n/`: localization ARB files.
