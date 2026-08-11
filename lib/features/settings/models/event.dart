@@ -1,5 +1,5 @@
 import 'package:onetj/models/event_model.dart';
-import 'package:onetj/repo/settings_repository.dart';
+import 'package:onetj/models/settings_data.dart';
 import 'package:onetj/services/hive_storage_service.dart';
 
 class SettingsSavedEvent extends UiEvent {

@@ -18,7 +18,7 @@ import 'package:onetj/models/time_period_range.dart';
 import 'package:onetj/models/timetable_index.dart';
 import 'package:onetj/models/theme_preferences.dart';
 import 'package:onetj/models/time_slot.dart';
-import 'package:onetj/repo/school_calendar_repository.dart';
+import 'package:onetj/models/school_calendar_data.dart';
 import 'package:onetj/services/app_update_service.dart';
 import 'package:onetj/widgets/course_detail_bottom_sheet.dart';
 

@@ -18,6 +18,7 @@ import 'package:onetj/models/time_period_range.dart';
 import 'package:onetj/models/settings_defaults.dart';
 import 'package:onetj/repo/course_schedule_repository.dart';
 import 'package:onetj/repo/school_calendar_repository.dart';
+import 'package:onetj/models/settings_data.dart';
 import 'package:onetj/repo/settings_repository.dart';
 import 'package:onetj/repo/student_info_repository.dart';
 import 'package:onetj/repo/token_repository.dart';

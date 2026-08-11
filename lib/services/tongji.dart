@@ -12,11 +12,12 @@ import 'package:onetj/models/data/course_schedule_net_data.dart';
 import 'package:onetj/models/data/school_calendar_net_data.dart';
 import 'package:onetj/models/data/student_info_net_data.dart';
 import 'package:onetj/models/data/undergraduate_score_net_data.dart';
-import 'package:onetj/repo/course_schedule_repository.dart';
-import 'package:onetj/repo/school_calendar_repository.dart';
-import 'package:onetj/repo/student_info_repository.dart';
+import 'package:onetj/models/course_schedule_data.dart';
+import 'package:onetj/models/school_calendar_data.dart';
+import 'package:onetj/models/student_info_data.dart';
+import 'package:onetj/models/token_data.dart';
 import 'package:onetj/repo/token_repository.dart';
-import 'package:onetj/repo/undergraduate_score_repository.dart';
+import 'package:onetj/models/undergraduate_score_data.dart';
 
 class TongjiApi {
   TongjiApi._();

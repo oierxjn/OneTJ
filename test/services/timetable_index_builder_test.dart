@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:onetj/repo/course_schedule_repository.dart';
+import 'package:onetj/models/course_schedule_data.dart';
 import 'package:onetj/services/timetable_index_builder.dart';
 
 void main() {
