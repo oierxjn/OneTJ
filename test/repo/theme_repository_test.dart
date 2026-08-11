@@ -10,8 +10,7 @@ void main() {
 
   setUp(() {
     storage = InMemoryThemeStorage();
-    ThemeRepository.resetForTesting(storage: storage);
-    repo = ThemeRepository.getInstance();
+    repo = ThemeRepository(storage: storage);
   });
 
   group('ThemeRepository', () {

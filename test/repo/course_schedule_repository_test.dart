@@ -8,9 +8,8 @@ void main() {
     late CourseScheduleRepository repo;
 
     setUp(() {
-      CourseScheduleRepository.resetInstanceForTest();
       storage = InMemoryCourseScheduleStorage();
-      repo = CourseScheduleRepository.getInstance(storage: storage);
+      repo = CourseScheduleRepository(storage: storage);
     });
 
     test('fetches and caches data on first getOrFetch', () async {

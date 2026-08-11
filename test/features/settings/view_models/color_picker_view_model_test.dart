@@ -18,15 +18,13 @@ Future<void> _waitForLoad(ColorPickerViewModel vm) => _pumpEventQueue();
 
 /// 测试用的 ThemeChangeNotifier，使用 InMemoryThemeStorage 隔离
 ThemeChangeNotifier _createFakeThemeNotifier() {
-  ThemeRepository.resetForTesting();
-  final repo = ThemeRepository.getInstance();
+  final repo = ThemeRepository(storage: InMemoryThemeStorage());
   return ThemeChangeNotifier(repository: repo);
 }
 
 /// 测试用的 ColorPresetRepository，使用 InMemoryColorPresetStorage 隔离
 ColorPresetRepository _createFakePresetRepo() {
-  ColorPresetRepository.resetForTesting();
-  return ColorPresetRepository.getInstance();
+  return ColorPresetRepository(storage: InMemoryColorPresetStorage());
 }
 
 void main() {

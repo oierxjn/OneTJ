@@ -7,6 +7,7 @@ import 'package:hive/hive.dart';
 import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/models/app_update_info.dart';
 import 'package:onetj/repo/app_update_state_repository.dart';
+import 'package:onetj/services/app_update_api.dart';
 import 'package:onetj/services/app_update_service.dart';
 import 'package:path/path.dart' as p;
 import 'package:flutter/services.dart';
@@ -19,6 +20,7 @@ void main() {
   late Directory tempDir;
   late HttpServer server;
   late AppUpdateService service;
+  late AppUpdateStateRepository repository;
 
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('app_update_service_test_');
@@ -34,8 +36,10 @@ void main() {
       }
       return null;
     });
+    repository = AppUpdateStateRepository();
     service = AppUpdateService(
-      repository: AppUpdateStateRepository.getInstance(),
+      api: AppUpdateApi(),
+      repository: repository,
     );
     server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
   });
@@ -78,8 +82,7 @@ void main() {
       expect(await file.readAsBytes(), payload);
       expect(p.basename(file.path), 'onetj_installer.exe');
 
-      final AppUpdateStateData state =
-          await AppUpdateStateRepository.getInstance().getState(
+      final AppUpdateStateData state = await repository.getState(
         refreshFromStorage: true,
       );
       expect(state.pendingFilePath, file.path);
