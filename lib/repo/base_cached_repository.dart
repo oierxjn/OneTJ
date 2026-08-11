@@ -49,7 +49,7 @@ abstract class BaseNetCachedRepository<TData extends BaseData,
   TMeta buildMeta(
     DateTime now,
     TData data, {
-    Object? requestKey,
+    String? requestKey,
   });
 
   Future<void> warmUp() async {
@@ -68,7 +68,7 @@ abstract class BaseNetCachedRepository<TData extends BaseData,
     required Duration ttl,
     required TData? cached,
     required TMeta? meta,
-    Object? requestKey,
+    String? requestKey,
   }) {
     if (cached == null || meta == null) {
       return true;
@@ -87,7 +87,7 @@ abstract class BaseNetCachedRepository<TData extends BaseData,
     required DateTime now,
     required Future<TData> Function() fetcher,
     Duration ttl = const Duration(days: 7),
-    Object? requestKey,
+    String? requestKey,
   }) async {
     _throwIfClearing();
     final TData? cached = _cachedData;
@@ -112,7 +112,7 @@ abstract class BaseNetCachedRepository<TData extends BaseData,
   Future<TData> refresh({
     required DateTime now,
     required Future<TData> Function() fetcher,
-    Object? requestKey,
+    String? requestKey,
   }) {
     return _runSingleFlightFetch(
       now: now,
@@ -165,7 +165,7 @@ abstract class BaseNetCachedRepository<TData extends BaseData,
   Future<TData> _runSingleFlightFetch({
     required DateTime now,
     required Future<TData> Function() fetcher,
-    required Object? requestKey,
+    required String? requestKey,
   }) {
     _throwIfClearing();
     final Future<TData>? inFlight = _inFlightFetch;
@@ -204,7 +204,7 @@ abstract class BaseNetCachedRepository<TData extends BaseData,
     required Future<TData> inFlight,
     required DateTime now,
     required Future<TData> Function() fetcher,
-    required Object? requestKey,
+    required String? requestKey,
   }) async {
     try {
       await inFlight;
@@ -220,7 +220,7 @@ abstract class BaseNetCachedRepository<TData extends BaseData,
   Future<TData> _fetchAndSave({
     required DateTime now,
     required Future<TData> Function() fetcher,
-    required Object? requestKey,
+    required String? requestKey,
   }) async {
     final TData fetched = await fetcher();
     final TMeta meta = buildMeta(now, fetched, requestKey: requestKey);

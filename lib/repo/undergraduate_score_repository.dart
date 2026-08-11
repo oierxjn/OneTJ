@@ -127,11 +127,11 @@ class UndergraduateScoreRepository extends BaseNetCachedRepository<
   UndergraduateScoreCacheMeta buildMeta(
     DateTime now,
     UndergraduateScoreData data, {
-    Object? requestKey,
+    String? requestKey,
   }) {
     return UndergraduateScoreCacheMeta(
       lastFetchedAtMillis: now.millisecondsSinceEpoch,
-      versionKey: requestKey as String?,
+      versionKey: requestKey,
     );
   }
 
@@ -141,7 +141,7 @@ class UndergraduateScoreRepository extends BaseNetCachedRepository<
     required Duration ttl,
     required UndergraduateScoreData? cached,
     required UndergraduateScoreCacheMeta? meta,
-    Object? requestKey,
+    String? requestKey,
   }) {
     final bool shouldFetchByBase = super.shouldFetch(
       now: now,
@@ -153,7 +153,7 @@ class UndergraduateScoreRepository extends BaseNetCachedRepository<
     if (shouldFetchByBase) {
       return true;
     }
-    final String? versionKey = requestKey as String?;
+    final String? versionKey = requestKey;
     return versionKey != null &&
         versionKey.isNotEmpty &&
         meta?.versionKey != versionKey;
@@ -183,7 +183,7 @@ class UndergraduateScoreRepository extends BaseNetCachedRepository<
     required Future<UndergraduateScoreData> Function() fetcher,
     String? versionKey,
     Duration ttl = const Duration(days: 7),
-    Object? requestKey,
+    String? requestKey,
   }) {
     return super.getOrFetch(
       now: now,
@@ -198,7 +198,7 @@ class UndergraduateScoreRepository extends BaseNetCachedRepository<
     required DateTime now,
     required Future<UndergraduateScoreData> Function() fetcher,
     String? versionKey,
-    Object? requestKey,
+    String? requestKey,
   }) {
     return super.refresh(
       now: now,
