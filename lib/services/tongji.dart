@@ -23,8 +23,8 @@ class TongjiApi {
 
   /// 获取 [TongjiApi] 实例。
   ///
-  /// 这是一个单例模式,确保在整个应用程序中只有一个实例。
-  /// 传入 [auth] 时会返回一个使用该实例的新对象,便于测试注入。
+  /// 这是一个单例模式，确保在整个应用程序中只有一个实例。
+  /// 传入 [auth] 时会返回一个使用该实例的新对象，便于测试注入。
   factory TongjiApi({AuthTokenProvider? auth}) =>
       auth == null ? _instance : TongjiApi._(auth);
 
