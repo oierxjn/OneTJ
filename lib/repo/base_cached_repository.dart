@@ -2,14 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:onetj/app/exception/app_exception.dart';
-
-/// 基础数据类，所有缓存数据都必须实现该类
-///
-/// 建议补上fromJson工厂方法
-abstract class BaseData {
-  const BaseData();
-  Map<String, dynamic> toJson();
-}
+import 'package:onetj/models/base_data.dart';
 
 /// 基础元数据类，所有缓存元数据都必须实现该类
 ///
