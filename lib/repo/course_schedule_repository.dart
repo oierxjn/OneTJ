@@ -122,13 +122,15 @@ class CourseScheduleRepository extends BaseNetCachedRepository<
     CourseScheduleStorage? storage,
   }) : super(storage ?? HiveCourseScheduleStorage());
 
-  String? _pendingTermKey;
-
   @override
-  CourseScheduleCacheMeta buildMeta(DateTime now) {
+  CourseScheduleCacheMeta buildMeta(
+    DateTime now,
+    CourseScheduleData data, {
+    Object? requestKey,
+  }) {
     return CourseScheduleCacheMeta(
       lastFetchedAtMillis: now.millisecondsSinceEpoch,
-      termKey: _pendingTermKey,
+      termKey: requestKey as String?,
     );
   }
 
@@ -151,36 +153,39 @@ class CourseScheduleRepository extends BaseNetCachedRepository<
   }
 
   @override
+  bool shouldFetch({
+    required DateTime now,
+    required Duration ttl,
+    required CourseScheduleData? cached,
+    required CourseScheduleCacheMeta? meta,
+    Object? requestKey,
+  }) {
+    if (meta == null || meta.termKey != requestKey) {
+      return true;
+    }
+    return super.shouldFetch(
+      now: now,
+      ttl: ttl,
+      cached: cached,
+      meta: meta,
+      requestKey: requestKey,
+    );
+  }
+
+  @override
   Future<CourseScheduleData> getOrFetch({
     required DateTime now,
     required Future<CourseScheduleData> Function() fetcher,
     String? termKey,
     Duration ttl = const Duration(days: 7),
-  }) async {
-    _pendingTermKey ??= termKey;
-    final CourseScheduleData data;
-    try {
-      data = await super.getOrFetch(
-        now: now,
-        fetcher: fetcher,
-        ttl: ttl,
-      );
-      return data;
-    } finally {
-      _pendingTermKey = null;
-    }
-  }
-
-  @override
-  bool shouldFetch(
-      {required DateTime now,
-      required Duration ttl,
-      required CourseScheduleData? cached,
-      required CourseScheduleCacheMeta? meta}) {
-    if (meta == null || meta.termKey != _pendingTermKey) {
-      return true;
-    }
-    return super.shouldFetch(now: now, ttl: ttl, cached: cached, meta: meta);
+    Object? requestKey,
+  }) {
+    return super.getOrFetch(
+      now: now,
+      fetcher: fetcher,
+      ttl: ttl,
+      requestKey: termKey ?? requestKey,
+    );
   }
 
   @override
@@ -188,17 +193,12 @@ class CourseScheduleRepository extends BaseNetCachedRepository<
     required DateTime now,
     required Future<CourseScheduleData> Function() fetcher,
     String? termKey,
-  }) async {
-    _pendingTermKey ??= termKey;
-    final CourseScheduleData data;
-    try {
-      data = await super.refresh(
-        now: now,
-        fetcher: fetcher,
-      );
-      return data;
-    } finally {
-      _pendingTermKey = null;
-    }
+    Object? requestKey,
+  }) {
+    return super.refresh(
+      now: now,
+      fetcher: fetcher,
+      requestKey: termKey ?? requestKey,
+    );
   }
 }
