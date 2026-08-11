@@ -93,7 +93,7 @@ class TemplateRepository extends BaseNetCachedRepository<TemplateData,
   TemplateCacheMeta buildMeta(
     DateTime now,
     TemplateData data, {
-    Object? requestKey,
+    String? requestKey,
   }) {
     return TemplateCacheMeta(
       lastFetchedAtMillis: now.millisecondsSinceEpoch,

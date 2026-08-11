@@ -126,11 +126,11 @@ class CourseScheduleRepository extends BaseNetCachedRepository<
   CourseScheduleCacheMeta buildMeta(
     DateTime now,
     CourseScheduleData data, {
-    Object? requestKey,
+    String? requestKey,
   }) {
     return CourseScheduleCacheMeta(
       lastFetchedAtMillis: now.millisecondsSinceEpoch,
-      termKey: requestKey as String?,
+      termKey: requestKey,
     );
   }
 
@@ -158,7 +158,7 @@ class CourseScheduleRepository extends BaseNetCachedRepository<
     required Duration ttl,
     required CourseScheduleData? cached,
     required CourseScheduleCacheMeta? meta,
-    Object? requestKey,
+    String? requestKey,
   }) {
     if (meta == null || meta.termKey != requestKey) {
       return true;
@@ -178,7 +178,7 @@ class CourseScheduleRepository extends BaseNetCachedRepository<
     required Future<CourseScheduleData> Function() fetcher,
     String? termKey,
     Duration ttl = const Duration(days: 7),
-    Object? requestKey,
+    String? requestKey,
   }) {
     return super.getOrFetch(
       now: now,
@@ -193,7 +193,7 @@ class CourseScheduleRepository extends BaseNetCachedRepository<
     required DateTime now,
     required Future<CourseScheduleData> Function() fetcher,
     String? termKey,
-    Object? requestKey,
+    String? requestKey,
   }) {
     return super.refresh(
       now: now,

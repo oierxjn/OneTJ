@@ -125,7 +125,7 @@ class SchoolCalendarRepository extends BaseNetCachedRepository<
   SchoolCalendarCacheMeta buildMeta(
     DateTime now,
     SchoolCalendarData data, {
-    Object? requestKey,
+    String? requestKey,
   }) {
     return SchoolCalendarCacheMeta(
       lastFetchedAtMillis: now.millisecondsSinceEpoch,
@@ -139,7 +139,7 @@ class SchoolCalendarRepository extends BaseNetCachedRepository<
     required Duration ttl,
     required SchoolCalendarData? cached,
     required SchoolCalendarCacheMeta? meta,
-    Object? requestKey,
+    String? requestKey,
   }) {
     final bool baseShouldFetch = super.shouldFetch(
       now: now,
@@ -178,7 +178,7 @@ class SchoolCalendarRepository extends BaseNetCachedRepository<
     required DateTime now,
     required Future<SchoolCalendarData> Function() fetcher,
     Duration ttl = const Duration(days: 1),
-    Object? requestKey,
+    String? requestKey,
   }) {
     return super.getOrFetch(
       now: now,

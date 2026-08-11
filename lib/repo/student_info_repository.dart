@@ -126,11 +126,11 @@ class StudentInfoRepository extends BaseNetCachedRepository<StudentInfoData,
   StudentInfoCacheMeta buildMeta(
     DateTime now,
     StudentInfoData data, {
-    Object? requestKey,
+    String? requestKey,
   }) {
     return StudentInfoCacheMeta(
       lastFetchedAtMillis: now.millisecondsSinceEpoch,
-      versionKey: requestKey as String?,
+      versionKey: requestKey,
     );
   }
 
@@ -140,7 +140,7 @@ class StudentInfoRepository extends BaseNetCachedRepository<StudentInfoData,
     required Duration ttl,
     required StudentInfoData? cached,
     required StudentInfoCacheMeta? meta,
-    Object? requestKey,
+    String? requestKey,
   }) {
     final bool shouldFetchByBase = super.shouldFetch(
       now: now,
@@ -152,7 +152,7 @@ class StudentInfoRepository extends BaseNetCachedRepository<StudentInfoData,
     if (shouldFetchByBase) {
       return true;
     }
-    final String? versionKey = requestKey as String?;
+    final String? versionKey = requestKey;
     return versionKey != null &&
         versionKey.isNotEmpty &&
         meta?.versionKey != versionKey;
@@ -182,7 +182,7 @@ class StudentInfoRepository extends BaseNetCachedRepository<StudentInfoData,
     required Future<StudentInfoData> Function() fetcher,
     String? versionKey,
     Duration ttl = const Duration(days: 7),
-    Object? requestKey,
+    String? requestKey,
   }) {
     return super.getOrFetch(
       now: now,
@@ -197,7 +197,7 @@ class StudentInfoRepository extends BaseNetCachedRepository<StudentInfoData,
     required DateTime now,
     required Future<StudentInfoData> Function() fetcher,
     String? versionKey,
-    Object? requestKey,
+    String? requestKey,
   }) {
     return super.refresh(
       now: now,
