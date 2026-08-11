@@ -1,5 +1,6 @@
 import 'package:onetj/services/tongji.dart';
 
+import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/repo/student_info_repository.dart';
 import 'package:onetj/repo/school_calendar_repository.dart';
 import 'package:onetj/repo/course_schedule_repository.dart';
@@ -31,7 +32,7 @@ class DashboardModel {
   }
 
   Future<StudentInfoData> getStudentInfo() async {
-    final StudentInfoRepository repo = StudentInfoRepository.getInstance();
+    final StudentInfoRepository repo = appLocator<StudentInfoRepository>();
     await repo.warmUp();
     return repo.getOrFetch(
       now: DateTime.now(),
@@ -51,7 +52,7 @@ class DashboardModel {
   Future<CourseScheduleData> getCourseSchedule() async {
     final DateTime now = DateTime.now();
     final CourseScheduleRepository repo =
-        CourseScheduleRepository.getInstance();
+        appLocator<CourseScheduleRepository>();
     await repo.warmUp();
     final String? termKey = await _termKeyResolver.resolveCurrentTermKey(
       now: now,

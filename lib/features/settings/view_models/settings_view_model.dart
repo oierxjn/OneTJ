@@ -41,7 +41,7 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
     SettingsRepository? settingsRepository,
     ThemeChangeNotifier? themeChangeNotifier,
   })  : _settingsRepository =
-            settingsRepository ?? SettingsRepository.getInstance(),
+            settingsRepository ?? appLocator<SettingsRepository>(),
         _themeChangeNotifier =
             themeChangeNotifier ?? appLocator<ThemeChangeNotifier>(),
         _hiveStorageService = HiveStorageService(),
@@ -257,10 +257,10 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
     errorMessage = null;
     notifyListeners();
     try {
-      await TokenRepository.getInstance().clearToken();
-      await StudentInfoRepository.getInstance().clearCache();
-      await SchoolCalendarRepository.getInstance().clearCache();
-      await CourseScheduleRepository.getInstance().clearCache();
+      await appLocator<TokenRepository>().clearToken();
+      await appLocator<StudentInfoRepository>().clearCache();
+      await appLocator<SchoolCalendarRepository>().clearCache();
+      await appLocator<CourseScheduleRepository>().clearCache();
       await CookieManager.instance(webViewEnvironment: _webViewEnvironment)
           .deleteAllCookies();
       AppLogger.logNavigation(

@@ -360,29 +360,9 @@ class InMemoryStudentInfoStorage implements StudentInfoStorage {
 
 class StudentInfoRepository extends BaseNetCachedRepository<StudentInfoData,
     StudentInfoCacheMeta, StudentInfoStorage> {
-  StudentInfoRepository._({
-    required StudentInfoStorage storage,
-  }) : super(storage);
-
-  static StudentInfoRepository? _instance;
-
-  static StudentInfoRepository getInstance({
+  StudentInfoRepository({
     StudentInfoStorage? storage,
-  }) {
-    if (_instance != null) {
-      return _instance!;
-    }
-    final StudentInfoRepository repo = StudentInfoRepository._(
-      storage: storage ?? HiveStudentInfoStorage(),
-    );
-    _instance = repo;
-    return repo;
-  }
-
-  @visibleForTesting
-  static void resetInstanceForTest() {
-    _instance = null;
-  }
+  }) : super(storage ?? HiveStudentInfoStorage());
 
   String? _pendingVersionKey;
 

@@ -41,9 +41,8 @@ void main() {
     late UndergraduateScoreRepository repo;
 
     setUp(() {
-      UndergraduateScoreRepository.resetInstanceForTest();
       storage = InMemoryUndergraduateScoreStorage();
-      repo = UndergraduateScoreRepository.getInstance(storage: storage);
+      repo = UndergraduateScoreRepository(storage: storage);
     });
 
     test('fetches and caches data on first getOrFetch', () async {

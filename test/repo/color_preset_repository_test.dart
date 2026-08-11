@@ -9,8 +9,7 @@ void main() {
 
   setUp(() {
     storage = InMemoryColorPresetStorage();
-    ColorPresetRepository.resetForTesting(storage: storage);
-    repo = ColorPresetRepository.getInstance();
+    repo = ColorPresetRepository(storage: storage);
   });
 
   const presetA = ThemePreferences(

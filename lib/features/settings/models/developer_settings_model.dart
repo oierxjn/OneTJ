@@ -1,3 +1,4 @@
+import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/features/settings/models/developer_settings_exception.dart';
 import 'package:onetj/repo/student_info_repository.dart';
 import 'package:onetj/services/tongji.dart';
@@ -9,7 +10,7 @@ class DeveloperSettingsModel {
     TongjiApi? tongjiApi,
     UserCollectionService? userCollectionService,
   })  : _studentInfoRepository =
-            studentInfoRepository ?? StudentInfoRepository.getInstance(),
+            studentInfoRepository ?? appLocator<StudentInfoRepository>(),
         _tongjiApi = tongjiApi ?? TongjiApi(),
         _userCollectionService =
             userCollectionService ?? UserCollectionService();

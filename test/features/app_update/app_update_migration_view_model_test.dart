@@ -78,7 +78,7 @@ void main() {
         return null;
       });
       final AppUpdateMigrationViewModel viewModel =
-          AppUpdateMigrationViewModel();
+          AppUpdateMigrationViewModel(externalLauncherService: ExternalLauncherService());
 
       final Future<UiEvent> nextEvent = viewModel.events.first;
       await viewModel.copyLink('https://example.com/update.apk');
@@ -98,7 +98,7 @@ void main() {
         return null;
       });
       final AppUpdateMigrationViewModel viewModel =
-          AppUpdateMigrationViewModel();
+          AppUpdateMigrationViewModel(externalLauncherService: ExternalLauncherService());
 
       final Future<UiEvent> nextEvent = viewModel.events.first;
       await viewModel.copyLink('https://example.com/update.apk');

@@ -56,9 +56,8 @@ void main() {
     late StudentInfoRepository repo;
 
     setUp(() {
-      StudentInfoRepository.resetInstanceForTest();
       storage = InMemoryStudentInfoStorage();
-      repo = StudentInfoRepository.getInstance(storage: storage);
+      repo = StudentInfoRepository(storage: storage);
     });
 
     test('fetches and caches data on first getOrFetch', () async {

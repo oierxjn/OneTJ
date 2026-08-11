@@ -8,6 +8,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import 'package:onetj/app/constant/app_version_constant.dart';
+import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/app/logging/logger.dart';
 import 'package:onetj/models/app_update_info.dart';
@@ -28,13 +29,8 @@ class AppUpdateService {
   AppUpdateService({
     AppUpdateApi? api,
     AppUpdateStateRepository? repository,
-  })  : _api = api ?? AppUpdateApi(),
-        _repository = repository ?? AppUpdateStateRepository.getInstance();
-
-  static AppUpdateService? _instance;
-  static AppUpdateService getInstance() {
-    return _instance ??= AppUpdateService();
-  }
+  })  : _api = api ?? appLocator<AppUpdateApi>(),
+        _repository = repository ?? appLocator<AppUpdateStateRepository>();
 
   final AppUpdateApi _api;
   final AppUpdateStateRepository _repository;

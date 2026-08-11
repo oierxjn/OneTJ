@@ -106,29 +106,9 @@ class HiveTemplateStorage implements TemplateStorage {
 
 class TemplateRepository extends BaseNetCachedRepository<TemplateData,
     TemplateCacheMeta, TemplateStorage> {
-  TemplateRepository._({
-    required TemplateStorage storage,
-  }) : super(storage);
-
-  static TemplateRepository? _instance;
-
-  static TemplateRepository getInstance({
+  TemplateRepository({
     TemplateStorage? storage,
-  }) {
-    if (_instance != null) {
-      return _instance!;
-    }
-    final TemplateRepository repo = TemplateRepository._(
-      storage: storage ?? HiveTemplateStorage(),
-    );
-    _instance = repo;
-    return repo;
-  }
-
-  @visibleForTesting
-  static void resetInstanceForTest() {
-    _instance = null;
-  }
+  }) : super(storage ?? HiveTemplateStorage());
 
   @override
   TemplateCacheMeta buildMeta(DateTime now) {

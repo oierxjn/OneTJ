@@ -60,7 +60,7 @@ class LauncherViewModel extends BaseViewModel<UiEvent> {
     final Future<void> webViewInitFuture =
         WebViewEnvironmentService.instance.initialize();
     final Future<SettingsData> settingsFuture =
-        SettingsRepository.getInstance().getSettings(
+        appLocator<SettingsRepository>().getSettings(
       refreshFromStorage: true,
     );
 
@@ -112,7 +112,7 @@ class LauncherViewModel extends BaseViewModel<UiEvent> {
   ///
   /// 如果 token 有效，则返回 [RoutePaths.home]，否则返回 [RoutePaths.login]。
   Future<String> _resolveInitialRoute() async {
-    final TokenRepository repo = TokenRepository.getInstance();
+    final TokenRepository repo = appLocator<TokenRepository>();
     final TokenData? token = await repo.getToken(refreshFromStorage: true);
 
     if (token != null &&

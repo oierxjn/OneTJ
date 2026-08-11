@@ -146,22 +146,10 @@ class InMemoryTokenStorage implements TokenStorage {
 
 /// 用于存储和管理认证令牌的仓库类。
 ///
-/// 使用 getInstance 方法获取单例实例。
+/// 通过 `appLocator<TokenRepository>()` 获取实例。
 class TokenRepository {
-  TokenRepository._({required TokenStorage storage}) : _storage = storage;
-
-  static TokenRepository? _instance;
-
-  static TokenRepository getInstance() {
-    if (_instance != null) {
-      return _instance!;
-    }
-    final TokenRepository repo = TokenRepository._(
-      storage: HiveTokenStorage(),
-    );
-    _instance = repo;
-    return repo;
-  }
+  TokenRepository({TokenStorage? storage})
+      : _storage = storage ?? HiveTokenStorage();
 
   final TokenStorage _storage;
   TokenData? _cached;

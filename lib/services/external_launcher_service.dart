@@ -8,12 +8,6 @@ enum ExternalUrlLaunchResult {
 class ExternalLauncherService {
   ExternalLauncherService();
 
-  static ExternalLauncherService? _instance;
-
-  static ExternalLauncherService getInstance() {
-    return _instance ??= ExternalLauncherService();
-  }
-
   Uri? tryParseExternalUrl(String url) {
     final String trimmed = url.trim();
     if (trimmed.isEmpty) {

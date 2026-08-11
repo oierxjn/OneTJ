@@ -13,8 +13,8 @@ void main() {
   late ThemeChangeNotifier themeChangeNotifier;
 
   setUp(() async {
-    ThemeRepository.resetForTesting(storage: InMemoryThemeStorage());
-    final ThemeRepository repository = ThemeRepository.getInstance();
+    final ThemeRepository repository =
+        ThemeRepository(storage: InMemoryThemeStorage());
     await repository.initialize();
     themeChangeNotifier = ThemeChangeNotifier(repository: repository);
   });
