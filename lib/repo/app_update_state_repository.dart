@@ -87,15 +87,10 @@ class AppUpdateStateData {
 }
 
 class AppUpdateStateRepository {
-  AppUpdateStateRepository._({required HiveInterface hive}) : _hive = hive;
+  AppUpdateStateRepository({HiveInterface? hive}) : _hive = hive ?? Hive;
 
   static const String _boxName = 'app_update_state';
   static const String _key = 'payload';
-  static AppUpdateStateRepository? _instance;
-
-  static AppUpdateStateRepository getInstance() {
-    return _instance ??= AppUpdateStateRepository._(hive: Hive);
-  }
 
   final HiveInterface _hive;
   AppUpdateStateData? _cached;

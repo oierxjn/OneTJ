@@ -10,12 +10,6 @@ import 'package:onetj/models/app_update_info.dart';
 class AppUpdateApi {
   AppUpdateApi();
 
-  static AppUpdateApi? _instance;
-
-  static AppUpdateApi getInstance() {
-    return _instance ??= AppUpdateApi();
-  }
-
   Future<AppUpdateCheckResult> checkLatest({
     required String platform,
     String? arch,

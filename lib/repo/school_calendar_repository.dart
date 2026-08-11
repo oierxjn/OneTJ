@@ -238,30 +238,11 @@ class InMemorySchoolCalendarStorage implements SchoolCalendarStorage {
 
 class SchoolCalendarRepository extends BaseNetCachedRepository<
     SchoolCalendarData, SchoolCalendarCacheMeta, SchoolCalendarStorage> {
-  SchoolCalendarRepository._({
-    required SchoolCalendarStorage storage,
-  }) : super(storage);
-
-  static SchoolCalendarRepository? _instance;
-  int? _fetchedWeekBeginDay;
-
-  static SchoolCalendarRepository getInstance({
+  SchoolCalendarRepository({
     SchoolCalendarStorage? storage,
-  }) {
-    if (_instance != null) {
-      return _instance!;
-    }
-    final SchoolCalendarRepository repo = SchoolCalendarRepository._(
-      storage: storage ?? HiveSchoolCalendarStorage(),
-    );
-    _instance = repo;
-    return repo;
-  }
+  }) : super(storage ?? HiveSchoolCalendarStorage());
 
-  @visibleForTesting
-  static void resetInstanceForTest() {
-    _instance = null;
-  }
+  int? _fetchedWeekBeginDay;
 
   @override
   SchoolCalendarCacheMeta buildMeta(DateTime now) {

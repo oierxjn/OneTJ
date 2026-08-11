@@ -284,11 +284,10 @@ class InMemorySettingsStorage implements SettingsStorage {
 }
 
 class SettingsRepository {
-  SettingsRepository._({required SettingsStorage storage})
-      : _storage = storage,
+  SettingsRepository({SettingsStorage? storage})
+      : _storage = storage ?? HiveSettingsStorage(),
         _controller = StreamController<SettingsData>.broadcast();
 
-  static SettingsRepository? _instance;
   static final SettingsData _defaultSettings = SettingsData(
     maxWeek: kDefaultMaxWeek,
     timeSlotRanges: kDefaultTimeSlotRanges,
@@ -297,23 +296,6 @@ class SettingsRepository {
     userCollectionFields: kDefaultUserCollectionFields,
     selectedLaunchWallpaperRef: LaunchWallpaperRef.defaultValue,
   );
-
-  static SettingsRepository getInstance() {
-    if (_instance != null) {
-      return _instance!;
-    }
-    final SettingsRepository repo = SettingsRepository._(
-      storage: HiveSettingsStorage(),
-    );
-    _instance = repo;
-    return repo;
-  }
-
-  static void resetForTesting({SettingsStorage? storage}) {
-    _instance = SettingsRepository._(
-      storage: storage ?? InMemorySettingsStorage(),
-    );
-  }
 
   final SettingsStorage _storage;
   final StreamController<SettingsData> _controller;

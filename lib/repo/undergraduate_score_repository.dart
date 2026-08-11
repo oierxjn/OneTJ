@@ -447,28 +447,8 @@ class UndergraduateScoreRepository extends BaseNetCachedRepository<
     UndergraduateScoreData,
     UndergraduateScoreCacheMeta,
     UndergraduateScoreStorage> {
-  UndergraduateScoreRepository._({required UndergraduateScoreStorage storage})
-      : super(storage);
-
-  static UndergraduateScoreRepository? _instance;
-
-  static UndergraduateScoreRepository getInstance({
-    UndergraduateScoreStorage? storage,
-  }) {
-    if (_instance != null) {
-      return _instance!;
-    }
-    final UndergraduateScoreRepository repo = UndergraduateScoreRepository._(
-      storage: storage ?? HiveUndergraduateScoreStorage(),
-    );
-    _instance = repo;
-    return repo;
-  }
-
-  @visibleForTesting
-  static void resetInstanceForTest() {
-    _instance = null;
-  }
+  UndergraduateScoreRepository({UndergraduateScoreStorage? storage})
+      : super(storage ?? HiveUndergraduateScoreStorage());
 
   String? _pendingVersionKey;
 

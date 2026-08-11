@@ -473,29 +473,9 @@ class InMemoryCourseScheduleStorage implements CourseScheduleStorage {
 
 class CourseScheduleRepository extends BaseNetCachedRepository<
     CourseScheduleData, CourseScheduleCacheMeta, CourseScheduleStorage> {
-  CourseScheduleRepository._({
-    required CourseScheduleStorage storage,
-  }) : super(storage);
-
-  static CourseScheduleRepository? _instance;
-
-  static CourseScheduleRepository getInstance({
+  CourseScheduleRepository({
     CourseScheduleStorage? storage,
-  }) {
-    if (_instance != null) {
-      return _instance!;
-    }
-    final CourseScheduleRepository repo = CourseScheduleRepository._(
-      storage: storage ?? HiveCourseScheduleStorage(),
-    );
-    _instance = repo;
-    return repo;
-  }
-
-  @visibleForTesting
-  static void resetInstanceForTest() {
-    _instance = null;
-  }
+  }) : super(storage ?? HiveCourseScheduleStorage());
 
   String? _pendingTermKey;
 
