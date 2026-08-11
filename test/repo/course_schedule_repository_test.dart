@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:onetj/models/course_schedule_data.dart';
@@ -149,6 +151,87 @@ void main() {
 
       expect(fetchCount, 1);
       expect(result.length, 2);
+    });
+
+    test('different termKey refreshes do not share an in-flight fetch',
+        () async {
+      final Completer<void> firstFetchStarted = Completer<void>();
+      final Completer<void> releaseFirstFetch = Completer<void>();
+      int firstFetchCount = 0;
+      int secondFetchCount = 0;
+
+      final Future<CourseScheduleData> firstRequest = repo.refresh(
+        now: DateTime(2026, 1, 1),
+        termKey: '2025-1',
+        fetcher: () async {
+          firstFetchCount += 1;
+          firstFetchStarted.complete();
+          await releaseFirstFetch.future;
+          return const CourseScheduleData(items: <CourseScheduleItemData>[]);
+        },
+      );
+      await firstFetchStarted.future;
+
+      final Future<CourseScheduleData> secondRequest = repo.refresh(
+        now: DateTime(2026, 1, 1),
+        termKey: '2025-2',
+        fetcher: () async {
+          secondFetchCount += 1;
+          return const CourseScheduleData(items: <CourseScheduleItemData>[]);
+        },
+      );
+      releaseFirstFetch.complete();
+
+      await Future.wait(<Future<CourseScheduleData>>[
+        firstRequest,
+        secondRequest,
+      ]);
+
+      final CourseScheduleCacheMeta? meta =
+          await repo.getCachedMeta(refreshFromStorage: true);
+      expect(firstFetchCount, 1);
+      expect(secondFetchCount, 1);
+      expect(meta?.termKey, '2025-2');
+    });
+
+    test('null and non-null termKeys do not share an in-flight fetch',
+        () async {
+      final Completer<void> firstFetchStarted = Completer<void>();
+      final Completer<void> releaseFirstFetch = Completer<void>();
+      int firstFetchCount = 0;
+      int secondFetchCount = 0;
+
+      final Future<CourseScheduleData> firstRequest = repo.getOrFetch(
+        now: DateTime(2026, 1, 1),
+        fetcher: () async {
+          firstFetchCount += 1;
+          firstFetchStarted.complete();
+          await releaseFirstFetch.future;
+          return const CourseScheduleData(items: <CourseScheduleItemData>[]);
+        },
+      );
+      await firstFetchStarted.future;
+
+      final Future<CourseScheduleData> secondRequest = repo.getOrFetch(
+        now: DateTime(2026, 1, 1),
+        termKey: '2025-1',
+        fetcher: () async {
+          secondFetchCount += 1;
+          return const CourseScheduleData(items: <CourseScheduleItemData>[]);
+        },
+      );
+      releaseFirstFetch.complete();
+
+      await Future.wait(<Future<CourseScheduleData>>[
+        firstRequest,
+        secondRequest,
+      ]);
+
+      final CourseScheduleCacheMeta? meta =
+          await repo.getCachedMeta(refreshFromStorage: true);
+      expect(firstFetchCount, 1);
+      expect(secondFetchCount, 1);
+      expect(meta?.termKey, '2025-1');
     });
 
     test('clearCache clears data and meta', () async {

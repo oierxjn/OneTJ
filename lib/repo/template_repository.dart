@@ -90,7 +90,11 @@ class TemplateRepository extends BaseNetCachedRepository<TemplateData,
   }) : super(storage ?? HiveTemplateStorage());
 
   @override
-  TemplateCacheMeta buildMeta(DateTime now) {
+  TemplateCacheMeta buildMeta(
+    DateTime now,
+    TemplateData data, {
+    Object? requestKey,
+  }) {
     return TemplateCacheMeta(
       lastFetchedAtMillis: now.millisecondsSinceEpoch,
     );

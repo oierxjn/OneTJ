@@ -122,13 +122,15 @@ class StudentInfoRepository extends BaseNetCachedRepository<StudentInfoData,
     StudentInfoStorage? storage,
   }) : super(storage ?? HiveStudentInfoStorage());
 
-  String? _pendingVersionKey;
-
   @override
-  StudentInfoCacheMeta buildMeta(DateTime now) {
+  StudentInfoCacheMeta buildMeta(
+    DateTime now,
+    StudentInfoData data, {
+    Object? requestKey,
+  }) {
     return StudentInfoCacheMeta(
       lastFetchedAtMillis: now.millisecondsSinceEpoch,
-      versionKey: _pendingVersionKey,
+      versionKey: requestKey as String?,
     );
   }
 
@@ -138,23 +140,22 @@ class StudentInfoRepository extends BaseNetCachedRepository<StudentInfoData,
     required Duration ttl,
     required StudentInfoData? cached,
     required StudentInfoCacheMeta? meta,
+    Object? requestKey,
   }) {
     final bool shouldFetchByBase = super.shouldFetch(
       now: now,
       ttl: ttl,
       cached: cached,
       meta: meta,
+      requestKey: requestKey,
     );
     if (shouldFetchByBase) {
       return true;
     }
-    final String? versionKey = _pendingVersionKey;
-    if (versionKey != null &&
+    final String? versionKey = requestKey as String?;
+    return versionKey != null &&
         versionKey.isNotEmpty &&
-        meta?.versionKey != versionKey) {
-      return true;
-    }
-    return false;
+        meta?.versionKey != versionKey;
   }
 
   Future<StudentInfoData?> getCached({
@@ -181,18 +182,14 @@ class StudentInfoRepository extends BaseNetCachedRepository<StudentInfoData,
     required Future<StudentInfoData> Function() fetcher,
     String? versionKey,
     Duration ttl = const Duration(days: 7),
-  }) async {
-    _pendingVersionKey =
-        (versionKey != null && versionKey.isNotEmpty) ? versionKey : null;
-    try {
-      return await super.getOrFetch(
-        now: now,
-        fetcher: fetcher,
-        ttl: ttl,
-      );
-    } finally {
-      _pendingVersionKey = null;
-    }
+    Object? requestKey,
+  }) {
+    return super.getOrFetch(
+      now: now,
+      fetcher: fetcher,
+      ttl: ttl,
+      requestKey: _normalizeVersionKey(versionKey) ?? requestKey,
+    );
   }
 
   @override
@@ -200,13 +197,16 @@ class StudentInfoRepository extends BaseNetCachedRepository<StudentInfoData,
     required DateTime now,
     required Future<StudentInfoData> Function() fetcher,
     String? versionKey,
-  }) async {
-    _pendingVersionKey =
-        (versionKey != null && versionKey.isNotEmpty) ? versionKey : null;
-    try {
-      return await super.refresh(now: now, fetcher: fetcher);
-    } finally {
-      _pendingVersionKey = null;
-    }
+    Object? requestKey,
+  }) {
+    return super.refresh(
+      now: now,
+      fetcher: fetcher,
+      requestKey: _normalizeVersionKey(versionKey) ?? requestKey,
+    );
+  }
+
+  String? _normalizeVersionKey(String? versionKey) {
+    return versionKey != null && versionKey.isNotEmpty ? versionKey : null;
   }
 }

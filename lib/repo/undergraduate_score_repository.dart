@@ -123,13 +123,15 @@ class UndergraduateScoreRepository extends BaseNetCachedRepository<
   UndergraduateScoreRepository({UndergraduateScoreStorage? storage})
       : super(storage ?? HiveUndergraduateScoreStorage());
 
-  String? _pendingVersionKey;
-
   @override
-  UndergraduateScoreCacheMeta buildMeta(DateTime now) {
+  UndergraduateScoreCacheMeta buildMeta(
+    DateTime now,
+    UndergraduateScoreData data, {
+    Object? requestKey,
+  }) {
     return UndergraduateScoreCacheMeta(
       lastFetchedAtMillis: now.millisecondsSinceEpoch,
-      versionKey: _pendingVersionKey,
+      versionKey: requestKey as String?,
     );
   }
 
@@ -139,23 +141,22 @@ class UndergraduateScoreRepository extends BaseNetCachedRepository<
     required Duration ttl,
     required UndergraduateScoreData? cached,
     required UndergraduateScoreCacheMeta? meta,
+    Object? requestKey,
   }) {
     final bool shouldFetchByBase = super.shouldFetch(
       now: now,
       ttl: ttl,
       cached: cached,
       meta: meta,
+      requestKey: requestKey,
     );
     if (shouldFetchByBase) {
       return true;
     }
-    final String? versionKey = _pendingVersionKey;
-    if (versionKey != null &&
+    final String? versionKey = requestKey as String?;
+    return versionKey != null &&
         versionKey.isNotEmpty &&
-        meta?.versionKey != versionKey) {
-      return true;
-    }
-    return false;
+        meta?.versionKey != versionKey;
   }
 
   Future<UndergraduateScoreData?> getCached({
@@ -182,18 +183,14 @@ class UndergraduateScoreRepository extends BaseNetCachedRepository<
     required Future<UndergraduateScoreData> Function() fetcher,
     String? versionKey,
     Duration ttl = const Duration(days: 7),
-  }) async {
-    _pendingVersionKey =
-        (versionKey != null && versionKey.isNotEmpty) ? versionKey : null;
-    try {
-      return await super.getOrFetch(
-        now: now,
-        fetcher: fetcher,
-        ttl: ttl,
-      );
-    } finally {
-      _pendingVersionKey = null;
-    }
+    Object? requestKey,
+  }) {
+    return super.getOrFetch(
+      now: now,
+      fetcher: fetcher,
+      ttl: ttl,
+      requestKey: _normalizeVersionKey(versionKey) ?? requestKey,
+    );
   }
 
   @override
@@ -201,13 +198,16 @@ class UndergraduateScoreRepository extends BaseNetCachedRepository<
     required DateTime now,
     required Future<UndergraduateScoreData> Function() fetcher,
     String? versionKey,
-  }) async {
-    _pendingVersionKey =
-        (versionKey != null && versionKey.isNotEmpty) ? versionKey : null;
-    try {
-      return await super.refresh(now: now, fetcher: fetcher);
-    } finally {
-      _pendingVersionKey = null;
-    }
+    Object? requestKey,
+  }) {
+    return super.refresh(
+      now: now,
+      fetcher: fetcher,
+      requestKey: _normalizeVersionKey(versionKey) ?? requestKey,
+    );
+  }
+
+  String? _normalizeVersionKey(String? versionKey) {
+    return versionKey != null && versionKey.isNotEmpty ? versionKey : null;
   }
 }

@@ -121,15 +121,15 @@ class SchoolCalendarRepository extends BaseNetCachedRepository<
     SchoolCalendarStorage? storage,
   }) : super(storage ?? HiveSchoolCalendarStorage());
 
-  int? _fetchedWeekBeginDay;
-
   @override
-  SchoolCalendarCacheMeta buildMeta(DateTime now) {
-    final int weekBeginDay = _fetchedWeekBeginDay ?? 0;
-    _fetchedWeekBeginDay = null;
+  SchoolCalendarCacheMeta buildMeta(
+    DateTime now,
+    SchoolCalendarData data, {
+    Object? requestKey,
+  }) {
     return SchoolCalendarCacheMeta(
       lastFetchedAtMillis: now.millisecondsSinceEpoch,
-      weekBeginDay: weekBeginDay,
+      weekBeginDay: data.schoolCalendar.weekBeginDay,
     );
   }
 
@@ -139,12 +139,14 @@ class SchoolCalendarRepository extends BaseNetCachedRepository<
     required Duration ttl,
     required SchoolCalendarData? cached,
     required SchoolCalendarCacheMeta? meta,
+    Object? requestKey,
   }) {
     final bool baseShouldFetch = super.shouldFetch(
       now: now,
       ttl: ttl,
       cached: cached,
       meta: meta,
+      requestKey: requestKey,
     );
     if (baseShouldFetch || meta == null) {
       return baseShouldFetch;
@@ -176,32 +178,13 @@ class SchoolCalendarRepository extends BaseNetCachedRepository<
     required DateTime now,
     required Future<SchoolCalendarData> Function() fetcher,
     Duration ttl = const Duration(days: 1),
+    Object? requestKey,
   }) {
     return super.getOrFetch(
       now: now,
-      fetcher: _withWeekBeginDay(fetcher),
+      fetcher: fetcher,
       ttl: ttl,
+      requestKey: requestKey,
     );
-  }
-
-  @override
-  Future<SchoolCalendarData> refresh({
-    required DateTime now,
-    required Future<SchoolCalendarData> Function() fetcher,
-  }) {
-    return super.refresh(
-      now: now,
-      fetcher: _withWeekBeginDay(fetcher),
-    );
-  }
-
-  Future<SchoolCalendarData> Function() _withWeekBeginDay(
-    Future<SchoolCalendarData> Function() fetcher,
-  ) {
-    return () async {
-      final SchoolCalendarData data = await fetcher();
-      _fetchedWeekBeginDay = data.schoolCalendar.weekBeginDay;
-      return data;
-    };
   }
 }
