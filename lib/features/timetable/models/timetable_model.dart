@@ -1,5 +1,6 @@
 import 'package:onetj/services/tongji.dart';
 
+import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/repo/course_schedule_repository.dart';
 import 'package:onetj/repo/school_calendar_repository.dart';
 import 'package:onetj/services/timetable_index_builder.dart';
@@ -16,15 +17,15 @@ class TimetableModel {
   })  : _api = api ?? TongjiApi(),
         _indexBuilder = indexBuilder ?? const TimetableIndexBuilder(),
         _scheduleRepository =
-            scheduleRepository ?? CourseScheduleRepository.getInstance(),
+            scheduleRepository ?? appLocator<CourseScheduleRepository>(),
         _calendarRepository =
-            calendarRepository ?? SchoolCalendarRepository.getInstance(),
+            calendarRepository ?? appLocator<SchoolCalendarRepository>(),
         _termKeyResolver = termKeyResolver ??
             TermKeyResolver(
               calendarRepository:
-                  calendarRepository ?? SchoolCalendarRepository.getInstance(),
+                  calendarRepository ?? appLocator<SchoolCalendarRepository>(),
               scheduleRepository:
-                  scheduleRepository ?? CourseScheduleRepository.getInstance(),
+                  scheduleRepository ?? appLocator<CourseScheduleRepository>(),
             );
 
   final TongjiApi _api;

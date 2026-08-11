@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/models/base_model.dart';
 import 'package:onetj/features/home/models/home_model.dart';
 import 'package:onetj/models/timetable_index.dart';
@@ -48,7 +49,7 @@ class HomeViewModel extends BaseViewModel<Never> {
 
   Future<void> loadSchoolCalendar() async {
     final SchoolCalendarRepository repo =
-        SchoolCalendarRepository.getInstance();
+        appLocator<SchoolCalendarRepository>();
     try {
       await repo.warmUp();
       final SchoolCalendarData data = await repo.getOrFetch(
@@ -64,7 +65,7 @@ class HomeViewModel extends BaseViewModel<Never> {
   Future<void> loadCourseSchedule() async {
     try {
       final CourseScheduleRepository repo =
-          CourseScheduleRepository.getInstance();
+          appLocator<CourseScheduleRepository>();
       final CourseScheduleData data = await repo.getOrFetch(
         now: DateTime.now(),
         fetcher: _model.fetchCourseSchedule,

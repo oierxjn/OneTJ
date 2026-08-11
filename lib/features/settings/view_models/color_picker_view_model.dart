@@ -49,7 +49,7 @@ class ColorPickerViewModel extends ChangeNotifier {
   })  : _themeChangeNotifier =
             themeChangeNotifier ?? appLocator<ThemeChangeNotifier>(),
         _presetRepository =
-            presetRepository ?? ColorPresetRepository.getInstance() {
+            presetRepository ?? appLocator<ColorPresetRepository>() {
     _snapshot = _themeChangeNotifier.preferences;
     _current = _snapshot;
     _presetName = '';

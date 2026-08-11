@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/features/timetable/models/event.dart';
 import 'package:onetj/features/timetable/models/timetable_model.dart';
@@ -22,7 +23,7 @@ class TimetableViewModel extends BaseViewModel<UiEvent> {
     SettingsRepository? settingsRepository,
   })  : _model = model ?? TimetableModel(),
         _settingsRepository =
-            settingsRepository ?? SettingsRepository.getInstance(),
+            settingsRepository ?? appLocator<SettingsRepository>(),
         _maxWeek = maxWeek {
     _settingsSub = _settingsRepository.stream.listen(_handleSettingsChanged);
   }

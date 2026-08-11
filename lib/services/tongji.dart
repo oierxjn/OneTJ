@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import 'package:onetj/app/constant/site_constant.dart';
+import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/app/logging/logger.dart';
 import 'package:onetj/models/api_response.dart';
@@ -50,7 +51,7 @@ class TongjiApi {
     if (response.statusCode >= 200 && response.statusCode < 300) {
       final Code2TokenData data =
           Code2TokenData.fromJson(json.decode(response.body));
-      final TokenRepository repo = TokenRepository.getInstance();
+      final TokenRepository repo = appLocator<TokenRepository>();
       await repo.saveFromCode2Token(data);
       return;
     }
@@ -210,7 +211,7 @@ class TongjiApi {
   }
 
   Future<String> _getValidAccessToken() async {
-    final TokenRepository repo = TokenRepository.getInstance();
+    final TokenRepository repo = appLocator<TokenRepository>();
     final TokenData? token = await repo.getToken(refreshFromStorage: true);
     if (token == null) {
       throw AppException('AUTH_REQUIRED', 'Missing access token');

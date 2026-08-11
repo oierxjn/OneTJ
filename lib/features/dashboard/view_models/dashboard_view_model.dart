@@ -26,7 +26,7 @@ class DashboardViewModel extends BaseViewModel<UiEvent> {
     AppUpdateService? appUpdateService,
   })  : _model = model ?? DashboardModel(),
         _settingsRepository =
-            settingsRepository ?? SettingsRepository.getInstance(),
+            settingsRepository ?? appLocator<SettingsRepository>(),
         _userCollectionService =
             userCollectionService ?? UserCollectionService(),
         _appUpdateService = appUpdateService ?? appLocator<AppUpdateService>() {
@@ -202,7 +202,7 @@ class DashboardViewModel extends BaseViewModel<UiEvent> {
 
   Future<void> _uploadUserCollectionWhenStudentInfoLoaded() async {
     try {
-      final StudentInfoRepository repo = StudentInfoRepository.getInstance();
+      final StudentInfoRepository repo = appLocator<StudentInfoRepository>();
       final StudentInfoData studentInfo = await repo.getOrFetch(
         now: DateTime.now(),
         fetcher: _model.fetchStudentInfo,
@@ -225,7 +225,7 @@ class DashboardViewModel extends BaseViewModel<UiEvent> {
 
   Future<void> loadSchoolCalendar() async {
     final SchoolCalendarRepository repo =
-        SchoolCalendarRepository.getInstance();
+        appLocator<SchoolCalendarRepository>();
     try {
       final DateTime now = DateTime.now();
       await repo.warmUp();
