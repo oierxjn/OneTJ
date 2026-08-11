@@ -42,7 +42,7 @@
 - `lib/features/`: feature modules (e.g. `launcher`, `login`) with `models/`, `view_models/`, `views/`.
 - `lib/models/`: shared data models (including API response models and domain `*Data` classes used by repositories).
 - `lib/repo/`: repositories for persistence/cache (e.g. token repo).
-- `lib/services/`: API/services layer (e.g. `TongjiApi`).
+- `lib/services/`: API/services layer (e.g. `TongjiApi`, `AuthTokenProvider` for token lifecycle).
 - `lib/l10n/`: localization ARB files.
 - `assets/`: image assets referenced by the app.
 - `local_packages/`: local forks/overrides (e.g. `flutter_inappwebview` OHOS fork).

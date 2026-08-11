@@ -13,6 +13,7 @@ import 'package:onetj/repo/token_repository.dart';
 import 'package:onetj/repo/undergraduate_score_repository.dart';
 import 'package:onetj/services/app_update_api.dart';
 import 'package:onetj/services/app_update_service.dart';
+import 'package:onetj/services/auth_token_provider.dart';
 import 'package:onetj/services/external_launcher_service.dart';
 
 final GetIt appLocator = GetIt.instance;
@@ -43,6 +44,9 @@ void configureDependencies() {
   );
 
   // Services
+  appLocator.registerLazySingleton<AuthTokenProvider>(
+    () => AuthTokenProvider(repository: appLocator<TokenRepository>()),
+  );
   appLocator.registerLazySingleton<AppUpdateApi>(AppUpdateApi.new);
   appLocator.registerLazySingleton<AppUpdateService>(
     () => AppUpdateService(

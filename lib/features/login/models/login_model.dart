@@ -2,10 +2,15 @@ import 'package:uuid/uuid.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
 import 'package:onetj/app/constant/site_constant.dart';
+import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/app/exception/app_exception.dart';
-import 'package:onetj/services/tongji.dart';
+import 'package:onetj/services/auth_token_provider.dart';
 
 class LoginModel {
+  LoginModel({AuthTokenProvider? auth})
+      : _auth = auth ?? appLocator<AuthTokenProvider>();
+
+  final AuthTokenProvider _auth;
   final String _baseUrl = tongjiApiBaseUrl;
   final String _path = loginEndpointPath;
 
@@ -37,7 +42,7 @@ class LoginModel {
   ///
   /// 如果URI不是重定向URI，返回false。
   /// 如果state不匹配，抛出[AuthStateMismatchException]。
-  /// 否则，调用[TongjiApi.code2token]交换token，并返回true。
+  /// 否则，调用[AuthTokenProvider.exchangeCode]交换token，并返回true。
   Future<bool> exchangeCodeIfRedirect(WebUri uri) async {
     if (!uri.toString().startsWith(_redirectUri)) {
       return false;
@@ -47,8 +52,7 @@ class LoginModel {
     if (state != _state) {
       throw AuthStateMismatchException();
     }
-    final TongjiApi api = TongjiApi();
-    await api.code2token(code);
+    await _auth.exchangeCode(code);
     return true;
   }
 }
