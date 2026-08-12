@@ -3,8 +3,8 @@ import 'package:onetj/services/tongji.dart';
 import 'package:onetj/models/undergraduate_score_data.dart';
 import 'package:onetj/repo/undergraduate_score_repository.dart';
 
-class GradesModel {
-  GradesModel({TongjiApi? api}) : _api = api ?? TongjiApi();
+class GradesDataService {
+  GradesDataService({TongjiApi? api}) : _api = api ?? TongjiApi();
 
   final TongjiApi _api;
 

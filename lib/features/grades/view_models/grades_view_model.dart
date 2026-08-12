@@ -1,12 +1,13 @@
 import 'package:onetj/app/presentation/base_view_model.dart';
 import 'package:onetj/app/presentation/ui_event.dart';
-import 'package:onetj/features/grades/models/grades_model.dart';
+import 'package:onetj/features/grades/application/grades_data_service.dart';
 import 'package:onetj/features/grades/models/grades_view_data.dart';
 
 class GradesViewModel extends BaseViewModel<UiEvent> {
-  GradesViewModel({GradesModel? model}) : _model = model ?? GradesModel();
+  GradesViewModel({GradesDataService? dataService})
+      : _dataService = dataService ?? GradesDataService();
 
-  final GradesModel _model;
+  final GradesDataService _dataService;
   GradesViewData? _viewData;
   int _selectedTermIndex = 0;
 
@@ -26,14 +27,14 @@ class GradesViewModel extends BaseViewModel<UiEvent> {
     loading = true;
     notifyListeners();
     try {
-      await _model.warmUpCache();
+      await _dataService.warmUpCache();
     } catch (error) {
       emit(
         ShowSnackBarEvent(message: 'Failed to warm cache: $error'),
       );
     }
     try {
-      final data = await _model.getUndergraduateScore();
+      final data = await _dataService.getUndergraduateScore();
       _viewData = GradesViewData.fromScoreData(data);
       _selectedTermIndex = 0;
     } catch (error) {
@@ -51,7 +52,7 @@ class GradesViewModel extends BaseViewModel<UiEvent> {
     loading = true;
     notifyListeners();
     try {
-      final data = await _model.refreshUndergraduateScore();
+      final data = await _dataService.refreshUndergraduateScore();
       _viewData = GradesViewData.fromScoreData(data);
       _selectedTermIndex = 0;
     } catch (error) {
