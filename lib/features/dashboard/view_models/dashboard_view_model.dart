@@ -1,6 +1,7 @@
 import 'dart:async';
 
-import 'package:onetj/features/dashboard/models/dashboard_model.dart';
+import 'package:onetj/features/dashboard/application/dashboard_data_service.dart';
+import 'package:onetj/features/dashboard/models/dashboard_upcoming_entry_data.dart';
 import 'package:onetj/features/dashboard/models/upcoming_entries_calculator.dart';
 import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/app/presentation/base_view_model.dart';
@@ -23,11 +24,11 @@ import 'package:onetj/app/logging/logger.dart';
 
 class DashboardViewModel extends BaseViewModel<UiEvent> {
   DashboardViewModel({
-    DashboardModel? model,
+    DashboardDataService? dataService,
     SettingsRepository? settingsRepository,
     UserCollectionService? userCollectionService,
     AppUpdateService? appUpdateService,
-  })  : _model = model ?? DashboardModel(),
+  })  : _dataService = dataService ?? DashboardDataService(),
         _settingsRepository =
             settingsRepository ?? appLocator<SettingsRepository>(),
         _userCollectionService =
@@ -36,7 +37,7 @@ class DashboardViewModel extends BaseViewModel<UiEvent> {
     _settingsSub = _settingsRepository.stream.listen(_listenSettingsChanged);
   }
 
-  final DashboardModel _model;
+  final DashboardDataService _dataService;
   final SettingsRepository _settingsRepository;
   final UserCollectionService _userCollectionService;
   final AppUpdateService _appUpdateService;
@@ -191,7 +192,7 @@ class DashboardViewModel extends BaseViewModel<UiEvent> {
 
   Future<void> loadStudentInfo() async {
     try {
-      final StudentInfoData data = await _model.getStudentInfo();
+      final StudentInfoData data = await _dataService.getStudentInfo();
       _departmentName = data.deptName;
     } catch (error) {
       emit(
@@ -208,7 +209,7 @@ class DashboardViewModel extends BaseViewModel<UiEvent> {
       final StudentInfoRepository repo = appLocator<StudentInfoRepository>();
       final StudentInfoData studentInfo = await repo.getOrFetch(
         now: DateTime.now(),
-        fetcher: _model.fetchStudentInfo,
+        fetcher: _dataService.fetchStudentInfo,
         ttl: const Duration(days: 1),
       );
       final SettingsData settings = await _settingsRepository.getSettings();
@@ -234,7 +235,7 @@ class DashboardViewModel extends BaseViewModel<UiEvent> {
       await repo.warmUp();
       final SchoolCalendarData data = await repo.getOrFetch(
         now: now,
-        fetcher: _model.fetchSchoolCalendar,
+        fetcher: _dataService.fetchSchoolCalendar,
       );
       _calendar = data;
       _lastCalendarSyncDate = now;
@@ -250,7 +251,7 @@ class DashboardViewModel extends BaseViewModel<UiEvent> {
 
   Future<void> loadCourseSchedule() async {
     try {
-      final CourseScheduleData data = await _model.getCourseSchedule();
+      final CourseScheduleData data = await _dataService.getCourseSchedule();
       final TimetableIndex index =
           const TimetableIndexBuilder().buildIndex(data);
       final List<TimetableEntry> entries =
