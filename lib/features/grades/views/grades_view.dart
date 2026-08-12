@@ -290,7 +290,7 @@ class _TermSelector extends StatelessWidget {
       return const SizedBox.shrink();
     }
     return DropdownButtonFormField<int>(
-      value: selectedIndex.clamp(0, terms.length - 1),
+      initialValue: selectedIndex.clamp(0, terms.length - 1),
       items: [
         for (int i = 0; i < terms.length; i += 1)
           DropdownMenuItem(
