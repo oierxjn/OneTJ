@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:onetj/app/di/dependencies.dart';
-import 'package:onetj/models/base_model.dart';
+import 'package:onetj/app/presentation/base_view_model.dart';
 import 'package:onetj/features/home/models/home_model.dart';
 import 'package:onetj/models/timetable_index.dart';
 import 'package:onetj/models/student_info_data.dart';

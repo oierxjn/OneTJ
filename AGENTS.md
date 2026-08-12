@@ -38,11 +38,21 @@
   via `target_compile_options(flutter_inappwebview_windows_plugin PRIVATE /utf-8)`.
 
 ## Project structure
-- `lib/app/`: app-level constants and exceptions.
-- `lib/features/`: feature modules (e.g. `launcher`, `login`) with `models/`, `view_models/`, `views/`.
-- `lib/models/`: shared data models (including API response models and domain `*Data` classes used by repositories).
-- `lib/repo/`: repositories for persistence/cache (e.g. token repo).
-- `lib/services/`: API/services layer (e.g. `TongjiApi`, `AuthTokenProvider` for token lifecycle).
+- `lib/app/`: app-level constants, exceptions, dependency injection, and shared presentation infrastructure.
+  - `lib/app/presentation/`: shared presentation-layer types such as `BaseViewModel` and `UiEvent`.
+- `lib/features/`: feature modules (e.g. `launcher`, `login`). A feature may contain `application/`, `models/`, `view_models/`, and `views/` as needed.
+  - `features/<feature>/application/`: feature use cases and orchestration services. Put API calls and the coordination of repositories, caches, fallbacks, and other dependencies here.
+  - `features/<feature>/models/`: feature-local data types and value objects only; it must not contain API calls, cache orchestration, `ChangeNotifier`, or UI events.
+  - `features/<feature>/view_models/`: presentation-layer state holders for the feature.
+  - `features/<feature>/views/`: Flutter UI for the feature.
+- `lib/models/`: cross-feature data types, API response types, and value objects (including domain `*Data` classes used by repositories). Do not put `ChangeNotifier`, UI events, API calls, or cache orchestration here.
+- `lib/repo/`: local/remote data access, cache, and persistence only; repositories must not own page workflows.
+- `lib/services/`: shared API/services layer (e.g. `TongjiApi`, `AuthTokenProvider` for token lifecycle).
 - `lib/l10n/`: localization ARB files.
 - `assets/`: image assets referenced by the app.
 - `local_packages/`: local forks/overrides (e.g. `flutter_inappwebview` OHOS fork).
+
+## Feature MVVM layering
+- ViewModels maintain UI state and emit `UiEvent`; they must not call APIs directly or access cache repositories directly.
+- Application services own feature-level API/repository/cache/fallback orchestration and must receive dependencies through constructor injection.
+- Restrict `appLocator` to `lib/app/di/` and necessary composition roots. Do not introduce `appLocator` lookups into ViewModels or application services; pass dependencies from the composition root instead.

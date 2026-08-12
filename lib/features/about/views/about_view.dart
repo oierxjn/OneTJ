@@ -9,7 +9,7 @@ import 'package:onetj/features/about/models/contributor_model.dart';
 import 'package:onetj/features/about/view_models/about_view_model.dart';
 import 'package:onetj/features/app_update/app_update_flow_coordinator.dart';
 import 'package:onetj/models/app_update_info.dart';
-import 'package:onetj/models/event_model.dart';
+import 'package:onetj/app/presentation/ui_event.dart';
 
 const String _kProjectRepoUrl = 'https://github.com/oierxjn/OneTJ';
 const String _kQqGroupId = '322324184';

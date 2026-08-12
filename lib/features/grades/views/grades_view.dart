@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:onetj/l10n/app_localizations.dart';
 
 import 'package:onetj/features/grades/view_models/grades_view_model.dart';
-import 'package:onetj/models/event_model.dart';
+import 'package:onetj/app/presentation/ui_event.dart';
 
 class GradesView extends StatefulWidget {
   const GradesView({super.key});
@@ -290,7 +290,7 @@ class _TermSelector extends StatelessWidget {
       return const SizedBox.shrink();
     }
     return DropdownButtonFormField<int>(
-      value: selectedIndex.clamp(0, terms.length - 1),
+      initialValue: selectedIndex.clamp(0, terms.length - 1),
       items: [
         for (int i = 0; i < terms.length; i += 1)
           DropdownMenuItem(

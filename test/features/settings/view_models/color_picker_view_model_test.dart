@@ -32,7 +32,6 @@ void main() {
   late ColorPresetRepository presetRepo;
   late ColorPickerViewModel viewModel;
 
-  const defaultColor = ThemePreferences.kDefaultSeedColor;
   const testColor = Color(0xFF123456);
   const otherColor = Color(0xFF654321);
 
@@ -333,7 +332,8 @@ void main() {
       });
 
       test('importFromText 无效主色返回 invalidLightSeed', () {
-        final result = viewModel.importFromText('#zzzzzzzz#AABBCCDD#AABBCCDD#AABBCCDD');
+        final result =
+            viewModel.importFromText('#zzzzzzzz#AABBCCDD#AABBCCDD#AABBCCDD');
         expect(result, ImportColorResult.invalidLightSeed);
       });
 

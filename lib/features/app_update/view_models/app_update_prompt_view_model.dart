@@ -1,7 +1,7 @@
 import 'package:onetj/app/logging/logger.dart';
 import 'package:onetj/features/app_update/models/event.dart';
-import 'package:onetj/models/base_model.dart';
-import 'package:onetj/models/event_model.dart';
+import 'package:onetj/app/presentation/base_view_model.dart';
+import 'package:onetj/app/presentation/ui_event.dart';
 import 'package:onetj/services/app_update_service.dart';
 
 class AppUpdatePromptViewModel extends BaseViewModel<UiEvent> {

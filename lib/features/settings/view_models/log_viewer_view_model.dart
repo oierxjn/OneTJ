@@ -6,8 +6,8 @@ import 'package:onetj/app/logging/log_export_service.dart';
 import 'package:onetj/app/logging/log_file_info.dart';
 import 'package:onetj/app/logging/logger.dart';
 import 'package:onetj/features/settings/models/event.dart';
-import 'package:onetj/models/base_model.dart';
-import 'package:onetj/models/event_model.dart';
+import 'package:onetj/app/presentation/base_view_model.dart';
+import 'package:onetj/app/presentation/ui_event.dart';
 
 typedef AppLogFilesLoader = Future<List<AppLogFileInfo>> Function();
 typedef AppLogFileReader = Future<String> Function(AppLogFileInfo fileInfo);

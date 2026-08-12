@@ -121,7 +121,8 @@ void main() {
       final MichelsonInterferometerViewModel viewModel =
           MichelsonInterferometerViewModel();
 
-      for (int index = 0; index < MichelsonInterferometerViewModel.positionCount;
+      for (int index = 0;
+          index < MichelsonInterferometerViewModel.positionCount;
           index += 1) {
         viewModel.updatePositionText(index, '${index + 1}.0');
       }
@@ -137,7 +138,8 @@ void main() {
       final MichelsonInterferometerViewModel viewModel =
           MichelsonInterferometerViewModel();
 
-      for (int index = 0; index < MichelsonInterferometerViewModel.positionCount;
+      for (int index = 0;
+          index < MichelsonInterferometerViewModel.positionCount;
           index += 1) {
         viewModel.updatePositionText(index, '${index + 1}.0');
       }
@@ -170,9 +172,10 @@ void main() {
         ],
       );
 
-      for (int index = 0; index < MichelsonInterferometerViewModel.positionCount;
+      for (int index = 0;
+          index < MichelsonInterferometerViewModel.positionCount;
           index += 1) {
-        viewModel.updatePositionText(index, '${index}');
+        viewModel.updatePositionText(index, '$index');
       }
 
       viewModel.applyPreset(preset);

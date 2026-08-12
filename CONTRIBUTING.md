@@ -213,25 +213,46 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
 ### 3.3 架构规范
 
-项目采用 MVVM 架构：
+项目采用以 feature 为边界的 MVVM 分层，并使用 application service 承担页面用例编排。不要将“Model”作为承载 API 调用、缓存预热或页面工作流的泛化容器。
 
-- **Model**：提供数据和业务逻辑。
-- **ViewModel**：连接 Model 和 View 的中间层，继承自 `ChangeNotifier`，用于处理业务逻辑和状态管理。
-- **View**：UI 组件，用 `Listenable` 组件实现状态监听。
+各层职责如下：
+
+- **View**：Flutter UI 组件；订阅并渲染 ViewModel 状态，将用户操作转交给 ViewModel。
+- **ViewModel**：展示层状态持有者，继承 `BaseViewModel` / `ChangeNotifier`，维护 UI state 并发出 `UiEvent`。不得直接调用 API 或直接访问缓存 repository。
+- **Application service**：feature 用例和编排层；负责协调 API、repository、缓存、fallback 及其他依赖。例如加载首页数据、刷新成绩或组装课表数据。
+- **Repository**：仅负责本地/远程数据访问、缓存和持久化；不得承担页面工作流或 UI 状态。
+- **Model / value object**：表达跨 feature 或 feature-local 的数据类型、API 响应和值对象；不得包含 `ChangeNotifier`、UI event、API 调用或缓存编排。
+- **Shared service**：封装跨 feature 的 API 或基础能力，例如 `TongjiApi`、认证令牌生命周期等。
+
+推荐依赖方向：
+
+```text
+View → ViewModel → Application service → Repository / Shared service → 本地存储或远程 API
+```
+
+依赖装配约定：
+
+- 新 application service 必须通过构造器注入依赖。
+- `appLocator` 仅可在 `lib/app/di/` 和必要的 composition root 中使用；不要在 ViewModel 或 application service 中新增 service locator 查询。
+- 共享展示层基础设施 `BaseViewModel` 与 `UiEvent` 位于 `lib/app/presentation/`。
 
 文件结构：
 ```
 lib/
-├── features/          # 功能模块
-│   ├── login/        # 登录模块
-│   │   ├── views/    # UI 组件
-│   │   ├── view_models/  # 视图模型
-│   │   └── models/   # 数据模型
+├── app/
+│   ├── di/                    # 依赖装配与 composition root
+│   └── presentation/          # BaseViewModel、UiEvent 等共享展示层类型
+├── features/                  # 功能模块
+│   ├── login/
+│   │   ├── application/       # feature 用例、API/repository/cache/fallback 编排
+│   │   ├── models/            # feature-local 数据类型和值对象
+│   │   ├── view_models/       # UI state 与 UiEvent
+│   │   └── views/             # Flutter UI
 │   └── ...
-├── models/           # 全局数据模型
-├── services/         # 服务层
-├── repo/             # 数据仓库
-└── utils/            # 工具类
+├── models/                    # 跨 feature 数据类型、API 响应和值对象
+├── repo/                      # 数据访问、缓存与持久化
+├── services/                  # 跨 feature API 与基础服务
+└── utils/                     # 工具类
 ```
 
 ## 4. 提交规范

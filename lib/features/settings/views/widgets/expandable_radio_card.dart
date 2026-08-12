@@ -97,8 +97,7 @@ class _ExpandableRadioCardState<T> extends State<ExpandableRadioCard<T>>
     return RadioListTile<T>(
       contentPadding: EdgeInsets.zero,
       value: option.value,
-      groupValue: widget.value,
-      onChanged: widget.enabled ? _onChanged : null,
+      enabled: widget.enabled,
       title: Row(
         children: [
           if (option.icon != null) ...[
@@ -114,16 +113,20 @@ class _ExpandableRadioCardState<T> extends State<ExpandableRadioCard<T>>
   Widget _buildExpandedContent() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 8),
-          ...widget.options.map(_buildOption),
-          if (widget.extraContent != null) ...[
+      child: RadioGroup<T>(
+        groupValue: widget.value,
+        onChanged: widget.enabled ? _onChanged : (_) {},
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
             const SizedBox(height: 8),
-            widget.extraContent!,
+            ...widget.options.map(_buildOption),
+            if (widget.extraContent != null) ...[
+              const SizedBox(height: 8),
+              widget.extraContent!,
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

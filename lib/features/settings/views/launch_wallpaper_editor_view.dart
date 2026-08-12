@@ -6,7 +6,7 @@ import 'package:onetj/l10n/app_localizations.dart';
 
 import 'package:onetj/features/settings/models/launch_wallpaper_editor_result.dart';
 import 'package:onetj/features/settings/view_models/launch_wallpaper_editor_view_model.dart';
-import 'package:onetj/models/event_model.dart';
+import 'package:onetj/app/presentation/ui_event.dart';
 import 'package:onetj/models/launch_wallpaper_item.dart';
 import 'package:onetj/models/launch_wallpaper_ref.dart';
 import 'package:onetj/services/launch_wallpaper_file_service.dart';

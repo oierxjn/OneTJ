@@ -1,7 +1,7 @@
 import 'package:onetj/features/physics_lab/features/franck_hertz/models/franck_hertz_analysis_result.dart';
 import 'package:onetj/features/physics_lab/features/franck_hertz/models/franck_hertz_measurement_row.dart';
 import 'package:onetj/features/physics_lab/features/franck_hertz/models/franck_hertz_metadata.dart';
-import 'package:onetj/models/base_model.dart';
+import 'package:onetj/app/presentation/base_view_model.dart';
 
 class FranckHertzViewModel extends BaseViewModel<Never> {
   static const int defaultRowCount = 50;

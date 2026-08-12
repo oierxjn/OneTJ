@@ -216,7 +216,7 @@ void main() {
         final intValue = ThemePreferences.colorToInt(color);
         final restored = Color(intValue);
 
-        expect(restored.value, color.value);
+        expect(restored.toARGB32(), color.toARGB32());
       });
 
       test('黑色', () {

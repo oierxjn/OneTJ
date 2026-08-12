@@ -9,8 +9,8 @@ import 'package:onetj/services/timetable_index_builder.dart';
 import 'package:onetj/services/term_key_resolver.dart';
 import 'package:onetj/models/timetable_index.dart';
 
-class TimetableModel {
-  TimetableModel({
+class TimetableDataService {
+  TimetableDataService({
     TongjiApi? api,
     TimetableIndexBuilder? indexBuilder,
     CourseScheduleRepository? scheduleRepository,
