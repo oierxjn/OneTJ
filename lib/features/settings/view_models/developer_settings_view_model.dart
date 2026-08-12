@@ -2,8 +2,8 @@ import 'package:onetj/app/constant/site_constant.dart';
 import 'package:onetj/features/settings/models/developer_settings_exception.dart';
 import 'package:onetj/features/settings/models/developer_settings_model.dart';
 import 'package:onetj/features/settings/models/event.dart';
-import 'package:onetj/models/base_model.dart';
-import 'package:onetj/models/event_model.dart';
+import 'package:onetj/app/presentation/base_view_model.dart';
+import 'package:onetj/app/presentation/ui_event.dart';
 
 class DeveloperSettingsViewModel extends BaseViewModel<UiEvent> {
   DeveloperSettingsViewModel({DeveloperSettingsModel? model})

@@ -1,4 +1,4 @@
-import 'package:onetj/models/event_model.dart';
+import 'package:onetj/app/presentation/ui_event.dart';
 import 'package:onetj/models/settings_data.dart';
 import 'package:onetj/services/hive_storage_service.dart';
 

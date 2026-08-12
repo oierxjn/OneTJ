@@ -1,8 +1,8 @@
 import 'package:onetj/app/constant/app_version_constant.dart';
 import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/models/app_update_info.dart';
-import 'package:onetj/models/base_model.dart';
-import 'package:onetj/models/event_model.dart';
+import 'package:onetj/app/presentation/base_view_model.dart';
+import 'package:onetj/app/presentation/ui_event.dart';
 import 'package:onetj/services/app_update_service.dart';
 
 class AboutViewModel extends BaseViewModel<UiEvent> {

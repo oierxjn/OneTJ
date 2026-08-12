@@ -13,7 +13,7 @@ import 'package:onetj/features/dashboard/views/widgets/function_grid.dart';
 import 'package:onetj/features/dashboard/models/dashboard_model.dart';
 import 'package:onetj/models/app_update_info.dart';
 import 'package:onetj/models/dashboard_upcoming_mode.dart';
-import 'package:onetj/models/event_model.dart';
+import 'package:onetj/app/presentation/ui_event.dart';
 import 'package:onetj/models/time_period_range.dart';
 import 'package:onetj/models/timetable_index.dart';
 import 'package:onetj/models/theme_preferences.dart';

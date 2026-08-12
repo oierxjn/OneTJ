@@ -6,7 +6,7 @@ import 'package:onetj/l10n/app_localizations.dart';
 import 'package:onetj/features/app_update/models/event.dart';
 import 'package:onetj/features/app_update/view_models/app_update_prompt_view_model.dart';
 import 'package:onetj/models/app_update_info.dart';
-import 'package:onetj/models/event_model.dart';
+import 'package:onetj/app/presentation/ui_event.dart';
 
 enum AppUpdatePromptDialogResult {
   later,

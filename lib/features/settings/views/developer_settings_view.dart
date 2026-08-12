@@ -10,7 +10,7 @@ import 'package:onetj/features/settings/models/event.dart';
 import 'package:onetj/features/settings/view_models/developer_settings_view_model.dart';
 import 'package:onetj/features/settings/views/widgets/developer_debug_upload_card.dart';
 import 'package:onetj/features/settings/views/widgets/settings_card.dart';
-import 'package:onetj/models/event_model.dart';
+import 'package:onetj/app/presentation/ui_event.dart';
 
 class DeveloperSettingsView extends StatefulWidget {
   const DeveloperSettingsView({super.key});

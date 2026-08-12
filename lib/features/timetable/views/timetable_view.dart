@@ -8,7 +8,7 @@ import 'package:onetj/app/logging/logger.dart';
 import 'package:onetj/features/timetable/view_models/timetable_view_model.dart';
 import 'package:onetj/features/timetable/views/widgets/timetable_timeline_panel.dart';
 import 'package:onetj/features/timetable/models/event.dart';
-import 'package:onetj/models/event_model.dart';
+import 'package:onetj/app/presentation/ui_event.dart';
 import 'package:onetj/models/timetable_index.dart';
 import 'package:onetj/widgets/course_detail_bottom_sheet.dart';
 

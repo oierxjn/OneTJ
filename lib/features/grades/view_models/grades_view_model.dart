@@ -1,5 +1,5 @@
-import 'package:onetj/models/base_model.dart';
-import 'package:onetj/models/event_model.dart';
+import 'package:onetj/app/presentation/base_view_model.dart';
+import 'package:onetj/app/presentation/ui_event.dart';
 import 'package:onetj/features/grades/models/grades_model.dart';
 import 'package:onetj/features/grades/models/grades_view_data.dart';
 

@@ -1,6 +1,6 @@
 import 'package:onetj/features/app_update/models/app_update_flow_state.dart';
 import 'package:onetj/models/app_update_info.dart';
-import 'package:onetj/models/base_model.dart';
+import 'package:onetj/app/presentation/base_view_model.dart';
 import 'package:onetj/services/app_update_service.dart';
 
 enum AppUpdateFlowCompletionType {
