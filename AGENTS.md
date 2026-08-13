@@ -5,6 +5,11 @@
 - On Windows, run Flutter tests via `scripts/flutter_test_no_proxy.ps1` so the
   child process can clear proxy env vars that would otherwise break local
   loopback WebSocket connections used by `flutter test`.
+- Run the app analyzer through `scripts/flutter_analyze_app.ps1`, which limits
+  analysis to `lib` and `test`.
+- Do not use bare `fvm flutter analyze` as the app-quality signal because it
+  may include local path vendor packages. Vendor changes require their own
+  validation workflow.
 
 ## Dependencies
 - HarmonyOS WebView package comes from the OpenHarmony fork of `flutter_inappwebview`
