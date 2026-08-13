@@ -195,10 +195,27 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
   fvm dart format .
   ```
 
-- 使用 `dart analyze` 检查代码质量：
-  ```bash
-  fvm dart analyze
+- 使用以下命令检查应用代码质量。脚本只分析 `lib` 和 `test`，不会将本地 `flutter_inappwebview` vendor fork 作为应用质量门禁：
+
+  Windows（PowerShell）：
+  ```powershell
+  .\scripts\flutter_analyze_app.ps1
   ```
+
+  Linux / macOS（Bash）：
+  ```bash
+  ./scripts/flutter_analyze_app.sh
+  ```
+
+  默认情况下，analyzer error 会使检查失败；warning 和 info 会输出，但暂不阻断。需要严格检查时，执行：
+  ```powershell
+  .\scripts\flutter_analyze_app.ps1 -Strict
+  ```
+  ```bash
+  ./scripts/flutter_analyze_app.sh --strict
+  ```
+
+  不要使用裸 `fvm flutter analyze` 作为应用代码质量绿灯的依据。修改 `local_packages/flutter_inappwebview/**` 时，请使用独立的 vendor 校验流程。
 
 ### 3.2 命名规范
 
