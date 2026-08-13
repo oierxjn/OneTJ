@@ -22,4 +22,8 @@ if [[ "$strict" == true ]]; then
 fi
 
 cd "$repo_root"
-fvm flutter analyze lib test "${quality_args[@]}" "${analyze_args[@]}"
+if [[ ${analyze_args[@]+set} ]]; then
+  fvm flutter analyze lib test "${quality_args[@]}" "${analyze_args[@]}"
+else
+  fvm flutter analyze lib test "${quality_args[@]}"
+fi
