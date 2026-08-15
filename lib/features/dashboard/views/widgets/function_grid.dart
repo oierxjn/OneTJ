@@ -69,7 +69,7 @@ class FunctionGrid extends StatelessWidget {
       ),
       _FunctionGridItem(
         label: studentExamsLabel,
-        assetPath: 'assets/icons/function_grid/memo_3d.png',
+        assetPath: 'assets/icons/function_grid/spiral_calendar_3d.png',
         onTap: onStudentExamsTap,
       ),
       _FunctionGridItem(
@@ -86,17 +86,17 @@ class FunctionGrid extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final bool useThreeColumns = constraints.maxWidth >= 720;
+        final bool useWideCards = constraints.maxWidth >= 720;
 
         return GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: items.length,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: useThreeColumns ? 3 : 2,
+            crossAxisCount: 4,
             mainAxisSpacing: 12,
             crossAxisSpacing: 12,
-            childAspectRatio: useThreeColumns ? 1.2 : 1.1,
+            childAspectRatio: useWideCards ? 1.2 : 1.1,
           ),
           itemBuilder: (context, index) =>
               _FunctionGridCard(item: items[index]),

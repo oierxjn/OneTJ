@@ -36,7 +36,7 @@ void main() {
         .crossAxisCount;
   }
 
-  testWidgets('窄屏按两列展示八个功能入口并分发点击事件', (tester) async {
+  testWidgets('窄屏按四列展示八个功能入口并分发点击事件', (tester) async {
     await tester.binding.setSurfaceSize(const Size(640, 1200));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     String? selected;
@@ -45,7 +45,7 @@ void main() {
 
     expect(find.byType(GridView), findsOneWidget);
     expect(find.byType(Card), findsNWidgets(8));
-    expect(crossAxisCount(tester), 2);
+    expect(crossAxisCount(tester), 4);
 
     final Offset timetablePosition = tester.getTopLeft(find.text('timetable'));
     final Offset physicsLabPosition =
@@ -58,12 +58,12 @@ void main() {
     final Offset toolsPosition = tester.getTopLeft(find.text('tools'));
     final Offset aboutPosition = tester.getTopLeft(find.text('about'));
     expect(physicsLabPosition.dy, timetablePosition.dy);
-    expect(settingsPosition.dy, greaterThan(timetablePosition.dy));
-    expect(gradesPosition.dy, settingsPosition.dy);
-    expect(cetScorePosition.dy, greaterThan(settingsPosition.dy));
+    expect(settingsPosition.dy, timetablePosition.dy);
+    expect(gradesPosition.dy, timetablePosition.dy);
+    expect(cetScorePosition.dy, greaterThan(timetablePosition.dy));
     expect(studentExamsPosition.dy, cetScorePosition.dy);
-    expect(toolsPosition.dy, greaterThan(cetScorePosition.dy));
-    expect(aboutPosition.dy, toolsPosition.dy);
+    expect(toolsPosition.dy, cetScorePosition.dy);
+    expect(aboutPosition.dy, cetScorePosition.dy);
 
     await tester.tap(find.text('student-exams'));
     expect(selected, 'student-exams');
@@ -90,18 +90,18 @@ void main() {
         'assets/icons/function_grid/gear_3d.png',
         'assets/icons/function_grid/anguished_face_3d.png',
         'assets/icons/function_grid/input_latin_letters_3d.png',
-        'assets/icons/function_grid/memo_3d.png',
+        'assets/icons/function_grid/spiral_calendar_3d.png',
         'assets/icons/function_grid/desktop_computer_3d.png',
         'assets/icons/function_grid/teddy_bear_3d.png',
       ],
     );
   });
-  testWidgets('宽屏按三列展示功能入口', (tester) async {
+  testWidgets('宽屏按四列展示功能入口', (tester) async {
     await tester.binding.setSurfaceSize(const Size(1200, 800));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(buildFunctionGrid(onTap: (_) {}));
 
-    expect(crossAxisCount(tester), 3);
+    expect(crossAxisCount(tester), 4);
 
     final Offset timetablePosition = tester.getTopLeft(find.text('timetable'));
     final Offset physicsLabPosition =
@@ -110,6 +110,6 @@ void main() {
     final Offset gradesPosition = tester.getTopLeft(find.text('grades'));
     expect(physicsLabPosition.dy, timetablePosition.dy);
     expect(settingsPosition.dy, timetablePosition.dy);
-    expect(gradesPosition.dy, greaterThan(timetablePosition.dy));
+    expect(gradesPosition.dy, timetablePosition.dy);
   });
 }
