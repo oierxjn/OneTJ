@@ -5,7 +5,9 @@ const List<String> oauthScope = [
   "rt_onetongji_undergraduate_score",
   "rt_teaching_info_undergraduate_summarized_grades", // 暂未使用
   "rt_onetongji_student_timetable",
-  "rt_onetongji_student_exams",
+// TODO: 等待学校开放平台为该 client 开通后再启用，
+// 否则授权请求会被 Keycloak 以 invalid_scope 拒绝，导致无法登录。
+//     "rt_onetongji_student_exams",
   "rt_teaching_info_sports_test_data",
   "rt_teaching_info_sports_test_health",
   "rt_onetongji_manual_arrange",

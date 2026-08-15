@@ -34,6 +34,19 @@ class AuthStateMismatchException extends AppException {
       : super(errorCode, 'Auth state mismatch, possible network attack');
 }
 
+/// 授权服务器把错误重定向回 redirect_uri（如 `invalid_scope`）时抛出，
+/// 直接携带后端的 `error` / `error_description`，避免拿空 code 去换 token。
+class AuthRedirectException extends AppException {
+  static const String errorCode = 'AUTH_REDIRECT_ERROR';
+  AuthRedirectException({required String error, String? errorDescription})
+      : super(
+          errorCode,
+          errorDescription == null || errorDescription.isEmpty
+              ? 'Authorization failed: $error'
+              : 'Authorization failed: $error ($errorDescription)',
+        );
+}
+
 class NetworkException extends AppException {
   static const String _code = 'NETWORK_ERROR';
   final int? statusCode;
