@@ -30,10 +30,13 @@ void main() {
     );
   }
 
-  int crossAxisCount(WidgetTester tester) {
+  SliverGridDelegateWithFixedCrossAxisCount gridDelegate(WidgetTester tester) {
     final GridView gridView = tester.widget<GridView>(find.byType(GridView));
-    return (gridView.gridDelegate as SliverGridDelegateWithFixedCrossAxisCount)
-        .crossAxisCount;
+    return gridView.gridDelegate as SliverGridDelegateWithFixedCrossAxisCount;
+  }
+
+  int crossAxisCount(WidgetTester tester) {
+    return gridDelegate(tester).crossAxisCount;
   }
 
   testWidgets('窄屏按四列展示八个功能入口并分发点击事件', (tester) async {
@@ -44,26 +47,21 @@ void main() {
         .pumpWidget(buildFunctionGrid(onTap: (value) => selected = value));
 
     expect(find.byType(GridView), findsOneWidget);
-    expect(find.byType(Card), findsNWidgets(8));
+    expect(find.byType(Card), findsNothing);
     expect(crossAxisCount(tester), 4);
+    expect(gridDelegate(tester).mainAxisExtent, 88);
+    expect(tester.getSize(find.byType(Image).first), const Size(36, 36));
 
-    final Offset timetablePosition = tester.getTopLeft(find.text('timetable'));
-    final Offset physicsLabPosition =
-        tester.getTopLeft(find.text('physics-lab'));
-    final Offset settingsPosition = tester.getTopLeft(find.text('settings'));
-    final Offset gradesPosition = tester.getTopLeft(find.text('grades'));
-    final Offset cetScorePosition = tester.getTopLeft(find.text('cet-score'));
-    final Offset studentExamsPosition =
-        tester.getTopLeft(find.text('student-exams'));
-    final Offset toolsPosition = tester.getTopLeft(find.text('tools'));
-    final Offset aboutPosition = tester.getTopLeft(find.text('about'));
-    expect(physicsLabPosition.dy, timetablePosition.dy);
-    expect(settingsPosition.dy, timetablePosition.dy);
-    expect(gradesPosition.dy, timetablePosition.dy);
-    expect(cetScorePosition.dy, greaterThan(timetablePosition.dy));
-    expect(studentExamsPosition.dy, cetScorePosition.dy);
-    expect(toolsPosition.dy, cetScorePosition.dy);
-    expect(aboutPosition.dy, cetScorePosition.dy);
+    final Finder taps = find.byType(InkWell);
+    expect(taps, findsNWidgets(8));
+    final double firstRowCellY = tester.getTopLeft(taps.at(0)).dy;
+    expect(tester.getTopLeft(taps.at(1)).dy, firstRowCellY);
+    expect(tester.getTopLeft(taps.at(2)).dy, firstRowCellY);
+    expect(tester.getTopLeft(taps.at(3)).dy, firstRowCellY);
+    expect(tester.getTopLeft(taps.at(4)).dy, greaterThan(firstRowCellY));
+    expect(tester.getTopLeft(taps.at(5)).dy, tester.getTopLeft(taps.at(4)).dy);
+    expect(tester.getTopLeft(taps.at(6)).dy, tester.getTopLeft(taps.at(4)).dy);
+    expect(tester.getTopLeft(taps.at(7)).dy, tester.getTopLeft(taps.at(4)).dy);
 
     await tester.tap(find.text('student-exams'));
     expect(selected, 'student-exams');

@@ -86,7 +86,7 @@ class FunctionGrid extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final bool useWideCards = constraints.maxWidth >= 720;
+        final bool useCompactLayout = constraints.maxWidth < 720;
 
         return GridView.builder(
           shrinkWrap: true,
@@ -94,12 +94,15 @@ class FunctionGrid extends StatelessWidget {
           itemCount: items.length,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 4,
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            childAspectRatio: useWideCards ? 1.2 : 1.1,
+            mainAxisSpacing: useCompactLayout ? 8 : 12,
+            crossAxisSpacing: useCompactLayout ? 8 : 12,
+            mainAxisExtent: useCompactLayout ? 88 : null,
+            childAspectRatio: 1.2,
           ),
-          itemBuilder: (context, index) =>
-              _FunctionGridCard(item: items[index]),
+          itemBuilder: (context, index) => _FunctionGridCard(
+            item: items[index],
+            compact: useCompactLayout,
+          ),
         );
       },
     );
@@ -119,47 +122,70 @@ class _FunctionGridItem {
 }
 
 class _FunctionGridCard extends StatelessWidget {
-  const _FunctionGridCard({required this.item});
+  const _FunctionGridCard({required this.item, required this.compact});
 
   final _FunctionGridItem item;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = Theme.of(context).colorScheme;
-    return Semantics(
-      button: true,
-      label: item.label,
-      child: Card(
-        elevation: 0,
-        clipBehavior: Clip.antiAlias,
-        color: colors.surfaceContainerHighest,
-        child: InkWell(
-          onTap: item.onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: Image.asset(
-                    item.assetPath,
-                    fit: BoxFit.contain,
-                    filterQuality: FilterQuality.medium,
-                    excludeFromSemantics: true,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  item.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-              ],
+    final Widget content = Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 4 : 16,
+        vertical: compact ? 6 : 16,
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          if (compact)
+            SizedBox(
+              width: 36,
+              height: 36,
+              child: Image.asset(
+                item.assetPath,
+                fit: BoxFit.contain,
+                filterQuality: FilterQuality.medium,
+                excludeFromSemantics: true,
+              ),
+            )
+          else
+            Expanded(
+              child: Image.asset(
+                item.assetPath,
+                fit: BoxFit.contain,
+                filterQuality: FilterQuality.medium,
+                excludeFromSemantics: true,
+              ),
             ),
+          SizedBox(height: compact ? 4 : 8),
+          Text(
+            item.label,
+            maxLines: compact ? 2 : 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: compact ? TextAlign.center : null,
+            style: compact
+                ? Theme.of(context).textTheme.bodySmall
+                : Theme.of(context).textTheme.titleSmall,
           ),
-        ),
+        ],
       ),
     );
+
+    final Widget tappable = compact
+        ? Material(
+            type: MaterialType.transparency,
+            borderRadius: BorderRadius.circular(12),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(onTap: item.onTap, child: content),
+          )
+        : Card(
+            elevation: 0,
+            clipBehavior: Clip.antiAlias,
+            color: colors.surfaceContainerHighest,
+            child: InkWell(onTap: item.onTap, child: content),
+          );
+
+    return Semantics(button: true, label: item.label, child: tappable);
   }
 }
