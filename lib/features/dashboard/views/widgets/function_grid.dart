@@ -8,6 +8,7 @@ class FunctionGrid extends StatelessWidget {
     required this.settingsLabel,
     required this.gradesLabel,
     required this.cetScoreLabel,
+    required this.studentExamsLabel,
     required this.toolsLabel,
     required this.aboutLabel,
     required this.onTimetableTap,
@@ -15,6 +16,7 @@ class FunctionGrid extends StatelessWidget {
     required this.onSettingsTap,
     required this.onGradesTap,
     required this.onCetScoreTap,
+    required this.onStudentExamsTap,
     required this.onToolsTap,
     required this.onAboutTap,
     super.key,
@@ -25,6 +27,7 @@ class FunctionGrid extends StatelessWidget {
   final String settingsLabel;
   final String gradesLabel;
   final String cetScoreLabel;
+  final String studentExamsLabel;
   final String toolsLabel;
   final String aboutLabel;
   final VoidCallback onTimetableTap;
@@ -32,6 +35,7 @@ class FunctionGrid extends StatelessWidget {
   final VoidCallback onSettingsTap;
   final VoidCallback onGradesTap;
   final VoidCallback onCetScoreTap;
+  final VoidCallback onStudentExamsTap;
   final VoidCallback onToolsTap;
   final VoidCallback onAboutTap;
 
@@ -64,6 +68,11 @@ class FunctionGrid extends StatelessWidget {
         onTap: onCetScoreTap,
       ),
       _FunctionGridItem(
+        label: studentExamsLabel,
+        assetPath: 'assets/icons/function_grid/spiral_calendar_3d.png',
+        onTap: onStudentExamsTap,
+      ),
+      _FunctionGridItem(
         label: toolsLabel,
         assetPath: 'assets/icons/function_grid/desktop_computer_3d.png',
         onTap: onToolsTap,
@@ -77,17 +86,17 @@ class FunctionGrid extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final bool useThreeColumns = constraints.maxWidth >= 720;
+        final bool useWideCards = constraints.maxWidth >= 720;
 
         return GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: items.length,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: useThreeColumns ? 3 : 2,
+            crossAxisCount: 4,
             mainAxisSpacing: 12,
             crossAxisSpacing: 12,
-            childAspectRatio: useThreeColumns ? 1.2 : 1.1,
+            childAspectRatio: useWideCards ? 1.2 : 1.1,
           ),
           itemBuilder: (context, index) =>
               _FunctionGridCard(item: items[index]),

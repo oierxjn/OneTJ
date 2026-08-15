@@ -5,7 +5,7 @@ const List<String> oauthScope = [
   "rt_onetongji_undergraduate_score",
   "rt_teaching_info_undergraduate_summarized_grades", // 暂未使用
   "rt_onetongji_student_timetable",
-// TODO:     "rt_onetongji_student_exams",
+  "rt_onetongji_student_exams",
   "rt_teaching_info_sports_test_data",
   "rt_teaching_info_sports_test_health",
   "rt_onetongji_manual_arrange",
@@ -24,6 +24,7 @@ const String currentTermCalendarPath =
 const String studentTimetablePath = "/v1/rt/onetongji/student_timetable";
 const String undergraduateScorePath = "/v1/rt/onetongji/undergraduate_score";
 const String cetScorePath = "/v1/rt/onetongji/cet_score";
+const String studentExamsPath = "/v1/rt/onetongji/student_exams";
 const String defaultDebugCollectionEndpoint =
     "http://127.0.0.1:8000/collector/v1/events";
 const String appUpdateServiceBaseUrl = "onetjapi.jkljkluiouio.top";

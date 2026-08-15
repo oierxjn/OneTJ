@@ -1163,4 +1163,50 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cetScoreOralScoreLabel => 'Oral test';
+
+  @override
+  String get studentExamsTitle => 'My Exams';
+
+  @override
+  String get studentExamsSubtitle =>
+      'View your current term\'s exam and course arrangements.';
+
+  @override
+  String get studentExamsToolSubtitle => 'View exam times and rooms';
+
+  @override
+  String get studentExamsEmpty => 'No exam arrangements are available.';
+
+  @override
+  String get studentExamsTermLabel => 'Term';
+
+  @override
+  String get studentExamsCourseCodeLabel => 'Course code';
+
+  @override
+  String get studentExamsTimeLabel => 'Time';
+
+  @override
+  String get studentExamsRoomLabel => 'Room';
+
+  @override
+  String get studentExamsRemarkLabel => 'Remark';
+
+  @override
+  String get studentExamsFormalLabel => 'Exam';
+
+  @override
+  String get studentExamsArrangementLabel => 'Course arrangement';
+
+  @override
+  String get studentExamsLatestFetchFailedUsingCache =>
+      'Couldn’t fetch the latest exam arrangements. Showing cached data.';
+
+  @override
+  String get studentExamsLatestFetchFailed =>
+      'Couldn’t fetch the latest exam arrangements. Please try again later.';
+
+  @override
+  String get studentExamsUnavailable =>
+      'This feature is temporarily unavailable. Please wait for the service to be restored.';
 }

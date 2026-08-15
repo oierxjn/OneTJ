@@ -1109,4 +1109,47 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get cetScoreOralScoreLabel => '口试成绩';
+
+  @override
+  String get studentExamsTitle => '我的考试';
+
+  @override
+  String get studentExamsSubtitle => '查看本学期的考试与课程安排。';
+
+  @override
+  String get studentExamsToolSubtitle => '查看考试时间与考场';
+
+  @override
+  String get studentExamsEmpty => '暂无考试安排';
+
+  @override
+  String get studentExamsTermLabel => '学期';
+
+  @override
+  String get studentExamsCourseCodeLabel => '课号';
+
+  @override
+  String get studentExamsTimeLabel => '时间';
+
+  @override
+  String get studentExamsRoomLabel => '地点';
+
+  @override
+  String get studentExamsRemarkLabel => '备注';
+
+  @override
+  String get studentExamsFormalLabel => '正式考试';
+
+  @override
+  String get studentExamsArrangementLabel => '课程安排';
+
+  @override
+  String get studentExamsLatestFetchFailedUsingCache =>
+      '最新考试安排拉取失败，当前显示的是缓存数据。';
+
+  @override
+  String get studentExamsLatestFetchFailed => '最新考试安排拉取失败，请稍后重试。';
+
+  @override
+  String get studentExamsUnavailable => '该功能暂未开放，请等待信息办恢复。';
 }

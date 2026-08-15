@@ -2126,6 +2126,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Oral test'**
   String get cetScoreOralScoreLabel;
+
+  /// No description provided for @studentExamsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'My Exams'**
+  String get studentExamsTitle;
+
+  /// No description provided for @studentExamsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'View your current term\'s exam and course arrangements.'**
+  String get studentExamsSubtitle;
+
+  /// No description provided for @studentExamsToolSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'View exam times and rooms'**
+  String get studentExamsToolSubtitle;
+
+  /// No description provided for @studentExamsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No exam arrangements are available.'**
+  String get studentExamsEmpty;
+
+  /// No description provided for @studentExamsTermLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Term'**
+  String get studentExamsTermLabel;
+
+  /// No description provided for @studentExamsCourseCodeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Course code'**
+  String get studentExamsCourseCodeLabel;
+
+  /// No description provided for @studentExamsTimeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Time'**
+  String get studentExamsTimeLabel;
+
+  /// No description provided for @studentExamsRoomLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Room'**
+  String get studentExamsRoomLabel;
+
+  /// No description provided for @studentExamsRemarkLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Remark'**
+  String get studentExamsRemarkLabel;
+
+  /// No description provided for @studentExamsFormalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Exam'**
+  String get studentExamsFormalLabel;
+
+  /// No description provided for @studentExamsArrangementLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Course arrangement'**
+  String get studentExamsArrangementLabel;
+
+  /// No description provided for @studentExamsLatestFetchFailedUsingCache.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t fetch the latest exam arrangements. Showing cached data.'**
+  String get studentExamsLatestFetchFailedUsingCache;
+
+  /// No description provided for @studentExamsLatestFetchFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t fetch the latest exam arrangements. Please try again later.'**
+  String get studentExamsLatestFetchFailed;
+
+  /// No description provided for @studentExamsUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This feature is temporarily unavailable. Please wait for the service to be restored.'**
+  String get studentExamsUnavailable;
 }
 
 class _AppLocalizationsDelegate

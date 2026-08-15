@@ -178,6 +178,7 @@ class _DashboardViewState extends State<DashboardView>
       settingsLabel: l10n.tabSettings,
       gradesLabel: l10n.scoreInquiryTitle,
       cetScoreLabel: l10n.cetScoreTitle,
+      studentExamsLabel: l10n.studentExamsTitle,
       toolsLabel: l10n.tabTools,
       aboutLabel: l10n.settingsAboutTitle,
       onTimetableTap: () => context.go(RoutePaths.homeTimetable),
@@ -186,6 +187,11 @@ class _DashboardViewState extends State<DashboardView>
       onSettingsTap: () => context.go(RoutePaths.homeSettings),
       onGradesTap: () => context.push(RoutePaths.homeGrades),
       onCetScoreTap: () => context.push(RoutePaths.homeCetScore),
+      onStudentExamsTap: () {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.studentExamsUnavailable)),
+        );
+      },
       onToolsTap: () => context.go(RoutePaths.homeTools),
       onAboutTap: () => context.push(RoutePaths.homeSettingsAbout),
     );
