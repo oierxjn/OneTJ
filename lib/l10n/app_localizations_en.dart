@@ -1197,4 +1197,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get studentExamsArrangementLabel => 'Course arrangement';
+
+  @override
+  String get studentExamsLatestFetchFailedUsingCache =>
+      'Couldn’t fetch the latest exam arrangements. Showing cached data.';
+
+  @override
+  String get studentExamsLatestFetchFailed =>
+      'Couldn’t fetch the latest exam arrangements. Please try again later.';
 }

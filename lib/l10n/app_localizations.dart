@@ -2192,6 +2192,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Course arrangement'**
   String get studentExamsArrangementLabel;
+
+  /// No description provided for @studentExamsLatestFetchFailedUsingCache.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t fetch the latest exam arrangements. Showing cached data.'**
+  String get studentExamsLatestFetchFailedUsingCache;
+
+  /// No description provided for @studentExamsLatestFetchFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t fetch the latest exam arrangements. Please try again later.'**
+  String get studentExamsLatestFetchFailed;
 }
 
 class _AppLocalizationsDelegate

@@ -23,13 +23,51 @@ class _StudentExamsViewState extends State<StudentExamsView> {
   void initState() {
     super.initState();
     _eventSub = widget.viewModel.events.listen((UiEvent event) {
-      if (event is ShowSnackBarEvent && mounted) {
+      if (!mounted) return;
+      if (event is StudentExamFetchFailedEvent) {
+        _showFetchFailedSnackBar(event);
+        return;
+      }
+      if (event is ShowSnackBarEvent) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(event.message ?? '')),
         );
       }
     });
     widget.viewModel.load();
+  }
+
+  void _showFetchFailedSnackBar(StudentExamFetchFailedEvent event) {
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    final ColorScheme colors = Theme.of(context).colorScheme;
+    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: colors.errorContainer,
+        duration: const Duration(seconds: 8),
+        content: Row(
+          children: <Widget>[
+            Icon(Icons.warning_amber_rounded, color: colors.onErrorContainer),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                event.showingCachedData
+                    ? l10n.studentExamsLatestFetchFailedUsingCache
+                    : l10n.studentExamsLatestFetchFailed,
+                style: TextStyle(color: colors.onErrorContainer),
+              ),
+            ),
+          ],
+        ),
+        action: SnackBarAction(
+          label: l10n.retryLabel,
+          textColor: colors.onErrorContainer,
+          onPressed: widget.viewModel.refresh,
+        ),
+      ),
+    );
   }
 
   @override

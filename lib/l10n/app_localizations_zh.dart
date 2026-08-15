@@ -1142,4 +1142,11 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get studentExamsArrangementLabel => '课程安排';
+
+  @override
+  String get studentExamsLatestFetchFailedUsingCache =>
+      '最新考试安排拉取失败，当前显示的是缓存数据。';
+
+  @override
+  String get studentExamsLatestFetchFailed => '最新考试安排拉取失败，请稍后重试。';
 }

@@ -569,5 +569,7 @@
   "studentExamsRoomLabel": "Room",
   "studentExamsRemarkLabel": "Remark",
   "studentExamsFormalLabel": "Exam",
-  "studentExamsArrangementLabel": "Course arrangement"
+  "studentExamsArrangementLabel": "Course arrangement",
+  "studentExamsLatestFetchFailedUsingCache": "Couldn’t fetch the latest exam arrangements. Showing cached data.",
+  "studentExamsLatestFetchFailed": "Couldn’t fetch the latest exam arrangements. Please try again later."
 }

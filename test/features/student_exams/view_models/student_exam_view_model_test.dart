@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:onetj/app/presentation/ui_event.dart';
 import 'package:onetj/features/student_exams/application/student_exam_data_service.dart';
 import 'package:onetj/features/student_exams/models/student_exam_view_data.dart';
 import 'package:onetj/features/student_exams/view_models/student_exam_view_model.dart';
@@ -9,19 +8,24 @@ class _FakeStudentExamDataSource implements StudentExamDataSource {
   _FakeStudentExamDataSource({
     this.loadResult,
     this.loadError,
+    this.refreshError,
   });
 
-  StudentExamData? loadResult;
+  StudentExamLoadResult? loadResult;
   Object? loadError;
+  Object? refreshError;
 
   @override
-  Future<StudentExamData> load() async {
+  Future<StudentExamLoadResult> load() async {
     if (loadError != null) throw loadError!;
     return loadResult!;
   }
 
   @override
-  Future<StudentExamData> refresh() async => loadResult!;
+  Future<StudentExamLoadResult> refresh() async {
+    if (refreshError != null) throw refreshError!;
+    return loadResult!;
+  }
 }
 
 StudentExamData buildStudentExamData() {
@@ -61,8 +65,9 @@ StudentExamData buildStudentExamData() {
 void main() {
   test('load sorts formal exams before non-exam arrangements', () async {
     final StudentExamViewModel viewModel = StudentExamViewModel(
-      dataSource:
-          _FakeStudentExamDataSource(loadResult: buildStudentExamData()),
+      dataSource: _FakeStudentExamDataSource(
+        loadResult: StudentExamLoadResult(data: buildStudentExamData()),
+      ),
     );
 
     await viewModel.load();
@@ -76,17 +81,66 @@ void main() {
     viewModel.dispose();
   });
 
-  test('load reports errors through UiEvent', () async {
+  test('load emits a cache fallback event when the latest fetch fails',
+      () async {
+    final StudentExamViewModel viewModel = StudentExamViewModel(
+      dataSource: _FakeStudentExamDataSource(
+        loadResult: StudentExamLoadResult(
+          data: buildStudentExamData(),
+          latestFetchFailed: true,
+        ),
+      ),
+    );
+    final Future<StudentExamFetchFailedEvent> event = viewModel.events
+        .where((event) => event is StudentExamFetchFailedEvent)
+        .cast<StudentExamFetchFailedEvent>()
+        .first;
+
+    await viewModel.load();
+
+    expect(viewModel.loading, isFalse);
+    expect(viewModel.records, isNotEmpty);
+    expect((await event).showingCachedData, isTrue);
+    viewModel.dispose();
+  });
+
+  test('refresh failure preserves current records and emits a retry event',
+      () async {
+    final _FakeStudentExamDataSource dataSource = _FakeStudentExamDataSource(
+      loadResult: StudentExamLoadResult(data: buildStudentExamData()),
+      refreshError: StateError('offline'),
+    );
+    final StudentExamViewModel viewModel = StudentExamViewModel(
+      dataSource: dataSource,
+    );
+    await viewModel.load();
+    final Future<StudentExamFetchFailedEvent> event = viewModel.events
+        .where((event) => event is StudentExamFetchFailedEvent)
+        .cast<StudentExamFetchFailedEvent>()
+        .first;
+
+    await viewModel.refresh();
+
+    expect(viewModel.loading, isFalse);
+    expect(viewModel.records, isNotEmpty);
+    expect((await event).showingCachedData, isFalse);
+    viewModel.dispose();
+  });
+
+  test('load emits a retry event when no data can be fetched', () async {
     final StudentExamViewModel viewModel = StudentExamViewModel(
       dataSource: _FakeStudentExamDataSource(loadError: StateError('offline')),
     );
-    final Future<UiEvent> event = viewModel.events.first;
+    final Future<StudentExamFetchFailedEvent> event = viewModel.events
+        .where((event) => event is StudentExamFetchFailedEvent)
+        .cast<StudentExamFetchFailedEvent>()
+        .first;
 
     await viewModel.load();
 
     expect(viewModel.loading, isFalse);
     expect(viewModel.records, isEmpty);
-    expect(await event, isA<ShowSnackBarEvent>());
+    expect((await event).showingCachedData, isFalse);
     viewModel.dispose();
   });
 }

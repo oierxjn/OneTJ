@@ -8,15 +8,15 @@ import 'package:onetj/l10n/app_localizations.dart';
 import 'package:onetj/models/student_exam_data.dart';
 
 class _FakeStudentExamDataSource implements StudentExamDataSource {
-  const _FakeStudentExamDataSource(this.data);
+  const _FakeStudentExamDataSource(this.loadResult);
 
-  final StudentExamData data;
-
-  @override
-  Future<StudentExamData> load() async => data;
+  final StudentExamLoadResult loadResult;
 
   @override
-  Future<StudentExamData> refresh() async => data;
+  Future<StudentExamLoadResult> load() async => loadResult;
+
+  @override
+  Future<StudentExamLoadResult> refresh() async => loadResult;
 }
 
 StudentExamData buildStudentExamData() {
@@ -44,14 +44,19 @@ StudentExamData buildStudentExamData() {
   );
 }
 
-Widget buildSubject(StudentExamData data) {
+Widget buildSubject({bool latestFetchFailed = false}) {
   return MaterialApp(
     locale: const Locale('zh'),
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
     home: StudentExamsView(
       viewModel: StudentExamViewModel(
-        dataSource: _FakeStudentExamDataSource(data),
+        dataSource: _FakeStudentExamDataSource(
+          StudentExamLoadResult(
+            data: buildStudentExamData(),
+            latestFetchFailed: latestFetchFailed,
+          ),
+        ),
       ),
     ),
   );
@@ -59,7 +64,7 @@ Widget buildSubject(StudentExamData data) {
 
 void main() {
   testWidgets('展示考试安排和非正式安排的关键字段', (tester) async {
-    await tester.pumpWidget(buildSubject(buildStudentExamData()));
+    await tester.pumpWidget(buildSubject());
     await tester.pumpAndSettle();
 
     expect(find.text('我的考试'), findsOneWidget);
@@ -71,5 +76,19 @@ void main() {
     expect(find.text('PHYS1001'), findsOneWidget);
     expect(find.text('北楼204'), findsOneWidget);
     expect(find.text('请携带计算器'), findsOneWidget);
+  });
+
+  testWidgets('最新拉取失败时显示缓存数据警示', (tester) async {
+    await tester.pumpWidget(buildSubject(latestFetchFailed: true));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
+
+    expect(find.text('大学物理'), findsOneWidget);
+    expect(
+      find.text('最新考试安排拉取失败，当前显示的是缓存数据。'),
+      findsOneWidget,
+    );
+    expect(find.byIcon(Icons.warning_amber_rounded), findsOneWidget);
+    expect(find.text('重试'), findsOneWidget);
   });
 }
