@@ -41,13 +41,25 @@ class LoginModel {
   /// 处理重定向URI，提取code并交换token
   ///
   /// 如果URI不是重定向URI，返回false。
+  /// 如果重定向携带 `error`（如 `invalid_scope`）或缺少 `code`，
+  /// 抛出[AuthRedirectException]，不会拿空 code 去请求 token 接口。
   /// 如果state不匹配，抛出[AuthStateMismatchException]。
   /// 否则，调用[AuthTokenProvider.exchangeCode]交换token，并返回true。
   Future<bool> exchangeCodeIfRedirect(WebUri uri) async {
     if (!uri.toString().startsWith(_redirectUri)) {
       return false;
     }
+    final String? error = uri.queryParameters['error'];
+    if (error != null && error.isNotEmpty) {
+      throw AuthRedirectException(
+        error: error,
+        errorDescription: uri.queryParameters['error_description'],
+      );
+    }
     final code = uri.queryParameters['code'] ?? '';
+    if (code.isEmpty) {
+      throw AuthRedirectException(error: 'missing_code');
+    }
     final state = uri.queryParameters['state'] ?? '';
     if (state != _state) {
       throw AuthStateMismatchException();
