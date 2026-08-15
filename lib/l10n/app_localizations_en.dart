@@ -1205,4 +1205,8 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get studentExamsLatestFetchFailed =>
       'Couldn’t fetch the latest exam arrangements. Please try again later.';
+
+  @override
+  String get studentExamsUnavailable =>
+      'This feature is temporarily unavailable. Please wait for the service to be restored.';
 }

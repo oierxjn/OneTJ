@@ -46,7 +46,11 @@ class ToolsView extends StatelessWidget {
             icon: Icons.calendar_month_outlined,
             title: l10n.studentExamsTitle,
             subtitle: l10n.studentExamsToolSubtitle,
-            onTap: () => context.push(RoutePaths.homeStudentExams),
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(l10n.studentExamsUnavailable)),
+              );
+            },
           ),
           _ToolTile(
             icon: Icons.workspace_premium_outlined,

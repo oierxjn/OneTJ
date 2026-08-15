@@ -187,7 +187,11 @@ class _DashboardViewState extends State<DashboardView>
       onSettingsTap: () => context.go(RoutePaths.homeSettings),
       onGradesTap: () => context.push(RoutePaths.homeGrades),
       onCetScoreTap: () => context.push(RoutePaths.homeCetScore),
-      onStudentExamsTap: () => context.push(RoutePaths.homeStudentExams),
+      onStudentExamsTap: () {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.studentExamsUnavailable)),
+        );
+      },
       onToolsTap: () => context.go(RoutePaths.homeTools),
       onAboutTap: () => context.push(RoutePaths.homeSettingsAbout),
     );

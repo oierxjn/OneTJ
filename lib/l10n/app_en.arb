@@ -571,5 +571,6 @@
   "studentExamsFormalLabel": "Exam",
   "studentExamsArrangementLabel": "Course arrangement",
   "studentExamsLatestFetchFailedUsingCache": "Couldn’t fetch the latest exam arrangements. Showing cached data.",
-  "studentExamsLatestFetchFailed": "Couldn’t fetch the latest exam arrangements. Please try again later."
+  "studentExamsLatestFetchFailed": "Couldn’t fetch the latest exam arrangements. Please try again later.",
+  "studentExamsUnavailable": "This feature is temporarily unavailable. Please wait for the service to be restored."
 }

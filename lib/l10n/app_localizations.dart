@@ -2204,6 +2204,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Couldn’t fetch the latest exam arrangements. Please try again later.'**
   String get studentExamsLatestFetchFailed;
+
+  /// No description provided for @studentExamsUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This feature is temporarily unavailable. Please wait for the service to be restored.'**
+  String get studentExamsUnavailable;
 }
 
 class _AppLocalizationsDelegate

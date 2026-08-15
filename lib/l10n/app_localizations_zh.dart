@@ -1149,4 +1149,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get studentExamsLatestFetchFailed => '最新考试安排拉取失败，请稍后重试。';
+
+  @override
+  String get studentExamsUnavailable => '该功能暂未开放，请等待信息办恢复。';
 }
