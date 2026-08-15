@@ -177,6 +177,7 @@ class _DashboardViewState extends State<DashboardView>
       physicsLabLabel: l10n.physicsLabTitle,
       settingsLabel: l10n.tabSettings,
       gradesLabel: l10n.scoreInquiryTitle,
+      cetScoreLabel: l10n.cetScoreTitle,
       toolsLabel: l10n.tabTools,
       aboutLabel: l10n.settingsAboutTitle,
       onTimetableTap: () => context.go(RoutePaths.homeTimetable),
@@ -184,6 +185,7 @@ class _DashboardViewState extends State<DashboardView>
       onPhysicsLabTap: () => context.push(RoutePaths.homePhysicsLab),
       onSettingsTap: () => context.go(RoutePaths.homeSettings),
       onGradesTap: () => context.push(RoutePaths.homeGrades),
+      onCetScoreTap: () => context.push(RoutePaths.homeCetScore),
       onToolsTap: () => context.go(RoutePaths.homeTools),
       onAboutTap: () => context.push(RoutePaths.homeSettingsAbout),
     );

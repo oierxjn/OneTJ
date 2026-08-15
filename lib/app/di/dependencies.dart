@@ -1,7 +1,10 @@
 import 'package:get_it/get_it.dart';
 
 import 'package:onetj/app/theme/theme_change_notifier.dart';
+import 'package:onetj/features/cet_score/application/cet_score_data_service.dart';
+import 'package:onetj/features/cet_score/view_models/cet_score_view_model.dart';
 import 'package:onetj/repo/app_update_state_repository.dart';
+import 'package:onetj/repo/cet_score_repository.dart';
 import 'package:onetj/repo/color_preset_repository.dart';
 import 'package:onetj/repo/course_schedule_repository.dart';
 import 'package:onetj/repo/school_calendar_repository.dart';
@@ -15,6 +18,7 @@ import 'package:onetj/services/app_update_api.dart';
 import 'package:onetj/services/app_update_service.dart';
 import 'package:onetj/services/auth_token_provider.dart';
 import 'package:onetj/services/external_launcher_service.dart';
+import 'package:onetj/services/tongji.dart';
 
 final GetIt appLocator = GetIt.instance;
 
@@ -23,6 +27,7 @@ void configureDependencies() {
   appLocator.registerLazySingleton<TokenRepository>(TokenRepository.new);
   appLocator.registerLazySingleton<SettingsRepository>(SettingsRepository.new);
   appLocator.registerLazySingleton<ThemeRepository>(ThemeRepository.new);
+  appLocator.registerLazySingleton<CetScoreRepository>(CetScoreRepository.new);
   appLocator.registerLazySingleton<ColorPresetRepository>(
     ColorPresetRepository.new,
   );
@@ -56,6 +61,16 @@ void configureDependencies() {
   );
   appLocator.registerLazySingleton<ExternalLauncherService>(
     ExternalLauncherService.new,
+  );
+  appLocator.registerLazySingleton<TongjiApi>(TongjiApi.new);
+  appLocator.registerLazySingleton<CetScoreDataService>(
+    () => CetScoreDataService(
+      api: appLocator<TongjiApi>(),
+      repository: appLocator<CetScoreRepository>(),
+    ),
+  );
+  appLocator.registerFactory<CetScoreViewModel>(
+    () => CetScoreViewModel(dataSource: appLocator<CetScoreDataService>()),
   );
 
   // Theme

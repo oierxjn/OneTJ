@@ -1085,4 +1085,28 @@ class AppLocalizationsZh extends AppLocalizations {
   String appUpdateMigrationOpenDownloadFailed(Object url) {
     return '无法打开下载链接，请复制后自行在浏览器中打开：$url';
   }
+
+  @override
+  String get cetScoreTitle => '四六级查询';
+
+  @override
+  String get cetScoreSubtitle => '查看大学英语四、六级考试成绩。';
+
+  @override
+  String get cetScoreToolSubtitle => '查看英语四、六级成绩';
+
+  @override
+  String get cetScoreEmpty => '暂无四六级成绩数据';
+
+  @override
+  String get cetScoreTicketNumberLabel => '准考证号';
+
+  @override
+  String get cetScoreStudentLabel => '学生';
+
+  @override
+  String get cetScoreSubjectLabel => '笔试科目';
+
+  @override
+  String get cetScoreOralScoreLabel => '口试成绩';
 }

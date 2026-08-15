@@ -24,4 +24,5 @@ class RoutePaths {
   static const String homePhysicsLabFranckHertz =
       '$homePhysicsLab/franck-hertz';
   static const String homeGrades = '$home/grades';
+  static const String homeCetScore = '$home/cet-score';
 }

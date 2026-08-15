@@ -10,6 +10,7 @@ import 'package:onetj/models/dashboard_upcoming_mode.dart';
 import 'package:onetj/models/theme_preferences.dart';
 import 'package:onetj/models/launch_wallpaper_ref.dart';
 import 'package:onetj/models/user_collection_field.dart';
+import 'package:onetj/features/cet_score/application/cet_score_data_service.dart';
 import 'package:onetj/features/settings/models/event.dart';
 import 'package:onetj/features/settings/models/settings_model.dart';
 import 'package:onetj/app/presentation/base_view_model.dart';
@@ -41,10 +42,12 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
   SettingsViewModel({
     SettingsRepository? settingsRepository,
     ThemeChangeNotifier? themeChangeNotifier,
+    required CetScoreDataService cetScoreDataService,
   })  : _settingsRepository =
             settingsRepository ?? appLocator<SettingsRepository>(),
         _themeChangeNotifier =
             themeChangeNotifier ?? appLocator<ThemeChangeNotifier>(),
+        _cetScoreDataService = cetScoreDataService,
         _hiveStorageService = HiveStorageService(),
         _webViewEnvironment = WebViewEnvironmentService.instance.environment {
     _savedSettings = _settingsRepository.peekCachedOrDefault();
@@ -54,6 +57,7 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
 
   final SettingsRepository _settingsRepository;
   final ThemeChangeNotifier _themeChangeNotifier;
+  final CetScoreDataService _cetScoreDataService;
   final HiveStorageService _hiveStorageService;
   final WebViewEnvironment? _webViewEnvironment;
 
@@ -262,6 +266,7 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
       await appLocator<StudentInfoRepository>().clearCache();
       await appLocator<SchoolCalendarRepository>().clearCache();
       await appLocator<CourseScheduleRepository>().clearCache();
+      await _cetScoreDataService.clearCachedData();
       await CookieManager.instance(webViewEnvironment: _webViewEnvironment)
           .deleteAllCookies();
       AppLogger.logNavigation(

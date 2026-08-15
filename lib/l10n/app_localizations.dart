@@ -2078,6 +2078,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Unable to open the download link. Copy and open it manually in your browser: {url}'**
   String appUpdateMigrationOpenDownloadFailed(Object url);
+
+  /// No description provided for @cetScoreTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'CET Scores'**
+  String get cetScoreTitle;
+
+  /// No description provided for @cetScoreSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'View your College English Test scores.'**
+  String get cetScoreSubtitle;
+
+  /// No description provided for @cetScoreToolSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'View CET-4 and CET-6 scores'**
+  String get cetScoreToolSubtitle;
+
+  /// No description provided for @cetScoreEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No CET score data is available.'**
+  String get cetScoreEmpty;
+
+  /// No description provided for @cetScoreTicketNumberLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Ticket No.'**
+  String get cetScoreTicketNumberLabel;
+
+  /// No description provided for @cetScoreStudentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Student'**
+  String get cetScoreStudentLabel;
+
+  /// No description provided for @cetScoreSubjectLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Written test'**
+  String get cetScoreSubjectLabel;
+
+  /// No description provided for @cetScoreOralScoreLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Oral test'**
+  String get cetScoreOralScoreLabel;
 }
 
 class _AppLocalizationsDelegate

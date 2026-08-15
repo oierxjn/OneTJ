@@ -11,9 +11,11 @@ import 'package:onetj/models/course_schedule_data.dart';
 import 'package:onetj/models/data/course_schedule_net_data.dart';
 import 'package:onetj/models/data/school_calendar_net_data.dart';
 import 'package:onetj/models/data/student_info_net_data.dart';
+import 'package:onetj/models/data/cet_score_net_data.dart';
 import 'package:onetj/models/data/undergraduate_score_net_data.dart';
 import 'package:onetj/models/school_calendar_data.dart';
 import 'package:onetj/models/student_info_data.dart';
+import 'package:onetj/models/cet_score_data.dart';
 import 'package:onetj/models/undergraduate_score_data.dart';
 import 'package:onetj/services/auth_token_provider.dart';
 import 'package:onetj/services/logged_http.dart';
@@ -207,9 +209,20 @@ class TongjiApi {
     return CourseScheduleData.fromNetDataList(netList);
   }
 
-  /// 获取本科生成绩
+  /// 获取四六级成绩。
+  Future<CetScoreData> fetchCetScores() async {
+    final Uri uri = Uri.https(_baseUrl, cetScorePath);
+    final CetScoreNetData netData = await _authorizedGetData<CetScoreNetData>(
+      uri,
+      parseData: (Object? data) =>
+          CetScoreNetData.fromJson(data as Map<String, dynamic>),
+    );
+    return CetScoreData.fromNetData(netData);
+  }
+
+  /// 获取本科生成绩。
   ///
-  /// [calendarId] 可选,指定查询的学期,默认查询当前学期。-1 返回所有学期。
+  /// [calendarId] 可选，指定查询的学期；默认查询当前学期，-1 返回所有学期。
   Future<UndergraduateScoreData> fetchUndergraduateScore(
       {int? calendarId}) async {
     final Uri uri = Uri.https(

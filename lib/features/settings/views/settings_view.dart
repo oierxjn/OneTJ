@@ -20,7 +20,9 @@ import 'package:onetj/models/user_collection_field.dart';
 import 'package:onetj/services/hive_storage_service.dart';
 
 class SettingsView extends StatefulWidget {
-  const SettingsView({super.key});
+  const SettingsView({required this.viewModel, super.key});
+
+  final SettingsViewModel viewModel;
 
   @override
   State<SettingsView> createState() => _SettingsViewState();
@@ -35,7 +37,7 @@ class _SettingsViewState extends State<SettingsView> {
   @override
   void initState() {
     super.initState();
-    _viewModel = SettingsViewModel();
+    _viewModel = widget.viewModel;
     _maxWeekController = TextEditingController();
     _dashboardCountController = TextEditingController();
     _eventSub = _viewModel.events.listen((event) {

@@ -42,6 +42,12 @@ class ToolsView extends StatelessWidget {
             subtitle: l10n.scoreInquirySubtitle,
             onTap: () => context.push(RoutePaths.homeGrades),
           ),
+          _ToolTile(
+            icon: Icons.workspace_premium_outlined,
+            title: l10n.cetScoreTitle,
+            subtitle: l10n.cetScoreToolSubtitle,
+            onTap: () => context.push(RoutePaths.homeCetScore),
+          ),
         ],
       ),
     );

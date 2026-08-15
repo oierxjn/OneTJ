@@ -550,6 +550,13 @@
     "placeholders": {
       "url": {}
     }
-  }
+  },
+  "cetScoreTitle": "四六级查询",
+  "cetScoreSubtitle": "查看大学英语四、六级考试成绩。",
+  "cetScoreToolSubtitle": "查看英语四、六级成绩",
+  "cetScoreEmpty": "暂无四六级成绩数据",
+  "cetScoreTicketNumberLabel": "准考证号",
+  "cetScoreStudentLabel": "学生",
+  "cetScoreSubjectLabel": "笔试科目",
+  "cetScoreOralScoreLabel": "口试成绩"
 }
-

@@ -23,6 +23,7 @@ const String currentTermCalendarPath =
     "/v1/rt/onetongji/school_calendar_current_term_calendar";
 const String studentTimetablePath = "/v1/rt/onetongji/student_timetable";
 const String undergraduateScorePath = "/v1/rt/onetongji/undergraduate_score";
+const String cetScorePath = "/v1/rt/onetongji/cet_score";
 const String defaultDebugCollectionEndpoint =
     "http://127.0.0.1:8000/collector/v1/events";
 const String appUpdateServiceBaseUrl = "onetjapi.jkljkluiouio.top";
