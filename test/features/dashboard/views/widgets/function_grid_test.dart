@@ -13,12 +13,14 @@ void main() {
           physicsLabLabel: 'physics-lab',
           settingsLabel: 'settings',
           gradesLabel: 'grades',
+          cetScoreLabel: 'cet-score',
           toolsLabel: 'tools',
           aboutLabel: 'about',
           onTimetableTap: () => onTap('timetable'),
           onPhysicsLabTap: () => onTap('physics-lab'),
           onSettingsTap: () => onTap('settings'),
           onGradesTap: () => onTap('grades'),
+          onCetScoreTap: () => onTap('cet-score'),
           onToolsTap: () => onTap('tools'),
           onAboutTap: () => onTap('about'),
         ),
@@ -32,15 +34,15 @@ void main() {
         .crossAxisCount;
   }
 
-  testWidgets('窄屏按两列展示六个功能入口并分发点击事件', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(640, 800));
+  testWidgets('窄屏按两列展示七个功能入口并分发点击事件', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(640, 1200));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     String? selected;
     await tester
         .pumpWidget(buildFunctionGrid(onTap: (value) => selected = value));
 
     expect(find.byType(GridView), findsOneWidget);
-    expect(find.byType(Card), findsNWidgets(6));
+    expect(find.byType(Card), findsNWidgets(7));
     expect(crossAxisCount(tester), 2);
 
     final Offset timetablePosition = tester.getTopLeft(find.text('timetable'));
@@ -48,16 +50,18 @@ void main() {
         tester.getTopLeft(find.text('physics-lab'));
     final Offset settingsPosition = tester.getTopLeft(find.text('settings'));
     final Offset gradesPosition = tester.getTopLeft(find.text('grades'));
+    final Offset cetScorePosition = tester.getTopLeft(find.text('cet-score'));
     final Offset toolsPosition = tester.getTopLeft(find.text('tools'));
     final Offset aboutPosition = tester.getTopLeft(find.text('about'));
     expect(physicsLabPosition.dy, timetablePosition.dy);
     expect(settingsPosition.dy, greaterThan(timetablePosition.dy));
     expect(gradesPosition.dy, settingsPosition.dy);
-    expect(toolsPosition.dy, greaterThan(settingsPosition.dy));
-    expect(aboutPosition.dy, toolsPosition.dy);
+    expect(cetScorePosition.dy, greaterThan(settingsPosition.dy));
+    expect(toolsPosition.dy, cetScorePosition.dy);
+    expect(aboutPosition.dy, greaterThan(toolsPosition.dy));
 
-    await tester.tap(find.text('grades'));
-    expect(selected, 'grades');
+    await tester.tap(find.text('cet-score'));
+    expect(selected, 'cet-score');
   });
 
   testWidgets('宽屏使用预渲染位图而不是运行时 SVG', (tester) async {
@@ -70,7 +74,7 @@ void main() {
 
     final List<Image> images =
         tester.widgetList<Image>(find.byType(Image)).toList();
-    expect(images, hasLength(6));
+    expect(images, hasLength(7));
     expect(
       images
           .map((Image image) => (image.image as AssetImage).assetName)
@@ -80,6 +84,7 @@ void main() {
         'assets/icons/function_grid/memo_3d.png',
         'assets/icons/function_grid/gear_3d.png',
         'assets/icons/function_grid/anguished_face_3d.png',
+        'assets/icons/function_grid/input_latin_letters_3d.png',
         'assets/icons/function_grid/desktop_computer_3d.png',
         'assets/icons/function_grid/teddy_bear_3d.png',
       ],

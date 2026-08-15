@@ -550,5 +550,13 @@
     "placeholders": {
       "url": {}
     }
-  }
+  },
+  "cetScoreTitle": "CET Scores",
+  "cetScoreSubtitle": "View your College English Test scores.",
+  "cetScoreToolSubtitle": "View CET-4 and CET-6 scores",
+  "cetScoreEmpty": "No CET score data is available.",
+  "cetScoreTicketNumberLabel": "Ticket No.",
+  "cetScoreStudentLabel": "Student",
+  "cetScoreSubjectLabel": "Written test",
+  "cetScoreOralScoreLabel": "Oral test"
 }

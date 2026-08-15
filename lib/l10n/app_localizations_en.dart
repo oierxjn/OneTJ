@@ -1139,4 +1139,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String appUpdateMigrationOpenDownloadFailed(Object url) {
     return 'Unable to open the download link. Copy and open it manually in your browser: $url';
   }
+
+  @override
+  String get cetScoreTitle => 'CET Scores';
+
+  @override
+  String get cetScoreSubtitle => 'View your College English Test scores.';
+
+  @override
+  String get cetScoreToolSubtitle => 'View CET-4 and CET-6 scores';
+
+  @override
+  String get cetScoreEmpty => 'No CET score data is available.';
+
+  @override
+  String get cetScoreTicketNumberLabel => 'Ticket No.';
+
+  @override
+  String get cetScoreStudentLabel => 'Student';
+
+  @override
+  String get cetScoreSubjectLabel => 'Written test';
+
+  @override
+  String get cetScoreOralScoreLabel => 'Oral test';
 }

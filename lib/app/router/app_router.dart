@@ -1,5 +1,6 @@
 import 'package:go_router/go_router.dart';
 
+import 'package:onetj/features/cet_score/routes.dart';
 import 'package:onetj/features/grades/routes.dart';
 import 'package:onetj/features/home/routes.dart';
 import 'package:onetj/features/launcher/routes.dart';
@@ -17,6 +18,7 @@ class AppRouter {
 
       // Shell 外的独立详情页面。
       ...gradesDetailRoutes,
+      ...cetScoreDetailRoutes,
       ...physicsLabDetailRoutes,
       ...settingsDetailRoutes,
 
