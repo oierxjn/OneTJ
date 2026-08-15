@@ -84,7 +84,7 @@ void main() {
         'assets/icons/function_grid/memo_3d.png',
         'assets/icons/function_grid/gear_3d.png',
         'assets/icons/function_grid/anguished_face_3d.png',
-        'assets/icons/function_grid/memo_3d.png',
+        'assets/icons/function_grid/input_latin_letters_3d.png',
         'assets/icons/function_grid/desktop_computer_3d.png',
         'assets/icons/function_grid/teddy_bear_3d.png',
       ],

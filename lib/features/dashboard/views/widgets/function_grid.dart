@@ -60,7 +60,7 @@ class FunctionGrid extends StatelessWidget {
       ),
       _FunctionGridItem(
         label: cetScoreLabel,
-        assetPath: 'assets/icons/function_grid/memo_3d.png',
+        assetPath: 'assets/icons/function_grid/input_latin_letters_3d.png',
         onTap: onCetScoreTap,
       ),
       _FunctionGridItem(
