@@ -74,13 +74,6 @@ class _CetScoreViewState extends State<CetScoreView> {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(16),
               children: <Widget>[
-                Text(
-                  l10n.cetScoreSubtitle,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                ),
-                const SizedBox(height: 16),
                 if (records.isEmpty)
                   _EmptyState(message: l10n.cetScoreEmpty)
                 else
