@@ -8,6 +8,7 @@ class FunctionGrid extends StatelessWidget {
     required this.settingsLabel,
     required this.gradesLabel,
     required this.cetScoreLabel,
+    required this.studentExamsLabel,
     required this.toolsLabel,
     required this.aboutLabel,
     required this.onTimetableTap,
@@ -15,6 +16,7 @@ class FunctionGrid extends StatelessWidget {
     required this.onSettingsTap,
     required this.onGradesTap,
     required this.onCetScoreTap,
+    required this.onStudentExamsTap,
     required this.onToolsTap,
     required this.onAboutTap,
     super.key,
@@ -25,6 +27,7 @@ class FunctionGrid extends StatelessWidget {
   final String settingsLabel;
   final String gradesLabel;
   final String cetScoreLabel;
+  final String studentExamsLabel;
   final String toolsLabel;
   final String aboutLabel;
   final VoidCallback onTimetableTap;
@@ -32,6 +35,7 @@ class FunctionGrid extends StatelessWidget {
   final VoidCallback onSettingsTap;
   final VoidCallback onGradesTap;
   final VoidCallback onCetScoreTap;
+  final VoidCallback onStudentExamsTap;
   final VoidCallback onToolsTap;
   final VoidCallback onAboutTap;
 
@@ -62,6 +66,11 @@ class FunctionGrid extends StatelessWidget {
         label: cetScoreLabel,
         assetPath: 'assets/icons/function_grid/input_latin_letters_3d.png',
         onTap: onCetScoreTap,
+      ),
+      _FunctionGridItem(
+        label: studentExamsLabel,
+        assetPath: 'assets/icons/function_grid/memo_3d.png',
+        onTap: onStudentExamsTap,
       ),
       _FunctionGridItem(
         label: toolsLabel,

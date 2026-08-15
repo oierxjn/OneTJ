@@ -7,6 +7,7 @@ import 'package:onetj/features/launcher/routes.dart';
 import 'package:onetj/features/login/routes.dart';
 import 'package:onetj/features/physics_lab/routes.dart';
 import 'package:onetj/features/settings/routes.dart';
+import 'package:onetj/features/student_exams/routes.dart';
 
 class AppRouter {
   const AppRouter._();
@@ -19,6 +20,7 @@ class AppRouter {
       // Shell 外的独立详情页面。
       ...gradesDetailRoutes,
       ...cetScoreDetailRoutes,
+      ...studentExamsDetailRoutes,
       ...physicsLabDetailRoutes,
       ...settingsDetailRoutes,
 

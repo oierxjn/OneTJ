@@ -10,10 +10,12 @@ import 'package:onetj/models/api_response.dart';
 import 'package:onetj/models/course_schedule_data.dart';
 import 'package:onetj/models/data/course_schedule_net_data.dart';
 import 'package:onetj/models/data/school_calendar_net_data.dart';
+import 'package:onetj/models/data/student_exam_net_data.dart';
 import 'package:onetj/models/data/student_info_net_data.dart';
 import 'package:onetj/models/data/cet_score_net_data.dart';
 import 'package:onetj/models/data/undergraduate_score_net_data.dart';
 import 'package:onetj/models/school_calendar_data.dart';
+import 'package:onetj/models/student_exam_data.dart';
 import 'package:onetj/models/student_info_data.dart';
 import 'package:onetj/models/cet_score_data.dart';
 import 'package:onetj/models/undergraduate_score_data.dart';
@@ -218,6 +220,18 @@ class TongjiApi {
           CetScoreNetData.fromJson(data as Map<String, dynamic>),
     );
     return CetScoreData.fromNetData(netData);
+  }
+
+  /// 获取学生考试安排。
+  Future<StudentExamData> fetchStudentExams() async {
+    final Uri uri = Uri.https(_baseUrl, studentExamsPath);
+    final StudentExamNetData netData =
+        await _authorizedGetData<StudentExamNetData>(
+      uri,
+      parseData: (Object? data) =>
+          StudentExamNetData.fromJson(data as Map<String, dynamic>),
+    );
+    return StudentExamData.fromNetData(netData);
   }
 
   /// 获取本科生成绩。

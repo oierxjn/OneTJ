@@ -558,5 +558,16 @@
   "cetScoreTicketNumberLabel": "准考证号",
   "cetScoreStudentLabel": "学生",
   "cetScoreSubjectLabel": "笔试科目",
-  "cetScoreOralScoreLabel": "口试成绩"
+  "cetScoreOralScoreLabel": "口试成绩",
+  "studentExamsTitle": "我的考试",
+  "studentExamsSubtitle": "查看本学期的考试与课程安排。",
+  "studentExamsToolSubtitle": "查看考试时间与考场",
+  "studentExamsEmpty": "暂无考试安排",
+  "studentExamsTermLabel": "学期",
+  "studentExamsCourseCodeLabel": "课号",
+  "studentExamsTimeLabel": "时间",
+  "studentExamsRoomLabel": "地点",
+  "studentExamsRemarkLabel": "备注",
+  "studentExamsFormalLabel": "正式考试",
+  "studentExamsArrangementLabel": "课程安排"
 }
