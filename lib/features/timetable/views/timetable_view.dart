@@ -1,13 +1,14 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:onetj/l10n/app_localizations.dart';
+import 'package:onetj/features/home/views/widgets/home_shell_back_button.dart';
 import 'package:onetj/app/logging/logger.dart';
 
 import 'package:onetj/features/timetable/view_models/timetable_view_model.dart';
 import 'package:onetj/features/timetable/views/widgets/timetable_timeline_panel.dart';
 import 'package:onetj/features/timetable/models/event.dart';
-import 'package:onetj/models/event_model.dart';
+import 'package:onetj/app/presentation/ui_event.dart';
 import 'package:onetj/models/timetable_index.dart';
 import 'package:onetj/widgets/course_detail_bottom_sheet.dart';
 
@@ -111,8 +112,12 @@ class _TimetableViewState extends State<TimetableView> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final Widget? homeBackButton = buildHomeShellBackButton(context);
     return Scaffold(
       appBar: AppBar(
+        leading: homeBackButton,
+        leadingWidth:
+            homeBackButton == null ? null : homeShellBackButtonLeadingWidth,
         title: Text(l10n.tabTimetable),
         actions: [
           AnimatedBuilder(

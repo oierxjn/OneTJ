@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:onetj/l10n/app_localizations.dart';
+import 'package:onetj/features/home/views/widgets/home_shell_back_button.dart';
 
 import 'package:onetj/app/constant/route_paths.dart';
 
@@ -10,8 +11,12 @@ class ToolsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final Widget? homeBackButton = buildHomeShellBackButton(context);
     return Scaffold(
       appBar: AppBar(
+        leading: homeBackButton,
+        leadingWidth:
+            homeBackButton == null ? null : homeShellBackButtonLeadingWidth,
         title: Text(l10n.tabTools),
       ),
       body: ListView(
@@ -36,6 +41,22 @@ class ToolsView extends StatelessWidget {
             title: l10n.scoreInquiryTitle,
             subtitle: l10n.scoreInquirySubtitle,
             onTap: () => context.push(RoutePaths.homeGrades),
+          ),
+          _ToolTile(
+            icon: Icons.calendar_month_outlined,
+            title: l10n.studentExamsTitle,
+            subtitle: l10n.studentExamsToolSubtitle,
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(l10n.studentExamsUnavailable)),
+              );
+            },
+          ),
+          _ToolTile(
+            icon: Icons.workspace_premium_outlined,
+            title: l10n.cetScoreTitle,
+            subtitle: l10n.cetScoreToolSubtitle,
+            onTap: () => context.push(RoutePaths.homeCetScore),
           ),
         ],
       ),

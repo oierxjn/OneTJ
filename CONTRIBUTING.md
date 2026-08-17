@@ -25,12 +25,59 @@
 下载本项目需要的 Flutter 鸿蒙版本：
 
 ```bash
-git clone -b oh-3.27.4-dev https://gitcode.com/openharmony-tpc/flutter_flutter.git
+git clone -b oh-3.35.7-release https://gitcode.com/CPF-Flutter/flutter_flutter.git
 ```
 
-将其放入 FVM 的版本文件夹中。使用 `fvm list` 查看是否已经添加，再用 `fvm use <版本名>` 切换到该版本。
+将其放入 FVM 的版本文件夹中并命名为 `ohos_flutter_3.35.7`。项目通过
+`.fvmrc` 固定使用该 SDK；使用 `fvm flutter --version` 确认版本后再继续。
 
 运行 `fvm flutter doctor` 检查环境是否配置正确。
+
+#### Windows：Visual Studio 2026（18.x）兼容补丁
+
+当前使用的 OpenHarmony Flutter 3.35.8 工具只显式识别 Visual Studio 2022
+（17.x），在检测到 Visual Studio 2026（18.x）时会错误地回退到 CMake
+生成器 `Visual Studio 16 2019`。若 `fvm flutter doctor` 显示已安装
+Visual Studio 2026，需要在 FVM SDK 中应用以下本地补丁：
+
+- 文件：`<FVM SDK>/packages/flutter_tools/lib/src/windows/visual_studio.dart`
+- 在 `cmakeGenerator` 的 `switch (_majorVersion)` 中添加：
+
+  ```dart
+  18 => 'Visual Studio 18 2026',
+  ```
+
+Flutter 工具会使用已编译的快照，因此修改后还需删除以下可再生文件，使其
+根据修改后的源码重建：
+
+```powershell
+Remove-Item <FVM SDK>\bin\cache\flutter_tools.snapshot
+Remove-Item <FVM SDK>\bin\cache\flutter_tools.stamp
+fvm flutter --version
+```
+
+最后删除旧的 Windows CMake 缓存并重新构建：
+
+```powershell
+Remove-Item build\windows\x64 -Recurse -Force
+fvm flutter build windows --debug
+```
+
+这是 SDK 的本地补丁，不会被项目 Git 管理；重新安装或升级 SDK 后需要重新
+应用。上游 SDK 正式支持 Visual Studio 18 后，应删除此补丁。
+
+#### OpenHarmony Flutter 的 `meta` 1.17 兼容补丁
+
+`full_svg_flutter 1.3.1` 依赖 `meta ^1.17.0`，但当前 OpenHarmony Flutter
+SDK 的 framework 与 `flutter_test` 仍将它精确固定为 `1.16.0`，导致项目无法
+同时解析该 SVG 依赖与 Flutter 测试 SDK。为使用该版本的 SVG 渲染器，在 FVM SDK
+中将以下两处改为 `meta: 1.17.0`：
+
+- `<FVM SDK>/packages/flutter/pubspec.yaml`
+- `<FVM SDK>/packages/flutter_test/pubspec.yaml`
+
+这同样是 SDK 的本地补丁。重新安装或升级 SDK 后需要重新应用；上游将 framework
+与 `flutter_test` 的固定版本更新到 1.17 后，应删除此补丁。
 
 一般来说，你还需要下载鸿蒙的 [Command Line Tools](https://developer.huawei.com/consumer/cn/download/command-line-tools-for-hmos)，将${Command Line Tools解压路径}\command-line-tools\bin目录配置到系统或者用户的PATH变量中。  
 
@@ -148,10 +195,27 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
   fvm dart format .
   ```
 
-- 使用 `dart analyze` 检查代码质量：
-  ```bash
-  fvm dart analyze
+- 使用以下命令检查应用代码质量。脚本只分析 `lib` 和 `test`，不会将本地 `flutter_inappwebview` vendor fork 作为应用质量门禁：
+
+  Windows（PowerShell）：
+  ```powershell
+  .\scripts\flutter_analyze_app.ps1
   ```
+
+  Linux / macOS（Bash）：
+  ```bash
+  ./scripts/flutter_analyze_app.sh
+  ```
+
+  默认情况下，analyzer error 会使检查失败；warning 和 info 会输出，但暂不阻断。需要严格检查时，执行：
+  ```powershell
+  .\scripts\flutter_analyze_app.ps1 -Strict
+  ```
+  ```bash
+  ./scripts/flutter_analyze_app.sh --strict
+  ```
+
+  不要使用裸 `fvm flutter analyze` 作为应用代码质量绿灯的依据。修改 `local_packages/flutter_inappwebview/**` 时，请使用独立的 vendor 校验流程。
 
 ### 3.2 命名规范
 
@@ -166,25 +230,46 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
 ### 3.3 架构规范
 
-项目采用 MVVM 架构：
+项目采用以 feature 为边界的 MVVM 分层，并使用 application service 承担页面用例编排。不要将“Model”作为承载 API 调用、缓存预热或页面工作流的泛化容器。
 
-- **Model**：提供数据和业务逻辑。
-- **ViewModel**：连接 Model 和 View 的中间层，继承自 `ChangeNotifier`，用于处理业务逻辑和状态管理。
-- **View**：UI 组件，用 `Listenable` 组件实现状态监听。
+各层职责如下：
+
+- **View**：Flutter UI 组件；订阅并渲染 ViewModel 状态，将用户操作转交给 ViewModel。
+- **ViewModel**：展示层状态持有者，继承 `BaseViewModel` / `ChangeNotifier`，维护 UI state 并发出 `UiEvent`。不得直接调用 API 或直接访问缓存 repository。
+- **Application service**：feature 用例和编排层；负责协调 API、repository、缓存、fallback 及其他依赖。例如加载首页数据、刷新成绩或组装课表数据。
+- **Repository**：仅负责本地/远程数据访问、缓存和持久化；不得承担页面工作流或 UI 状态。
+- **Model / value object**：表达跨 feature 或 feature-local 的数据类型、API 响应和值对象；不得包含 `ChangeNotifier`、UI event、API 调用或缓存编排。
+- **Shared service**：封装跨 feature 的 API 或基础能力，例如 `TongjiApi`、认证令牌生命周期等。
+
+推荐依赖方向：
+
+```text
+View → ViewModel → Application service → Repository / Shared service → 本地存储或远程 API
+```
+
+依赖装配约定：
+
+- 新 application service 必须通过构造器注入依赖。
+- `appLocator` 仅可在 `lib/app/di/` 和必要的 composition root 中使用；不要在 ViewModel 或 application service 中新增 service locator 查询。
+- 共享展示层基础设施 `BaseViewModel` 与 `UiEvent` 位于 `lib/app/presentation/`。
 
 文件结构：
 ```
 lib/
-├── features/          # 功能模块
-│   ├── login/        # 登录模块
-│   │   ├── views/    # UI 组件
-│   │   ├── view_models/  # 视图模型
-│   │   └── models/   # 数据模型
+├── app/
+│   ├── di/                    # 依赖装配与 composition root
+│   └── presentation/          # BaseViewModel、UiEvent 等共享展示层类型
+├── features/                  # 功能模块
+│   ├── login/
+│   │   ├── application/       # feature 用例、API/repository/cache/fallback 编排
+│   │   ├── models/            # feature-local 数据类型和值对象
+│   │   ├── view_models/       # UI state 与 UiEvent
+│   │   └── views/             # Flutter UI
 │   └── ...
-├── models/           # 全局数据模型
-├── services/         # 服务层
-├── repo/             # 数据仓库
-└── utils/            # 工具类
+├── models/                    # 跨 feature 数据类型、API 响应和值对象
+├── repo/                      # 数据访问、缓存与持久化
+├── services/                  # 跨 feature API 与基础服务
+└── utils/                     # 工具类
 ```
 
 ## 4. 提交规范

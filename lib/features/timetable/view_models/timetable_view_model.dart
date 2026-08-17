@@ -1,13 +1,15 @@
 import 'dart:async';
 
+import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/features/timetable/models/event.dart';
-import 'package:onetj/features/timetable/models/timetable_model.dart';
-import 'package:onetj/models/base_model.dart';
-import 'package:onetj/models/event_model.dart';
+import 'package:onetj/features/timetable/application/timetable_data_service.dart';
+import 'package:onetj/app/presentation/base_view_model.dart';
+import 'package:onetj/app/presentation/ui_event.dart';
 import 'package:onetj/models/settings_defaults.dart';
 import 'package:onetj/models/time_period_range.dart';
 import 'package:onetj/models/timetable_index.dart';
+import 'package:onetj/models/settings_data.dart';
 import 'package:onetj/repo/settings_repository.dart';
 
 enum TimetableDisplayMode {
@@ -17,17 +19,17 @@ enum TimetableDisplayMode {
 
 class TimetableViewModel extends BaseViewModel<UiEvent> {
   TimetableViewModel({
-    TimetableModel? model,
+    TimetableDataService? dataService,
     int maxWeek = 22,
     SettingsRepository? settingsRepository,
-  })  : _model = model ?? TimetableModel(),
+  })  : _dataService = dataService ?? TimetableDataService(),
         _settingsRepository =
-            settingsRepository ?? SettingsRepository.getInstance(),
+            settingsRepository ?? appLocator<SettingsRepository>(),
         _maxWeek = maxWeek {
     _settingsSub = _settingsRepository.stream.listen(_handleSettingsChanged);
   }
 
-  final TimetableModel _model;
+  final TimetableDataService _dataService;
   final SettingsRepository _settingsRepository;
   StreamSubscription<SettingsData>? _settingsSub;
   int _maxWeek;
@@ -201,7 +203,7 @@ class TimetableViewModel extends BaseViewModel<UiEvent> {
   /// 如果加载失败，将当前周数设置为 null 并显示错误消息。
   Future<void> _loadCurrentWeek() async {
     try {
-      _currentWeek = await _model.getSchoolCalendarCurrentWeek();
+      _currentWeek = await _dataService.getSchoolCalendarCurrentWeek();
     } catch (error) {
       _currentWeek = null;
       emit(
@@ -216,7 +218,7 @@ class TimetableViewModel extends BaseViewModel<UiEvent> {
   /// 如果加载失败，将错误存储到 [_error] 中
   Future<void> _loadTimetable() async {
     try {
-      _index = await _model.getTimetableIndex();
+      _index = await _dataService.getTimetableIndex();
       _syncSelectedWeek();
       emit(const SyncWheelEvent());
     } catch (error) {
@@ -228,7 +230,7 @@ class TimetableViewModel extends BaseViewModel<UiEvent> {
 
   Future<void> _loadLastFetchedAt() async {
     try {
-      _lastFetchedAt = await _model.getLastFetchedAt();
+      _lastFetchedAt = await _dataService.getLastFetchedAt();
     } catch (_) {
       _lastFetchedAt = null;
     }

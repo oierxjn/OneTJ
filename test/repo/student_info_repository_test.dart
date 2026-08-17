@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:onetj/models/student_info_data.dart';
 import 'package:onetj/repo/student_info_repository.dart';
 
 StudentInfoData buildStudentInfo({String deptName = 'Computer Science'}) {
@@ -56,9 +57,8 @@ void main() {
     late StudentInfoRepository repo;
 
     setUp(() {
-      StudentInfoRepository.resetInstanceForTest();
       storage = InMemoryStudentInfoStorage();
-      repo = StudentInfoRepository.getInstance(storage: storage);
+      repo = StudentInfoRepository(storage: storage);
     });
 
     test('fetches and caches data on first getOrFetch', () async {

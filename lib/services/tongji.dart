@@ -3,101 +3,55 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import 'package:onetj/app/constant/site_constant.dart';
+import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/app/logging/logger.dart';
 import 'package:onetj/models/api_response.dart';
-import 'package:onetj/models/data/code2token.dart';
+import 'package:onetj/models/course_schedule_data.dart';
 import 'package:onetj/models/data/course_schedule_net_data.dart';
 import 'package:onetj/models/data/school_calendar_net_data.dart';
+import 'package:onetj/models/data/student_exam_net_data.dart';
 import 'package:onetj/models/data/student_info_net_data.dart';
+import 'package:onetj/models/data/cet_score_net_data.dart';
 import 'package:onetj/models/data/undergraduate_score_net_data.dart';
-import 'package:onetj/repo/course_schedule_repository.dart';
-import 'package:onetj/repo/school_calendar_repository.dart';
-import 'package:onetj/repo/student_info_repository.dart';
-import 'package:onetj/repo/token_repository.dart';
-import 'package:onetj/repo/undergraduate_score_repository.dart';
+import 'package:onetj/models/school_calendar_data.dart';
+import 'package:onetj/models/student_exam_data.dart';
+import 'package:onetj/models/student_info_data.dart';
+import 'package:onetj/models/cet_score_data.dart';
+import 'package:onetj/models/undergraduate_score_data.dart';
+import 'package:onetj/services/auth_token_provider.dart';
+import 'package:onetj/services/logged_http.dart';
 
 class TongjiApi {
-  TongjiApi._();
+  TongjiApi._([this._authOverride]);
 
   /// 获取 [TongjiApi] 实例。
   ///
   /// 这是一个单例模式，确保在整个应用程序中只有一个实例。
-  factory TongjiApi() => _instance;
+  /// 传入 [auth] 时会返回一个使用该实例的新对象，便于测试注入。
+  factory TongjiApi({AuthTokenProvider? auth}) =>
+      auth == null ? _instance : TongjiApi._(auth);
 
   static final TongjiApi _instance = TongjiApi._();
 
+  final AuthTokenProvider? _authOverride;
+
+  AuthTokenProvider get _auth =>
+      _authOverride ?? appLocator<AuthTokenProvider>();
+
   final String _baseUrl = tongjiApiBaseUrl;
-  static const Duration _tokenSkew = Duration(seconds: 30);
-
-  /// Exchange auth code for token.
-  ///
-  /// Saves the token into [TokenRepository] on success.
-  Future<void> code2token(String code) async {
-    final Uri uri = Uri.https(_baseUrl, code2tokenPath);
-    final http.Response response = await _postWithLogs(
-      uri,
-      body: <String, String>{
-        'grant_type': 'authorization_code',
-        'client_id': tongjiClientID,
-        'code': code,
-        'redirect_uri': oneTJredirectUri,
-      },
-      headers: const <String, String>{
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-    );
-    if (response.statusCode >= 200 && response.statusCode < 300) {
-      final Code2TokenData data =
-          Code2TokenData.fromJson(json.decode(response.body));
-      final TokenRepository repo = TokenRepository.getInstance();
-      await repo.saveFromCode2Token(data);
-      return;
-    }
-    throw NetworkException.http(
-      statusCode: response.statusCode,
-      uri: uri,
-      responseBody: response.body,
-    );
-  }
-
-  /// Token刷新
-  ///
-  /// 返回刷新后的 [Code2TokenData]。不进行存储。
-  Future<Code2TokenData> refreshToken(String refreshToken) async {
-    final Uri uri = Uri.https(_baseUrl, code2tokenPath);
-    final http.Response response = await _postWithLogs(
-      uri,
-      body: <String, String>{
-        'grant_type': 'refresh_token',
-        'client_id': tongjiClientID,
-        'refresh_token': refreshToken,
-      },
-      headers: const <String, String>{
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-    );
-    if (response.statusCode >= 200 && response.statusCode < 300) {
-      return Code2TokenData.fromJson(json.decode(response.body));
-    }
-    throw NetworkException.http(
-      statusCode: response.statusCode,
-      uri: uri,
-      responseBody: response.body,
-    );
-  }
 
   Future<http.Response> _authorizedGet(
     Uri uri, {
     Map<String, String>? headers,
   }) async {
-    final String accessToken = await _getValidAccessToken();
+    final String accessToken = await _auth.getValidAccessToken();
     final Map<String, String> requestHeaders = <String, String>{
       'Authorization': 'Bearer $accessToken',
       if (headers != null) ...headers,
     };
     try {
-      return await _getWithLogs(uri, headers: requestHeaders);
+      return await loggedHttpGet(uri, headers: requestHeaders);
     } catch (error, stackTrace) {
       AppLogger.error(
         'Authorized GET failed',
@@ -148,13 +102,13 @@ class TongjiApi {
     Object? body,
     Encoding? encoding,
   }) async {
-    final String accessToken = await _getValidAccessToken();
+    final String accessToken = await _auth.getValidAccessToken();
     final Map<String, String> requestHeaders = <String, String>{
       'Authorization': 'Bearer $accessToken',
       if (headers != null) ...headers,
     };
     try {
-      return await _postWithLogs(
+      return await loggedHttpPost(
         uri,
         headers: requestHeaders,
         body: body,
@@ -209,23 +163,6 @@ class TongjiApi {
     return payload.data;
   }
 
-  Future<String> _getValidAccessToken() async {
-    final TokenRepository repo = TokenRepository.getInstance();
-    final TokenData? token = await repo.getToken(refreshFromStorage: true);
-    if (token == null) {
-      throw AppException('AUTH_REQUIRED', 'Missing access token');
-    }
-    if (!token.isAccessTokenExpired(skew: _tokenSkew)) {
-      return token.accessToken;
-    }
-    if (token.isRefreshTokenExpired(skew: _tokenSkew)) {
-      throw AppException('AUTH_EXPIRED', 'Refresh token expired');
-    }
-    final Code2TokenData refreshed = await refreshToken(token.refreshToken);
-    await repo.saveFromCode2Token(refreshed);
-    return refreshed.accessToken;
-  }
-
   Future<StudentInfoData> fetchStudentInfo() async {
     final Uri uri = Uri.https(_baseUrl, studentInfoPath);
     final StudentInfoNetData netData =
@@ -274,9 +211,32 @@ class TongjiApi {
     return CourseScheduleData.fromNetDataList(netList);
   }
 
-  /// 获取本科生成绩
+  /// 获取四六级成绩。
+  Future<CetScoreData> fetchCetScores() async {
+    final Uri uri = Uri.https(_baseUrl, cetScorePath);
+    final CetScoreNetData netData = await _authorizedGetData<CetScoreNetData>(
+      uri,
+      parseData: (Object? data) =>
+          CetScoreNetData.fromJson(data as Map<String, dynamic>),
+    );
+    return CetScoreData.fromNetData(netData);
+  }
+
+  /// 获取学生考试安排。
+  Future<StudentExamData> fetchStudentExams() async {
+    final Uri uri = Uri.https(_baseUrl, studentExamsPath);
+    final StudentExamNetData netData =
+        await _authorizedGetData<StudentExamNetData>(
+      uri,
+      parseData: (Object? data) =>
+          StudentExamNetData.fromJson(data as Map<String, dynamic>),
+    );
+    return StudentExamData.fromNetData(netData);
+  }
+
+  /// 获取本科生成绩。
   ///
-  /// [calendarId] 可选，指定查询的学期，默认查询当前学期。-1 返回所有学期。
+  /// [calendarId] 可选，指定查询的学期；默认查询当前学期，-1 返回所有学期。
   Future<UndergraduateScoreData> fetchUndergraduateScore(
       {int? calendarId}) async {
     final Uri uri = Uri.https(
@@ -295,74 +255,5 @@ class TongjiApi {
           UndergraduateScoreNetData.fromJson(data as Map<String, dynamic>),
     );
     return UndergraduateScoreData.fromNetData(netData);
-  }
-
-  Future<http.Response> _getWithLogs(
-    Uri uri, {
-    Map<String, String>? headers,
-  }) async {
-    AppLogger.logNetworkRequest(method: 'GET', uri: uri);
-    final Stopwatch stopwatch = Stopwatch()..start();
-    try {
-      final http.Response response = await http.get(uri, headers: headers);
-      AppLogger.logNetworkResponse(
-        method: 'GET',
-        uri: uri,
-        statusCode: response.statusCode,
-        elapsedMs: stopwatch.elapsedMilliseconds,
-      );
-      return response;
-    } catch (error, stackTrace) {
-      AppLogger.error(
-        'GET request failed',
-        loggerName: 'TongjiApi',
-        error: error,
-        stackTrace: stackTrace,
-        context: <String, Object?>{
-          'method': 'GET',
-          'path': uri.path,
-          'elapsedMs': stopwatch.elapsedMilliseconds,
-        },
-      );
-      rethrow;
-    }
-  }
-
-  Future<http.Response> _postWithLogs(
-    Uri uri, {
-    Map<String, String>? headers,
-    Object? body,
-    Encoding? encoding,
-  }) async {
-    AppLogger.logNetworkRequest(method: 'POST', uri: uri);
-    final Stopwatch stopwatch = Stopwatch()..start();
-    try {
-      final http.Response response = await http.post(
-        uri,
-        headers: headers,
-        body: body,
-        encoding: encoding,
-      );
-      AppLogger.logNetworkResponse(
-        method: 'POST',
-        uri: uri,
-        statusCode: response.statusCode,
-        elapsedMs: stopwatch.elapsedMilliseconds,
-      );
-      return response;
-    } catch (error, stackTrace) {
-      AppLogger.error(
-        'POST request failed',
-        loggerName: 'TongjiApi',
-        error: error,
-        stackTrace: stackTrace,
-        context: <String, Object?>{
-          'method': 'POST',
-          'path': uri.path,
-          'elapsedMs': stopwatch.elapsedMilliseconds,
-        },
-      );
-      rethrow;
-    }
   }
 }

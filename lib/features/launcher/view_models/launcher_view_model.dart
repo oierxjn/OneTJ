@@ -3,15 +3,16 @@ import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/app/logging/logger.dart';
 import 'package:onetj/app/logging/logging_bootstrap.dart';
 import 'package:onetj/app/theme/theme_change_notifier.dart';
-import 'package:onetj/models/base_model.dart';
-import 'package:onetj/models/data/code2token.dart';
-import 'package:onetj/models/event_model.dart';
+import 'package:onetj/app/presentation/base_view_model.dart';
+import 'package:onetj/app/presentation/ui_event.dart';
 import 'package:onetj/models/launch_wallpaper_ref.dart';
+import 'package:onetj/models/settings_data.dart';
 import 'package:onetj/repo/settings_repository.dart';
+import 'package:onetj/models/token_data.dart';
 import 'package:onetj/repo/token_repository.dart';
+import 'package:onetj/services/auth_token_provider.dart';
 import 'package:onetj/services/hive_storage_service.dart';
 import 'package:onetj/services/launch_wallpaper_file_service.dart';
-import 'package:onetj/services/tongji.dart';
 import 'package:onetj/services/webview_environment_service.dart';
 
 class LauncherViewModel extends BaseViewModel<UiEvent> {
@@ -60,7 +61,7 @@ class LauncherViewModel extends BaseViewModel<UiEvent> {
     final Future<void> webViewInitFuture =
         WebViewEnvironmentService.instance.initialize();
     final Future<SettingsData> settingsFuture =
-        SettingsRepository.getInstance().getSettings(
+        appLocator<SettingsRepository>().getSettings(
       refreshFromStorage: true,
     );
 
@@ -112,40 +113,33 @@ class LauncherViewModel extends BaseViewModel<UiEvent> {
   ///
   /// 如果 token 有效，则返回 [RoutePaths.home]，否则返回 [RoutePaths.login]。
   Future<String> _resolveInitialRoute() async {
-    final TokenRepository repo = TokenRepository.getInstance();
+    final TokenRepository repo = appLocator<TokenRepository>();
     final TokenData? token = await repo.getToken(refreshFromStorage: true);
 
-    if (token != null &&
-        !token.isAccessTokenExpired(skew: const Duration(seconds: 30))) {
+    if (token == null) {
       AppLogger.info(
-        'Resolved route by valid access token',
+        'Resolved route to login',
+        loggerName: 'LauncherViewModel',
+        context: const <String, Object?>{'route': RoutePaths.login},
+      );
+      return RoutePaths.login;
+    }
+
+    try {
+      await appLocator<AuthTokenProvider>().getValidAccessToken();
+      AppLogger.info(
+        'Resolved route by valid token',
         loggerName: 'LauncherViewModel',
         context: const <String, Object?>{'route': RoutePaths.home},
       );
       return RoutePaths.home;
-    }
-
-    if (token != null &&
-        !token.isRefreshTokenExpired(skew: const Duration(seconds: 30))) {
-      try {
-        final TongjiApi api = TongjiApi();
-        final Code2TokenData refreshed =
-            await api.refreshToken(token.refreshToken);
-        await repo.saveFromCode2Token(refreshed);
-        AppLogger.info(
-          'Resolved route by refresh token',
-          loggerName: 'LauncherViewModel',
-          context: const <String, Object?>{'route': RoutePaths.home},
-        );
-        return RoutePaths.home;
-      } catch (error, stackTrace) {
-        AppLogger.warning(
-          'Failed to refresh token during launch',
-          loggerName: 'LauncherViewModel',
-          error: error,
-          stackTrace: stackTrace,
-        );
-      }
+    } catch (error, stackTrace) {
+      AppLogger.warning(
+        'Failed to resolve a valid token during launch',
+        loggerName: 'LauncherViewModel',
+        error: error,
+        stackTrace: stackTrace,
+      );
     }
 
     AppLogger.info(

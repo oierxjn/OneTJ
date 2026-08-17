@@ -1,12 +1,27 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/features/dashboard/view_models/dashboard_view_model.dart';
-import 'package:onetj/models/event_model.dart';
+import 'package:onetj/app/presentation/ui_event.dart';
+import 'package:onetj/repo/course_schedule_repository.dart';
+import 'package:onetj/repo/school_calendar_repository.dart';
 import 'package:onetj/repo/settings_repository.dart';
 import 'package:onetj/services/app_update_service.dart';
 
 void main() {
   setUp(() {
-    SettingsRepository.resetForTesting();
+    appLocator.registerSingleton<SettingsRepository>(
+      SettingsRepository(storage: InMemorySettingsStorage()),
+    );
+    appLocator.registerSingleton<SchoolCalendarRepository>(
+      SchoolCalendarRepository(storage: InMemorySchoolCalendarStorage()),
+    );
+    appLocator.registerSingleton<CourseScheduleRepository>(
+      CourseScheduleRepository(storage: InMemoryCourseScheduleStorage()),
+    );
+  });
+
+  tearDown(() async {
+    await resetDependencies();
   });
 
   group('DashboardViewModel.skipUpdateVersion', () {

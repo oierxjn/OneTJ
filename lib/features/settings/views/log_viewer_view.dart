@@ -1,14 +1,14 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:onetj/l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as path;
 
 import 'package:onetj/app/logging/log_file_info.dart';
 import 'package:onetj/features/settings/models/event.dart';
 import 'package:onetj/features/settings/view_models/log_viewer_view_model.dart';
-import 'package:onetj/models/event_model.dart';
+import 'package:onetj/app/presentation/ui_event.dart';
 
 class LogViewerView extends StatefulWidget {
   const LogViewerView({super.key});

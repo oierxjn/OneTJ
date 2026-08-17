@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
+import 'package:onetj/models/template_data.dart';
 import 'package:onetj/repo/base_cached_repository.dart';
 
 class TemplateCacheMeta extends BaseMeta {
@@ -19,27 +19,6 @@ class TemplateCacheMeta extends BaseMeta {
   Map<String, dynamic> toJson() {
     return {
       'lastFetchedAtMillis': lastFetchedAtMillis,
-    };
-  }
-}
-
-class TemplateData extends BaseData {
-  const TemplateData({required this.items}) : super();
-
-  final List<Map<String, dynamic>> items;
-
-  factory TemplateData.fromJson(Map<String, dynamic> json) {
-    final Object? rawItems = json['items'];
-    final List<Map<String, dynamic>> items = rawItems is List<dynamic>
-        ? rawItems.whereType<Map<String, dynamic>>().toList()
-        : const [];
-    return TemplateData(items: items);
-  }
-
-  @override
-  Map<String, dynamic> toJson() {
-    return {
-      'items': items,
     };
   }
 }
@@ -106,32 +85,16 @@ class HiveTemplateStorage implements TemplateStorage {
 
 class TemplateRepository extends BaseNetCachedRepository<TemplateData,
     TemplateCacheMeta, TemplateStorage> {
-  TemplateRepository._({
-    required TemplateStorage storage,
-  }) : super(storage);
-
-  static TemplateRepository? _instance;
-
-  static TemplateRepository getInstance({
+  TemplateRepository({
     TemplateStorage? storage,
-  }) {
-    if (_instance != null) {
-      return _instance!;
-    }
-    final TemplateRepository repo = TemplateRepository._(
-      storage: storage ?? HiveTemplateStorage(),
-    );
-    _instance = repo;
-    return repo;
-  }
-
-  @visibleForTesting
-  static void resetInstanceForTest() {
-    _instance = null;
-  }
+  }) : super(storage ?? HiveTemplateStorage());
 
   @override
-  TemplateCacheMeta buildMeta(DateTime now) {
+  TemplateCacheMeta buildMeta(
+    DateTime now,
+    TemplateData data, {
+    String? requestKey,
+  }) {
     return TemplateCacheMeta(
       lastFetchedAtMillis: now.millisecondsSinceEpoch,
     );

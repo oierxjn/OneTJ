@@ -1,5 +1,5 @@
 import 'package:onetj/models/timetable_index.dart';
-import 'package:onetj/repo/course_schedule_repository.dart';
+import 'package:onetj/models/course_schedule_data.dart';
 
 class CourseDetailField {
   const CourseDetailField({

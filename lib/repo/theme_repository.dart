@@ -85,13 +85,11 @@ class InMemoryThemeStorage implements ThemeStorage {
 ///
 /// 继承 [ChangeNotifier]，当主题偏好变更时通知监听者。
 class ThemeRepository extends ChangeNotifier {
-  ThemeRepository._({
-    required ThemeStorage storage,
-  }) : _storage = storage {
+  ThemeRepository({
+    ThemeStorage? storage,
+  }) : _storage = storage ?? HiveThemeStorage() {
     _preferences = ThemePreferences.defaultPreferences;
   }
-
-  static ThemeRepository? _instance;
 
   final ThemeStorage _storage;
   late ThemePreferences _preferences;
@@ -102,22 +100,6 @@ class ThemeRepository extends ChangeNotifier {
 
   /// 是否已从存储中加载完成
   bool get initialized => _initialized;
-
-  /// 获取单例
-  static ThemeRepository getInstance() {
-    if (_instance != null) {
-      return _instance!;
-    }
-    _instance = ThemeRepository._(storage: HiveThemeStorage());
-    return _instance!;
-  }
-
-  /// 重置单例（用于测试）
-  static void resetForTesting({ThemeStorage? storage}) {
-    _instance = ThemeRepository._(
-      storage: storage ?? InMemoryThemeStorage(),
-    );
-  }
 
   /// 从 Hive 加载主题偏好
   ///
@@ -155,6 +137,11 @@ class ThemeRepository extends ChangeNotifier {
   /// 更新主题模式（system / light / dark）
   Future<void> setThemeMode(ThemeMode mode) async {
     await save(_preferences.copyWith(themeMode: mode));
+  }
+
+  /// 更新主页导航布局
+  Future<void> setHomeLayout(HomeLayout layout) async {
+    await save(_preferences.copyWith(homeLayout: layout));
   }
 
   /// 更新亮色主色

@@ -2,14 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:onetj/app/exception/app_exception.dart';
-
-/// 基础数据类，所有缓存数据都必须实现该类
-///
-/// 建议补上fromJson工厂方法
-abstract class BaseData {
-  const BaseData();
-  Map<String, dynamic> toJson();
-}
+import 'package:onetj/models/base_data.dart';
 
 /// 基础元数据类，所有缓存元数据都必须实现该类
 ///
@@ -40,6 +33,7 @@ abstract class BaseNetCachedRepository<TData extends BaseData,
   TMeta? _cachedMeta;
   Future<void>? _pendingPersist;
   Future<TData>? _inFlightFetch;
+  Object? _inFlightRequestKey;
   Completer<void>? _clearCompleter;
   @protected
   TData? get cachedData => _cachedData;
@@ -52,7 +46,11 @@ abstract class BaseNetCachedRepository<TData extends BaseData,
   Future<void> persistMeta(TMeta meta) async => await _storage.saveMeta(meta);
   Future<void> clearStorage() async => await _storage.clear();
 
-  TMeta buildMeta(DateTime now);
+  TMeta buildMeta(
+    DateTime now,
+    TData data, {
+    String? requestKey,
+  });
 
   Future<void> warmUp() async {
     _throwIfClearing();
@@ -70,6 +68,7 @@ abstract class BaseNetCachedRepository<TData extends BaseData,
     required Duration ttl,
     required TData? cached,
     required TMeta? meta,
+    String? requestKey,
   }) {
     if (cached == null || meta == null) {
       return true;
@@ -88,6 +87,7 @@ abstract class BaseNetCachedRepository<TData extends BaseData,
     required DateTime now,
     required Future<TData> Function() fetcher,
     Duration ttl = const Duration(days: 7),
+    String? requestKey,
   }) async {
     _throwIfClearing();
     final TData? cached = _cachedData;
@@ -97,18 +97,28 @@ abstract class BaseNetCachedRepository<TData extends BaseData,
       ttl: ttl,
       cached: cached,
       meta: meta,
+      requestKey: requestKey,
     );
     if (!shouldFetchFlag) {
       return cached!;
     }
-    return _runSingleFlightFetch(now: now, fetcher: fetcher);
+    return _runSingleFlightFetch(
+      now: now,
+      fetcher: fetcher,
+      requestKey: requestKey,
+    );
   }
 
   Future<TData> refresh({
     required DateTime now,
     required Future<TData> Function() fetcher,
+    String? requestKey,
   }) {
-    return _runSingleFlightFetch(now: now, fetcher: fetcher);
+    return _runSingleFlightFetch(
+      now: now,
+      fetcher: fetcher,
+      requestKey: requestKey,
+    );
   }
 
   Future<void> flush() {
@@ -139,6 +149,7 @@ abstract class BaseNetCachedRepository<TData extends BaseData,
       _cachedData = null;
       _cachedMeta = null;
       _inFlightFetch = null;
+      _inFlightRequestKey = null;
       await clearStorage();
       clearCompleter.complete();
     } catch (error, stackTrace) {
@@ -154,32 +165,65 @@ abstract class BaseNetCachedRepository<TData extends BaseData,
   Future<TData> _runSingleFlightFetch({
     required DateTime now,
     required Future<TData> Function() fetcher,
+    required String? requestKey,
   }) {
     _throwIfClearing();
     final Future<TData>? inFlight = _inFlightFetch;
     if (inFlight != null) {
-      return inFlight;
+      if (_inFlightRequestKey == requestKey) {
+        return inFlight;
+      }
+      return _runAfterInFlight(
+        inFlight: inFlight,
+        now: now,
+        fetcher: fetcher,
+        requestKey: requestKey,
+      );
     }
     late final Future<TData> nextInFlight;
     nextInFlight = () async {
       try {
-        return await _fetchAndSave(now: now, fetcher: fetcher);
+        return await _fetchAndSave(
+          now: now,
+          fetcher: fetcher,
+          requestKey: requestKey,
+        );
       } finally {
         if (identical(_inFlightFetch, nextInFlight)) {
           _inFlightFetch = null;
+          _inFlightRequestKey = null;
         }
       }
     }();
     _inFlightFetch = nextInFlight;
+    _inFlightRequestKey = requestKey;
     return nextInFlight;
+  }
+
+  Future<TData> _runAfterInFlight({
+    required Future<TData> inFlight,
+    required DateTime now,
+    required Future<TData> Function() fetcher,
+    required String? requestKey,
+  }) async {
+    try {
+      await inFlight;
+    } catch (_) {}
+    _throwIfClearing();
+    return _runSingleFlightFetch(
+      now: now,
+      fetcher: fetcher,
+      requestKey: requestKey,
+    );
   }
 
   Future<TData> _fetchAndSave({
     required DateTime now,
     required Future<TData> Function() fetcher,
+    required String? requestKey,
   }) async {
     final TData fetched = await fetcher();
-    final TMeta meta = buildMeta(now);
+    final TMeta meta = buildMeta(now, fetched, requestKey: requestKey);
     _saveCache(data: fetched, meta: meta, persist: true);
     return fetched;
   }

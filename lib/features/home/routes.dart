@@ -35,12 +35,12 @@ final StatefulShellRoute homeShellRoute = StatefulShellRoute.indexedStack(
     ),
     StatefulShellBranch(
       routes: [
-        ...toolsRoutes,
+        ...toolsShellRoutes,
       ],
     ),
     StatefulShellBranch(
       routes: [
-        ...settingsRoutes,
+        ...settingsShellRoutes,
       ],
     ),
   ],

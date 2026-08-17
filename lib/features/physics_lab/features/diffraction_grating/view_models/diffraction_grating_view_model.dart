@@ -4,7 +4,7 @@ import 'package:onetj/features/physics_lab/features/diffraction_grating/models/d
 import 'package:onetj/features/physics_lab/features/diffraction_grating/models/diffraction_grating_calibration_result.dart';
 import 'package:onetj/features/physics_lab/features/diffraction_grating/models/diffraction_grating_measurement_result.dart';
 import 'package:onetj/features/physics_lab/features/diffraction_grating/models/diffraction_grating_wavelength_result.dart';
-import 'package:onetj/models/base_model.dart';
+import 'package:onetj/app/presentation/base_view_model.dart';
 
 class DiffractionGratingViewModel extends BaseViewModel<Never> {
   static const int readingCountPerRow = 4;

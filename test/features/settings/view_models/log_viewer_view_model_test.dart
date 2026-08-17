@@ -6,7 +6,7 @@ import 'package:onetj/app/logging/log_export_service.dart';
 import 'package:onetj/app/logging/log_file_info.dart';
 import 'package:onetj/features/settings/models/event.dart';
 import 'package:onetj/features/settings/view_models/log_viewer_view_model.dart';
-import 'package:onetj/models/event_model.dart';
+import 'package:onetj/app/presentation/ui_event.dart';
 import 'package:open_filex/open_filex.dart';
 
 void main() {

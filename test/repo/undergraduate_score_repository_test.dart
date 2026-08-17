@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:onetj/models/undergraduate_score_data.dart';
 import 'package:onetj/repo/undergraduate_score_repository.dart';
 
 UndergraduateScoreData buildUndergraduateScore({String? totalGradePoint}) {
@@ -41,9 +42,8 @@ void main() {
     late UndergraduateScoreRepository repo;
 
     setUp(() {
-      UndergraduateScoreRepository.resetInstanceForTest();
       storage = InMemoryUndergraduateScoreStorage();
-      repo = UndergraduateScoreRepository.getInstance(storage: storage);
+      repo = UndergraduateScoreRepository(storage: storage);
     });
 
     test('fetches and caches data on first getOrFetch', () async {

@@ -1,19 +1,24 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:onetj/l10n/app_localizations.dart';
+import 'package:go_router/go_router.dart';
 
+import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/app/di/dependencies.dart';
+import 'package:onetj/app/theme/theme_change_notifier.dart';
 import 'package:onetj/features/app_update/app_update_flow_coordinator.dart';
 import 'package:onetj/features/dashboard/view_models/dashboard_view_model.dart';
-import 'package:onetj/features/dashboard/models/dashboard_model.dart';
+import 'package:onetj/features/dashboard/views/widgets/function_grid.dart';
+import 'package:onetj/features/dashboard/models/dashboard_upcoming_entry_data.dart';
 import 'package:onetj/models/app_update_info.dart';
 import 'package:onetj/models/dashboard_upcoming_mode.dart';
-import 'package:onetj/models/event_model.dart';
+import 'package:onetj/app/presentation/ui_event.dart';
 import 'package:onetj/models/time_period_range.dart';
 import 'package:onetj/models/timetable_index.dart';
+import 'package:onetj/models/theme_preferences.dart';
 import 'package:onetj/models/time_slot.dart';
-import 'package:onetj/repo/school_calendar_repository.dart';
+import 'package:onetj/models/school_calendar_data.dart';
 import 'package:onetj/services/app_update_service.dart';
 import 'package:onetj/widgets/course_detail_bottom_sheet.dart';
 
@@ -32,6 +37,7 @@ class DashboardView extends StatefulWidget {
 class _DashboardViewState extends State<DashboardView>
     with WidgetsBindingObserver {
   late final DashboardViewModel _viewModel;
+  late final ThemeChangeNotifier _themeChangeNotifier;
   late final AppUpdateService _appUpdateService;
   late final AppUpdateFlowCoordinator _appUpdateCoordinator;
   StreamSubscription<UiEvent>? _eventSub;
@@ -41,6 +47,7 @@ class _DashboardViewState extends State<DashboardView>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _themeChangeNotifier = appLocator<ThemeChangeNotifier>();
     _appUpdateService = appLocator<AppUpdateService>();
     _appUpdateCoordinator = AppUpdateFlowCoordinator(
       appUpdateService: _appUpdateService,
@@ -116,7 +123,8 @@ class _DashboardViewState extends State<DashboardView>
         title: Text(AppLocalizations.of(context).tabDashboard),
       ),
       body: AnimatedBuilder(
-        animation: _viewModel,
+        animation:
+            Listenable.merge(<Listenable>[_viewModel, _themeChangeNotifier]),
         builder: (context, _) => _buildBody(context, l10n),
       ),
     );
@@ -125,25 +133,67 @@ class _DashboardViewState extends State<DashboardView>
   Widget _buildBody(BuildContext context, AppLocalizations l10n) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildHeroCard(context),
-          const SizedBox(height: 24),
-          Text(
-            l10n.dashboardUpcomingTitle,
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          if (_viewModel.timetableLoading || _viewModel.calendarLoading)
-            const LinearProgressIndicator()
-          else
-            _buildUpcomingSection(
-              context,
-              entries: _viewModel.buildUpcomingEntries(),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1120),
+          child: SizedBox(
+            width: double.infinity,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeroCard(context),
+                const SizedBox(height: 24),
+                if (_themeChangeNotifier.preferences.homeLayout ==
+                    HomeLayout.functionGrid) ...[
+                  _buildFunctionGrid(context, l10n),
+                  const SizedBox(height: 24),
+                ],
+                Text(
+                  l10n.dashboardUpcomingTitle,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                if (_viewModel.timetableLoading || _viewModel.calendarLoading)
+                  const LinearProgressIndicator()
+                else
+                  _buildUpcomingSection(
+                    context,
+                    entries: _viewModel.buildUpcomingEntries(),
+                  ),
+              ],
             ),
-        ],
+          ),
+        ),
       ),
+    );
+  }
+
+  Widget _buildFunctionGrid(
+    BuildContext context,
+    AppLocalizations l10n,
+  ) {
+    return FunctionGrid(
+      timetableLabel: l10n.tabTimetable,
+      physicsLabLabel: l10n.physicsLabTitle,
+      settingsLabel: l10n.tabSettings,
+      gradesLabel: l10n.scoreInquiryTitle,
+      cetScoreLabel: l10n.cetScoreTitle,
+      studentExamsLabel: l10n.studentExamsTitle,
+      toolsLabel: l10n.tabTools,
+      aboutLabel: l10n.settingsAboutTitle,
+      onTimetableTap: () => context.go(RoutePaths.homeTimetable),
+      // 二级详情路由位于主页 Shell 外，使用 push 保留返回一级主页的栈。
+      onPhysicsLabTap: () => context.push(RoutePaths.homePhysicsLab),
+      onSettingsTap: () => context.go(RoutePaths.homeSettings),
+      onGradesTap: () => context.push(RoutePaths.homeGrades),
+      onCetScoreTap: () => context.push(RoutePaths.homeCetScore),
+      onStudentExamsTap: () {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.studentExamsUnavailable)),
+        );
+      },
+      onToolsTap: () => context.go(RoutePaths.homeTools),
+      onAboutTap: () => context.push(RoutePaths.homeSettingsAbout),
     );
   }
 

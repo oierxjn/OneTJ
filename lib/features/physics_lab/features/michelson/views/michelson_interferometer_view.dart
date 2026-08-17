@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:onetj/l10n/app_localizations.dart';
 
 import 'package:onetj/features/physics_lab/features/michelson/models/michelson_input_preset.dart';
 import 'package:onetj/features/physics_lab/features/michelson/models/michelson_measurement_result.dart';

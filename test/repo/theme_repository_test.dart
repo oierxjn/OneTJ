@@ -10,8 +10,7 @@ void main() {
 
   setUp(() {
     storage = InMemoryThemeStorage();
-    ThemeRepository.resetForTesting(storage: storage);
-    repo = ThemeRepository.getInstance();
+    repo = ThemeRepository(storage: storage);
   });
 
   group('ThemeRepository', () {
@@ -106,6 +105,13 @@ void main() {
       test('setThemeMode 更新主题模式', () async {
         await repo.setThemeMode(ThemeMode.dark);
         expect(repo.preferences.themeMode, ThemeMode.dark);
+      });
+
+      test('setHomeLayout 更新主页布局', () async {
+        await repo.setHomeLayout(HomeLayout.functionGrid);
+
+        expect(repo.preferences.homeLayout, HomeLayout.functionGrid);
+        expect((await storage.read())!.homeLayout, HomeLayout.functionGrid);
       });
 
       test('setLightSeedColor 更新亮色主色', () async {

@@ -18,15 +18,13 @@ Future<void> _waitForLoad(ColorPickerViewModel vm) => _pumpEventQueue();
 
 /// 测试用的 ThemeChangeNotifier，使用 InMemoryThemeStorage 隔离
 ThemeChangeNotifier _createFakeThemeNotifier() {
-  ThemeRepository.resetForTesting();
-  final repo = ThemeRepository.getInstance();
+  final repo = ThemeRepository(storage: InMemoryThemeStorage());
   return ThemeChangeNotifier(repository: repo);
 }
 
 /// 测试用的 ColorPresetRepository，使用 InMemoryColorPresetStorage 隔离
 ColorPresetRepository _createFakePresetRepo() {
-  ColorPresetRepository.resetForTesting();
-  return ColorPresetRepository.getInstance();
+  return ColorPresetRepository(storage: InMemoryColorPresetStorage());
 }
 
 void main() {
@@ -34,7 +32,6 @@ void main() {
   late ColorPresetRepository presetRepo;
   late ColorPickerViewModel viewModel;
 
-  const defaultColor = ThemePreferences.kDefaultSeedColor;
   const testColor = Color(0xFF123456);
   const otherColor = Color(0xFF654321);
 
@@ -335,7 +332,8 @@ void main() {
       });
 
       test('importFromText 无效主色返回 invalidLightSeed', () {
-        final result = viewModel.importFromText('#zzzzzzzz#AABBCCDD#AABBCCDD#AABBCCDD');
+        final result =
+            viewModel.importFromText('#zzzzzzzz#AABBCCDD#AABBCCDD#AABBCCDD');
         expect(result, ImportColorResult.invalidLightSeed);
       });
 

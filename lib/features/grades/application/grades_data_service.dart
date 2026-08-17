@@ -1,8 +1,10 @@
+import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/services/tongji.dart';
+import 'package:onetj/models/undergraduate_score_data.dart';
 import 'package:onetj/repo/undergraduate_score_repository.dart';
 
-class GradesModel {
-  GradesModel({TongjiApi? api}) : _api = api ?? TongjiApi();
+class GradesDataService {
+  GradesDataService({TongjiApi? api}) : _api = api ?? TongjiApi();
 
   final TongjiApi _api;
 
@@ -12,7 +14,7 @@ class GradesModel {
 
   Future<UndergraduateScoreData> getUndergraduateScore() async {
     final UndergraduateScoreRepository repo =
-        UndergraduateScoreRepository.getInstance();
+        appLocator<UndergraduateScoreRepository>();
     return repo.getOrFetch(
       now: DateTime.now(),
       fetcher: () => fetchUndergraduateScore(calendarId: -1),
@@ -22,13 +24,13 @@ class GradesModel {
 
   Future<void> warmUpCache() async {
     final UndergraduateScoreRepository repo =
-        UndergraduateScoreRepository.getInstance();
+        appLocator<UndergraduateScoreRepository>();
     await repo.warmUp();
   }
 
   Future<UndergraduateScoreData> refreshUndergraduateScore() async {
     final UndergraduateScoreRepository repo =
-        UndergraduateScoreRepository.getInstance();
+        appLocator<UndergraduateScoreRepository>();
     return repo.refresh(
       now: DateTime.now(),
       fetcher: () => fetchUndergraduateScore(calendarId: -1),

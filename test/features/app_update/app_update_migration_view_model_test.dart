@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:onetj/features/app_update/models/event.dart';
 import 'package:onetj/features/app_update/view_models/app_update_migration_view_model.dart';
-import 'package:onetj/models/event_model.dart';
+import 'package:onetj/app/presentation/ui_event.dart';
 import 'package:onetj/services/external_launcher_service.dart';
 
 void main() {
@@ -78,7 +78,7 @@ void main() {
         return null;
       });
       final AppUpdateMigrationViewModel viewModel =
-          AppUpdateMigrationViewModel();
+          AppUpdateMigrationViewModel(externalLauncherService: ExternalLauncherService());
 
       final Future<UiEvent> nextEvent = viewModel.events.first;
       await viewModel.copyLink('https://example.com/update.apk');
@@ -98,14 +98,17 @@ void main() {
         return null;
       });
       final AppUpdateMigrationViewModel viewModel =
-          AppUpdateMigrationViewModel();
+          AppUpdateMigrationViewModel(externalLauncherService: ExternalLauncherService());
 
       final Future<UiEvent> nextEvent = viewModel.events.first;
       await viewModel.copyLink('https://example.com/update.apk');
       final UiEvent event = await nextEvent;
 
       expect(event, isA<AppUpdateMigrationLinkCopyFailedEvent>());
-      expect((event as AppUpdateMigrationLinkCopyFailedEvent).error, same(error));
+      final Object caughtError =
+          (event as AppUpdateMigrationLinkCopyFailedEvent).error;
+      expect(caughtError, isA<PlatformException>());
+      expect((caughtError as PlatformException).code, 'clipboard-failed');
       expect(viewModel.copying, isFalse);
     });
   });

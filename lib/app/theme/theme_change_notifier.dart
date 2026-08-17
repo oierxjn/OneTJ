@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/app/theme/theme_color_scheme_builder.dart';
 import 'package:onetj/models/theme_preferences.dart';
 import 'package:onetj/repo/theme_repository.dart';
@@ -13,7 +14,7 @@ import 'package:onetj/repo/theme_repository.dart';
 class ThemeChangeNotifier extends ChangeNotifier {
   ThemeChangeNotifier({
     ThemeRepository? repository,
-  }) : _repository = repository ?? ThemeRepository.getInstance() {
+  }) : _repository = repository ?? appLocator<ThemeRepository>() {
     // 监听 ThemeRepository 的变更，自动重建 ColorScheme
     _repository.addListener(_onPreferencesChanged);
     // 从当前缓存构建初始 ColorScheme
@@ -57,6 +58,11 @@ class ThemeChangeNotifier extends ChangeNotifier {
   /// 设置主题模式
   Future<void> setThemeMode(ThemeMode mode) async {
     await _repository.setThemeMode(mode);
+  }
+
+  /// 设置主页导航布局
+  Future<void> setHomeLayout(HomeLayout layout) async {
+    await _repository.setHomeLayout(layout);
   }
 
   /// 设置亮色主色

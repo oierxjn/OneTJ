@@ -1,23 +1,14 @@
+import 'package:onetj/app/di/dependencies.dart';
+import 'package:onetj/models/course_schedule_data.dart';
+import 'package:onetj/models/school_calendar_data.dart';
+import 'package:onetj/models/student_info_data.dart';
+import 'package:onetj/repo/course_schedule_repository.dart';
+import 'package:onetj/repo/student_info_repository.dart';
+import 'package:onetj/services/term_key_resolver.dart';
 import 'package:onetj/services/tongji.dart';
 
-import 'package:onetj/repo/student_info_repository.dart';
-import 'package:onetj/repo/school_calendar_repository.dart';
-import 'package:onetj/repo/course_schedule_repository.dart';
-import 'package:onetj/models/timetable_index.dart';
-import 'package:onetj/services/term_key_resolver.dart';
-
-class DashboardUpcomingEntryData {
-  const DashboardUpcomingEntryData({
-    required this.entry,
-    required this.isOngoing,
-  });
-
-  final TimetableEntry entry;
-  final bool isOngoing;
-}
-
-class DashboardModel {
-  DashboardModel({
+class DashboardDataService {
+  DashboardDataService({
     TongjiApi? api,
     TermKeyResolver? termKeyResolver,
   })  : _api = api ?? TongjiApi(),
@@ -31,7 +22,7 @@ class DashboardModel {
   }
 
   Future<StudentInfoData> getStudentInfo() async {
-    final StudentInfoRepository repo = StudentInfoRepository.getInstance();
+    final StudentInfoRepository repo = appLocator<StudentInfoRepository>();
     await repo.warmUp();
     return repo.getOrFetch(
       now: DateTime.now(),
@@ -51,7 +42,7 @@ class DashboardModel {
   Future<CourseScheduleData> getCourseSchedule() async {
     final DateTime now = DateTime.now();
     final CourseScheduleRepository repo =
-        CourseScheduleRepository.getInstance();
+        appLocator<CourseScheduleRepository>();
     await repo.warmUp();
     final String? termKey = await _termKeyResolver.resolveCurrentTermKey(
       now: now,

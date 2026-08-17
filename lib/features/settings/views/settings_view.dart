@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:onetj/l10n/app_localizations.dart';
+import 'package:onetj/features/home/views/widgets/home_shell_back_button.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:onetj/app/constant/route_paths.dart';
@@ -10,12 +10,9 @@ import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/features/settings/models/event.dart';
 import 'package:onetj/features/settings/models/launch_wallpaper_editor_result.dart';
 import 'package:onetj/features/settings/view_models/settings_view_model.dart';
-import 'package:onetj/features/settings/views/widgets/settings_card.dart';
-import 'package:onetj/features/settings/views/widgets/settings_card_visual_state.dart';
-import 'package:onetj/features/settings/views/widgets/theme_color_card.dart';
-import 'package:onetj/features/settings/views/widgets/upcoming_courses_card.dart';
+import 'package:onetj/features/settings/views/widgets/settings_sections.dart';
+import 'package:onetj/app/presentation/ui_event.dart';
 import 'package:onetj/models/dashboard_upcoming_mode.dart';
-import 'package:onetj/models/event_model.dart';
 import 'package:onetj/models/launch_wallpaper_ref.dart';
 import 'package:onetj/models/time_period_range.dart';
 import 'package:onetj/models/time_slot.dart';
@@ -23,7 +20,9 @@ import 'package:onetj/models/user_collection_field.dart';
 import 'package:onetj/services/hive_storage_service.dart';
 
 class SettingsView extends StatefulWidget {
-  const SettingsView({super.key});
+  const SettingsView({required this.viewModel, super.key});
+
+  final SettingsViewModel viewModel;
 
   @override
   State<SettingsView> createState() => _SettingsViewState();
@@ -38,7 +37,7 @@ class _SettingsViewState extends State<SettingsView> {
   @override
   void initState() {
     super.initState();
-    _viewModel = SettingsViewModel();
+    _viewModel = widget.viewModel;
     _maxWeekController = TextEditingController();
     _dashboardCountController = TextEditingController();
     _eventSub = _viewModel.events.listen((event) {
@@ -343,11 +342,7 @@ class _SettingsViewState extends State<SettingsView> {
     }
     final String first = TimeSlot.formatMinutes(ranges.first.startMinutes);
     final String last = TimeSlot.formatMinutes(ranges.last.endMinutes);
-    return l10n.settingsTimeSlotsSummary(
-      ranges.length,
-      first,
-      last,
-    );
+    return l10n.settingsTimeSlotsSummary(ranges.length, first, last);
   }
 
   String _dashboardUpcomingSummary(AppLocalizations l10n) {
@@ -364,9 +359,8 @@ class _SettingsViewState extends State<SettingsView> {
   }
 
   String _userCollectionSummary(AppLocalizations l10n) {
-    final int selected = _viewModel.draftUserCollectionFields.length;
     return l10n.settingsUserCollectionPolicySummary(
-      selected,
+      _viewModel.draftUserCollectionFields.length,
       UserCollectionField.values.length,
     );
   }
@@ -381,213 +375,44 @@ class _SettingsViewState extends State<SettingsView> {
 
   bool get _settingsBusy => _viewModel.isBusy;
 
-  SettingsCardStatus _resolveCardStatus({
-    required bool isDirty,
-    required bool hasError,
-  }) {
-    if (hasError) {
-      return SettingsCardStatus.error;
-    }
-    if (isDirty) {
-      return SettingsCardStatus.dirty;
-    }
-    return SettingsCardStatus.normal;
-  }
-
-  void _onUpcomingModeChanged(DashboardUpcomingMode value) {
-    _viewModel.updateUpcomingMode(value);
-  }
-
-  void _onDashboardCountChanged(String value) {
-    _viewModel.updateDashboardUpcomingCountText(value);
-  }
-
-  Widget _buildMaxWeekCard(AppLocalizations l10n) {
-    final SettingsCardStatus status = _resolveCardStatus(
-      isDirty: _viewModel.isMaxWeekDirty,
-      hasError: _viewModel.isMaxWeekInvalid,
-    );
-    return SettingsCard(
-      status: status,
-      title: Text(l10n.settingsMaxWeekTitle),
-      subtitle: Text(l10n.settingsMaxWeekSubtitle),
-      trailing: SizedBox(
-        width: 100,
-        child: TextField(
-          controller: _maxWeekController,
-          onChanged: _viewModel.updateMaxWeekText,
-          keyboardType: TextInputType.number,
-          inputFormatters: [
-            FilteringTextInputFormatter.digitsOnly,
-          ],
-          enabled: !_settingsBusy,
-          decoration: const InputDecoration(
-            isDense: true,
-            border: OutlineInputBorder(),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTimeSlotCard(AppLocalizations l10n) {
-    final SettingsCardStatus status = _resolveCardStatus(
-      isDirty: _viewModel.isTimeSlotDirty,
-      hasError: false,
-    );
-    return SettingsCard(
-      status: status,
-      leading: const Icon(Icons.schedule),
-      title: Text(l10n.settingsTimeSlotsTitle),
-      subtitle: Text(_timeSlotSummary(l10n)),
-      trailing: const Icon(Icons.chevron_right),
-      onTap: _settingsBusy ? null : _openTimeSlotEditor,
-    );
-  }
-
-  Widget _buildDashboardUpcomingCard(AppLocalizations l10n) {
-    final SettingsCardStatus status = _resolveCardStatus(
-      isDirty: _viewModel.isUpcomingDirty,
-      hasError: _viewModel.isUpcomingInvalid,
-    );
-    return UpcomingCoursesCard(
+  Widget _buildLoadedBody(AppLocalizations l10n) {
+    return SettingsSections(
       l10n: l10n,
-      mode: _viewModel.draftUpcomingMode,
-      countController: _dashboardCountController,
+      maxWeekController: _maxWeekController,
+      dashboardCountController: _dashboardCountController,
+      maxWeekDirty: _viewModel.isMaxWeekDirty,
+      maxWeekInvalid: _viewModel.isMaxWeekInvalid,
+      timeSlotDirty: _viewModel.isTimeSlotDirty,
+      upcomingDirty: _viewModel.isUpcomingDirty,
+      upcomingInvalid: _viewModel.isUpcomingInvalid,
+      userCollectionDirty: _viewModel.isUserCollectionDirty,
+      launchWallpaperDirty: _viewModel.isLaunchWallpaperDirty,
+      timeSlotSummary: _timeSlotSummary(l10n),
+      dashboardUpcomingSummary: _dashboardUpcomingSummary(l10n),
+      userCollectionSummary: _userCollectionSummary(l10n),
+      launchWallpaperSummary: _launchWallpaperSummary(l10n),
+      upcomingMode: _viewModel.draftUpcomingMode,
+      themeColor: _viewModel.themeColor,
+      homeLayout: _viewModel.homeLayout,
       enabled: !_settingsBusy,
-      summaryText: _dashboardUpcomingSummary(l10n),
-      onModeChanged: _onUpcomingModeChanged,
-      onCountChanged: _onDashboardCountChanged,
-      status: status,
-    );
-  }
-
-  Widget _buildCommonSectionTitle(AppLocalizations l10n) {
-    return Text(
-      l10n.settingsCommonSectionTitle,
-      style: Theme.of(context).textTheme.titleMedium,
-    );
-  }
-
-  Widget _buildAppearanceSectionTitle(AppLocalizations l10n) {
-    return Text(
-      l10n.settingsAppearanceSectionTitle,
-      style: Theme.of(context).textTheme.titleMedium,
-    );
-  }
-
-  Widget _buildThemeColorCard(AppLocalizations l10n) {
-    return ThemeColorCard(
-      l10n: l10n,
-      color: _viewModel.themeColor,
-      enabled: !_settingsBusy,
-      onColorChanged: _viewModel.setThemeColor,
-    );
-  }
-
-  Widget _buildCustomColorCard(AppLocalizations l10n) {
-    return SettingsCard(
-      leading: const Icon(Icons.colorize),
-      title: Text(l10n.settingsAppearanceCustomColorTitle),
-      trailing: const Icon(Icons.chevron_right),
-      onTap: _settingsBusy
-          ? null
-          : () => context.push(RoutePaths.homeSettingsColorPicker),
-    );
-  }
-
-  Widget _buildAdvancedSectionTitle(AppLocalizations l10n) {
-    return Text(
-      l10n.settingsAdvancedSectionTitle,
-      style: Theme.of(context).textTheme.titleMedium,
-    );
-  }
-
-  Widget _buildResetCard(AppLocalizations l10n) {
-    return SettingsCard(
-      leading: const Icon(Icons.restore),
-      title: Text(l10n.settingsResetTitle),
-      subtitle: Text(l10n.settingsResetSubtitle),
-      onTap: _settingsBusy ? null : () => _confirmResetSettings(context),
-    );
-  }
-
-  Widget _buildDataMigrationCard(AppLocalizations l10n) {
-    final bool canTap = !_settingsBusy && !_viewModel.hiveMigrationLoading;
-    final String subtitle;
-    if (_viewModel.hiveMigrationLoading) {
-      subtitle = l10n.settingsDataMigrationLoading;
-    } else if (!_viewModel.hiveMigrationStateLoaded) {
-      subtitle = l10n.settingsDataMigrationSubtitle;
-    } else if (!_viewModel.legacyHiveDataAvailable) {
-      subtitle = l10n.settingsDataMigrationNoData;
-    } else {
-      subtitle = l10n.settingsDataMigrationSubtitle;
-    }
-    return SettingsCard(
-      leading: const Icon(Icons.move_down),
-      title: Text(l10n.settingsDataMigrationTitle),
-      subtitle: Text(subtitle),
-      onTap: canTap ? () => _onTapDataMigration(context) : null,
-    );
-  }
-
-  Widget _buildDeveloperCard(AppLocalizations l10n) {
-    return SettingsCard(
-      leading: const Icon(Icons.developer_mode),
-      title: Text(l10n.settingsDeveloperTitle),
-      subtitle: Text(l10n.settingsDeveloperSubtitle),
-      trailing: const Icon(Icons.chevron_right),
-      onTap: () => context.push(RoutePaths.homeSettingsDeveloper),
-    );
-  }
-
-  Widget _buildUserCollectionPolicyCard(AppLocalizations l10n) {
-    final SettingsCardStatus status = _resolveCardStatus(
-      isDirty: _viewModel.isUserCollectionDirty,
-      hasError: false,
-    );
-    return SettingsCard(
-      status: status,
-      leading: const Icon(Icons.privacy_tip_outlined),
-      title: Text(l10n.settingsUserCollectionPolicyTitle),
-      subtitle: Text(_userCollectionSummary(l10n)),
-      trailing: const Icon(Icons.chevron_right),
-      onTap: _settingsBusy ? null : _openUserCollectionPolicy,
-    );
-  }
-
-  Widget _buildLaunchWallpaperCard(AppLocalizations l10n) {
-    final SettingsCardStatus status = _resolveCardStatus(
-      isDirty: _viewModel.isLaunchWallpaperDirty,
-      hasError: false,
-    );
-    return SettingsCard(
-      status: status,
-      leading: const Icon(Icons.wallpaper_outlined),
-      title: Text(l10n.settingsLaunchWallpaperTitle),
-      subtitle: Text(_launchWallpaperSummary(l10n)),
-      trailing: const Icon(Icons.chevron_right),
-      onTap: _settingsBusy ? null : _openLaunchWallpaperEditor,
-    );
-  }
-
-  Widget _buildAboutCard(AppLocalizations l10n) {
-    return SettingsCard(
-      leading: const Icon(Icons.info_outline),
-      title: Text(l10n.settingsAboutTitle),
-      subtitle: Text(l10n.settingsAboutSubtitle),
-      trailing: const Icon(Icons.chevron_right),
-      onTap: () => context.push(RoutePaths.homeSettingsAbout),
-    );
-  }
-
-  Widget _buildLogoutButton(AppLocalizations l10n) {
-    return Center(
-      child: FilledButton(
-        onPressed: _viewModel.loading ? null : () => _logout(context),
-        child: Text(l10n.logOut),
-      ),
+      hiveMigrationLoading: _viewModel.hiveMigrationLoading,
+      hiveMigrationStateLoaded: _viewModel.hiveMigrationStateLoaded,
+      legacyHiveDataAvailable: _viewModel.legacyHiveDataAvailable,
+      onMaxWeekChanged: _viewModel.updateMaxWeekText,
+      onUpcomingModeChanged: _viewModel.updateUpcomingMode,
+      onDashboardCountChanged: _viewModel.updateDashboardUpcomingCountText,
+      onThemeColorChanged: _viewModel.setThemeColor,
+      onHomeLayoutChanged: _viewModel.setHomeLayout,
+      onOpenTimeSlotEditor: _openTimeSlotEditor,
+      onOpenUserCollectionPolicy: _openUserCollectionPolicy,
+      onOpenLaunchWallpaperEditor: _openLaunchWallpaperEditor,
+      onOpenCustomColor: () => context.push(RoutePaths.homeSettingsColorPicker),
+      onOpenAbout: () => context.push(RoutePaths.homeSettingsAbout),
+      onReset: () => _confirmResetSettings(context),
+      onTapDataMigration: () => _onTapDataMigration(context),
+      onOpenDeveloper: () => context.push(RoutePaths.homeSettingsDeveloper),
+      onLogout: () => _logout(context),
+      logoutLoading: _viewModel.loading,
     );
   }
 
@@ -601,72 +426,40 @@ class _SettingsViewState extends State<SettingsView> {
     );
   }
 
-  Widget _buildLoadedBody(AppLocalizations l10n) {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        _buildCommonSectionTitle(l10n),
-        const SizedBox(height: 8),
-        _buildMaxWeekCard(l10n),
-        const SizedBox(height: 12),
-        _buildTimeSlotCard(l10n),
-        const SizedBox(height: 12),
-        _buildDashboardUpcomingCard(l10n),
-        const SizedBox(height: 12),
-        _buildUserCollectionPolicyCard(l10n),
-        const SizedBox(height: 12),
-        _buildLaunchWallpaperCard(l10n),
-        const SizedBox(height: 12),
-        _buildAboutCard(l10n),
-        const SizedBox(height: 24),
-        _buildAppearanceSectionTitle(l10n),
-        const SizedBox(height: 8),
-        _buildThemeColorCard(l10n),
-        const SizedBox(height: 12),
-        _buildCustomColorCard(l10n),
-        const SizedBox(height: 24),
-        _buildAdvancedSectionTitle(l10n),
-        const SizedBox(height: 8),
-        _buildResetCard(l10n),
-        const SizedBox(height: 12),
-        _buildDataMigrationCard(l10n),
-        const SizedBox(height: 12),
-        _buildDeveloperCard(l10n),
-        const SizedBox(height: 24),
-        _buildLogoutButton(l10n),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.tabSettings),
-        actions: [
-          AnimatedBuilder(
-            animation: _viewModel,
-            builder: (context, _) => IconButton(
-              tooltip: l10n.saveLabel,
-              icon: const Icon(Icons.save),
-              onPressed: !_viewModel.uiState.isHydrated || _settingsBusy
-                  ? null
-                  : _submitSettings,
-            ),
-          ),
-        ],
-      ),
-      body: AnimatedBuilder(
-        animation: _viewModel,
-        builder: (context, _) {
-          if (!_viewModel.uiState.isHydrated) {
-            return _buildLoadingBody();
-          }
+    return AnimatedBuilder(
+      animation: _viewModel,
+      builder: (context, _) {
+        final Widget? homeBackButton = buildHomeShellBackButton(context);
+        final Widget body;
+        if (!_viewModel.uiState.isHydrated) {
+          body = _buildLoadingBody();
+        } else {
           _syncControllersFromViewModel();
-          return _buildLoadedBody(l10n);
-        },
-      ),
+          body = _buildLoadedBody(l10n);
+        }
+
+        return Scaffold(
+          appBar: AppBar(
+            leading: homeBackButton,
+            leadingWidth:
+                homeBackButton == null ? null : homeShellBackButtonLeadingWidth,
+            title: Text(l10n.tabSettings),
+            actions: [
+              IconButton(
+                tooltip: l10n.saveLabel,
+                icon: const Icon(Icons.save),
+                onPressed: !_viewModel.uiState.isHydrated || _settingsBusy
+                    ? null
+                    : _submitSettings,
+              ),
+            ],
+          ),
+          body: body,
+        );
+      },
     );
   }
 }

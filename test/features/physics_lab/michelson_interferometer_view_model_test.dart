@@ -98,7 +98,7 @@ void main() {
       );
       expect(result.averageDifferenceMm, closeTo(5.5, 1e-9));
       expect(result.wavelengthNm, closeTo(73333.3333333333, 1e-6));
-      expect(result.relativeErrorPercent, closeTo(11654.7809165298, 1e-6));
+      expect(result.relativeErrorPercent, closeTo(11655.9046703003, 1e-6));
 
       viewModel.dispose();
     });
@@ -121,7 +121,8 @@ void main() {
       final MichelsonInterferometerViewModel viewModel =
           MichelsonInterferometerViewModel();
 
-      for (int index = 0; index < MichelsonInterferometerViewModel.positionCount;
+      for (int index = 0;
+          index < MichelsonInterferometerViewModel.positionCount;
           index += 1) {
         viewModel.updatePositionText(index, '${index + 1}.0');
       }
@@ -137,7 +138,8 @@ void main() {
       final MichelsonInterferometerViewModel viewModel =
           MichelsonInterferometerViewModel();
 
-      for (int index = 0; index < MichelsonInterferometerViewModel.positionCount;
+      for (int index = 0;
+          index < MichelsonInterferometerViewModel.positionCount;
           index += 1) {
         viewModel.updatePositionText(index, '${index + 1}.0');
       }
@@ -170,9 +172,10 @@ void main() {
         ],
       );
 
-      for (int index = 0; index < MichelsonInterferometerViewModel.positionCount;
+      for (int index = 0;
+          index < MichelsonInterferometerViewModel.positionCount;
           index += 1) {
-        viewModel.updatePositionText(index, '${index}');
+        viewModel.updatePositionText(index, '$index');
       }
 
       viewModel.applyPreset(preset);

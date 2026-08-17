@@ -304,6 +304,10 @@
   "settingsAppearanceThemeColorLight": "Light",
   "settingsAppearanceThemeColorDark": "Dark",
   "settingsAppearanceCustomColorTitle": "Custom colors",
+  "settingsAppearanceHomeLayoutTitle": "Home layout",
+  "settingsAppearanceHomeLayoutBottomNavigation": "Bottom navigation",
+  "settingsAppearanceHomeLayoutFunctionGrid": "Function grid home",
+  "gridHomeBackToHome": "Back to home",
   "colorPickerTitle": "Color themes",
   "colorPickerUndo": "Undo",
   "colorPickerShare": "Share",
@@ -546,5 +550,27 @@
     "placeholders": {
       "url": {}
     }
-  }
+  },
+  "cetScoreTitle": "CET Scores",
+  "cetScoreSubtitle": "View your College English Test scores.",
+  "cetScoreToolSubtitle": "View CET-4 and CET-6 scores",
+  "cetScoreEmpty": "No CET score data is available.",
+  "cetScoreTicketNumberLabel": "Ticket No.",
+  "cetScoreStudentLabel": "Student",
+  "cetScoreSubjectLabel": "Written test",
+  "cetScoreOralScoreLabel": "Oral test",
+  "studentExamsTitle": "My Exams",
+  "studentExamsSubtitle": "View your current term's exam and course arrangements.",
+  "studentExamsToolSubtitle": "View exam times and rooms",
+  "studentExamsEmpty": "No exam arrangements are available.",
+  "studentExamsTermLabel": "Term",
+  "studentExamsCourseCodeLabel": "Course code",
+  "studentExamsTimeLabel": "Time",
+  "studentExamsRoomLabel": "Room",
+  "studentExamsRemarkLabel": "Remark",
+  "studentExamsFormalLabel": "Exam",
+  "studentExamsArrangementLabel": "Course arrangement",
+  "studentExamsLatestFetchFailedUsingCache": "Couldn’t fetch the latest exam arrangements. Showing cached data.",
+  "studentExamsLatestFetchFailed": "Couldn’t fetch the latest exam arrangements. Please try again later.",
+  "studentExamsUnavailable": "This feature is temporarily unavailable. Please wait for the service to be restored."
 }

@@ -91,27 +91,11 @@ class InMemoryColorPresetStorage implements ColorPresetStorage {
 
 /// 用户自定义预设仓库
 class ColorPresetRepository {
-  ColorPresetRepository._({
-    required ColorPresetStorage storage,
-  }) : _storage = storage;
-
-  static ColorPresetRepository? _instance;
+  ColorPresetRepository({
+    ColorPresetStorage? storage,
+  }) : _storage = storage ?? HiveColorPresetStorage();
 
   final ColorPresetStorage _storage;
-
-  static ColorPresetRepository getInstance() {
-    if (_instance != null) {
-      return _instance!;
-    }
-    _instance = ColorPresetRepository._(storage: HiveColorPresetStorage());
-    return _instance!;
-  }
-
-  static void resetForTesting({ColorPresetStorage? storage}) {
-    _instance = ColorPresetRepository._(
-      storage: storage ?? InMemoryColorPresetStorage(),
-    );
-  }
 
   Future<List<ThemePreferences>> getPresets() async {
     return _storage.read();

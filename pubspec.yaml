@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 2.4.5+17
+version: 2.5.0+18
 
 environment:
   sdk: ^3.6.2
@@ -55,7 +55,7 @@ dependencies:
   open_filex:
     git:
       url: "https://gitcode.com/openharmony-sig/fluttertpc_open_filex.git"
-      ref: "br_v4.5.0_ohos"
+      ref: "br_v4.7.0_ohos"
   file_picker_ohos:
     git:
       url: "https://gitcode.com/openharmony-sig/fluttertpc_file_picker.git"
@@ -77,10 +77,14 @@ dependencies:
   flutter_math_fork:
     git:
       url: "https://gitcode.com/openharmony-sig/flutter_math_fork.git"
-      ref: "br_v0.7.4_ohos"
+      ref: "br_v0.7.4_flutter3.35.7_ohos"
   # Keep the upstream constraint here; HarmonyOS builds are pinned below to an
   # OpenHarmony fork whose pubspec version still reports 9.1.0.
   device_info_plus: ^10.1.2
+  full_svg_flutter:
+    git:
+      url: https://github.com/oierxjn/full_svg_flutter_runtime.git
+      ref: fbdda67126a56c88f1197d2b0a8ad250d634c561
 
 
 dev_dependencies:
@@ -111,6 +115,10 @@ flutter:
     - assets/icon/logo.jpg
     - assets/media/
     - assets/pictures/1.jpg
+    - assets/icons/fluentemoji/
+    - assets/icons/function_grid/
+    - assets/icons/function_grid/input_latin_letters_3d.png
+    - assets/icons/function_grid/spiral_calendar_3d.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

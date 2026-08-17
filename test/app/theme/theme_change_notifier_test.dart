@@ -11,8 +11,7 @@ void main() {
 
   setUp(() {
     storage = InMemoryThemeStorage();
-    ThemeRepository.resetForTesting(storage: storage);
-    repo = ThemeRepository.getInstance();
+    repo = ThemeRepository(storage: storage);
     notifier = ThemeChangeNotifier(repository: repo);
   });
 
@@ -92,6 +91,16 @@ void main() {
       test('setThemeMode', () async {
         await notifier.setThemeMode(ThemeMode.dark);
         expect(notifier.themeMode, ThemeMode.dark);
+      });
+
+      test('setHomeLayout 通知并更新主页布局', () async {
+        int notifyCount = 0;
+        notifier.addListener(() => notifyCount++);
+
+        await notifier.setHomeLayout(HomeLayout.functionGrid);
+
+        expect(notifier.preferences.homeLayout, HomeLayout.functionGrid);
+        expect(notifyCount, 1);
       });
 
       test('setLightSeedColor', () async {

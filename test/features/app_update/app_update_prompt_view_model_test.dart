@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:onetj/features/app_update/models/event.dart';
 import 'package:onetj/features/app_update/view_models/app_update_prompt_view_model.dart';
-import 'package:onetj/models/event_model.dart';
+import 'package:onetj/app/presentation/ui_event.dart';
 import 'package:onetj/services/app_update_service.dart';
 
 void main() {

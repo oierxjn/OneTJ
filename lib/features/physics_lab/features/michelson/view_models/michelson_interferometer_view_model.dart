@@ -1,6 +1,6 @@
 import 'package:onetj/features/physics_lab/features/michelson/models/michelson_input_preset.dart';
 import 'package:onetj/features/physics_lab/features/michelson/models/michelson_measurement_result.dart';
-import 'package:onetj/models/base_model.dart';
+import 'package:onetj/app/presentation/base_view_model.dart';
 
 class MichelsonInterferometerViewModel extends BaseViewModel<Never> {
   static const int positionCount = MichelsonInputPreset.expectedValueCount;

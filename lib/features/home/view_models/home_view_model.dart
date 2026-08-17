@@ -1,10 +1,13 @@
 import 'dart:async';
 
-import 'package:onetj/models/base_model.dart';
+import 'package:onetj/app/di/dependencies.dart';
+import 'package:onetj/app/presentation/base_view_model.dart';
 import 'package:onetj/features/home/models/home_model.dart';
 import 'package:onetj/models/timetable_index.dart';
-import 'package:onetj/repo/student_info_repository.dart';
+import 'package:onetj/models/student_info_data.dart';
+import 'package:onetj/models/school_calendar_data.dart';
 import 'package:onetj/repo/school_calendar_repository.dart';
+import 'package:onetj/models/course_schedule_data.dart';
 import 'package:onetj/repo/course_schedule_repository.dart';
 import 'package:onetj/services/timetable_index_builder.dart';
 
@@ -48,7 +51,7 @@ class HomeViewModel extends BaseViewModel<Never> {
 
   Future<void> loadSchoolCalendar() async {
     final SchoolCalendarRepository repo =
-        SchoolCalendarRepository.getInstance();
+        appLocator<SchoolCalendarRepository>();
     try {
       await repo.warmUp();
       final SchoolCalendarData data = await repo.getOrFetch(
@@ -64,7 +67,7 @@ class HomeViewModel extends BaseViewModel<Never> {
   Future<void> loadCourseSchedule() async {
     try {
       final CourseScheduleRepository repo =
-          CourseScheduleRepository.getInstance();
+          appLocator<CourseScheduleRepository>();
       final CourseScheduleData data = await repo.getOrFetch(
         now: DateTime.now(),
         fetcher: _model.fetchCourseSchedule,

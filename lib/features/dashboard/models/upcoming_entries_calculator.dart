@@ -1,7 +1,7 @@
 import 'package:onetj/models/dashboard_upcoming_mode.dart';
 import 'package:onetj/models/time_period_range.dart';
 import 'package:onetj/models/timetable_index.dart';
-import 'dashboard_model.dart';
+import 'dashboard_upcoming_entry_data.dart';
 
 /// 储存查询即将到来的课程的参数
 ///

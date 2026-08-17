@@ -6,7 +6,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/models/app_update_info.dart';
+import 'package:onetj/models/app_update_state_data.dart';
 import 'package:onetj/repo/app_update_state_repository.dart';
+import 'package:onetj/services/app_update_api.dart';
 import 'package:onetj/services/app_update_service.dart';
 import 'package:path/path.dart' as p;
 import 'package:flutter/services.dart';
@@ -19,6 +21,7 @@ void main() {
   late Directory tempDir;
   late HttpServer server;
   late AppUpdateService service;
+  late AppUpdateStateRepository repository;
 
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('app_update_service_test_');
@@ -27,13 +30,17 @@ void main() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(pathProviderChannel,
             (MethodCall methodCall) async {
-      if (methodCall.method == 'getTemporaryDirectory') {
-        return tempDir.path;
+      switch (methodCall.method) {
+        case 'getTemporaryDirectory':
+        case 'getApplicationSupportDirectory':
+          return tempDir.path;
       }
       return null;
     });
+    repository = AppUpdateStateRepository();
     service = AppUpdateService(
-      repository: AppUpdateStateRepository.getInstance(),
+      api: AppUpdateApi(),
+      repository: repository,
     );
     server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
   });
@@ -68,14 +75,15 @@ void main() {
         minSupportedVersion: null,
       );
 
-      final File file = await service.downloadPackage(info);
+      final File file = await _runWithRealHttpClient(
+        () => service.downloadPackage(info),
+      );
 
       expect(await file.exists(), isTrue);
       expect(await file.readAsBytes(), payload);
       expect(p.basename(file.path), 'onetj_installer.exe');
 
-      final AppUpdateStateData state =
-          await AppUpdateStateRepository.getInstance().getState(
+      final AppUpdateStateData state = await repository.getState(
         refreshFromStorage: true,
       );
       expect(state.pendingFilePath, file.path);
@@ -99,7 +107,9 @@ void main() {
         minSupportedVersion: null,
       );
 
-      final File file = await service.downloadPackage(info);
+      final File file = await _runWithRealHttpClient(
+        () => service.downloadPackage(info),
+      );
 
       expect(await file.exists(), isTrue);
       expect(await file.readAsBytes(), payload);
@@ -121,13 +131,15 @@ void main() {
         minSupportedVersion: null,
       );
 
-      await expectLater(
-        service.downloadPackage(info),
-        throwsA(
-          isA<AppException>().having(
-            (AppException error) => error.code,
-            'code',
-            'UPDATE_PACKAGE_HASH_MISMATCH',
+      await _runWithRealHttpClient(
+        () => expectLater(
+          service.downloadPackage(info),
+          throwsA(
+            isA<AppException>().having(
+              (AppException error) => error.code,
+              'code',
+              'UPDATE_PACKAGE_HASH_MISMATCH',
+            ),
           ),
         ),
       );
@@ -142,6 +154,13 @@ String _buildUrl(HttpServer server, String path) {
   return 'http://${server.address.host}:${server.port}$path';
 }
 
+Future<T> _runWithRealHttpClient<T>(Future<T> Function() body) {
+  return HttpOverrides.runWithHttpOverrides(
+    body,
+    _RealHttpOverrides(),
+  );
+}
+
 void _servePayload(HttpServer server, List<int> payload) {
   server.listen((HttpRequest request) async {
     request.response.statusCode = HttpStatus.ok;
@@ -150,3 +169,5 @@ void _servePayload(HttpServer server, List<int> payload) {
     await request.response.close();
   });
 }
+
+class _RealHttpOverrides extends HttpOverrides {}
