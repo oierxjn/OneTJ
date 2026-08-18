@@ -1,8 +1,13 @@
 import 'package:onetj/features/physics_lab/features/michelson/models/michelson_input_preset.dart';
 import 'package:onetj/features/physics_lab/features/michelson/models/michelson_measurement_result.dart';
 import 'package:onetj/app/presentation/base_view_model.dart';
+import 'package:onetj/features/physics_lab/features/michelson/application/michelson_draft_service.dart';
+import 'package:onetj/features/physics_lab/features/michelson/models/michelson_draft.dart';
 
 class MichelsonInterferometerViewModel extends BaseViewModel<Never> {
+  MichelsonInterferometerViewModel({MichelsonDraftService? draftService})
+      : _draftService = draftService;
+
   static const int positionCount = MichelsonInputPreset.expectedValueCount;
   static const int differenceOffset = 5;
   static const double referenceValue = 623.8;
@@ -30,6 +35,8 @@ class MichelsonInterferometerViewModel extends BaseViewModel<Never> {
     growable: false,
   );
 
+  final MichelsonDraftService? _draftService;
+
   List<String> get positionTexts => List<String>.unmodifiable(_positionTexts);
 
   MichelsonMeasurementResult? get result => _buildResult();
@@ -44,6 +51,7 @@ class MichelsonInterferometerViewModel extends BaseViewModel<Never> {
       return;
     }
     _positionTexts[index] = value;
+    _persist();
     notifyListeners();
   }
 
@@ -61,6 +69,7 @@ class MichelsonInterferometerViewModel extends BaseViewModel<Never> {
       changed = true;
     }
     if (changed) {
+      _persist();
       notifyListeners();
     }
   }
@@ -75,8 +84,45 @@ class MichelsonInterferometerViewModel extends BaseViewModel<Never> {
       changed = true;
     }
     if (changed) {
+      _persist();
       notifyListeners();
     }
+  }
+
+  Future<void> load() async {
+    final MichelsonDraftService? service = _draftService;
+    if (service == null) {
+      return;
+    }
+    final MichelsonDraft? draft = await service.load();
+    if (draft == null) {
+      return;
+    }
+    final List<String> values = draft.positions;
+    if (values.length != _positionTexts.length) {
+      return;
+    }
+    bool changed = false;
+    for (int index = 0; index < _positionTexts.length; index += 1) {
+      if (_positionTexts[index] == values[index]) {
+        continue;
+      }
+      _positionTexts[index] = values[index];
+      changed = true;
+    }
+    if (changed) {
+      notifyListeners();
+    }
+  }
+
+  void _persist() {
+    final MichelsonDraftService? service = _draftService;
+    if (service == null) {
+      return;
+    }
+    service.save(
+      MichelsonDraft(positions: List<String>.of(_positionTexts)),
+    );
   }
 
   MichelsonMeasurementResult? _buildResult() {

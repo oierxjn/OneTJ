@@ -13,7 +13,9 @@ part 'widgets/diffraction_grating_form_widgets.dart';
 const String _degreeSymbol = '\u00B0';
 
 class DiffractionGratingView extends StatefulWidget {
-  const DiffractionGratingView({super.key});
+  const DiffractionGratingView({required this.viewModel, super.key});
+
+  final DiffractionGratingViewModel viewModel;
 
   @override
   State<DiffractionGratingView> createState() => _DiffractionGratingViewState();
@@ -29,7 +31,7 @@ class _DiffractionGratingViewState extends State<DiffractionGratingView> {
   @override
   void initState() {
     super.initState();
-    _viewModel = DiffractionGratingViewModel();
+    _viewModel = widget.viewModel;
     _calibrationReferenceController = TextEditingController(
       text: _viewModel.calibrationReferenceText,
     );
@@ -66,6 +68,11 @@ class _DiffractionGratingViewState extends State<DiffractionGratingView> {
       ),
       growable: false,
     );
+    _viewModel.load().then((_) {
+      if (mounted) {
+        _syncControllersFromViewModel();
+      }
+    });
   }
 
   @override
@@ -362,6 +369,40 @@ class _DiffractionGratingViewState extends State<DiffractionGratingView> {
       r'\psi_2',
       r"\psi_2^{\prime}",
     ];
+  }
+
+  void _syncControllersFromViewModel() {
+    _calibrationReferenceController.text =
+        _viewModel.calibrationReferenceText;
+    for (int rowIndex = 0;
+        rowIndex < DiffractionGratingViewModel.calibrationRowCount;
+        rowIndex += 1) {
+      for (int readingIndex = 0;
+          readingIndex < DiffractionGratingViewModel.readingCountPerRow;
+          readingIndex += 1) {
+        _calibrationControllers[rowIndex][readingIndex].setCombinedText(
+          _viewModel.calibrationTexts[rowIndex][readingIndex],
+        );
+      }
+    }
+    for (int groupIndex = 0;
+        groupIndex < DiffractionGratingViewModel.wavelengthGroupCount;
+        groupIndex += 1) {
+      _groupReferenceControllers[groupIndex].text =
+          _viewModel.referenceWavelengthTexts[groupIndex];
+      for (int rowIndex = 0;
+          rowIndex < DiffractionGratingViewModel.wavelengthRowCount;
+          rowIndex += 1) {
+        for (int readingIndex = 0;
+            readingIndex < DiffractionGratingViewModel.readingCountPerRow;
+            readingIndex += 1) {
+          _groupControllers[groupIndex][rowIndex][readingIndex]
+              .setCombinedText(
+            _viewModel.wavelengthTexts[groupIndex][rowIndex][readingIndex],
+          );
+        }
+      }
+    }
   }
 
   void _clearAllInputs() {
