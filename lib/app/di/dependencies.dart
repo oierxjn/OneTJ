@@ -5,6 +5,9 @@ import 'package:onetj/features/cet_score/application/cet_score_data_service.dart
 import 'package:onetj/features/student_exams/application/student_exam_data_service.dart';
 import 'package:onetj/features/cet_score/view_models/cet_score_view_model.dart';
 import 'package:onetj/features/student_exams/view_models/student_exam_view_model.dart';
+import 'package:onetj/features/physics_lab/features/michelson/application/michelson_draft_service.dart';
+import 'package:onetj/features/physics_lab/features/diffraction_grating/application/diffraction_grating_draft_service.dart';
+import 'package:onetj/features/physics_lab/features/franck_hertz/application/franck_hertz_draft_service.dart';
 import 'package:onetj/repo/app_update_state_repository.dart';
 import 'package:onetj/repo/cet_score_repository.dart';
 import 'package:onetj/repo/color_preset_repository.dart';
@@ -17,6 +20,7 @@ import 'package:onetj/repo/template_repository.dart';
 import 'package:onetj/repo/theme_repository.dart';
 import 'package:onetj/repo/token_repository.dart';
 import 'package:onetj/repo/undergraduate_score_repository.dart';
+import 'package:onetj/repo/physics_lab_draft_repository.dart';
 import 'package:onetj/services/app_update_api.dart';
 import 'package:onetj/services/app_update_service.dart';
 import 'package:onetj/services/auth_token_provider.dart';
@@ -53,6 +57,9 @@ void configureDependencies() {
   appLocator.registerLazySingleton<AppUpdateStateRepository>(
     AppUpdateStateRepository.new,
   );
+  appLocator.registerLazySingleton<PhysicsLabDraftRepository>(
+    PhysicsLabDraftRepository.new,
+  );
 
   // Services
   appLocator.registerLazySingleton<AuthTokenProvider>(
@@ -87,6 +94,21 @@ void configureDependencies() {
   appLocator.registerFactory<StudentExamViewModel>(
     () => StudentExamViewModel(
       dataSource: appLocator<StudentExamDataService>(),
+    ),
+  );
+  appLocator.registerLazySingleton<MichelsonDraftService>(
+    () => MichelsonDraftService(
+      repository: appLocator<PhysicsLabDraftRepository>(),
+    ),
+  );
+  appLocator.registerLazySingleton<DiffractionGratingDraftService>(
+    () => DiffractionGratingDraftService(
+      repository: appLocator<PhysicsLabDraftRepository>(),
+    ),
+  );
+  appLocator.registerLazySingleton<FranckHertzDraftService>(
+    () => FranckHertzDraftService(
+      repository: appLocator<PhysicsLabDraftRepository>(),
     ),
   );
 

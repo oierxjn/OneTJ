@@ -5,8 +5,13 @@ import 'package:onetj/features/physics_lab/features/diffraction_grating/models/d
 import 'package:onetj/features/physics_lab/features/diffraction_grating/models/diffraction_grating_measurement_result.dart';
 import 'package:onetj/features/physics_lab/features/diffraction_grating/models/diffraction_grating_wavelength_result.dart';
 import 'package:onetj/app/presentation/base_view_model.dart';
+import 'package:onetj/features/physics_lab/features/diffraction_grating/application/diffraction_grating_draft_service.dart';
+import 'package:onetj/features/physics_lab/features/diffraction_grating/models/diffraction_grating_draft.dart';
 
 class DiffractionGratingViewModel extends BaseViewModel<Never> {
+  DiffractionGratingViewModel({DiffractionGratingDraftService? draftService})
+      : _draftService = draftService;
+
   static const int readingCountPerRow = 4;
   static const int calibrationRowCount = 1;
   static const int wavelengthGroupCount = 2;
@@ -57,6 +62,8 @@ class DiffractionGratingViewModel extends BaseViewModel<Never> {
       defaultCalibrationReferenceWavelengthNm.toStringAsFixed(2);
   _DiffractionGratingDerivedState? _derivedState;
 
+  final DiffractionGratingDraftService? _draftService;
+
   List<List<String>> get calibrationTexts => _clone2d(_calibrationTexts);
   List<List<List<String>>> get wavelengthTexts => _clone3d(_wavelengthTexts);
   List<String> get referenceWavelengthTexts =>
@@ -80,6 +87,7 @@ class DiffractionGratingViewModel extends BaseViewModel<Never> {
       return;
     }
     _calibrationTexts[rowIndex][readingIndex] = value;
+    _persist();
     _invalidateDerivedState();
     notifyListeners();
   }
@@ -97,6 +105,7 @@ class DiffractionGratingViewModel extends BaseViewModel<Never> {
       return;
     }
     _wavelengthTexts[groupIndex][rowIndex][readingIndex] = value;
+    _persist();
     _invalidateDerivedState();
     notifyListeners();
   }
@@ -106,6 +115,7 @@ class DiffractionGratingViewModel extends BaseViewModel<Never> {
       return;
     }
     _calibrationReferenceText = value;
+    _persist();
     _invalidateDerivedState();
     notifyListeners();
   }
@@ -118,6 +128,7 @@ class DiffractionGratingViewModel extends BaseViewModel<Never> {
       return;
     }
     _referenceWavelengthTexts[groupIndex] = value;
+    _persist();
     _invalidateDerivedState();
     notifyListeners();
   }
@@ -147,6 +158,7 @@ class DiffractionGratingViewModel extends BaseViewModel<Never> {
     }
     _referenceWavelengthTexts[0] = '435.84';
     _referenceWavelengthTexts[1] = '585.94';
+    _persist();
     _invalidateDerivedState();
     notifyListeners();
   }
@@ -188,9 +200,103 @@ class DiffractionGratingViewModel extends BaseViewModel<Never> {
       }
     }
     if (changed) {
+      _persist();
       _invalidateDerivedState();
       notifyListeners();
     }
+  }
+
+  Future<void> load() async {
+    final DiffractionGratingDraftService? service = _draftService;
+    if (service == null) {
+      return;
+    }
+    final DiffractionGratingDraft? draft = await service.load();
+    if (draft == null) {
+      return;
+    }
+    if (!_hasValidCalibrationShape(draft.calibrationTexts) ||
+        !_hasValidWavelengthShape(draft.wavelengthTexts) ||
+        draft.referenceWavelengthTexts.length !=
+            _referenceWavelengthTexts.length) {
+      return;
+    }
+
+    _calibrationReferenceText = draft.calibrationReferenceText;
+    for (int rowIndex = 0;
+        rowIndex < _calibrationTexts.length;
+        rowIndex += 1) {
+      for (int readingIndex = 0;
+          readingIndex < readingCountPerRow;
+          readingIndex += 1) {
+        _calibrationTexts[rowIndex][readingIndex] =
+            draft.calibrationTexts[rowIndex][readingIndex];
+      }
+    }
+    for (int groupIndex = 0;
+        groupIndex < _wavelengthTexts.length;
+        groupIndex += 1) {
+      for (int rowIndex = 0; rowIndex < wavelengthRowCount; rowIndex += 1) {
+        for (int readingIndex = 0;
+            readingIndex < readingCountPerRow;
+            readingIndex += 1) {
+          _wavelengthTexts[groupIndex][rowIndex][readingIndex] =
+              draft.wavelengthTexts[groupIndex][rowIndex][readingIndex];
+        }
+      }
+    }
+    for (int groupIndex = 0;
+        groupIndex < _referenceWavelengthTexts.length;
+        groupIndex += 1) {
+      _referenceWavelengthTexts[groupIndex] =
+          draft.referenceWavelengthTexts[groupIndex];
+    }
+    _invalidateDerivedState();
+    notifyListeners();
+  }
+
+  void _persist() {
+    final DiffractionGratingDraftService? service = _draftService;
+    if (service == null) {
+      return;
+    }
+    service.save(
+      DiffractionGratingDraft(
+        calibrationTexts: _clone2d(_calibrationTexts),
+        wavelengthTexts: _clone3d(_wavelengthTexts),
+        referenceWavelengthTexts: List<String>.of(_referenceWavelengthTexts),
+        calibrationReferenceText: _calibrationReferenceText,
+      ),
+    );
+  }
+
+  bool _hasValidCalibrationShape(List<List<String>> values) {
+    if (values.length != _calibrationTexts.length) {
+      return false;
+    }
+    for (final List<String> row in values) {
+      if (row.length != readingCountPerRow) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  bool _hasValidWavelengthShape(List<List<List<String>>> values) {
+    if (values.length != _wavelengthTexts.length) {
+      return false;
+    }
+    for (final List<List<String>> group in values) {
+      if (group.length != wavelengthRowCount) {
+        return false;
+      }
+      for (final List<String> row in group) {
+        if (row.length != readingCountPerRow) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
   _DiffractionGratingDerivedState _getDerivedState() {

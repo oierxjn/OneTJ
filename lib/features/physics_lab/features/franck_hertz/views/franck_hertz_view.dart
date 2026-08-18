@@ -9,7 +9,9 @@ import 'package:onetj/features/physics_lab/widgets/physics_lab_formula.dart';
 part 'widgets/franck_hertz_form_widgets.dart';
 
 class FranckHertzView extends StatefulWidget {
-  const FranckHertzView({super.key});
+  const FranckHertzView({required this.viewModel, super.key});
+
+  final FranckHertzViewModel viewModel;
 
   @override
   State<FranckHertzView> createState() => _FranckHertzViewState();
@@ -27,7 +29,7 @@ class _FranckHertzViewState extends State<FranckHertzView> {
   @override
   void initState() {
     super.initState();
-    _viewModel = FranckHertzViewModel();
+    _viewModel = widget.viewModel;
     _vfController = TextEditingController();
     _vg1kController = TextEditingController();
     _vg2aController = TextEditingController();
@@ -37,6 +39,7 @@ class _FranckHertzViewState extends State<FranckHertzView> {
     _vg2kControllers = <TextEditingController>[];
     _ipControllers = <TextEditingController>[];
     _syncRowControllers();
+    _viewModel.load();
   }
 
   @override
