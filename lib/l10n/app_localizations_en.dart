@@ -286,6 +286,77 @@ class AppLocalizationsEn extends AppLocalizations {
   String get physicsLabFranckHertzCurrentUnit => 'μA';
 
   @override
+  String get physicsLabBohrTwistPendulumTitle => 'Bohr Twist Pendulum';
+
+  @override
+  String get physicsLabBohrTwistPendulumSubtitle =>
+      'Damping coefficient of forced vibration';
+
+  @override
+  String get physicsLabBohrTwistPendulumFormulaTitle => 'Formula';
+
+  @override
+  String get physicsLabBohrTwistPendulumDescription =>
+      'Fill in the free-vibration period (or the period table) and the damped-vibration amplitude table. The page computes the damping coefficient β using both the logarithmic successive-difference method and the graphical method. The period and the period table are alternatives; the period table takes priority when present.';
+
+  @override
+  String get physicsLabBohrTwistPendulumFormulaBody =>
+      'First, average the third column of the period table to obtain the period T, falling back to the single period field when the table is empty. Each amplitude table row has three columns (index, θₙ, θₙ₊₅). The logarithmic method averages β = (ln θₙ − ln θₙ₊₅)/(5T); the graphical method fits (n, ln θₙ) and (n+5, ln θₙ₊₅) by least squares, takes the slope k, and computes β = −k/T.';
+
+  @override
+  String get physicsLabBohrTwistPendulumFreeVibrationTitle => 'Free Vibration';
+
+  @override
+  String get physicsLabBohrTwistPendulumPeriodLabel => 'Period';
+
+  @override
+  String get physicsLabBohrTwistPendulumPeriodUnit => 's';
+
+  @override
+  String get physicsLabBohrTwistPendulumPeriodTableLabel => 'Period Table';
+
+  @override
+  String get physicsLabBohrTwistPendulumPeriodTableHint =>
+      'Three columns per row: index, amplitude, period; separated by spaces or newlines.';
+
+  @override
+  String get physicsLabBohrTwistPendulumDampedVibrationTitle =>
+      'Damped Vibration';
+
+  @override
+  String get physicsLabBohrTwistPendulumAmplitudeTableLabel =>
+      'Amplitude Table';
+
+  @override
+  String get physicsLabBohrTwistPendulumAmplitudeTableHint =>
+      'Three columns per row: index, θₙ, θₙ₊₅; separated by spaces or newlines.';
+
+  @override
+  String get physicsLabBohrTwistPendulumResultTitle => 'Results';
+
+  @override
+  String get physicsLabBohrTwistPendulumLogMethodLabel => 'Logarithmic Method';
+
+  @override
+  String get physicsLabBohrTwistPendulumGraphMethodLabel => 'Graphical Method';
+
+  @override
+  String get physicsLabBohrTwistPendulumAveragePeriodLabel => 'Average Period';
+
+  @override
+  String get physicsLabBohrTwistPendulumDampingUnit => 's⁻¹';
+
+  @override
+  String get physicsLabBohrTwistPendulumIncompleteHint =>
+      'Fill in a valid period (or period table) and amplitude table first.';
+
+  @override
+  String get physicsLabBohrTwistPendulumPresetFillLabel => 'Fill Preset Values';
+
+  @override
+  String get physicsLabBohrTwistPendulumClearAllLabel => 'Clear';
+
+  @override
   String get physicsLabDiffractionGratingDescription =>
       'The first section derives the grating constant d from a known spectral line. The second and third sections reuse that d to calculate the target wavelengths. Each record accepts four raw angle readings and automatically computes two angle differences, γ, sinγ, and the final result.';
 

@@ -608,6 +608,132 @@ abstract class AppLocalizations {
   /// **'μA'**
   String get physicsLabFranckHertzCurrentUnit;
 
+  /// No description provided for @physicsLabBohrTwistPendulumTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Bohr Twist Pendulum'**
+  String get physicsLabBohrTwistPendulumTitle;
+
+  /// No description provided for @physicsLabBohrTwistPendulumSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Damping coefficient of forced vibration'**
+  String get physicsLabBohrTwistPendulumSubtitle;
+
+  /// No description provided for @physicsLabBohrTwistPendulumFormulaTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Formula'**
+  String get physicsLabBohrTwistPendulumFormulaTitle;
+
+  /// No description provided for @physicsLabBohrTwistPendulumDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill in the free-vibration period (or the period table) and the damped-vibration amplitude table. The page computes the damping coefficient β using both the logarithmic successive-difference method and the graphical method. The period and the period table are alternatives; the period table takes priority when present.'**
+  String get physicsLabBohrTwistPendulumDescription;
+
+  /// No description provided for @physicsLabBohrTwistPendulumFormulaBody.
+  ///
+  /// In en, this message translates to:
+  /// **'First, average the third column of the period table to obtain the period T, falling back to the single period field when the table is empty. Each amplitude table row has three columns (index, θₙ, θₙ₊₅). The logarithmic method averages β = (ln θₙ − ln θₙ₊₅)/(5T); the graphical method fits (n, ln θₙ) and (n+5, ln θₙ₊₅) by least squares, takes the slope k, and computes β = −k/T.'**
+  String get physicsLabBohrTwistPendulumFormulaBody;
+
+  /// No description provided for @physicsLabBohrTwistPendulumFreeVibrationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Free Vibration'**
+  String get physicsLabBohrTwistPendulumFreeVibrationTitle;
+
+  /// No description provided for @physicsLabBohrTwistPendulumPeriodLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Period'**
+  String get physicsLabBohrTwistPendulumPeriodLabel;
+
+  /// No description provided for @physicsLabBohrTwistPendulumPeriodUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'s'**
+  String get physicsLabBohrTwistPendulumPeriodUnit;
+
+  /// No description provided for @physicsLabBohrTwistPendulumPeriodTableLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Period Table'**
+  String get physicsLabBohrTwistPendulumPeriodTableLabel;
+
+  /// No description provided for @physicsLabBohrTwistPendulumPeriodTableHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Three columns per row: index, amplitude, period; separated by spaces or newlines.'**
+  String get physicsLabBohrTwistPendulumPeriodTableHint;
+
+  /// No description provided for @physicsLabBohrTwistPendulumDampedVibrationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Damped Vibration'**
+  String get physicsLabBohrTwistPendulumDampedVibrationTitle;
+
+  /// No description provided for @physicsLabBohrTwistPendulumAmplitudeTableLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Amplitude Table'**
+  String get physicsLabBohrTwistPendulumAmplitudeTableLabel;
+
+  /// No description provided for @physicsLabBohrTwistPendulumAmplitudeTableHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Three columns per row: index, θₙ, θₙ₊₅; separated by spaces or newlines.'**
+  String get physicsLabBohrTwistPendulumAmplitudeTableHint;
+
+  /// No description provided for @physicsLabBohrTwistPendulumResultTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Results'**
+  String get physicsLabBohrTwistPendulumResultTitle;
+
+  /// No description provided for @physicsLabBohrTwistPendulumLogMethodLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Logarithmic Method'**
+  String get physicsLabBohrTwistPendulumLogMethodLabel;
+
+  /// No description provided for @physicsLabBohrTwistPendulumGraphMethodLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Graphical Method'**
+  String get physicsLabBohrTwistPendulumGraphMethodLabel;
+
+  /// No description provided for @physicsLabBohrTwistPendulumAveragePeriodLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Average Period'**
+  String get physicsLabBohrTwistPendulumAveragePeriodLabel;
+
+  /// No description provided for @physicsLabBohrTwistPendulumDampingUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'s⁻¹'**
+  String get physicsLabBohrTwistPendulumDampingUnit;
+
+  /// No description provided for @physicsLabBohrTwistPendulumIncompleteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill in a valid period (or period table) and amplitude table first.'**
+  String get physicsLabBohrTwistPendulumIncompleteHint;
+
+  /// No description provided for @physicsLabBohrTwistPendulumPresetFillLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill Preset Values'**
+  String get physicsLabBohrTwistPendulumPresetFillLabel;
+
+  /// No description provided for @physicsLabBohrTwistPendulumClearAllLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get physicsLabBohrTwistPendulumClearAllLabel;
+
   /// No description provided for @physicsLabDiffractionGratingDescription.
   ///
   /// In en, this message translates to:

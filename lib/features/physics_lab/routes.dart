@@ -12,6 +12,9 @@ import 'package:onetj/features/physics_lab/features/michelson/views/michelson_in
 import 'package:onetj/features/physics_lab/features/michelson/application/michelson_draft_service.dart';
 import 'package:onetj/features/physics_lab/features/diffraction_grating/application/diffraction_grating_draft_service.dart';
 import 'package:onetj/features/physics_lab/features/franck_hertz/application/franck_hertz_draft_service.dart';
+import 'package:onetj/features/physics_lab/features/bohr_twist_pendulum/view_models/bohr_twist_pendulum_view_model.dart';
+import 'package:onetj/features/physics_lab/features/bohr_twist_pendulum/views/bohr_twist_pendulum_view.dart';
+import 'package:onetj/features/physics_lab/features/bohr_twist_pendulum/application/bohr_twist_pendulum_draft_service.dart';
 import 'package:onetj/features/physics_lab/views/physics_lab_view.dart';
 
 /// 物理实验及其子实验的 Shell 外详情页面。
@@ -45,6 +48,15 @@ final List<GoRoute> physicsLabDetailRoutes = [
         builder: (context, state) => FranckHertzView(
           viewModel: FranckHertzViewModel(
             draftService: appLocator<FranckHertzDraftService>(),
+          ),
+        ),
+      ),
+      GoRoute(
+        path: 'bohr-twist-pendulum',
+        name: 'physics-lab-bohr-twist-pendulum',
+        builder: (context, state) => BohrTwistPendulumView(
+          viewModel: BohrTwistPendulumViewModel(
+            draftService: appLocator<BohrTwistPendulumDraftService>(),
           ),
         ),
       ),

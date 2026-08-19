@@ -8,6 +8,7 @@ import 'package:onetj/features/student_exams/view_models/student_exam_view_model
 import 'package:onetj/features/physics_lab/features/michelson/application/michelson_draft_service.dart';
 import 'package:onetj/features/physics_lab/features/diffraction_grating/application/diffraction_grating_draft_service.dart';
 import 'package:onetj/features/physics_lab/features/franck_hertz/application/franck_hertz_draft_service.dart';
+import 'package:onetj/features/physics_lab/features/bohr_twist_pendulum/application/bohr_twist_pendulum_draft_service.dart';
 import 'package:onetj/repo/app_update_state_repository.dart';
 import 'package:onetj/repo/cet_score_repository.dart';
 import 'package:onetj/repo/color_preset_repository.dart';
@@ -108,6 +109,11 @@ void configureDependencies() {
   );
   appLocator.registerLazySingleton<FranckHertzDraftService>(
     () => FranckHertzDraftService(
+      repository: appLocator<PhysicsLabDraftRepository>(),
+    ),
+  );
+  appLocator.registerLazySingleton<BohrTwistPendulumDraftService>(
+    () => BohrTwistPendulumDraftService(
       repository: appLocator<PhysicsLabDraftRepository>(),
     ),
   );
