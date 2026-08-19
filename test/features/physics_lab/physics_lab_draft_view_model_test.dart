@@ -3,6 +3,8 @@ import 'package:onetj/features/physics_lab/features/diffraction_grating/applicat
 import 'package:onetj/features/physics_lab/features/diffraction_grating/view_models/diffraction_grating_view_model.dart';
 import 'package:onetj/features/physics_lab/features/franck_hertz/application/franck_hertz_draft_service.dart';
 import 'package:onetj/features/physics_lab/features/franck_hertz/view_models/franck_hertz_view_model.dart';
+import 'package:onetj/features/physics_lab/features/bohr_twist_pendulum/application/bohr_twist_pendulum_draft_service.dart';
+import 'package:onetj/features/physics_lab/features/bohr_twist_pendulum/view_models/bohr_twist_pendulum_view_model.dart';
 import 'package:onetj/features/physics_lab/features/michelson/application/michelson_draft_service.dart';
 import 'package:onetj/features/physics_lab/features/michelson/view_models/michelson_interferometer_view_model.dart';
 import 'package:onetj/repo/physics_lab_draft_repository.dart';
@@ -12,6 +14,7 @@ void main() {
   late MichelsonDraftService michelsonService;
   late DiffractionGratingDraftService diffractionService;
   late FranckHertzDraftService franckHertzService;
+  late BohrTwistPendulumDraftService bohrTwistPendulumService;
 
   setUp(() {
     storage = InMemoryPhysicsLabDraftStorage();
@@ -20,6 +23,8 @@ void main() {
     michelsonService = MichelsonDraftService(repository: repository);
     diffractionService = DiffractionGratingDraftService(repository: repository);
     franckHertzService = FranckHertzDraftService(repository: repository);
+    bohrTwistPendulumService =
+        BohrTwistPendulumDraftService(repository: repository);
   });
 
   test('MichelsonInterferometerViewModel persists and restores its draft',
@@ -42,8 +47,7 @@ void main() {
     second.dispose();
   });
 
-  test('DiffractionGratingViewModel persists and restores its draft',
-      () async {
+  test('DiffractionGratingViewModel persists and restores its draft', () async {
     final DiffractionGratingViewModel first =
         DiffractionGratingViewModel(draftService: diffractionService);
     first.updateCalibrationReferenceText('546.07');
@@ -80,6 +84,28 @@ void main() {
     expect(second.rows, hasLength(FranckHertzViewModel.defaultRowCount + 1));
     expect(second.rows[0].vg2kText, '12.0');
     expect(second.rows[0].ipText, '0.32');
+
+    first.dispose();
+    second.dispose();
+  });
+
+  test('BohrTwistPendulumViewModel persists and restores its draft', () async {
+    final BohrTwistPendulumViewModel first = BohrTwistPendulumViewModel(
+      draftService: bohrTwistPendulumService,
+    );
+    first.updatePeriodText('1.6');
+    first.updatePeriodTableText('1 100 1.5');
+    first.updateAmplitudeTableText('1 100 50');
+    await pumpEventQueue();
+
+    final BohrTwistPendulumViewModel second = BohrTwistPendulumViewModel(
+      draftService: bohrTwistPendulumService,
+    );
+    await second.load();
+
+    expect(second.periodText, '1.6');
+    expect(second.periodTableText, '1 100 1.5');
+    expect(second.amplitudeTableText, '1 100 50');
 
     first.dispose();
     second.dispose();
