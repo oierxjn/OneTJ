@@ -1,3 +1,4 @@
+import 'package:onetj/features/physics_lab/draft_save_coordinator.dart';
 import 'package:onetj/features/physics_lab/features/michelson/models/michelson_input_preset.dart';
 import 'package:onetj/features/physics_lab/features/michelson/models/michelson_measurement_result.dart';
 import 'package:onetj/app/presentation/base_view_model.dart';
@@ -6,7 +7,9 @@ import 'package:onetj/features/physics_lab/features/michelson/models/michelson_d
 
 class MichelsonInterferometerViewModel extends BaseViewModel<Never> {
   MichelsonInterferometerViewModel({MichelsonDraftService? draftService})
-      : _draftService = draftService;
+      : _draftService = draftService {
+    _saveCoordinator = DraftSaveCoordinator(_persistNow);
+  }
 
   static const int positionCount = MichelsonInputPreset.expectedValueCount;
   static const int differenceOffset = 5;
@@ -36,6 +39,7 @@ class MichelsonInterferometerViewModel extends BaseViewModel<Never> {
   );
 
   final MichelsonDraftService? _draftService;
+  late final DraftSaveCoordinator _saveCoordinator;
 
   List<String> get positionTexts => List<String>.unmodifiable(_positionTexts);
 
@@ -51,7 +55,7 @@ class MichelsonInterferometerViewModel extends BaseViewModel<Never> {
       return;
     }
     _positionTexts[index] = value;
-    _persist();
+    _saveCoordinator.markEdited();
     notifyListeners();
   }
 
@@ -69,7 +73,7 @@ class MichelsonInterferometerViewModel extends BaseViewModel<Never> {
       changed = true;
     }
     if (changed) {
-      _persist();
+      _saveCoordinator.markEdited();
       notifyListeners();
     }
   }
@@ -84,7 +88,7 @@ class MichelsonInterferometerViewModel extends BaseViewModel<Never> {
       changed = true;
     }
     if (changed) {
-      _persist();
+      _saveCoordinator.markEdited();
       notifyListeners();
     }
   }
@@ -94,8 +98,12 @@ class MichelsonInterferometerViewModel extends BaseViewModel<Never> {
     if (service == null) {
       return;
     }
+    final int versionAtStart = _saveCoordinator.editVersion;
     final MichelsonDraft? draft = await service.load();
     if (draft == null) {
+      return;
+    }
+    if (_saveCoordinator.editVersion != versionAtStart) {
       return;
     }
     final List<String> values = draft.positions;
@@ -115,12 +123,12 @@ class MichelsonInterferometerViewModel extends BaseViewModel<Never> {
     }
   }
 
-  void _persist() {
+  Future<void> _persistNow() {
     final MichelsonDraftService? service = _draftService;
     if (service == null) {
-      return;
+      return Future<void>.value();
     }
-    service.save(
+    return service.save(
       MichelsonDraft(positions: List<String>.of(_positionTexts)),
     );
   }

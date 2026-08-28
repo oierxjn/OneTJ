@@ -1,3 +1,4 @@
+import 'package:onetj/features/physics_lab/draft_save_coordinator.dart';
 import 'package:onetj/features/physics_lab/features/franck_hertz/models/franck_hertz_analysis_result.dart';
 import 'package:onetj/features/physics_lab/features/franck_hertz/models/franck_hertz_measurement_row.dart';
 import 'package:onetj/features/physics_lab/features/franck_hertz/models/franck_hertz_metadata.dart';
@@ -7,7 +8,9 @@ import 'package:onetj/features/physics_lab/features/franck_hertz/models/franck_h
 
 class FranckHertzViewModel extends BaseViewModel<Never> {
   FranckHertzViewModel({FranckHertzDraftService? draftService})
-      : _draftService = draftService;
+      : _draftService = draftService {
+    _saveCoordinator = DraftSaveCoordinator(_persistNow);
+  }
 
   static const int defaultRowCount = 50;
   static const String defaultReferenceVoltageText = '11.61';
@@ -194,6 +197,7 @@ class FranckHertzViewModel extends BaseViewModel<Never> {
   );
 
   final FranckHertzDraftService? _draftService;
+  late final DraftSaveCoordinator _saveCoordinator;
 
   FranckHertzMetadata get metadata => FranckHertzMetadata(
         vfText: _vfText,
@@ -218,7 +222,7 @@ class FranckHertzViewModel extends BaseViewModel<Never> {
       return;
     }
     _vfText = value;
-    _persist();
+    _saveCoordinator.markEdited();
     notifyListeners();
   }
 
@@ -227,7 +231,7 @@ class FranckHertzViewModel extends BaseViewModel<Never> {
       return;
     }
     _vg1kText = value;
-    _persist();
+    _saveCoordinator.markEdited();
     notifyListeners();
   }
 
@@ -236,7 +240,7 @@ class FranckHertzViewModel extends BaseViewModel<Never> {
       return;
     }
     _vg2aText = value;
-    _persist();
+    _saveCoordinator.markEdited();
     notifyListeners();
   }
 
@@ -245,7 +249,7 @@ class FranckHertzViewModel extends BaseViewModel<Never> {
       return;
     }
     _referenceVoltageText = value;
-    _persist();
+    _saveCoordinator.markEdited();
     notifyListeners();
   }
 
@@ -258,7 +262,7 @@ class FranckHertzViewModel extends BaseViewModel<Never> {
       return;
     }
     _rows[rowIndex] = row.copyWith(vg2kText: value);
-    _persist();
+    _saveCoordinator.markEdited();
     notifyListeners();
   }
 
@@ -271,7 +275,7 @@ class FranckHertzViewModel extends BaseViewModel<Never> {
       return;
     }
     _rows[rowIndex] = row.copyWith(ipText: value);
-    _persist();
+    _saveCoordinator.markEdited();
     notifyListeners();
   }
 
@@ -283,7 +287,7 @@ class FranckHertzViewModel extends BaseViewModel<Never> {
         ipText: '',
       ),
     );
-    _persist();
+    _saveCoordinator.markEdited();
     notifyListeners();
   }
 
@@ -296,7 +300,7 @@ class FranckHertzViewModel extends BaseViewModel<Never> {
       final FranckHertzMeasurementRow row = _rows[index];
       _rows[index] = row.copyWith(index: index + 1);
     }
-    _persist();
+    _saveCoordinator.markEdited();
     notifyListeners();
   }
 
@@ -325,7 +329,7 @@ class FranckHertzViewModel extends BaseViewModel<Never> {
         ipText: '',
       );
     }
-    _persist();
+    _saveCoordinator.markEdited();
     notifyListeners();
   }
 
@@ -380,7 +384,7 @@ class FranckHertzViewModel extends BaseViewModel<Never> {
       }
     }
     if (changed) {
-      _persist();
+      _saveCoordinator.markEdited();
       notifyListeners();
     }
   }
@@ -390,8 +394,12 @@ class FranckHertzViewModel extends BaseViewModel<Never> {
     if (service == null) {
       return;
     }
+    final int versionAtStart = _saveCoordinator.editVersion;
     final FranckHertzDraft? draft = await service.load();
     if (draft == null) {
+      return;
+    }
+    if (_saveCoordinator.editVersion != versionAtStart) {
       return;
     }
     _vfText = draft.vfText;
@@ -412,12 +420,12 @@ class FranckHertzViewModel extends BaseViewModel<Never> {
     notifyListeners();
   }
 
-  void _persist() {
+  Future<void> _persistNow() {
     final FranckHertzDraftService? service = _draftService;
     if (service == null) {
-      return;
+      return Future<void>.value();
     }
-    service.save(
+    return service.save(
       FranckHertzDraft(
         vfText: _vfText,
         vg1kText: _vg1kText,
