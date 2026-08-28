@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:onetj/features/physics_lab/draft_save_coordinator.dart';
 import 'package:onetj/features/physics_lab/features/diffraction_grating/models/diffraction_grating_angle.dart';
 import 'package:onetj/features/physics_lab/features/diffraction_grating/models/diffraction_grating_calibration_result.dart';
 import 'package:onetj/features/physics_lab/features/diffraction_grating/models/diffraction_grating_measurement_result.dart';
@@ -10,7 +11,9 @@ import 'package:onetj/features/physics_lab/features/diffraction_grating/models/d
 
 class DiffractionGratingViewModel extends BaseViewModel<Never> {
   DiffractionGratingViewModel({DiffractionGratingDraftService? draftService})
-      : _draftService = draftService;
+      : _draftService = draftService {
+    _saveCoordinator = DraftSaveCoordinator(_persistNow);
+  }
 
   static const int readingCountPerRow = 4;
   static const int calibrationRowCount = 1;
@@ -63,6 +66,7 @@ class DiffractionGratingViewModel extends BaseViewModel<Never> {
   _DiffractionGratingDerivedState? _derivedState;
 
   final DiffractionGratingDraftService? _draftService;
+  late final DraftSaveCoordinator _saveCoordinator;
 
   List<List<String>> get calibrationTexts => _clone2d(_calibrationTexts);
   List<List<List<String>>> get wavelengthTexts => _clone3d(_wavelengthTexts);
@@ -87,7 +91,7 @@ class DiffractionGratingViewModel extends BaseViewModel<Never> {
       return;
     }
     _calibrationTexts[rowIndex][readingIndex] = value;
-    _persist();
+    _saveCoordinator.markEdited();
     _invalidateDerivedState();
     notifyListeners();
   }
@@ -105,7 +109,7 @@ class DiffractionGratingViewModel extends BaseViewModel<Never> {
       return;
     }
     _wavelengthTexts[groupIndex][rowIndex][readingIndex] = value;
-    _persist();
+    _saveCoordinator.markEdited();
     _invalidateDerivedState();
     notifyListeners();
   }
@@ -115,7 +119,7 @@ class DiffractionGratingViewModel extends BaseViewModel<Never> {
       return;
     }
     _calibrationReferenceText = value;
-    _persist();
+    _saveCoordinator.markEdited();
     _invalidateDerivedState();
     notifyListeners();
   }
@@ -128,7 +132,7 @@ class DiffractionGratingViewModel extends BaseViewModel<Never> {
       return;
     }
     _referenceWavelengthTexts[groupIndex] = value;
-    _persist();
+    _saveCoordinator.markEdited();
     _invalidateDerivedState();
     notifyListeners();
   }
@@ -158,7 +162,7 @@ class DiffractionGratingViewModel extends BaseViewModel<Never> {
     }
     _referenceWavelengthTexts[0] = '435.84';
     _referenceWavelengthTexts[1] = '585.94';
-    _persist();
+    _saveCoordinator.markEdited();
     _invalidateDerivedState();
     notifyListeners();
   }
@@ -200,7 +204,7 @@ class DiffractionGratingViewModel extends BaseViewModel<Never> {
       }
     }
     if (changed) {
-      _persist();
+      _saveCoordinator.markEdited();
       _invalidateDerivedState();
       notifyListeners();
     }
@@ -211,8 +215,12 @@ class DiffractionGratingViewModel extends BaseViewModel<Never> {
     if (service == null) {
       return;
     }
+    final int versionAtStart = _saveCoordinator.editVersion;
     final DiffractionGratingDraft? draft = await service.load();
     if (draft == null) {
+      return;
+    }
+    if (_saveCoordinator.editVersion != versionAtStart) {
       return;
     }
     if (!_hasValidCalibrationShape(draft.calibrationTexts) ||
@@ -255,12 +263,12 @@ class DiffractionGratingViewModel extends BaseViewModel<Never> {
     notifyListeners();
   }
 
-  void _persist() {
+  Future<void> _persistNow() {
     final DiffractionGratingDraftService? service = _draftService;
     if (service == null) {
-      return;
+      return Future<void>.value();
     }
-    service.save(
+    return service.save(
       DiffractionGratingDraft(
         calibrationTexts: _clone2d(_calibrationTexts),
         wavelengthTexts: _clone3d(_wavelengthTexts),

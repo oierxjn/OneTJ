@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:onetj/features/physics_lab/draft_save_coordinator.dart';
 import 'package:onetj/app/presentation/base_view_model.dart';
 import 'package:onetj/features/physics_lab/features/bohr_twist_pendulum/application/bohr_twist_pendulum_draft_service.dart';
 import 'package:onetj/features/physics_lab/features/bohr_twist_pendulum/models/bohr_twist_pendulum_draft.dart';
@@ -12,7 +13,9 @@ import 'package:onetj/features/physics_lab/features/bohr_twist_pendulum/models/b
 /// 对数逐差法与作图法分别求阻尼系数 β。
 class BohrTwistPendulumViewModel extends BaseViewModel<Never> {
   BohrTwistPendulumViewModel({BohrTwistPendulumDraftService? draftService})
-      : _draftService = draftService;
+      : _draftService = draftService {
+    _saveCoordinator = DraftSaveCoordinator(_persistNow);
+  }
 
   /// 对数逐差法中相邻振幅的间隔数（θₙ 与 θₙ₊₅）。
   static const int numberOfIntervals = 5;
@@ -31,6 +34,7 @@ class BohrTwistPendulumViewModel extends BaseViewModel<Never> {
   String _amplitudeTableText = defaultAmplitudeTableText;
 
   final BohrTwistPendulumDraftService? _draftService;
+  late final DraftSaveCoordinator _saveCoordinator;
 
   String get periodText => _periodText;
   String get periodTableText => _periodTableText;
@@ -48,7 +52,7 @@ class BohrTwistPendulumViewModel extends BaseViewModel<Never> {
       return;
     }
     _periodText = value;
-    _persist();
+    _saveCoordinator.markEdited();
     notifyListeners();
   }
 
@@ -57,7 +61,7 @@ class BohrTwistPendulumViewModel extends BaseViewModel<Never> {
       return;
     }
     _periodTableText = value;
-    _persist();
+    _saveCoordinator.markEdited();
     notifyListeners();
   }
 
@@ -66,7 +70,7 @@ class BohrTwistPendulumViewModel extends BaseViewModel<Never> {
       return;
     }
     _amplitudeTableText = value;
-    _persist();
+    _saveCoordinator.markEdited();
     notifyListeners();
   }
 
@@ -85,7 +89,7 @@ class BohrTwistPendulumViewModel extends BaseViewModel<Never> {
       changed = true;
     }
     if (changed) {
-      _persist();
+      _saveCoordinator.markEdited();
       notifyListeners();
     }
   }
@@ -105,7 +109,7 @@ class BohrTwistPendulumViewModel extends BaseViewModel<Never> {
       changed = true;
     }
     if (changed) {
-      _persist();
+      _saveCoordinator.markEdited();
       notifyListeners();
     }
   }
@@ -115,8 +119,12 @@ class BohrTwistPendulumViewModel extends BaseViewModel<Never> {
     if (service == null) {
       return;
     }
+    final int versionAtStart = _saveCoordinator.editVersion;
     final BohrTwistPendulumDraft? draft = await service.load();
     if (draft == null) {
+      return;
+    }
+    if (_saveCoordinator.editVersion != versionAtStart) {
       return;
     }
     _periodText = draft.periodText;
@@ -125,12 +133,12 @@ class BohrTwistPendulumViewModel extends BaseViewModel<Never> {
     notifyListeners();
   }
 
-  void _persist() {
+  Future<void> _persistNow() {
     final BohrTwistPendulumDraftService? service = _draftService;
     if (service == null) {
-      return;
+      return Future<void>.value();
     }
-    service.save(
+    return service.save(
       BohrTwistPendulumDraft(
         periodText: _periodText,
         periodTableText: _periodTableText,
