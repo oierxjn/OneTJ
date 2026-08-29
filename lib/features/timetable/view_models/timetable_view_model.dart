@@ -70,6 +70,11 @@ class TimetableViewModel extends BaseViewModel<UiEvent> {
     await _loadLastFetchedAt();
     _isLoading = false;
     notifyListeners();
+    // 课表加载完成后（此时页面已由 loading 态切换到内容态）再同步滚轮，
+    // 避免滚轮尚未挂载到 FixedExtentScrollController 时触发同步导致失败。
+    if (_index != null && _index!.allEntries.isNotEmpty) {
+      emit(const SyncWheelEvent());
+    }
   }
 
   void setMode(TimetableDisplayMode mode) {
@@ -220,7 +225,6 @@ class TimetableViewModel extends BaseViewModel<UiEvent> {
     try {
       _index = await _dataService.getTimetableIndex();
       _syncSelectedWeek();
-      emit(const SyncWheelEvent());
     } catch (error) {
       emit(
         ShowSnackBarEvent(message: _formatErrorMessage(error)),
