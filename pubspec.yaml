@@ -56,6 +56,7 @@ dependencies:
     git:
       url: "https://gitcode.com/openharmony-sig/fluttertpc_open_filex.git"
       ref: "br_v4.7.0_ohos"
+  file_picker: ^11.0.3
   file_picker_ohos:
     git:
       url: "https://gitcode.com/openharmony-sig/fluttertpc_file_picker.git"
