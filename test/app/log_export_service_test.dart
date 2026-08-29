@@ -167,6 +167,79 @@ void main() {
       );
     });
   });
+
+  group('AppPlatformLogFilePicker', () {
+    const MethodChannel filePickerChannel = MethodChannel(
+      'miguelruivo.flutter.plugins.filepicker',
+      StandardMethodCodec(),
+    );
+
+    tearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(filePickerChannel, null);
+    });
+
+    test('saveFile is unsupported on Android and falls back', () async {
+      const AppPlatformLogFilePicker picker =
+          AppPlatformLogFilePicker(operatingSystem: 'android');
+
+      await expectLater(
+        picker.saveFile(fileName: 'x.log'),
+        throwsA(isA<UnsupportedError>()),
+      );
+    });
+
+    test('getDirectoryPath delegates to standard picker on Android', () async {
+      final List<MethodCall> calls = <MethodCall>[];
+      final String selectedDirectory =
+          p.join(tempDir.path, 'android-selected-dir');
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(filePickerChannel, (MethodCall call) async {
+        calls.add(call);
+        return selectedDirectory;
+      });
+
+      const AppPlatformLogFilePicker picker =
+          AppPlatformLogFilePicker(operatingSystem: 'android');
+      final String? result = await picker.getDirectoryPath();
+
+      expect(result, selectedDirectory);
+      expect(calls, hasLength(1));
+      expect(calls.single.method, 'dir');
+    });
+
+    test('exports log via directory picker on Android', () async {
+      final AppFileLogSink sink = AppFileLogSink(prefix: '[OneTJ]');
+      final AppLogFileInfo fileInfo = await _createLogFile(
+        tempDir: tempDir,
+        contents: 'android directory export',
+      );
+      final String selectedDirectory =
+          p.join(tempDir.path, 'android-export-dir');
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(filePickerChannel, (MethodCall call) async {
+        if (call.method == 'dir') {
+          return selectedDirectory;
+        }
+        return null;
+      });
+      final AppLogExportService service = AppLogExportService(
+        fileSink: sink,
+        filePicker: const AppPlatformLogFilePicker(operatingSystem: 'android'),
+        supportDirectoryProvider: () async => tempDir,
+      );
+
+      final AppLogExportResult? result = await service.exportLogFile(fileInfo);
+
+      expect(result, isNotNull);
+      expect(result!.method, AppLogExportMethod.directoryPicker);
+      expect(result.path, p.join(selectedDirectory, fileInfo.name));
+      expect(
+        await File(result.path).readAsString(),
+        contains('android directory export'),
+      );
+    });
+  });
 }
 
 Future<void> _deleteTempDir(Directory directory) async {

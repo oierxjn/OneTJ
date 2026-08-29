@@ -1,6 +1,7 @@
 import 'dart:io';
 
-import 'package:file_picker_ohos/file_picker_ohos.dart';
+import 'package:file_picker/file_picker.dart' as standard_picker;
+import 'package:file_picker_ohos/file_picker_ohos.dart' as ohos_picker;
 import 'package:flutter/services.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
@@ -19,20 +20,46 @@ abstract class AppLogFilePicker {
 }
 
 class AppPlatformLogFilePicker implements AppLogFilePicker {
-  const AppPlatformLogFilePicker();
+  const AppPlatformLogFilePicker({String? operatingSystem})
+      : _operatingSystem = operatingSystem;
+
+  /// 测试注入用；为 null 时按真实运行平台判断。
+  final String? _operatingSystem;
+
+  /// 是否为 Android/iOS。
+  ///
+  /// 这两个平台使用标准 `file_picker`；其余平台（OpenHarmony 与桌面端）
+  /// 使用 `file_picker_ohos`。
+  bool get _isAndroidOrIos {
+    if (_operatingSystem != null) {
+      return _operatingSystem == 'android' || _operatingSystem == 'ios';
+    }
+    return Platform.isAndroid || Platform.isIOS;
+  }
 
   @override
-  Future<String?> saveFile({required String fileName}) {
-    return FilePicker.platform.saveFile(
+  Future<String?> saveFile({required String fileName}) async {
+    if (_isAndroidOrIos) {
+      // 标准 file_picker 在 Android/iOS 上 saveFile 必须传入 bytes 并自行写入文件，
+      // 与本服务“先选路径、再复制文件”的模型不一致；这里声明不支持，
+      // 让 AppLogExportService 回退到目录选择器。
+      throw UnsupportedError(
+        'saveFile is unsupported on Android/iOS; use getDirectoryPath',
+      );
+    }
+    return ohos_picker.FilePicker.platform.saveFile(
       fileName: fileName,
-      type: FileType.custom,
+      type: ohos_picker.FileType.custom,
       allowedExtensions: const <String>['log'],
     );
   }
 
   @override
   Future<String?> getDirectoryPath() {
-    return FilePicker.platform.getDirectoryPath();
+    if (_isAndroidOrIos) {
+      return standard_picker.FilePicker.getDirectoryPath();
+    }
+    return ohos_picker.FilePicker.platform.getDirectoryPath();
   }
 }
 
