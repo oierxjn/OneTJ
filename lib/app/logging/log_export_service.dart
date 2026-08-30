@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart' as standard_picker;
 import 'package:file_picker_ohos/file_picker_ohos.dart' as ohos_picker;
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 
@@ -212,11 +213,9 @@ class AppLogExportService {
     final String directory = path.dirname(nextPath);
     final String basename = path.basenameWithoutExtension(nextPath);
     final String extension = path.extension(nextPath);
-    final String timestamp = DateTime.now()
-        .toIso8601String()
-        .replaceAll(':', '')
-        .replaceAll('.', '')
-        .replaceAll('T', '-');
+    // 防重名后缀只保留时间（HH-mm-ss-SSS）：源日志文件名已含日期，
+    // 再拼接日期既冗余，又容易被误读为“日期叠日期”。
+    final String timestamp = DateFormat('HH-mm-ss-SSS').format(DateTime.now());
     return path.join(directory, '$basename-$timestamp$extension');
   }
 
