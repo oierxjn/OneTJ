@@ -133,6 +133,12 @@ void main() {
       expect(result, isNotNull);
       expect(result!.path, isNot(chosenPath));
       expect(p.extension(result.path), '.log');
+      final String renamedBasename = p.basenameWithoutExtension(result.path);
+      expect(
+        RegExp(r'-\d{2}-\d{2}-\d{2}-\d{3}$').hasMatch(renamedBasename),
+        isTrue,
+        reason: 'collision suffix should be HH-mm-ss-SSS',
+      );
       expect(
           await File(result.path).readAsString(), contains('renamed export'));
       expect(await File(chosenPath).readAsString(), 'existing file');
