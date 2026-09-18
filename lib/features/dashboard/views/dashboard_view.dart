@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:onetj/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:onetj/app/constant/layout_constants.dart';
 import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/app/theme/theme_change_notifier.dart';
@@ -119,16 +118,16 @@ class _DashboardViewState extends State<DashboardView>
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final bool isCompact =
-        MediaQuery.sizeOf(context).height < kCompactHeightThreshold;
-    final AnimatedBuilder body = AnimatedBuilder(
-      animation:
-          Listenable.merge(<Listenable>[_viewModel, _themeChangeNotifier]),
-      builder: (context, _) => _buildBody(context, l10n),
-    );
     return Scaffold(
-      appBar: isCompact ? null : AppBar(title: Text(l10n.tabDashboard)),
-      body: isCompact ? SafeArea(top: true, bottom: false, child: body) : body,
+      body: SafeArea(
+        top: true,
+        bottom: false,
+        child: AnimatedBuilder(
+          animation:
+              Listenable.merge(<Listenable>[_viewModel, _themeChangeNotifier]),
+          builder: (context, _) => _buildBody(context, l10n),
+        ),
+      ),
     );
   }
 

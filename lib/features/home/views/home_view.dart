@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:onetj/l10n/app_localizations.dart';
 
+import 'package:onetj/app/constant/layout_constants.dart';
 import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/features/home/views/widgets/home_shell_layout_scope.dart';
@@ -75,6 +76,7 @@ class HomeView extends StatelessWidget {
             body: navigationShell,
             bottomNavigationBar: useBottomNavigation
                 ? NavigationBar(
+                    height: kHomeBottomNavigationBarHeight,
                     selectedIndex: currentIndex,
                     onDestinationSelected: navigationShell.goBranch,
                     destinations: [

@@ -55,6 +55,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get timetableWeekView => 'Week View';
 
   @override
+  String get timetableJumpToToday => 'Back to today';
+
+  @override
   String timetableLoadFailed(Object error) {
     return 'Failed to load timetable: $error';
   }

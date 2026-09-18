@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:onetj/l10n/app_localizations.dart';
-import 'package:onetj/app/constant/layout_constants.dart';
 import 'package:onetj/features/home/views/widgets/home_shell_back_button.dart';
-import 'package:onetj/features/home/views/widgets/home_tab_compact_header.dart';
+import 'package:onetj/features/home/views/widgets/home_slim_header.dart';
 
 import 'package:onetj/app/constant/route_paths.dart';
 
@@ -14,27 +13,20 @@ class ToolsView extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final Widget? homeBackButton = buildHomeShellBackButton(context);
-    final bool isCompact =
-        MediaQuery.sizeOf(context).height < kCompactHeightThreshold;
-    final Widget body = _buildToolsList(context, l10n);
     return Scaffold(
-      appBar: isCompact
-          ? null
-          : AppBar(
+      body: SafeArea(
+        top: true,
+        bottom: false,
+        child: Column(
+          children: [
+            HomeSlimHeader(
               leading: homeBackButton,
-              leadingWidth: homeBackButton == null
-                  ? null
-                  : homeShellBackButtonLeadingWidth,
-              title: Text(l10n.tabTools),
+              title: homeBackButton == null ? null : l10n.tabTools,
             ),
-      body: isCompact
-          ? Column(
-              children: [
-                HomeTabCompactHeader(leading: homeBackButton),
-                Expanded(child: body),
-              ],
-            )
-          : body,
+            Expanded(child: _buildToolsList(context, l10n)),
+          ],
+        ),
+      ),
     );
   }
 
