@@ -50,11 +50,16 @@ void main() {
     // setSurfaceSize 不影响 MediaQuery 读到的 view 尺寸，需直接设置 view。
     tester.view.devicePixelRatio = 1.0;
     tester.view.physicalSize = const Size(800, 540);
+    tester.view.padding = FakeViewPadding(top: 40);
     addTearDown(tester.view.reset);
     await pumpSubject(tester);
 
     expect(find.byType(AppBar), findsNothing);
     expect(find.text('工具'), findsNothing);
-    expect(find.text('常用工具与实验计算会集中在这里。'), findsOneWidget);
+    final Finder subtitle = find.text('常用工具与实验计算会集中在这里。');
+    expect(subtitle, findsOneWidget);
+    // 底部导航布局下紧凑按钮行为空，仍须为状态栏留出高度
+    // （40 需大于列表自带 padding 16 + 12，否则断言无法区分是否占位）。
+    expect(tester.getTopLeft(subtitle).dy, greaterThan(40));
   });
 }

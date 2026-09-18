@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 /// 一级页面在紧凑高度下隐藏 AppBar 后，内容顶部的按钮行。
 ///
-/// 承接原 AppBar 中的返回入口与操作按钮；没有任何子项时不占位，
-/// 由调用方决定是否还需要 [SafeArea]。
+/// 承接原 AppBar 中的返回入口与操作按钮；没有任何子项时退化为
+/// 状态栏高度的占位，仍保证内容不顶进状态栏。
 class HomeTabCompactHeader extends StatelessWidget {
   const HomeTabCompactHeader({
     super.key,
@@ -17,7 +17,11 @@ class HomeTabCompactHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (leading == null && actions.isEmpty) {
-      return const SizedBox.shrink();
+      return const SafeArea(
+        top: true,
+        bottom: false,
+        child: SizedBox.shrink(),
+      );
     }
     return SafeArea(
       top: true,
