@@ -5,8 +5,10 @@ import 'package:onetj/l10n/app_localizations.dart';
 import 'package:onetj/features/home/views/widgets/home_shell_back_button.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:onetj/app/constant/layout_constants.dart';
 import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/app/exception/app_exception.dart';
+import 'package:onetj/features/home/views/widgets/home_tab_compact_header.dart';
 import 'package:onetj/features/settings/models/event.dart';
 import 'package:onetj/features/settings/models/launch_wallpaper_editor_result.dart';
 import 'package:onetj/features/settings/view_models/settings_view_model.dart';
@@ -433,6 +435,8 @@ class _SettingsViewState extends State<SettingsView> {
       animation: _viewModel,
       builder: (context, _) {
         final Widget? homeBackButton = buildHomeShellBackButton(context);
+        final bool isCompact =
+            MediaQuery.sizeOf(context).height < kCompactHeightThreshold;
         final Widget body;
         if (!_viewModel.uiState.isHydrated) {
           body = _buildLoadingBody();
@@ -440,24 +444,40 @@ class _SettingsViewState extends State<SettingsView> {
           _syncControllersFromViewModel();
           body = _buildLoadedBody(l10n);
         }
+        final Widget saveAction = IconButton(
+          tooltip: l10n.saveLabel,
+          icon: const Icon(Icons.save),
+          onPressed: !_viewModel.uiState.isHydrated || _settingsBusy
+              ? null
+              : _submitSettings,
+        );
 
         return Scaffold(
-          appBar: AppBar(
-            leading: homeBackButton,
-            leadingWidth:
-                homeBackButton == null ? null : homeShellBackButtonLeadingWidth,
-            title: Text(l10n.tabSettings),
-            actions: [
-              IconButton(
-                tooltip: l10n.saveLabel,
-                icon: const Icon(Icons.save),
-                onPressed: !_viewModel.uiState.isHydrated || _settingsBusy
-                    ? null
-                    : _submitSettings,
-              ),
-            ],
-          ),
-          body: body,
+          appBar: isCompact
+              ? null
+              : AppBar(
+                  leading: homeBackButton,
+                  leadingWidth: homeBackButton == null
+                      ? null
+                      : homeShellBackButtonLeadingWidth,
+                  title: Text(l10n.tabSettings),
+                  actions: [
+                    saveAction,
+                  ],
+                ),
+          body: isCompact
+              ? Column(
+                  children: [
+                    HomeTabCompactHeader(
+                      leading: homeBackButton,
+                      actions: [
+                        saveAction,
+                      ],
+                    ),
+                    Expanded(child: body),
+                  ],
+                )
+              : body,
         );
       },
     );

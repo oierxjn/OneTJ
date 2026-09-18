@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:onetj/l10n/app_localizations.dart';
+import 'package:onetj/app/constant/layout_constants.dart';
 import 'package:onetj/features/home/views/widgets/home_shell_back_button.dart';
+import 'package:onetj/features/home/views/widgets/home_tab_compact_header.dart';
 
 import 'package:onetj/app/constant/route_paths.dart';
 
@@ -12,54 +14,71 @@ class ToolsView extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final Widget? homeBackButton = buildHomeShellBackButton(context);
+    final bool isCompact =
+        MediaQuery.sizeOf(context).height < kCompactHeightThreshold;
+    final Widget body = _buildToolsList(context, l10n);
     return Scaffold(
-      appBar: AppBar(
-        leading: homeBackButton,
-        leadingWidth:
-            homeBackButton == null ? null : homeShellBackButtonLeadingWidth,
-        title: Text(l10n.tabTools),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          const SizedBox(height: 12),
-          Text(
-            l10n.toolsSubtitle,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-          ),
-          const SizedBox(height: 16),
-          _ToolTile(
-            icon: Icons.science_outlined,
-            title: l10n.physicsLabTitle,
-            subtitle: l10n.physicsLabToolSubtitle,
-            onTap: () => context.push(RoutePaths.homePhysicsLab),
-          ),
-          _ToolTile(
-            icon: Icons.auto_graph_outlined,
-            title: l10n.scoreInquiryTitle,
-            subtitle: l10n.scoreInquirySubtitle,
-            onTap: () => context.push(RoutePaths.homeGrades),
-          ),
-          _ToolTile(
-            icon: Icons.calendar_month_outlined,
-            title: l10n.studentExamsTitle,
-            subtitle: l10n.studentExamsToolSubtitle,
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(l10n.studentExamsUnavailable)),
-              );
-            },
-          ),
-          _ToolTile(
-            icon: Icons.workspace_premium_outlined,
-            title: l10n.cetScoreTitle,
-            subtitle: l10n.cetScoreToolSubtitle,
-            onTap: () => context.push(RoutePaths.homeCetScore),
-          ),
-        ],
-      ),
+      appBar: isCompact
+          ? null
+          : AppBar(
+              leading: homeBackButton,
+              leadingWidth: homeBackButton == null
+                  ? null
+                  : homeShellBackButtonLeadingWidth,
+              title: Text(l10n.tabTools),
+            ),
+      body: isCompact
+          ? Column(
+              children: [
+                HomeTabCompactHeader(leading: homeBackButton),
+                Expanded(child: body),
+              ],
+            )
+          : body,
+    );
+  }
+
+  Widget _buildToolsList(BuildContext context, AppLocalizations l10n) {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        const SizedBox(height: 12),
+        Text(
+          l10n.toolsSubtitle,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+        ),
+        const SizedBox(height: 16),
+        _ToolTile(
+          icon: Icons.science_outlined,
+          title: l10n.physicsLabTitle,
+          subtitle: l10n.physicsLabToolSubtitle,
+          onTap: () => context.push(RoutePaths.homePhysicsLab),
+        ),
+        _ToolTile(
+          icon: Icons.auto_graph_outlined,
+          title: l10n.scoreInquiryTitle,
+          subtitle: l10n.scoreInquirySubtitle,
+          onTap: () => context.push(RoutePaths.homeGrades),
+        ),
+        _ToolTile(
+          icon: Icons.calendar_month_outlined,
+          title: l10n.studentExamsTitle,
+          subtitle: l10n.studentExamsToolSubtitle,
+          onTap: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(l10n.studentExamsUnavailable)),
+            );
+          },
+        ),
+        _ToolTile(
+          icon: Icons.workspace_premium_outlined,
+          title: l10n.cetScoreTitle,
+          subtitle: l10n.cetScoreToolSubtitle,
+          onTap: () => context.push(RoutePaths.homeCetScore),
+        ),
+      ],
     );
   }
 }

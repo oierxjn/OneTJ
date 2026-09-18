@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:onetj/l10n/app_localizations.dart';
+import 'package:onetj/app/constant/layout_constants.dart';
 import 'package:onetj/features/home/views/widgets/home_shell_back_button.dart';
+import 'package:onetj/features/home/views/widgets/home_tab_compact_header.dart';
 import 'package:onetj/app/logging/logger.dart';
 
 import 'package:onetj/features/timetable/view_models/timetable_view_model.dart';
@@ -113,25 +115,47 @@ class _TimetableViewState extends State<TimetableView> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final Widget? homeBackButton = buildHomeShellBackButton(context);
+    final bool isCompact =
+        MediaQuery.sizeOf(context).height < kCompactHeightThreshold;
+    final Widget body = AnimatedBuilder(
+      animation: _viewModel,
+      builder: (context, _) => _buildBody(context),
+    );
     return Scaffold(
-      appBar: AppBar(
-        leading: homeBackButton,
-        leadingWidth:
-            homeBackButton == null ? null : homeShellBackButtonLeadingWidth,
-        title: Text(l10n.tabTimetable),
-        actions: [
-          AnimatedBuilder(
-            animation: _viewModel,
-            builder: (context, _) => IconButton(
-              icon: const Icon(Icons.location_searching),
-              onPressed: _viewModel.isLoading ? null : _viewModel.jumpToToday,
+      appBar: isCompact
+          ? null
+          : AppBar(
+              leading: homeBackButton,
+              leadingWidth: homeBackButton == null
+                  ? null
+                  : homeShellBackButtonLeadingWidth,
+              title: Text(l10n.tabTimetable),
+              actions: [
+                _buildJumpToTodayAction(),
+              ],
             ),
-          ),
-        ],
-      ),
-      body: AnimatedBuilder(
-        animation: _viewModel,
-        builder: (context, _) => _buildBody(context),
+      body: isCompact
+          ? Column(
+              children: [
+                HomeTabCompactHeader(
+                  leading: homeBackButton,
+                  actions: [
+                    _buildJumpToTodayAction(),
+                  ],
+                ),
+                Expanded(child: body),
+              ],
+            )
+          : body,
+    );
+  }
+
+  Widget _buildJumpToTodayAction() {
+    return AnimatedBuilder(
+      animation: _viewModel,
+      builder: (context, _) => IconButton(
+        icon: const Icon(Icons.location_searching),
+        onPressed: _viewModel.isLoading ? null : _viewModel.jumpToToday,
       ),
     );
   }

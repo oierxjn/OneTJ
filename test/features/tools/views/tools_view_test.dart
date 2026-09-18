@@ -45,4 +45,16 @@ void main() {
     expect(find.text('工具'), findsOneWidget);
     expect(find.text('该功能暂未开放，请等待信息办恢复。'), findsOneWidget);
   });
+
+  testWidgets('窗口高度低于阈值时隐藏标题栏且内容仍可见', (tester) async {
+    // setSurfaceSize 不影响 MediaQuery 读到的 view 尺寸，需直接设置 view。
+    tester.view.devicePixelRatio = 1.0;
+    tester.view.physicalSize = const Size(800, 540);
+    addTearDown(tester.view.reset);
+    await pumpSubject(tester);
+
+    expect(find.byType(AppBar), findsNothing);
+    expect(find.text('工具'), findsNothing);
+    expect(find.text('常用工具与实验计算会集中在这里。'), findsOneWidget);
+  });
 }
