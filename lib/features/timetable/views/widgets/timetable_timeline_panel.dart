@@ -14,24 +14,36 @@ import 'package:onetj/models/timetable_index.dart';
 const double kTimelinePanelLeftPadding = 4;
 const double kTimelinePanelRightPadding = 12;
 
+/// 时间标签列的首选宽度。
+const double kTimelinePreferredLabelWidth = 72;
+
+/// 时间标签列的最小宽度。
+///
+/// 窄窗口下时间列被压缩到该宽度为止；压到下限后时间文字
+/// 切换为小号字体渲染（见 [TimetableTimelinePanel]）。
+const double kTimelineMinLabelWidth = 35;
+
+/// 单个日列卡片的最小宽度。
+const double kTimelineMinCardWidth = 92;
+
 /// 依据时间轴面板的内部可用宽度，解析时间标签列的宽度。
 ///
 /// 面板与外部对齐元素（如视图切换行的动作拨盘）共用同一计算，
 /// 保证两者宽度始终一致。
 double resolveTimelineLabelWidth(double panelInnerMaxWidth) {
-  const double preferredLabelWidth = 72;
-  const double minLabelWidth = 35;
-  const double minCardWidth = 92;
   final double availableWidth =
       (panelInnerMaxWidth - 8).clamp(0, double.infinity);
 
-  double labelWidth = preferredLabelWidth;
+  double labelWidth = kTimelinePreferredLabelWidth;
   final double dayColumnWidth =
       ((availableWidth - labelWidth) / 7).clamp(0, double.infinity);
 
-  if (dayColumnWidth < minCardWidth) {
-    final double neededLabelWidth = availableWidth - minCardWidth * 7;
-    labelWidth = neededLabelWidth.clamp(minLabelWidth, preferredLabelWidth);
+  if (dayColumnWidth < kTimelineMinCardWidth) {
+    final double neededLabelWidth = availableWidth - kTimelineMinCardWidth * 7;
+    labelWidth = neededLabelWidth.clamp(
+      kTimelineMinLabelWidth,
+      kTimelinePreferredLabelWidth,
+    );
   }
   return labelWidth;
 }
@@ -163,7 +175,7 @@ class TimetableTimelinePanel extends StatelessWidget {
     final double dayColumnWidth =
         ((maxWidth - 8 - labelWidth) / 7).clamp(0, maxCardWidth);
 
-    final bool isNarrowLabel = labelWidth <= 35 + 0.1;
+    final bool isNarrowLabel = labelWidth <= kTimelineMinLabelWidth + 0.1;
     final TextStyle? labelStyle = isNarrowLabel
         ? Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 11)
         : Theme.of(context).textTheme.bodySmall;
