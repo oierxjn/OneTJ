@@ -57,6 +57,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get timetableJumpToToday => '回到今天';
 
   @override
+  String get timetableRefreshAction => '刷新课表';
+
+  @override
   String timetableLoadFailed(Object error) {
     return '加载课程表失败: $error';
   }

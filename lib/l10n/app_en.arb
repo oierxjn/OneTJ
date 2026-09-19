@@ -17,6 +17,7 @@
   "timetableDayView": "Day View",
   "timetableWeekView": "Week View",
   "timetableJumpToToday": "Back to today",
+  "timetableRefreshAction": "Refresh timetable",
 
   "timetableLoadFailed": "Failed to load timetable: {error}",
   "@timetableLoadFailed": {

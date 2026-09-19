@@ -194,6 +194,12 @@ abstract class AppLocalizations {
   /// **'Back to today'**
   String get timetableJumpToToday;
 
+  /// No description provided for @timetableRefreshAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh timetable'**
+  String get timetableRefreshAction;
+
   /// No description provided for @timetableLoadFailed.
   ///
   /// In en, this message translates to:

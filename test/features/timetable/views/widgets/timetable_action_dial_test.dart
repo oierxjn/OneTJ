@@ -49,8 +49,10 @@ void main() {
     await pumpDial(tester, onTap: () {});
 
     AnimatedRotation rotation() => tester.widget<AnimatedRotation>(
-      find.ancestor(of: find.byIcon(Icons.expand_more), matching: find.byType(AnimatedRotation)),
-    );
+          find.ancestor(
+              of: find.byIcon(Icons.expand_more),
+              matching: find.byType(AnimatedRotation)),
+        );
 
     expect(rotation().turns, 0);
     await tester.tap(find.byIcon(Icons.expand_more));
@@ -127,6 +129,175 @@ void main() {
     await mouse.moveTo(const Offset(400, 300));
     await tester.pumpAndSettle();
     expect(find.text('回到今天'), findsNothing);
+  });
+
+  testWidgets('busy 时触发器显示转圈指示器且无 chevron', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Align(
+            alignment: Alignment.topLeft,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: TimetableActionDial(
+                width: 72,
+                busy: true,
+                actions: [
+                  TimetableDialAction(
+                    icon: Icons.today,
+                    label: '回到今天',
+                    onTap: () {},
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byIcon(Icons.expand_more), findsNothing);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+    // 转圈指示器永不静止，不能用 pumpAndSettle；固定推进一帧即可。
+    // 触发器仍可点开，动作面板正常工作。
+    await tester.tap(find.byType(CircularProgressIndicator));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.byIcon(Icons.today), findsOneWidget);
+  });
+
+  testWidgets('面板展开时触发器仍在命中路径上（悬停反馈可用）', (tester) async {
+    await pumpDial(tester, onTap: () {});
+
+    await tester.tap(find.byIcon(Icons.expand_more));
+    await tester.pumpAndSettle();
+
+    // 回归：此前的全屏 opaque 收起屏障会拦截命中测试，展开后鼠标悬停
+    // 触发器不再有任何按钮反馈。屏障在触发器处挖洞后，触发器 FAB 应
+    // 重新出现在其位置的命中路径里。
+    final Offset triggerCenter = tester.getCenter(
+      find.byIcon(Icons.expand_more),
+    );
+    final RenderObject triggerRenderObject =
+        tester.renderObject(find.byIcon(Icons.expand_more));
+    final HitTestResult result = tester.hitTestOnBinding(triggerCenter);
+    expect(
+      result.path.map((HitTestEntry entry) => entry.target),
+      contains(triggerRenderObject),
+    );
+
+    // 洞外的屏障依旧生效：面板外点击可收起。
+    await tester.tapAt(const Offset(400, 300));
+    await tester.pumpAndSettle();
+    expect(find.byIcon(Icons.today), findsNothing);
+  });
+
+  testWidgets('success 显示对勾、failure 显示叉号，busy 优先', (tester) async {
+    Future<void> pumpTrigger({
+      required bool busy,
+      required bool success,
+      required bool failure,
+    }) {
+      return tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Align(
+              alignment: Alignment.topLeft,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: TimetableActionDial(
+                  width: 72,
+                  busy: busy,
+                  success: success,
+                  failure: failure,
+                  actions: [
+                    TimetableDialAction(
+                      icon: Icons.today,
+                      label: '回到今天',
+                      onTap: () {},
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    await pumpTrigger(busy: false, success: true, failure: false);
+    expect(find.byIcon(Icons.check), findsOneWidget);
+    expect(find.byIcon(Icons.expand_more), findsNothing);
+
+    await pumpTrigger(busy: false, success: false, failure: true);
+    // AnimatedSwitcher 过渡期内旧的对勾子项还在树上，先推进过渡期。
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.byIcon(Icons.close), findsOneWidget);
+    expect(find.byIcon(Icons.check), findsNothing);
+
+    await pumpTrigger(busy: true, success: true, failure: true);
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.byIcon(Icons.check), findsNothing);
+    expect(find.byIcon(Icons.close), findsNothing);
+  });
+
+  testWidgets('面板展开时屏障带背景模糊，收起后消失', (tester) async {
+    await pumpDial(tester, onTap: () {});
+
+    expect(find.byType(BackdropFilter), findsNothing);
+    await tester.tap(find.byIcon(Icons.expand_more));
+    await tester.pumpAndSettle();
+    expect(find.byType(BackdropFilter), findsOneWidget);
+
+    await tester.tapAt(const Offset(400, 300));
+    await tester.pumpAndSettle();
+    expect(find.byType(BackdropFilter), findsNothing);
+  });
+
+  testWidgets('触发器与首个动作、动作项之间的垂直间隔一致', (tester) async {
+    // 回归：此前面板偏移是 6、项间距是 12，两段间隔不一致。
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Align(
+            alignment: Alignment.topLeft,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: TimetableActionDial(
+                width: 72,
+                actions: [
+                  TimetableDialAction(
+                    icon: Icons.today,
+                    label: '回到今天',
+                    onTap: () {},
+                  ),
+                  TimetableDialAction(
+                    icon: Icons.refresh,
+                    label: '刷新课表',
+                    onTap: () {},
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byIcon(Icons.expand_more));
+    await tester.pumpAndSettle();
+
+    double topOf(Finder finder) => tester.getRect(finder).top;
+
+    final Rect trigger = tester.getRect(find.byIcon(Icons.expand_more));
+    final double gapTriggerToFirst =
+        topOf(find.byIcon(Icons.today)) - trigger.bottom;
+    final double gapBetweenActions = topOf(find.byIcon(Icons.refresh)) -
+        tester.getRect(find.byIcon(Icons.today)).bottom;
+
+    expect(gapTriggerToFirst, greaterThan(0));
+    expect(gapTriggerToFirst, gapBetweenActions);
   });
 
   testWidgets('触发器框宽被压缩到 35 时两个 FAB 仍保持 40×40', (tester) async {
