@@ -58,6 +58,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get timetableJumpToToday => 'Back to today';
 
   @override
+  String get timetableRefreshAction => 'Refresh timetable';
+
+  @override
+  String get timetableRefreshing => 'Refreshing timetable…';
+
+  @override
+  String get timetableRefreshed => 'Timetable updated';
+
+  @override
   String timetableLoadFailed(Object error) {
     return 'Failed to load timetable: $error';
   }

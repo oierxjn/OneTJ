@@ -37,6 +37,7 @@ class TimetableViewModel extends BaseViewModel<UiEvent> {
   TimetableIndex? _index;
   Object? _error;
   bool _isLoading = true;
+  bool _isRefreshing = false;
   List<TimePeriodRangeData> _timeSlotRanges = kDefaultTimeSlotRanges;
   int _selectedDay = DateTime.now().weekday;
 
@@ -51,6 +52,7 @@ class TimetableViewModel extends BaseViewModel<UiEvent> {
   TimetableIndex? get index => _index;
   Object? get error => _error;
   bool get isLoading => _isLoading;
+  bool get isRefreshing => _isRefreshing;
   List<int> get timeSlotStartMinutes =>
       _timeSlotRanges.map((item) => item.startMinutes).toList(growable: false);
   List<TimePeriodRangeData> get timeSlotRanges => _timeSlotRanges;
@@ -75,6 +77,35 @@ class TimetableViewModel extends BaseViewModel<UiEvent> {
     if (_index != null && _index!.allEntries.isNotEmpty) {
       emit(const SyncWheelEvent());
     }
+  }
+
+  /// 强制刷新课表
+  ///
+  /// 绕过缓存 TTL 从服务器拉取最新课表，刷新期间保留旧课表内容展示。
+  /// 成功返回 true；刷新中重复调用或初始加载未完成时为 no-op，返回 false。
+  /// 失败时旧数据不动，通过 [ShowSnackBarEvent] 提示错误。
+  Future<bool> refresh() async {
+    if (_isRefreshing || _isLoading) {
+      return false;
+    }
+    _isRefreshing = true;
+    notifyListeners();
+    bool success = false;
+    try {
+      _index = await _dataService.refreshTimetableIndex();
+      _syncSelectedWeek();
+      await _loadLastFetchedAt();
+      success = true;
+    } catch (error) {
+      emit(ShowSnackBarEvent(message: _formatErrorMessage(error)));
+    } finally {
+      _isRefreshing = false;
+      notifyListeners();
+    }
+    if (success && _index != null && _index!.allEntries.isNotEmpty) {
+      emit(const SyncWheelEvent());
+    }
+    return success;
   }
 
   void setMode(TimetableDisplayMode mode) {

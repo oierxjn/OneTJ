@@ -22,11 +22,17 @@ class TimetableActionDial extends StatefulWidget {
   const TimetableActionDial({
     required this.width,
     required this.actions,
+    this.busy = false,
     super.key,
   });
 
   final double width;
   final List<TimetableDialAction> actions;
+
+  /// 触发器是否处于忙碌状态（如课表刷新中）。
+  ///
+  /// 忙碌时触发器图标替换为转圈指示器，其余行为不变。
+  final bool busy;
 
   @override
   State<TimetableActionDial> createState() => _TimetableActionDialState();
@@ -82,11 +88,17 @@ class _TimetableActionDialState extends State<TimetableActionDial> {
           child: Center(
             child: FloatingActionButton.small(
               onPressed: _toggle,
-              child: AnimatedRotation(
-                turns: _isOpen ? 0.5 : 0,
-                duration: _animationDuration(context),
-                child: const Icon(Icons.expand_more, size: 20),
-              ),
+              child: widget.busy
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2.2),
+                    )
+                  : AnimatedRotation(
+                      turns: _isOpen ? 0.5 : 0,
+                      duration: _animationDuration(context),
+                      child: const Icon(Icons.expand_more, size: 20),
+                    ),
             ),
           ),
         ),

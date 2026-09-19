@@ -129,6 +129,41 @@ void main() {
     expect(find.text('回到今天'), findsNothing);
   });
 
+  testWidgets('busy 时触发器显示转圈指示器且无 chevron', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Align(
+            alignment: Alignment.topLeft,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: TimetableActionDial(
+                width: 72,
+                busy: true,
+                actions: [
+                  TimetableDialAction(
+                    icon: Icons.today,
+                    label: '回到今天',
+                    onTap: () {},
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byIcon(Icons.expand_more), findsNothing);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+    // 转圈指示器永不静止，不能用 pumpAndSettle；固定推进一帧即可。
+    // 触发器仍可点开，动作面板正常工作。
+    await tester.tap(find.byType(CircularProgressIndicator));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.byIcon(Icons.today), findsOneWidget);
+  });
+
   testWidgets('触发器框宽被压缩到 35 时两个 FAB 仍保持 40×40', (tester) async {
     // 时间列宽的响应式下限是 35；FAB 的紧约束会被父级约束钳制，
     // 若触发器框不设最小宽度，会被压成 35×40 的胶囊。
