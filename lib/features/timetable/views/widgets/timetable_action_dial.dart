@@ -38,18 +38,23 @@ class _TimetableActionDialState extends State<TimetableActionDial> {
 
   bool get _isOpen => _portalController.isShowing;
 
+  // show/hide 只更新浮层条目，不会触发触发器所在子树重建；
+  // chevron 的旋转角度依赖 _isOpen，必须显式 setState 才会动画。
   void _toggle() {
-    if (_isOpen) {
-      _portalController.hide();
-    } else {
-      _portalController.show();
-    }
+    setState(() {
+      if (_isOpen) {
+        _portalController.hide();
+      } else {
+        _portalController.show();
+      }
+    });
   }
 
   void _close() {
-    if (_isOpen) {
-      _portalController.hide();
+    if (!_isOpen) {
+      return;
     }
+    setState(_portalController.hide);
   }
 
   Duration _animationDuration(BuildContext context) {

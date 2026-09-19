@@ -45,6 +45,23 @@ void main() {
     expect(find.byIcon(Icons.today), findsNothing);
   });
 
+  testWidgets('展开与收起时触发器 chevron 旋转 180°', (tester) async {
+    await pumpDial(tester, onTap: () {});
+
+    AnimatedRotation rotation() => tester.widget<AnimatedRotation>(
+      find.ancestor(of: find.byIcon(Icons.expand_more), matching: find.byType(AnimatedRotation)),
+    );
+
+    expect(rotation().turns, 0);
+    await tester.tap(find.byIcon(Icons.expand_more));
+    await tester.pumpAndSettle();
+    expect(rotation().turns, 0.5);
+
+    await tester.tap(find.byIcon(Icons.expand_more));
+    await tester.pumpAndSettle();
+    expect(rotation().turns, 0);
+  });
+
   testWidgets('点击面板外任意处收起', (tester) async {
     var tapped = false;
     await pumpDial(tester, onTap: () => tapped = true);
