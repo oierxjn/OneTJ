@@ -25,6 +25,7 @@ class TimetableActionDial extends StatefulWidget {
     required this.width,
     required this.actions,
     this.busy = false,
+    this.success = false,
     super.key,
   });
 
@@ -35,6 +36,11 @@ class TimetableActionDial extends StatefulWidget {
   ///
   /// 忙碌时触发器图标替换为转圈指示器，其余行为不变。
   final bool busy;
+
+  /// 触发器是否显示成功标记（如课表刷新完成）。
+  ///
+  /// 显示对勾图标，仅在 [busy] 为 false 时生效；何时收回由调用方控制。
+  final bool success;
 
   @override
   State<TimetableActionDial> createState() => _TimetableActionDialState();
@@ -84,6 +90,35 @@ class _TimetableActionDialState extends State<TimetableActionDial> {
         : const Duration(milliseconds: 150);
   }
 
+  /// 触发器图标在 默认箭头/忙碌转圈/成功对勾 间平滑过渡。
+  ///
+  /// 三态各自持有唯一 key 供 [AnimatedSwitcher] 区分；对勾用于
+  /// [TimetableActionDial.success]，仅在不忙碌时显示。
+  Widget _buildTriggerIcon(BuildContext context) {
+    if (widget.busy) {
+      return const SizedBox(
+        key: ValueKey<String>('busy'),
+        width: 20,
+        height: 20,
+        child: CircularProgressIndicator(strokeWidth: 2.2),
+      );
+    }
+    if (widget.success) {
+      return Icon(
+        Icons.check,
+        key: const ValueKey<String>('success'),
+        size: 20,
+        color: Theme.of(context).colorScheme.primary,
+      );
+    }
+    return AnimatedRotation(
+      key: const ValueKey<String>('idle'),
+      turns: _isOpen ? 0.5 : 0,
+      duration: _animationDuration(context),
+      child: const Icon(Icons.expand_more, size: 20),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return OverlayPortal(
@@ -105,17 +140,21 @@ class _TimetableActionDialState extends State<TimetableActionDial> {
               // shrinkWrap 去掉 padded 触摸目标在布局上多出的 8px
               //（四周各 4px），保证触发器与动作项的可视尺寸、间隙一致。
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              child: widget.busy
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2.2),
-                    )
-                  : AnimatedRotation(
-                      turns: _isOpen ? 0.5 : 0,
-                      duration: _animationDuration(context),
-                      child: const Icon(Icons.expand_more, size: 20),
+              child: AnimatedSwitcher(
+                duration: _animationDuration(context),
+                switchInCurve: Curves.easeOut,
+                switchOutCurve: Curves.easeIn,
+                transitionBuilder: (child, animation) => FadeTransition(
+                  opacity: animation,
+                  child: ScaleTransition(
+                    scale: Tween<double>(begin: 0.6, end: 1).animate(
+                      animation,
                     ),
+                    child: child,
+                  ),
+                ),
+                child: _buildTriggerIcon(context),
+              ),
             ),
           ),
         ),

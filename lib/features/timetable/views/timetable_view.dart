@@ -27,6 +27,8 @@ class _TimetableViewState extends State<TimetableView> {
   late final FixedExtentScrollController _weekController;
   final ScrollController _scrollController = ScrollController();
   StreamSubscription<UiEvent>? _eventSub;
+  bool _refreshSuccessVisible = false;
+  Timer? _refreshSuccessTimer;
 
   @override
   void initState() {
@@ -54,11 +56,30 @@ class _TimetableViewState extends State<TimetableView> {
   @override
   void dispose() {
     _eventSub?.cancel();
+    _refreshSuccessTimer?.cancel();
     _dayController.dispose();
     _weekController.dispose();
     _scrollController.dispose();
     _viewModel.dispose();
     super.dispose();
+  }
+
+  /// 拨盘动作：强制刷新课表。
+  ///
+  /// 过程反馈由触发器的转圈图标承担；成功显示 2 秒对勾后收回，
+  /// 失败提示由 ViewModel 的 [ShowSnackBarEvent] 负责。
+  Future<void> _refreshTimetable() async {
+    final bool success = await _viewModel.refresh();
+    if (!mounted || !success) {
+      return;
+    }
+    _refreshSuccessTimer?.cancel();
+    setState(() => _refreshSuccessVisible = true);
+    _refreshSuccessTimer = Timer(const Duration(seconds: 2), () {
+      if (mounted) {
+        setState(() => _refreshSuccessVisible = false);
+      }
+    });
   }
 
   String _formatRoom(TimetableEntry entry) {
@@ -191,6 +212,7 @@ class _TimetableViewState extends State<TimetableView> {
                   TimetableActionDial(
                     width: labelWidth,
                     busy: _viewModel.isRefreshing,
+                    success: _refreshSuccessVisible,
                     actions: [
                       TimetableDialAction(
                         icon: Icons.today,
@@ -200,9 +222,7 @@ class _TimetableViewState extends State<TimetableView> {
                       TimetableDialAction(
                         icon: Icons.refresh,
                         label: l10n.timetableRefreshAction,
-                        // 刷新反馈由触发器转圈与底部"最近同步"时间承担，
-                        // 失败提示由 ViewModel 的事件流弹出。
-                        onTap: () => unawaited(_viewModel.refresh()),
+                        onTap: () => unawaited(_refreshTimetable()),
                       ),
                     ],
                   ),

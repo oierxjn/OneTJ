@@ -192,6 +192,45 @@ void main() {
     expect(find.byIcon(Icons.today), findsNothing);
   });
 
+  testWidgets('success 时触发器显示对勾，busy 优先于 success', (tester) async {
+    Future<void> pumpTrigger({required bool busy, required bool success}) {
+      return tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Align(
+              alignment: Alignment.topLeft,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: TimetableActionDial(
+                  width: 72,
+                  busy: busy,
+                  success: success,
+                  actions: [
+                    TimetableDialAction(
+                      icon: Icons.today,
+                      label: '回到今天',
+                      onTap: () {},
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    await pumpTrigger(busy: false, success: true);
+    expect(find.byIcon(Icons.check), findsOneWidget);
+    expect(find.byIcon(Icons.expand_more), findsNothing);
+
+    await pumpTrigger(busy: true, success: true);
+    // AnimatedSwitcher 需要过渡期把旧的对勾子项淡出。
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.byIcon(Icons.check), findsNothing);
+  });
+
   testWidgets('面板展开时屏障带背景模糊，收起后消失', (tester) async {
     await pumpDial(tester, onTap: () {});
 
