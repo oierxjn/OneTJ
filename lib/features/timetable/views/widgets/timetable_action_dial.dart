@@ -88,6 +88,9 @@ class _TimetableActionDialState extends State<TimetableActionDial> {
           child: Center(
             child: FloatingActionButton.small(
               onPressed: _toggle,
+              // shrinkWrap 去掉 padded 触摸目标在布局上多出的 8px
+              //（四周各 4px），保证触发器与动作项的可视尺寸、间隙一致。
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               child: widget.busy
                   ? const SizedBox(
                       width: 20,
@@ -120,9 +123,11 @@ class _TimetableActionDialState extends State<TimetableActionDial> {
           link: _layerLink,
           // 动作列与触发器做中心对齐：触发器在时间列宽度框内居中，
           // 若按左缘对齐，动作按钮会整体左偏，观感上像大小/位置不一致。
+          // 偏移量与动作项之间的 spacing 相同，保证触发器与首个动作、
+          // 动作项彼此之间的间隔一致。
           targetAnchor: Alignment.bottomCenter,
           followerAnchor: Alignment.topCenter,
-          offset: const Offset(0, 6),
+          offset: const Offset(0, 8),
           child: Material(
             type: MaterialType.transparency,
             child: TweenAnimationBuilder<double>(
@@ -137,6 +142,7 @@ class _TimetableActionDialState extends State<TimetableActionDial> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.center,
+                spacing: 8,
                 children: <Widget>[
                   for (final TimetableDialAction action in widget.actions)
                     _DialActionItem(action: action, onClose: _close),
@@ -163,20 +169,19 @@ class _DialActionItem extends StatelessWidget {
       action.onTap();
     }
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Semantics(
-        label: action.label,
-        button: true,
+    return Semantics(
+      label: action.label,
+      button: true,
         child: _MouseHoverLabel(
           message: action.label,
           child: FloatingActionButton.small(
             heroTag: Object(),
             onPressed: handleTap,
+            // 同触发器：shrinkWrap 去掉 padded 布局余量。
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
             child: Icon(action.icon, size: 20),
           ),
         ),
-      ),
     );
   }
 }

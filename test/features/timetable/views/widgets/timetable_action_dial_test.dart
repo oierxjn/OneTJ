@@ -164,6 +164,52 @@ void main() {
     expect(find.byIcon(Icons.today), findsOneWidget);
   });
 
+  testWidgets('触发器与首个动作、动作项之间的垂直间隔一致', (tester) async {
+    // 回归：此前面板偏移是 6、项间距是 12，两段间隔不一致。
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Align(
+            alignment: Alignment.topLeft,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: TimetableActionDial(
+                width: 72,
+                actions: [
+                  TimetableDialAction(
+                    icon: Icons.today,
+                    label: '回到今天',
+                    onTap: () {},
+                  ),
+                  TimetableDialAction(
+                    icon: Icons.refresh,
+                    label: '刷新课表',
+                    onTap: () {},
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byIcon(Icons.expand_more));
+    await tester.pumpAndSettle();
+
+    double topOf(Finder finder) => tester.getRect(finder).top;
+
+    final Rect trigger = tester.getRect(find.byIcon(Icons.expand_more));
+    final double gapTriggerToFirst =
+        topOf(find.byIcon(Icons.today)) - trigger.bottom;
+    final double gapBetweenActions =
+        topOf(find.byIcon(Icons.refresh)) -
+        tester.getRect(find.byIcon(Icons.today)).bottom;
+
+    expect(gapTriggerToFirst, greaterThan(0));
+    expect(gapTriggerToFirst, gapBetweenActions);
+  });
+
   testWidgets('触发器框宽被压缩到 35 时两个 FAB 仍保持 40×40', (tester) async {
     // 时间列宽的响应式下限是 35；FAB 的紧约束会被父级约束钳制，
     // 若触发器框不设最小宽度，会被压成 35×40 的胶囊。
