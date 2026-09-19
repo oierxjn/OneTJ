@@ -26,6 +26,7 @@ class TimetableActionDial extends StatefulWidget {
     required this.actions,
     this.busy = false,
     this.success = false,
+    this.failure = false,
     super.key,
   });
 
@@ -41,6 +42,11 @@ class TimetableActionDial extends StatefulWidget {
   ///
   /// 显示对勾图标，仅在 [busy] 为 false 时生效；何时收回由调用方控制。
   final bool success;
+
+  /// 触发器是否显示失败标记（如课表刷新出错）。
+  ///
+  /// 显示叉号图标，与 [success] 对称；仅在 [busy] 为 false 时生效。
+  final bool failure;
 
   @override
   State<TimetableActionDial> createState() => _TimetableActionDialState();
@@ -90,10 +96,11 @@ class _TimetableActionDialState extends State<TimetableActionDial> {
         : const Duration(milliseconds: 150);
   }
 
-  /// 触发器图标在 默认箭头/忙碌转圈/成功对勾 间平滑过渡。
+  /// 触发器图标在 默认箭头/忙碌转圈/成功对勾/失败叉号 间平滑过渡。
   ///
-  /// 三态各自持有唯一 key 供 [AnimatedSwitcher] 区分；对勾用于
-  /// [TimetableActionDial.success]，仅在不忙碌时显示。
+  /// 各态持有唯一 key 供 [AnimatedSwitcher] 区分；对勾与叉号对应
+  /// [TimetableActionDial.success] / [TimetableActionDial.failure]，
+  /// 仅在不忙碌时显示。
   Widget _buildTriggerIcon(BuildContext context) {
     if (widget.busy) {
       return const SizedBox(
@@ -109,6 +116,14 @@ class _TimetableActionDialState extends State<TimetableActionDial> {
         key: const ValueKey<String>('success'),
         size: 20,
         color: Theme.of(context).colorScheme.primary,
+      );
+    }
+    if (widget.failure) {
+      return Icon(
+        Icons.close,
+        key: const ValueKey<String>('failure'),
+        size: 20,
+        color: Theme.of(context).colorScheme.error,
       );
     }
     return AnimatedRotation(

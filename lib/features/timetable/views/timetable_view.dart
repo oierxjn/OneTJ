@@ -21,14 +21,19 @@ class TimetableView extends StatefulWidget {
   State<TimetableView> createState() => _TimetableViewState();
 }
 
+/// 刷新结束后触发器短暂显示的标记。
+enum _RefreshFeedback { none, success, failure }
+
 class _TimetableViewState extends State<TimetableView> {
   late final TimetableViewModel _viewModel;
   late final FixedExtentScrollController _dayController;
   late final FixedExtentScrollController _weekController;
   final ScrollController _scrollController = ScrollController();
   StreamSubscription<UiEvent>? _eventSub;
-  bool _refreshSuccessVisible = false;
-  Timer? _refreshSuccessTimer;
+
+  /// 刷新结束后的触发器标记：成功对勾 / 失败叉号，2 秒后收回。
+  _RefreshFeedback _refreshFeedback = _RefreshFeedback.none;
+  Timer? _refreshFeedbackTimer;
 
   @override
   void initState() {
@@ -56,7 +61,7 @@ class _TimetableViewState extends State<TimetableView> {
   @override
   void dispose() {
     _eventSub?.cancel();
-    _refreshSuccessTimer?.cancel();
+    _refreshFeedbackTimer?.cancel();
     _dayController.dispose();
     _weekController.dispose();
     _scrollController.dispose();
@@ -66,18 +71,21 @@ class _TimetableViewState extends State<TimetableView> {
 
   /// 拨盘动作：强制刷新课表。
   ///
-  /// 过程反馈由触发器的转圈图标承担；成功显示 2 秒对勾后收回，
-  /// 失败提示由 ViewModel 的 [ShowSnackBarEvent] 负责。
+  /// 过程反馈由触发器的转圈图标承担；结束显示 2 秒对勾/叉号后收回，
+  /// 失败详情由 ViewModel 的 [ShowSnackBarEvent] 负责。
   Future<void> _refreshTimetable() async {
     final bool success = await _viewModel.refresh();
-    if (!mounted || !success) {
+    if (!mounted) {
       return;
     }
-    _refreshSuccessTimer?.cancel();
-    setState(() => _refreshSuccessVisible = true);
-    _refreshSuccessTimer = Timer(const Duration(seconds: 2), () {
+    _refreshFeedbackTimer?.cancel();
+    setState(() {
+      _refreshFeedback =
+          success ? _RefreshFeedback.success : _RefreshFeedback.failure;
+    });
+    _refreshFeedbackTimer = Timer(const Duration(seconds: 2), () {
       if (mounted) {
-        setState(() => _refreshSuccessVisible = false);
+        setState(() => _refreshFeedback = _RefreshFeedback.none);
       }
     });
   }
@@ -212,7 +220,8 @@ class _TimetableViewState extends State<TimetableView> {
                   TimetableActionDial(
                     width: labelWidth,
                     busy: _viewModel.isRefreshing,
-                    success: _refreshSuccessVisible,
+                    success: _refreshFeedback == _RefreshFeedback.success,
+                    failure: _refreshFeedback == _RefreshFeedback.failure,
                     actions: [
                       TimetableDialAction(
                         icon: Icons.today,

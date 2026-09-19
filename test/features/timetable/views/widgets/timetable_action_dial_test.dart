@@ -192,8 +192,12 @@ void main() {
     expect(find.byIcon(Icons.today), findsNothing);
   });
 
-  testWidgets('success 时触发器显示对勾，busy 优先于 success', (tester) async {
-    Future<void> pumpTrigger({required bool busy, required bool success}) {
+  testWidgets('success 显示对勾、failure 显示叉号，busy 优先', (tester) async {
+    Future<void> pumpTrigger({
+      required bool busy,
+      required bool success,
+      required bool failure,
+    }) {
       return tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -205,6 +209,7 @@ void main() {
                   width: 72,
                   busy: busy,
                   success: success,
+                  failure: failure,
                   actions: [
                     TimetableDialAction(
                       icon: Icons.today,
@@ -220,15 +225,21 @@ void main() {
       );
     }
 
-    await pumpTrigger(busy: false, success: true);
+    await pumpTrigger(busy: false, success: true, failure: false);
     expect(find.byIcon(Icons.check), findsOneWidget);
     expect(find.byIcon(Icons.expand_more), findsNothing);
 
-    await pumpTrigger(busy: true, success: true);
-    // AnimatedSwitcher 需要过渡期把旧的对勾子项淡出。
+    await pumpTrigger(busy: false, success: false, failure: true);
+    // AnimatedSwitcher 过渡期内旧的对勾子项还在树上，先推进过渡期。
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.byIcon(Icons.close), findsOneWidget);
+    expect(find.byIcon(Icons.check), findsNothing);
+
+    await pumpTrigger(busy: true, success: true, failure: true);
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
     expect(find.byIcon(Icons.check), findsNothing);
+    expect(find.byIcon(Icons.close), findsNothing);
   });
 
   testWidgets('面板展开时屏障带背景模糊，收起后消失', (tester) async {
