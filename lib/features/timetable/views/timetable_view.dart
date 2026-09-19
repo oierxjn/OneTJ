@@ -111,31 +111,6 @@ class _TimetableViewState extends State<TimetableView> {
     );
   }
 
-  /// 拨盘动作：强制刷新课表。
-  ///
-  /// 开始与成功在此弹提示；失败提示由 ViewModel 的 [ShowSnackBarEvent]
-  /// 负责，避免重复弹窗。SnackBar 是排队显示的，进行中的提示要在结果
-  /// 出现前主动撤掉，否则结果会排在 4 秒的进度提示之后。
-  Future<void> _refreshTimetable(AppLocalizations l10n) async {
-    if (_viewModel.isRefreshing || _viewModel.isLoading) {
-      return;
-    }
-    final ScaffoldFeatureController<SnackBar, SnackBarClosedReason>
-        refreshingBar = ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n.timetableRefreshing)),
-    );
-    final bool success = await _viewModel.refresh();
-    if (!mounted) {
-      return;
-    }
-    refreshingBar.close();
-    if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.timetableRefreshed)),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -225,7 +200,9 @@ class _TimetableViewState extends State<TimetableView> {
                       TimetableDialAction(
                         icon: Icons.refresh,
                         label: l10n.timetableRefreshAction,
-                        onTap: () => unawaited(_refreshTimetable(l10n)),
+                        // 刷新反馈由触发器转圈与底部"最近同步"时间承担，
+                        // 失败提示由 ViewModel 的事件流弹出。
+                        onTap: () => unawaited(_viewModel.refresh()),
                       ),
                     ],
                   ),

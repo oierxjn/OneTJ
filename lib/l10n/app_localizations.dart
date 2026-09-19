@@ -200,18 +200,6 @@ abstract class AppLocalizations {
   /// **'Refresh timetable'**
   String get timetableRefreshAction;
 
-  /// No description provided for @timetableRefreshing.
-  ///
-  /// In en, this message translates to:
-  /// **'Refreshing timetable…'**
-  String get timetableRefreshing;
-
-  /// No description provided for @timetableRefreshed.
-  ///
-  /// In en, this message translates to:
-  /// **'Timetable updated'**
-  String get timetableRefreshed;
-
   /// No description provided for @timetableLoadFailed.
   ///
   /// In en, this message translates to:

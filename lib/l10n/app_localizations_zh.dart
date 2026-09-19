@@ -60,12 +60,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get timetableRefreshAction => '刷新课表';
 
   @override
-  String get timetableRefreshing => '正在刷新课表…';
-
-  @override
-  String get timetableRefreshed => '课表已更新';
-
-  @override
   String timetableLoadFailed(Object error) {
     return '加载课程表失败: $error';
   }
