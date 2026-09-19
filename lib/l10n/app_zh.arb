@@ -17,6 +17,7 @@
 
     "timetableDayView": "日视图",
     "timetableWeekView": "周视图",
+    "timetableJumpToToday": "回到今天",
 
     "timetableLoadFailed": "加载课程表失败: {error}",
     "@timetableLoadFailed": {

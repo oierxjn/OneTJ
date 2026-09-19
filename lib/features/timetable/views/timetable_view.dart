@@ -3,9 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:onetj/l10n/app_localizations.dart';
 import 'package:onetj/features/home/views/widgets/home_shell_back_button.dart';
+import 'package:onetj/features/home/views/widgets/home_slim_header.dart';
 import 'package:onetj/app/logging/logger.dart';
 
 import 'package:onetj/features/timetable/view_models/timetable_view_model.dart';
+import 'package:onetj/features/timetable/views/widgets/timetable_action_dial.dart';
 import 'package:onetj/features/timetable/views/widgets/timetable_timeline_panel.dart';
 import 'package:onetj/features/timetable/models/event.dart';
 import 'package:onetj/app/presentation/ui_event.dart';
@@ -114,24 +116,23 @@ class _TimetableViewState extends State<TimetableView> {
     final l10n = AppLocalizations.of(context);
     final Widget? homeBackButton = buildHomeShellBackButton(context);
     return Scaffold(
-      appBar: AppBar(
-        leading: homeBackButton,
-        leadingWidth:
-            homeBackButton == null ? null : homeShellBackButtonLeadingWidth,
-        title: Text(l10n.tabTimetable),
-        actions: [
-          AnimatedBuilder(
-            animation: _viewModel,
-            builder: (context, _) => IconButton(
-              icon: const Icon(Icons.location_searching),
-              onPressed: _viewModel.isLoading ? null : _viewModel.jumpToToday,
+      body: SafeArea(
+        top: true,
+        bottom: false,
+        child: Column(
+          children: [
+            HomeSlimHeader(
+              leading: homeBackButton,
+              title: homeBackButton == null ? null : l10n.tabTimetable,
             ),
-          ),
-        ],
-      ),
-      body: AnimatedBuilder(
-        animation: _viewModel,
-        builder: (context, _) => _buildBody(context),
+            Expanded(
+              child: AnimatedBuilder(
+                animation: _viewModel,
+                builder: (context, _) => _buildBody(context),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -171,24 +172,55 @@ class _TimetableViewState extends State<TimetableView> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-          child: SegmentedButton<TimetableDisplayMode>(
-            segments: [
-              ButtonSegment(
-                value: TimetableDisplayMode.day,
-                label: Text(l10n.timetableDayView),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final double labelWidth = resolveTimelineLabelWidth(
+              constraints.maxWidth -
+                  kTimelinePanelLeftPadding -
+                  kTimelinePanelRightPadding,
+            );
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(
+                kTimelinePanelLeftPadding,
+                4,
+                16,
+                8,
               ),
-              ButtonSegment(
-                value: TimetableDisplayMode.week,
-                label: Text(l10n.timetableWeekView),
+              child: Row(
+                children: [
+                  TimetableActionDial(
+                    width: labelWidth,
+                    actions: [
+                      TimetableDialAction(
+                        icon: Icons.today,
+                        label: l10n.timetableJumpToToday,
+                        onTap: _viewModel.jumpToToday,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: SegmentedButton<TimetableDisplayMode>(
+                      segments: [
+                        ButtonSegment(
+                          value: TimetableDisplayMode.day,
+                          label: Text(l10n.timetableDayView),
+                        ),
+                        ButtonSegment(
+                          value: TimetableDisplayMode.week,
+                          label: Text(l10n.timetableWeekView),
+                        ),
+                      ],
+                      selected: {_viewModel.mode},
+                      onSelectionChanged: (selection) {
+                        _viewModel.setMode(selection.first);
+                      },
+                    ),
+                  ),
+                ],
               ),
-            ],
-            selected: {_viewModel.mode},
-            onSelectionChanged: (selection) {
-              _viewModel.setMode(selection.first);
-            },
-          ),
+            );
+          },
         ),
         if (_viewModel.availableWeeks.isNotEmpty)
           SizedBox(

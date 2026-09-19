@@ -188,6 +188,12 @@ abstract class AppLocalizations {
   /// **'Week View'**
   String get timetableWeekView;
 
+  /// No description provided for @timetableJumpToToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to today'**
+  String get timetableJumpToToday;
+
   /// No description provided for @timetableLoadFailed.
   ///
   /// In en, this message translates to:

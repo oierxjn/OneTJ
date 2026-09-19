@@ -105,6 +105,16 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
 
   bool get isBusy => _settingsLoading || _settingsSaving;
 
+  /// 是否存在未保存的草稿改动。
+  ///
+  /// 用于决定设置页顶部的保存入口是否展示。
+  bool get hasDraftChanges =>
+      isMaxWeekDirty ||
+      isTimeSlotDirty ||
+      isUpcomingDirty ||
+      isUserCollectionDirty ||
+      isLaunchWallpaperDirty;
+
   bool get isMaxWeekDirty =>
       _draftMaxWeekText != _savedSettings.maxWeek.toString();
 

@@ -29,17 +29,17 @@ void main() {
       routes: [
         GoRoute(
           path: '/page',
-          builder: (context, state) {
-            final Widget? homeBackButton = buildHomeShellBackButton(context);
-            return Scaffold(
-              appBar: AppBar(
-                leading: homeBackButton,
-                leadingWidth: homeBackButton == null
-                    ? null
-                    : homeShellBackButtonLeadingWidth,
-              ),
-            );
-          },
+          builder: (context, state) => Scaffold(
+            body: Builder(
+              builder: (context) {
+                final Widget? button = buildHomeShellBackButton(context);
+                if (button == null) {
+                  return const SizedBox.shrink();
+                }
+                return button;
+              },
+            ),
+          ),
         ),
       ],
     );
@@ -72,13 +72,13 @@ void main() {
     expect(exception, isA<FlutterError>());
     expect(exception.toString(), contains('HomeShellLayoutScope'));
   });
-  testWidgets('布局切换后会在应用栏显示返回入口', (tester) async {
+  testWidgets('布局切换后在页面顶部显示返回入口', (tester) async {
     await pumpTestApp(tester);
-    final appBarFinder = find.byType(AppBar);
-    expect(tester.widget<AppBar>(appBarFinder).leading, isNull);
+    // 注意：TextButton.icon 的运行时类型是私有子类，不能用 byType 匹配。
+    expect(find.text('返回主页'), findsNothing);
 
     await themeChangeNotifier.setHomeLayout(HomeLayout.functionGrid);
     await tester.pump();
-    expect(tester.widget<AppBar>(appBarFinder).leading, isNotNull);
+    expect(find.text('返回主页'), findsOneWidget);
   });
 }

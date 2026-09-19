@@ -54,6 +54,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get timetableWeekView => '周视图';
 
   @override
+  String get timetableJumpToToday => '回到今天';
+
+  @override
   String timetableLoadFailed(Object error) {
     return '加载课程表失败: $error';
   }

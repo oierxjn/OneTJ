@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/app/exception/app_exception.dart';
+import 'package:onetj/features/home/views/widgets/home_slim_header.dart';
 import 'package:onetj/features/settings/models/event.dart';
 import 'package:onetj/features/settings/models/launch_wallpaper_editor_result.dart';
 import 'package:onetj/features/settings/view_models/settings_view_model.dart';
@@ -440,24 +441,30 @@ class _SettingsViewState extends State<SettingsView> {
           _syncControllersFromViewModel();
           body = _buildLoadedBody(l10n);
         }
+        // 保存入口只在有未保存改动时出现；保存进行中保持禁用。
+        final bool showSave =
+            _viewModel.hasDraftChanges && _viewModel.uiState.isHydrated;
+        final Widget saveAction = IconButton(
+          tooltip: l10n.saveLabel,
+          icon: const Icon(Icons.save),
+          onPressed: _settingsBusy ? null : _submitSettings,
+        );
 
         return Scaffold(
-          appBar: AppBar(
-            leading: homeBackButton,
-            leadingWidth:
-                homeBackButton == null ? null : homeShellBackButtonLeadingWidth,
-            title: Text(l10n.tabSettings),
-            actions: [
-              IconButton(
-                tooltip: l10n.saveLabel,
-                icon: const Icon(Icons.save),
-                onPressed: !_viewModel.uiState.isHydrated || _settingsBusy
-                    ? null
-                    : _submitSettings,
-              ),
-            ],
+          body: SafeArea(
+            top: true,
+            bottom: false,
+            child: Column(
+              children: [
+                HomeSlimHeader(
+                  leading: homeBackButton,
+                  title: homeBackButton == null ? null : l10n.tabSettings,
+                  actions: showSave ? <Widget>[saveAction] : const <Widget>[],
+                ),
+                Expanded(child: body),
+              ],
+            ),
           ),
-          body: body,
         );
       },
     );
