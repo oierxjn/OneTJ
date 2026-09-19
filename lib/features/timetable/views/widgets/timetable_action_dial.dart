@@ -1,3 +1,5 @@
+import 'dart:ui' show ImageFilter;
+
 import 'package:flutter/material.dart';
 
 /// 拨盘中的一个动作项。
@@ -128,12 +130,22 @@ class _TimetableActionDialState extends State<TimetableActionDial> {
           // 全屏收起屏障。opaque 会阻断命中测试，把触发器的悬停反馈
           // 一并挡掉，所以在触发器矩形处挖一个洞（命中测试尊重裁剪
           // 路径），洞内由触发器 FAB 自己响应悬停与点击。
+          // ClipPath 在 BackdropFilter 外层，模糊与命中都被同一裁剪
+          // 约束：洞外磨砂虚化背景，洞内与面板保持清晰，反衬拨盘。
           child: ClipPath(
             clipper: _TriggerHoleClipper(hole: _triggerGlobalRect),
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: _close,
-              child: const SizedBox.shrink(),
+            child: TweenAnimationBuilder<double>(
+              duration: _animationDuration(context),
+              tween: Tween<double>(begin: 0, end: _barrierBlurSigma),
+              builder: (context, sigma, child) => BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
+                child: child,
+              ),
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: _close,
+                child: const SizedBox.shrink(),
+              ),
             ),
           ),
         ),
@@ -173,6 +185,9 @@ class _TimetableActionDialState extends State<TimetableActionDial> {
     );
   }
 }
+
+/// 收起屏障的背景模糊强度（sigma）。虚化洞外背景以反衬拨盘。
+const double _barrierBlurSigma = 3.0;
 
 /// 全屏收起屏障的裁剪：整屏矩形挖去 [hole]（触发器矩形）。
 ///

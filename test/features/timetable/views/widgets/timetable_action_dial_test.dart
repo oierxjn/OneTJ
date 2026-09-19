@@ -173,8 +173,7 @@ void main() {
     // 回归：此前的全屏 opaque 收起屏障会拦截命中测试，展开后鼠标悬停
     // 触发器不再有任何按钮反馈。屏障在触发器处挖洞后，触发器 FAB 应
     // 重新出现在其位置的命中路径里。
-    final Offset triggerCenter = tester.getCenter(find.byIcon(Icons.expand_more));
-    final RenderObject triggerRenderObject =
+    final Offset triggerCenter = tester.getCenter(find.byIcon(Icons.expand_more));    final RenderObject triggerRenderObject =
         tester.renderObject(find.byIcon(Icons.expand_more));
     final HitTestResult result = tester.hitTestOnBinding(triggerCenter);
     expect(
@@ -186,6 +185,19 @@ void main() {
     await tester.tapAt(const Offset(400, 300));
     await tester.pumpAndSettle();
     expect(find.byIcon(Icons.today), findsNothing);
+  });
+
+  testWidgets('面板展开时屏障带背景模糊，收起后消失', (tester) async {
+    await pumpDial(tester, onTap: () {});
+
+    expect(find.byType(BackdropFilter), findsNothing);
+    await tester.tap(find.byIcon(Icons.expand_more));
+    await tester.pumpAndSettle();
+    expect(find.byType(BackdropFilter), findsOneWidget);
+
+    await tester.tapAt(const Offset(400, 300));
+    await tester.pumpAndSettle();
+    expect(find.byType(BackdropFilter), findsNothing);
   });
 
   testWidgets('触发器与首个动作、动作项之间的垂直间隔一致', (tester) async {
