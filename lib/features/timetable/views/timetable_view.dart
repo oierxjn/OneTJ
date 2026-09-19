@@ -114,21 +114,26 @@ class _TimetableViewState extends State<TimetableView> {
   /// 拨盘动作：强制刷新课表。
   ///
   /// 开始与成功在此弹提示；失败提示由 ViewModel 的 [ShowSnackBarEvent]
-  /// 负责，避免重复弹窗。
+  /// 负责，避免重复弹窗。SnackBar 是排队显示的，进行中的提示要在结果
+  /// 出现前主动撤掉，否则结果会排在 4 秒的进度提示之后。
   Future<void> _refreshTimetable(AppLocalizations l10n) async {
     if (_viewModel.isRefreshing || _viewModel.isLoading) {
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
+    final ScaffoldFeatureController<SnackBar, SnackBarClosedReason>
+        refreshingBar = ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(l10n.timetableRefreshing)),
     );
     final bool success = await _viewModel.refresh();
-    if (!mounted || !success) {
+    if (!mounted) {
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n.timetableRefreshed)),
-    );
+    refreshingBar.close();
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.timetableRefreshed)),
+      );
+    }
   }
 
   @override

@@ -210,8 +210,7 @@ class _TriggerHoleClipper extends CustomClipper<Path> {
   }
 
   @override
-  bool shouldReclip(_TriggerHoleClipper oldClipper) =>
-      oldClipper.hole != hole;
+  bool shouldReclip(_TriggerHoleClipper oldClipper) => oldClipper.hole != hole;
 }
 
 class _DialActionItem extends StatelessWidget {
@@ -230,16 +229,16 @@ class _DialActionItem extends StatelessWidget {
     return Semantics(
       label: action.label,
       button: true,
-        child: _MouseHoverLabel(
-          message: action.label,
-          child: FloatingActionButton.small(
-            heroTag: Object(),
-            onPressed: handleTap,
-            // 同触发器：shrinkWrap 去掉 padded 布局余量。
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            child: Icon(action.icon, size: 20),
-          ),
+      child: _MouseHoverLabel(
+        message: action.label,
+        child: FloatingActionButton.small(
+          heroTag: Object(),
+          onPressed: handleTap,
+          // 同触发器：shrinkWrap 去掉 padded 布局余量。
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          child: Icon(action.icon, size: 20),
         ),
+      ),
     );
   }
 }
