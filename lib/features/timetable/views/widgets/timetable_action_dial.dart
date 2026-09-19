@@ -41,8 +41,19 @@ class TimetableActionDial extends StatefulWidget {
 class _TimetableActionDialState extends State<TimetableActionDial> {
   final LayerLink _layerLink = LayerLink();
   final OverlayPortalController _portalController = OverlayPortalController();
+  final GlobalKey _triggerKey = GlobalKey();
 
   bool get _isOpen => _portalController.isShowing;
+
+  /// 触发器在屏幕上的矩形，供面板屏障挖洞用；未挂载时为 null。
+  Rect? get _triggerGlobalRect {
+    final BuildContext? context = _triggerKey.currentContext;
+    final RenderBox? box = context?.findRenderObject() as RenderBox?;
+    if (box == null || !box.attached) {
+      return null;
+    }
+    return box.localToGlobal(Offset.zero) & box.size;
+  }
 
   // show/hide 只更新浮层条目，不会触发触发器所在子树重建；
   // chevron 的旋转角度依赖 _isOpen，必须显式 setState 才会动画。
@@ -87,6 +98,7 @@ class _TimetableActionDialState extends State<TimetableActionDial> {
           height: 40,
           child: Center(
             child: FloatingActionButton.small(
+              key: _triggerKey,
               onPressed: _toggle,
               // shrinkWrap 去掉 padded 触摸目标在布局上多出的 8px
               //（四周各 4px），保证触发器与动作项的可视尺寸、间隙一致。
@@ -113,10 +125,16 @@ class _TimetableActionDialState extends State<TimetableActionDial> {
     return Stack(
       children: [
         Positioned.fill(
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: _close,
-            child: const SizedBox.shrink(),
+          // 全屏收起屏障。opaque 会阻断命中测试，把触发器的悬停反馈
+          // 一并挡掉，所以在触发器矩形处挖一个洞（命中测试尊重裁剪
+          // 路径），洞内由触发器 FAB 自己响应悬停与点击。
+          child: ClipPath(
+            clipper: _TriggerHoleClipper(hole: _triggerGlobalRect),
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: _close,
+              child: const SizedBox.shrink(),
+            ),
           ),
         ),
         CompositedTransformFollower(
@@ -154,6 +172,31 @@ class _TimetableActionDialState extends State<TimetableActionDial> {
       ],
     );
   }
+}
+
+/// 全屏收起屏障的裁剪：整屏矩形挖去 [hole]（触发器矩形）。
+///
+/// [hole] 为 null（触发器未挂载）时退化为不挖洞的整屏屏障。
+class _TriggerHoleClipper extends CustomClipper<Path> {
+  const _TriggerHoleClipper({required this.hole});
+
+  final Rect? hole;
+
+  @override
+  Path getClip(Size size) {
+    final Path path = Path()
+      ..fillType = PathFillType.evenOdd
+      ..addRect(Offset.zero & size);
+    final Rect? holeRect = hole;
+    if (holeRect != null) {
+      path.addRect(holeRect);
+    }
+    return path;
+  }
+
+  @override
+  bool shouldReclip(_TriggerHoleClipper oldClipper) =>
+      oldClipper.hole != hole;
 }
 
 class _DialActionItem extends StatelessWidget {

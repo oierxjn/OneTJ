@@ -164,6 +164,30 @@ void main() {
     expect(find.byIcon(Icons.today), findsOneWidget);
   });
 
+  testWidgets('面板展开时触发器仍在命中路径上（悬停反馈可用）', (tester) async {
+    await pumpDial(tester, onTap: () {});
+
+    await tester.tap(find.byIcon(Icons.expand_more));
+    await tester.pumpAndSettle();
+
+    // 回归：此前的全屏 opaque 收起屏障会拦截命中测试，展开后鼠标悬停
+    // 触发器不再有任何按钮反馈。屏障在触发器处挖洞后，触发器 FAB 应
+    // 重新出现在其位置的命中路径里。
+    final Offset triggerCenter = tester.getCenter(find.byIcon(Icons.expand_more));
+    final RenderObject triggerRenderObject =
+        tester.renderObject(find.byIcon(Icons.expand_more));
+    final HitTestResult result = tester.hitTestOnBinding(triggerCenter);
+    expect(
+      result.path.map((HitTestEntry entry) => entry.target),
+      contains(triggerRenderObject),
+    );
+
+    // 洞外的屏障依旧生效：面板外点击可收起。
+    await tester.tapAt(const Offset(400, 300));
+    await tester.pumpAndSettle();
+    expect(find.byIcon(Icons.today), findsNothing);
+  });
+
   testWidgets('触发器与首个动作、动作项之间的垂直间隔一致', (tester) async {
     // 回归：此前面板偏移是 6、项间距是 12，两段间隔不一致。
     await tester.pumpWidget(
