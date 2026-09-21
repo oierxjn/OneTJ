@@ -37,12 +37,20 @@ class SettingsCard extends StatelessWidget {
       trailing: trailing,
       onTap: onTap,
     );
-    return Card(
-      color: visual.color,
-      shape: visual.shape,
-      margin: margin,
-      clipBehavior: clipBehavior,
-      elevation: elevation,
+    return TweenAnimationBuilder<Color>(
+      tween: Tween<Color>(
+        end: visual.color ?? SettingsCardVisualState.baseCardColor(context),
+      ),
+      duration: SettingsCardVisualState.statusTransitionDuration,
+      curve: Curves.easeOut,
+      builder: (context, color, child) => Card(
+        color: color,
+        shape: visual.shape,
+        margin: margin,
+        clipBehavior: clipBehavior,
+        elevation: elevation,
+        child: child,
+      ),
       child: content,
     );
   }

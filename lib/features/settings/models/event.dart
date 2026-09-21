@@ -2,6 +2,22 @@ import 'package:onetj/app/presentation/ui_event.dart';
 import 'package:onetj/models/settings_data.dart';
 import 'package:onetj/services/hive_storage_service.dart';
 
+/// 设置页会持久化的设置项，对应会给出保存反馈的卡片。
+enum SettingsCardField {
+  maxWeek,
+  timeSlots,
+  upcoming,
+  userCollection,
+  launchWallpaper,
+}
+
+/// 某个设置项持久化成功后的卡片反馈事件。
+class SettingsSavedFeedbackEvent extends UiEvent {
+  const SettingsSavedFeedbackEvent({required this.field});
+
+  final SettingsCardField field;
+}
+
 class SettingsResetEvent extends UiEvent {
   const SettingsResetEvent({required this.settings});
 

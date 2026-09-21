@@ -49,6 +49,7 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
     SettingsRepository? settingsRepository,
     ThemeChangeNotifier? themeChangeNotifier,
     required CetScoreDataService cetScoreDataService,
+    this.savingFeedbackDelay = const Duration(milliseconds: 300),
   })  : _settingsRepository =
             settingsRepository ?? appLocator<SettingsRepository>(),
         _themeChangeNotifier =
@@ -60,6 +61,9 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
     _applySavedToDraft(_savedSettings);
     _themeChangeNotifier.addListener(_onThemeChanged);
   }
+
+  /// 蓝条反馈的延迟阈值：写入在该时间内完成则视为“无感知”，不显示保存中。
+  final Duration savingFeedbackDelay;
 
   final SettingsRepository _settingsRepository;
   final ThemeChangeNotifier _themeChangeNotifier;
@@ -85,6 +89,11 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
 
   /// 串行化持久化的任务链，避免连续改动并发写仓库。
   Future<void> _persistQueue = Future<void>.value();
+
+  /// 蓝条反馈的延迟 Timer 与当前可见状态。
+  Timer? _savingFeedbackTimer;
+  bool _savingFeedbackVisible = false;
+  SettingsCardField? _savingFeedbackField;
 
   SettingsUiState get uiState => SettingsUiState(
         isHydrated: _hydrated,
@@ -114,6 +123,10 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
   bool get hiveMigrationStateLoaded => _hiveMigrationStateLoaded;
 
   bool get isBusy => _settingsLoading || _settingsSaving;
+
+  /// 当前应显示蓝条（保存中）的设置项；写入不可感知时为 null。
+  SettingsCardField? get visibleSavingField =>
+      _savingFeedbackVisible ? _savingFeedbackField : null;
 
   /// 最大周数草稿与已存值是否不一致。
   ///
@@ -205,7 +218,7 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
     }
     _draftUpcomingMode = mode;
     notifyListeners();
-    await _persist();
+    await _persist(field: SettingsCardField.upcoming);
   }
 
   void updateDashboardUpcomingCountText(String value) {
@@ -227,7 +240,7 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
         )
         .toList(growable: false);
     notifyListeners();
-    await _persist();
+    await _persist(field: SettingsCardField.timeSlots);
   }
 
   /// 更新隐私采集字段并立即持久化。
@@ -235,7 +248,7 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
       Set<UserCollectionField> value) async {
     _draftUserCollectionFields = Set<UserCollectionField>.from(value);
     notifyListeners();
-    await _persist();
+    await _persist(field: SettingsCardField.userCollection);
   }
 
   /// 更新启动壁纸并立即持久化。
@@ -245,7 +258,7 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
     }
     _draftLaunchWallpaperRef = value;
     notifyListeners();
-    await _persist();
+    await _persist(field: SettingsCardField.launchWallpaper);
   }
 
   Future<void> logout() async {
@@ -368,7 +381,7 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
     if (!_isMaxWeekTextCommittable) {
       return;
     }
-    await _persist();
+    await _persist(field: SettingsCardField.maxWeek);
   }
 
   /// 提交桌面课程数文本框草稿（失去焦点时调用）。
@@ -376,7 +389,7 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
     if (!_isUpcomingCountTextCommittable) {
       return;
     }
-    await _persist();
+    await _persist(field: SettingsCardField.upcoming);
   }
 
   bool get _isMaxWeekTextCommittable =>
@@ -414,7 +427,7 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
   /// 两个文本草稿仅在能合法解析时参与写入，否则沿用已存值，保证非法输入
   /// 不会阻塞其他设置落盘。写入成功后只更新 [_savedSettings]、不回写草稿，
   /// 避免覆盖用户正在编辑的文本框内容。
-  Future<void> _persist() async {
+  Future<void> _persist({required SettingsCardField field}) async {
     final Future<void> previous = _persistQueue;
     final Completer<void> gate = Completer<void>();
     _persistQueue = gate.future;
@@ -424,6 +437,8 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
         return;
       }
       _settingsSaving = true;
+      _savingFeedbackField = field;
+      _scheduleSavingFeedbackTimer();
       errorMessage = null;
       notifyListeners();
       try {
@@ -459,6 +474,7 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
             'dashboardUpcomingCount': dashboardUpcomingCount,
           },
         );
+        emit(SettingsSavedFeedbackEvent(field: field));
       } on SettingsValidationException catch (error) {
         if (_disposed) {
           return;
@@ -485,6 +501,8 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
         emit(ShowSnackBarEvent(message: message));
       } finally {
         _settingsSaving = false;
+        _savingFeedbackTimer?.cancel();
+        _savingFeedbackVisible = false;
         if (!_disposed) {
           notifyListeners();
         }
@@ -492,6 +510,19 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
     } finally {
       gate.complete();
     }
+  }
+
+  /// 写入超过 [savingFeedbackDelay] 仍未完成时才点亮蓝条，瞬时写入保持安静。
+  void _scheduleSavingFeedbackTimer() {
+    _savingFeedbackTimer?.cancel();
+    _savingFeedbackVisible = false;
+    _savingFeedbackTimer = Timer(savingFeedbackDelay, () {
+      if (_disposed || !_settingsSaving) {
+        return;
+      }
+      _savingFeedbackVisible = true;
+      notifyListeners();
+    });
   }
 
   Future<void> resetSettings() async {
@@ -567,6 +598,7 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
   @override
   void dispose() {
     _disposed = true;
+    _savingFeedbackTimer?.cancel();
     _themeChangeNotifier.removeListener(_onThemeChanged);
     super.dispose();
   }

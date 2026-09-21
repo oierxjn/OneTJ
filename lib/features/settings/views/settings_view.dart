@@ -36,6 +36,8 @@ class _SettingsViewState extends State<SettingsView> {
   late final TextEditingController _dashboardCountController;
   late final FocusNode _maxWeekFocusNode;
   late final FocusNode _dashboardCountFocusNode;
+  Timer? _successFlashTimer;
+  SettingsCardField? _successFlashField;
 
   @override
   void initState() {
@@ -60,6 +62,20 @@ class _SettingsViewState extends State<SettingsView> {
       }
       if (event is NavigateEvent) {
         context.go(event.route);
+        return;
+      }
+      if (event is SettingsSavedFeedbackEvent) {
+        _successFlashTimer?.cancel();
+        setState(() {
+          _successFlashField = event.field;
+        });
+        _successFlashTimer = Timer(const Duration(seconds: 2), () {
+          if (mounted) {
+            setState(() {
+              _successFlashField = null;
+            });
+          }
+        });
         return;
       }
       if (event is SettingsResetEvent) {
@@ -118,6 +134,7 @@ class _SettingsViewState extends State<SettingsView> {
   @override
   void dispose() {
     _eventSub?.cancel();
+    _successFlashTimer?.cancel();
     _maxWeekFocusNode.removeListener(_onMaxWeekFocusChanged);
     _dashboardCountFocusNode.removeListener(_onDashboardCountFocusChanged);
     _maxWeekFocusNode.dispose();
@@ -399,6 +416,8 @@ class _SettingsViewState extends State<SettingsView> {
       dashboardCountFocusNode: _dashboardCountFocusNode,
       maxWeekInvalid: _viewModel.isMaxWeekInvalid,
       upcomingInvalid: _viewModel.isUpcomingInvalid,
+      visibleSavingField: _viewModel.visibleSavingField,
+      successFlashField: _successFlashField,
       timeSlotSummary: _timeSlotSummary(l10n),
       dashboardUpcomingSummary: _dashboardUpcomingSummary(l10n),
       userCollectionSummary: _userCollectionSummary(l10n),

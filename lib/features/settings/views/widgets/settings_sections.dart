@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:onetj/l10n/app_localizations.dart';
 
+import 'package:onetj/features/settings/models/event.dart';
 import 'package:onetj/features/settings/views/widgets/home_layout_card.dart';
 import 'package:onetj/features/settings/views/widgets/settings_card.dart';
 import 'package:onetj/features/settings/views/widgets/settings_card_visual_state.dart';
@@ -19,6 +20,8 @@ class SettingsSections extends StatelessWidget {
     required this.dashboardCountFocusNode,
     required this.maxWeekInvalid,
     required this.upcomingInvalid,
+    required this.visibleSavingField,
+    required this.successFlashField,
     required this.timeSlotSummary,
     required this.dashboardUpcomingSummary,
     required this.userCollectionSummary,
@@ -54,6 +57,8 @@ class SettingsSections extends StatelessWidget {
   final FocusNode dashboardCountFocusNode;
   final bool maxWeekInvalid;
   final bool upcomingInvalid;
+  final SettingsCardField? visibleSavingField;
+  final SettingsCardField? successFlashField;
   final String timeSlotSummary;
   final String dashboardUpcomingSummary;
   final String userCollectionSummary;
@@ -133,13 +138,29 @@ class SettingsSections extends StatelessWidget {
     );
   }
 
-  SettingsCardStatus _status({required bool hasError}) {
-    return hasError ? SettingsCardStatus.error : SettingsCardStatus.normal;
+  /// 把底层条件消解为卡片唯一显示状态：error > saving > success > normal。
+  SettingsCardStatus _status(
+    SettingsCardField field, {
+    bool hasError = false,
+  }) {
+    if (hasError) {
+      return SettingsCardStatus.error;
+    }
+    if (visibleSavingField == field) {
+      return SettingsCardStatus.saving;
+    }
+    if (successFlashField == field) {
+      return SettingsCardStatus.success;
+    }
+    return SettingsCardStatus.normal;
   }
 
   Widget _buildMaxWeekCard() {
     return SettingsCard(
-      status: _status(hasError: maxWeekInvalid),
+      status: _status(
+        SettingsCardField.maxWeek,
+        hasError: maxWeekInvalid,
+      ),
       title: Text(l10n.settingsMaxWeekTitle),
       subtitle: Text(l10n.settingsMaxWeekSubtitle),
       trailing: SizedBox(
@@ -164,6 +185,7 @@ class SettingsSections extends StatelessWidget {
   }
 
   Widget _buildTimeSlotCard() => SettingsCard(
+        status: _status(SettingsCardField.timeSlots),
         leading: const Icon(Icons.schedule),
         title: Text(l10n.settingsTimeSlotsTitle),
         subtitle: Text(timeSlotSummary),
@@ -179,10 +201,14 @@ class SettingsSections extends StatelessWidget {
         summaryText: dashboardUpcomingSummary,
         onModeChanged: onUpcomingModeChanged,
         onCountChanged: onDashboardCountChanged,
-        status: _status(hasError: upcomingInvalid),
+        status: _status(
+          SettingsCardField.upcoming,
+          hasError: upcomingInvalid,
+        ),
       );
 
   Widget _buildUserCollectionPolicyCard() => SettingsCard(
+        status: _status(SettingsCardField.userCollection),
         leading: const Icon(Icons.privacy_tip_outlined),
         title: Text(l10n.settingsUserCollectionPolicyTitle),
         subtitle: Text(userCollectionSummary),
@@ -191,6 +217,7 @@ class SettingsSections extends StatelessWidget {
       );
 
   Widget _buildLaunchWallpaperCard() => SettingsCard(
+        status: _status(SettingsCardField.launchWallpaper),
         leading: const Icon(Icons.wallpaper_outlined),
         title: Text(l10n.settingsLaunchWallpaperTitle),
         subtitle: Text(launchWallpaperSummary),
