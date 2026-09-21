@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:onetj/app/presentation/ui_event.dart';
 import 'package:onetj/app/theme/theme_change_notifier.dart';
 import 'package:onetj/features/cet_score/application/cet_score_data_service.dart';
+import 'package:onetj/features/settings/models/event.dart';
 import 'package:onetj/features/settings/view_models/settings_view_model.dart';
 import 'package:onetj/models/cet_score_data.dart';
 import 'package:onetj/models/dashboard_upcoming_mode.dart';
@@ -23,13 +26,14 @@ class _FakeCetScoreDataService implements CetScoreDataService {
   Future<void> clearCachedData() async {}
 }
 
-/// 记录写入次数并可注入失败的存储装饰器。
+/// 记录写入次数、可注入失败与写入门控的存储装饰器。
 class _CountingSettingsStorage implements SettingsStorage {
   _CountingSettingsStorage(this._inner);
 
   final SettingsStorage _inner;
   int saveCount = 0;
   Object? saveError;
+  Completer<void>? saveGate;
 
   @override
   Future<SettingsData?> read() => _inner.read();
@@ -40,6 +44,10 @@ class _CountingSettingsStorage implements SettingsStorage {
     final Object? error = saveError;
     if (error != null) {
       throw error;
+    }
+    final Completer<void>? gate = saveGate;
+    if (gate != null) {
+      await gate.future;
     }
     await _inner.save(data);
   }
@@ -211,6 +219,90 @@ void main() {
       expect(saved.maxWeek, kDefaultMaxWeek);
       expect(viewModel.draftMaxWeekText, kDefaultMaxWeek.toString());
       expect(viewModel.isMaxWeekDirty, isFalse);
+    });
+  });
+
+  group('保存反馈', () {
+    test('持久化成功发出对应字段的反馈事件', () async {
+      await viewModel.initialize();
+      final List<UiEvent> events = <UiEvent>[];
+      final StreamSubscription<UiEvent> sub = viewModel.events.listen(
+        events.add,
+      );
+
+      viewModel.updateMaxWeekText('10');
+      await viewModel.commitMaxWeekText();
+      await viewModel.updateTimeSlotRanges(const <TimePeriodRangeData>[
+        TimePeriodRangeData(startMinutes: 480, endMinutes: 555),
+      ]);
+      await pumpEventQueue();
+      await sub.cancel();
+
+      expect(
+        events
+            .whereType<SettingsSavedFeedbackEvent>()
+            .map((SettingsSavedFeedbackEvent event) => event.field),
+        <SettingsCardField>[
+          SettingsCardField.maxWeek,
+          SettingsCardField.timeSlots,
+        ],
+      );
+    });
+
+    test('瞬时写入不点亮蓝条', () async {
+      await viewModel.initialize();
+
+      await viewModel.updateTimeSlotRanges(const <TimePeriodRangeData>[
+        TimePeriodRangeData(startMinutes: 480, endMinutes: 555),
+      ]);
+
+      expect(viewModel.visibleSavingField, isNull);
+    });
+
+    test('超过延迟阈值仍未写完时点亮蓝条，结束后熄灭', () async {
+      final SettingsViewModel slowViewModel = SettingsViewModel(
+        settingsRepository: settingsRepository,
+        themeChangeNotifier: themeChangeNotifier,
+        cetScoreDataService: _FakeCetScoreDataService(),
+        savingFeedbackDelay: Duration.zero,
+      );
+      try {
+        await slowViewModel.initialize();
+        final Completer<void> gate = Completer<void>();
+        countingStorage.saveGate = gate;
+
+        final Future<void> persisting = slowViewModel.updateTimeSlotRanges(
+          const <TimePeriodRangeData>[
+            TimePeriodRangeData(startMinutes: 480, endMinutes: 555),
+          ],
+        );
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+        expect(slowViewModel.visibleSavingField, SettingsCardField.timeSlots);
+
+        gate.complete();
+        await persisting;
+        expect(slowViewModel.visibleSavingField, isNull);
+      } finally {
+        slowViewModel.dispose();
+      }
+    });
+
+    test('默认延迟内完成的写入不点亮蓝条', () async {
+      await viewModel.initialize();
+      final Completer<void> gate = Completer<void>();
+      countingStorage.saveGate = gate;
+
+      final Future<void> persisting = viewModel.updateTimeSlotRanges(
+        const <TimePeriodRangeData>[
+          TimePeriodRangeData(startMinutes: 480, endMinutes: 555),
+        ],
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+      expect(viewModel.visibleSavingField, isNull);
+
+      gate.complete();
+      await persisting;
+      expect(viewModel.visibleSavingField, isNull);
     });
   });
 }
