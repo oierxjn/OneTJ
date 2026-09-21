@@ -37,8 +37,8 @@ class SettingsCard extends StatelessWidget {
       trailing: trailing,
       onTap: onTap,
     );
-    return TweenAnimationBuilder<Color>(
-      tween: Tween<Color>(
+    return TweenAnimationBuilder<Color?>(
+      tween: ColorTween(
         end: visual.color ?? SettingsCardVisualState.baseCardColor(context),
       ),
       duration: SettingsCardVisualState.statusTransitionDuration,

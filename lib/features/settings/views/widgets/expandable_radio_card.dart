@@ -135,8 +135,8 @@ class _ExpandableRadioCardState<T> extends State<ExpandableRadioCard<T>>
   Widget build(BuildContext context) {
     final SettingsCardVisualState visual =
         SettingsCardVisualState.fromStatus(context, widget.status);
-    return TweenAnimationBuilder<Color>(
-      tween: Tween<Color>(
+    return TweenAnimationBuilder<Color?>(
+      tween: ColorTween(
         end: visual.color ?? SettingsCardVisualState.baseCardColor(context),
       ),
       duration: SettingsCardVisualState.statusTransitionDuration,
