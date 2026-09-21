@@ -2,12 +2,6 @@ import 'package:onetj/app/presentation/ui_event.dart';
 import 'package:onetj/models/settings_data.dart';
 import 'package:onetj/services/hive_storage_service.dart';
 
-class SettingsSavedEvent extends UiEvent {
-  const SettingsSavedEvent({required this.settings});
-
-  final SettingsData settings;
-}
-
 class SettingsResetEvent extends UiEvent {
   const SettingsResetEvent({required this.settings});
 

@@ -1935,12 +1935,6 @@ abstract class AppLocalizations {
   /// **'Settings reset to defaults'**
   String get settingsResetDone;
 
-  /// No description provided for @settingsSaved.
-  ///
-  /// In en, this message translates to:
-  /// **'Settings saved'**
-  String get settingsSaved;
-
   /// No description provided for @aboutDescription.
   ///
   /// In en, this message translates to:

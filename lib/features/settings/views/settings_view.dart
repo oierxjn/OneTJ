@@ -34,6 +34,8 @@ class _SettingsViewState extends State<SettingsView> {
   StreamSubscription<UiEvent>? _eventSub;
   late final TextEditingController _maxWeekController;
   late final TextEditingController _dashboardCountController;
+  late final FocusNode _maxWeekFocusNode;
+  late final FocusNode _dashboardCountFocusNode;
 
   @override
   void initState() {
@@ -41,6 +43,10 @@ class _SettingsViewState extends State<SettingsView> {
     _viewModel = widget.viewModel;
     _maxWeekController = TextEditingController();
     _dashboardCountController = TextEditingController();
+    _maxWeekFocusNode = FocusNode();
+    _dashboardCountFocusNode = FocusNode();
+    _maxWeekFocusNode.addListener(_onMaxWeekFocusChanged);
+    _dashboardCountFocusNode.addListener(_onDashboardCountFocusChanged);
     _eventSub = _viewModel.events.listen((event) {
       if (!mounted) {
         return;
@@ -54,14 +60,6 @@ class _SettingsViewState extends State<SettingsView> {
       }
       if (event is NavigateEvent) {
         context.go(event.route);
-        return;
-      }
-      if (event is SettingsSavedEvent) {
-        _syncControllersFromViewModel();
-        final AppLocalizations l10n = AppLocalizations.of(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.settingsSaved)),
-        );
         return;
       }
       if (event is SettingsResetEvent) {
@@ -120,10 +118,30 @@ class _SettingsViewState extends State<SettingsView> {
   @override
   void dispose() {
     _eventSub?.cancel();
+    _maxWeekFocusNode.removeListener(_onMaxWeekFocusChanged);
+    _dashboardCountFocusNode.removeListener(_onDashboardCountFocusChanged);
+    _maxWeekFocusNode.dispose();
+    _dashboardCountFocusNode.dispose();
     _maxWeekController.dispose();
     _dashboardCountController.dispose();
     _viewModel.dispose();
     super.dispose();
+  }
+
+  /// 文本框失去焦点即提交草稿。
+  ///
+  /// Flutter 默认点击文本框外部会先使其失焦，因此切换选项卡、打开
+  /// 子编辑器等离开操作都会先经过这里完成落盘。
+  void _onMaxWeekFocusChanged() {
+    if (!_maxWeekFocusNode.hasFocus) {
+      unawaited(_viewModel.commitMaxWeekText());
+    }
+  }
+
+  void _onDashboardCountFocusChanged() {
+    if (!_dashboardCountFocusNode.hasFocus) {
+      unawaited(_viewModel.commitDashboardUpcomingCountText());
+    }
   }
 
   String _resolveSettingsErrorMessage(
@@ -180,10 +198,6 @@ class _SettingsViewState extends State<SettingsView> {
       text: next,
       selection: TextSelection.collapsed(offset: next.length),
     );
-  }
-
-  Future<void> _submitSettings() async {
-    await _viewModel.saveSettings();
   }
 
   Future<void> _logout(BuildContext context) async {
@@ -381,13 +395,10 @@ class _SettingsViewState extends State<SettingsView> {
       l10n: l10n,
       maxWeekController: _maxWeekController,
       dashboardCountController: _dashboardCountController,
-      maxWeekDirty: _viewModel.isMaxWeekDirty,
+      maxWeekFocusNode: _maxWeekFocusNode,
+      dashboardCountFocusNode: _dashboardCountFocusNode,
       maxWeekInvalid: _viewModel.isMaxWeekInvalid,
-      timeSlotDirty: _viewModel.isTimeSlotDirty,
-      upcomingDirty: _viewModel.isUpcomingDirty,
       upcomingInvalid: _viewModel.isUpcomingInvalid,
-      userCollectionDirty: _viewModel.isUserCollectionDirty,
-      launchWallpaperDirty: _viewModel.isLaunchWallpaperDirty,
       timeSlotSummary: _timeSlotSummary(l10n),
       dashboardUpcomingSummary: _dashboardUpcomingSummary(l10n),
       userCollectionSummary: _userCollectionSummary(l10n),
@@ -395,12 +406,12 @@ class _SettingsViewState extends State<SettingsView> {
       upcomingMode: _viewModel.draftUpcomingMode,
       themeColor: _viewModel.themeColor,
       homeLayout: _viewModel.homeLayout,
-      enabled: !_settingsBusy,
       hiveMigrationLoading: _viewModel.hiveMigrationLoading,
       hiveMigrationStateLoaded: _viewModel.hiveMigrationStateLoaded,
       legacyHiveDataAvailable: _viewModel.legacyHiveDataAvailable,
       onMaxWeekChanged: _viewModel.updateMaxWeekText,
-      onUpcomingModeChanged: _viewModel.updateUpcomingMode,
+      onUpcomingModeChanged: (mode) =>
+          unawaited(_viewModel.updateUpcomingMode(mode)),
       onDashboardCountChanged: _viewModel.updateDashboardUpcomingCountText,
       onThemeColorChanged: _viewModel.setThemeColor,
       onHomeLayoutChanged: _viewModel.setHomeLayout,
@@ -441,14 +452,6 @@ class _SettingsViewState extends State<SettingsView> {
           _syncControllersFromViewModel();
           body = _buildLoadedBody(l10n);
         }
-        // 保存入口只在有未保存改动时出现；保存进行中保持禁用。
-        final bool showSave =
-            _viewModel.hasDraftChanges && _viewModel.uiState.isHydrated;
-        final Widget saveAction = IconButton(
-          tooltip: l10n.saveLabel,
-          icon: const Icon(Icons.save),
-          onPressed: _settingsBusy ? null : _submitSettings,
-        );
 
         return Scaffold(
           body: SafeArea(
@@ -459,7 +462,6 @@ class _SettingsViewState extends State<SettingsView> {
                 HomeSlimHeader(
                   leading: homeBackButton,
                   title: homeBackButton == null ? null : l10n.tabSettings,
-                  actions: showSave ? <Widget>[saveAction] : const <Widget>[],
                 ),
                 Expanded(child: body),
               ],

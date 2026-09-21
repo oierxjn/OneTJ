@@ -1049,9 +1049,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsResetDone => 'Settings reset to defaults';
 
   @override
-  String get settingsSaved => 'Settings saved';
-
-  @override
   String get aboutDescription =>
       'A third-party client for Tongji University services.';
 

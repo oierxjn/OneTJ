@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
@@ -38,6 +40,10 @@ class SettingsUiState {
   final bool isSaving;
 }
 
+/// 设置页视图模型。
+///
+/// 采用即改即存：离散设置（时间段、隐私字段、启动壁纸、桌面课程模式）
+/// 在草稿更新后立即持久化；文本框草稿只在失去焦点提交时落盘。
 class SettingsViewModel extends BaseViewModel<UiEvent> {
   SettingsViewModel({
     SettingsRepository? settingsRepository,
@@ -72,9 +78,13 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
   bool _hydrated = false;
   bool _settingsLoading = false;
   bool _settingsSaving = false;
+  bool _disposed = false;
   bool _legacyHiveDataAvailable = false;
   bool _hiveMigrationLoading = false;
   bool _hiveMigrationStateLoaded = false;
+
+  /// 串行化持久化的任务链，避免连续改动并发写仓库。
+  Future<void> _persistQueue = Future<void>.value();
 
   SettingsUiState get uiState => SettingsUiState(
         isHydrated: _hydrated,
@@ -105,16 +115,9 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
 
   bool get isBusy => _settingsLoading || _settingsSaving;
 
-  /// 是否存在未保存的草稿改动。
+  /// 草稿与已存值是否不一致。
   ///
-  /// 用于决定设置页顶部的保存入口是否展示。
-  bool get hasDraftChanges =>
-      isMaxWeekDirty ||
-      isTimeSlotDirty ||
-      isUpcomingDirty ||
-      isUserCollectionDirty ||
-      isLaunchWallpaperDirty;
-
+  /// 即改即存后仅用于测试与状态 introspection，不再驱动任何 UI。
   bool get isMaxWeekDirty =>
       _draftMaxWeekText != _savedSettings.maxWeek.toString();
 
@@ -225,12 +228,14 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
     notifyListeners();
   }
 
-  void updateUpcomingMode(DashboardUpcomingMode mode) {
+  /// 更新桌面课程模式并立即持久化。
+  Future<void> updateUpcomingMode(DashboardUpcomingMode mode) async {
     if (_draftUpcomingMode == mode) {
       return;
     }
     _draftUpcomingMode = mode;
     notifyListeners();
+    await _persist();
   }
 
   void updateDashboardUpcomingCountText(String value) {
@@ -241,7 +246,8 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
     notifyListeners();
   }
 
-  void updateTimeSlotRanges(List<TimePeriodRangeData> value) {
+  /// 更新时间段并立即持久化（时间段编辑器返回前已完成自身校验）。
+  Future<void> updateTimeSlotRanges(List<TimePeriodRangeData> value) async {
     _draftTimeSlotRanges = value
         .map(
           (item) => TimePeriodRangeData(
@@ -251,19 +257,25 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
         )
         .toList(growable: false);
     notifyListeners();
+    await _persist();
   }
 
-  void updateUserCollectionFields(Set<UserCollectionField> value) {
+  /// 更新隐私采集字段并立即持久化。
+  Future<void> updateUserCollectionFields(
+      Set<UserCollectionField> value) async {
     _draftUserCollectionFields = Set<UserCollectionField>.from(value);
     notifyListeners();
+    await _persist();
   }
 
-  void updateLaunchWallpaperSelection(LaunchWallpaperRef value) {
+  /// 更新启动壁纸并立即持久化。
+  Future<void> updateLaunchWallpaperSelection(LaunchWallpaperRef value) async {
     if (_draftLaunchWallpaperRef == value) {
       return;
     }
     _draftLaunchWallpaperRef = value;
     notifyListeners();
+    await _persist();
   }
 
   Future<void> logout() async {
@@ -379,72 +391,136 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
     }
   }
 
-  Future<void> saveSettings() async {
-    AppLogger.logUiAction(feature: 'Settings', action: 'save_started');
-    _settingsSaving = true;
-    errorMessage = null;
-    notifyListeners();
+  /// 提交最大周数文本框草稿（失去焦点时调用）。
+  ///
+  /// 文本与已存值一致或非法时静默跳过；非法态由卡片错误状态实时呈现。
+  Future<void> commitMaxWeekText() async {
+    if (!_isMaxWeekTextCommittable) {
+      return;
+    }
+    await _persist();
+  }
+
+  /// 提交桌面课程数文本框草稿（失去焦点时调用）。
+  Future<void> commitDashboardUpcomingCountText() async {
+    if (!_isUpcomingCountTextCommittable) {
+      return;
+    }
+    await _persist();
+  }
+
+  bool get _isMaxWeekTextCommittable =>
+      isMaxWeekDirty && _parseDraftMaxWeekOrNull() != null;
+
+  bool get _isUpcomingCountTextCommittable =>
+      _draftDashboardUpcomingCountText !=
+          _savedSettings.dashboardUpcomingCount.toString() &&
+      _parseDraftUpcomingCountOrNull() != null;
+
+  int? _parseDraftMaxWeekOrNull() {
     try {
       final int maxWeek = SettingsModel.parseMaxWeekText(_draftMaxWeekText);
-      final int dashboardUpcomingCount =
-          _draftUpcomingMode == DashboardUpcomingMode.count
-              ? SettingsModel.parseDashboardUpcomingCountText(
-                  _draftDashboardUpcomingCountText,
-                )
-              : _savedSettings.dashboardUpcomingCount;
       SettingsModel.validateMaxWeek(maxWeek);
-      SettingsModel.validateTimeSlotRanges(_draftTimeSlotRanges);
-      SettingsModel.validateDashboardUpcomingCount(dashboardUpcomingCount);
-      final SettingsData next = SettingsData(
-        maxWeek: maxWeek,
-        timeSlotRanges: List<TimePeriodRangeData>.unmodifiable(
-          _draftTimeSlotRanges,
-        ),
-        dashboardUpcomingMode: _draftUpcomingMode,
-        dashboardUpcomingCount: dashboardUpcomingCount,
-        userCollectionFields: Set<UserCollectionField>.unmodifiable(
-          _draftUserCollectionFields,
-        ),
-        selectedLaunchWallpaperRef: _draftLaunchWallpaperRef,
+      return maxWeek;
+    } on SettingsValidationException {
+      return null;
+    }
+  }
+
+  int? _parseDraftUpcomingCountOrNull() {
+    try {
+      final int count = SettingsModel.parseDashboardUpcomingCountText(
+        _draftDashboardUpcomingCountText,
       );
-      await _settingsRepository.saveSettings(next);
-      _savedSettings = next;
-      _applySavedToDraft(next);
-      AppLogger.info(
-        'Save settings success',
-        loggerName: 'SettingsViewModel',
-        context: <String, Object?>{
-          'maxWeek': maxWeek,
-          'timeSlotCount': _draftTimeSlotRanges.length,
-          'dashboardUpcomingMode': _draftUpcomingMode.jsonValue,
-          'dashboardUpcomingCount': dashboardUpcomingCount,
-        },
-      );
+      SettingsModel.validateDashboardUpcomingCount(count);
+      return count;
+    } on SettingsValidationException {
+      return null;
+    }
+  }
+
+  /// 将当前草稿写入仓库并更新已存状态。
+  ///
+  /// 两个文本草稿仅在能合法解析时参与写入，否则沿用已存值，保证非法输入
+  /// 不会阻塞其他设置落盘。写入成功后只更新 [_savedSettings]、不回写草稿，
+  /// 避免覆盖用户正在编辑的文本框内容。
+  Future<void> _persist() async {
+    final Future<void> previous = _persistQueue;
+    final Completer<void> gate = Completer<void>();
+    _persistQueue = gate.future;
+    await previous;
+    try {
+      if (_disposed) {
+        return;
+      }
+      _settingsSaving = true;
+      errorMessage = null;
       notifyListeners();
-      emit(SettingsSavedEvent(settings: next));
-    } on SettingsValidationException catch (error) {
-      errorMessage = error.message;
-      AppLogger.warning(
-        'Save settings validation failed',
-        loggerName: 'SettingsViewModel',
-        code: error.code,
-        error: error,
-      );
-      emit(
-        ShowSnackBarEvent(message: error.message, code: error.code),
-      );
-    } catch (error) {
-      final String message = 'Failed to save settings: ${error.toString()}';
-      errorMessage = message;
-      AppLogger.error(
-        'Save settings failed',
-        loggerName: 'SettingsViewModel',
-        error: error,
-      );
-      emit(ShowSnackBarEvent(message: message));
+      try {
+        final int maxWeek =
+            _parseDraftMaxWeekOrNull() ?? _savedSettings.maxWeek;
+        final int dashboardUpcomingCount = _parseDraftUpcomingCountOrNull() ??
+            _savedSettings.dashboardUpcomingCount;
+        SettingsModel.validateTimeSlotRanges(_draftTimeSlotRanges);
+        final SettingsData next = SettingsData(
+          maxWeek: maxWeek,
+          timeSlotRanges: List<TimePeriodRangeData>.unmodifiable(
+            _draftTimeSlotRanges,
+          ),
+          dashboardUpcomingMode: _draftUpcomingMode,
+          dashboardUpcomingCount: dashboardUpcomingCount,
+          userCollectionFields: Set<UserCollectionField>.unmodifiable(
+            _draftUserCollectionFields,
+          ),
+          selectedLaunchWallpaperRef: _draftLaunchWallpaperRef,
+        );
+        await _settingsRepository.saveSettings(next);
+        if (_disposed) {
+          return;
+        }
+        _savedSettings = next;
+        AppLogger.info(
+          'Save settings success',
+          loggerName: 'SettingsViewModel',
+          context: <String, Object?>{
+            'maxWeek': maxWeek,
+            'timeSlotCount': _draftTimeSlotRanges.length,
+            'dashboardUpcomingMode': _draftUpcomingMode.jsonValue,
+            'dashboardUpcomingCount': dashboardUpcomingCount,
+          },
+        );
+      } on SettingsValidationException catch (error) {
+        if (_disposed) {
+          return;
+        }
+        errorMessage = error.message;
+        AppLogger.warning(
+          'Save settings validation failed',
+          loggerName: 'SettingsViewModel',
+          code: error.code,
+          error: error,
+        );
+        emit(ShowSnackBarEvent(message: error.message, code: error.code));
+      } catch (error) {
+        if (_disposed) {
+          return;
+        }
+        final String message = 'Failed to save settings: ${error.toString()}';
+        errorMessage = message;
+        AppLogger.error(
+          'Save settings failed',
+          loggerName: 'SettingsViewModel',
+          error: error,
+        );
+        emit(ShowSnackBarEvent(message: message));
+      } finally {
+        _settingsSaving = false;
+        if (!_disposed) {
+          notifyListeners();
+        }
+      }
     } finally {
-      _settingsSaving = false;
-      notifyListeners();
+      gate.complete();
     }
   }
 
@@ -457,6 +533,9 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
       await _settingsRepository.clearSettings();
       final SettingsData next =
           await _settingsRepository.getSettings(refreshFromStorage: true);
+      if (_disposed) {
+        return;
+      }
       _savedSettings = next;
       _applySavedToDraft(next);
       AppLogger.info(
@@ -479,7 +558,9 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
       emit(ShowSnackBarEvent(message: message));
     } finally {
       _settingsSaving = false;
-      notifyListeners();
+      if (!_disposed) {
+        notifyListeners();
+      }
     }
   }
 
@@ -531,6 +612,7 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
 
   @override
   void dispose() {
+    _disposed = true;
     _themeChangeNotifier.removeListener(_onThemeChanged);
     super.dispose();
   }

@@ -8,7 +8,7 @@ class ThemeColorCard extends StatelessWidget {
   const ThemeColorCard({
     required this.l10n,
     required this.color,
-    required this.enabled,
+    this.enabled = true,
     required this.onColorChanged,
     super.key,
   });
