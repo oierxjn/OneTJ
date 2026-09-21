@@ -1,6 +1,6 @@
 <div align="center">
 
-[![OneTJ Logo](assets/icon/logo.jpg)](https://github.com/oierxjn/OneTJ)
+[![OneTJ Logo](assets/icon/origin.png)](https://github.com/oierxjn/OneTJ)
 # OneTJ（一统同济）
 
 [中文](README_zh.md) | [English](README.md)
