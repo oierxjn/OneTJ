@@ -185,6 +185,12 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
   - Flutter 插件
   - Dart 插件
 
+### 2.3 应用图标
+
+全平台应用图标由母版 `assets/icon/origin.png` 派生，生成流程、验证方法与
+调参说明见 [`docs/app-icons.zh-CN.md`](docs/app-icons.zh-CN.md)。替换母版后
+需要重新生成图标，不要手工编辑生成产物。
+
 ## 3. 代码规范
 
 ### 3.1 Dart 代码规范

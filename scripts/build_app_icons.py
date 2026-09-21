@@ -1,54 +1,25 @@
 #!/usr/bin/env python3
 """Rebuild every app-icon artifact from the artist master.
 
-Source of truth: assets/icon/origin.png (square, RGBA, ~1254px).
-
-Nothing here is hand-edited downstream: run this script after replacing
-origin.png and every platform icon is regenerated consistently.
+Source of truth: assets/icon/origin.png. Nothing downstream is hand-edited:
+run this script after replacing the master and every platform icon is
+regenerated consistently.
 
     python scripts/build_app_icons.py
 
-Outputs
--------
-Flutter / installer
-  assets/icon/logo.png              256px asset used in-app (about page)
-  assets/icon/logo.ico              multi-size .ico for the app + installer
-  windows/runner/resources/logo.ico copy referenced by windows/runner/Runner.rc
+Usage, per-platform output list, verification steps and tuning knobs:
+docs/app-icons.zh-CN.md.
 
-Android
-  the legacy mipmap-*/launcher_icon.png fallback is generated separately by
-  `dart run flutter_launcher_icons` (see pubspec.yaml); it reads origin.png
-  directly. The adaptive icon (API 26+) is built here, because
-  flutter_launcher_icons cannot derive a foreground layer on its own:
-    drawable-*/ic_launcher_foreground.png   artwork, field colour removed
-    mipmap-anydpi-v26/launcher_icon.xml     background colour + foreground
-    values/colors.xml                       ic_launcher_background = field
+Two things are worth knowing before editing this file:
 
-iOS / macOS / web
-  Regenerated in place under their existing filenames. The asset-catalog
-  Contents.json files are parsed rather than guessed, so this script never
-  writes a file the catalogs do not already reference (and never adds orphans,
-  unlike the flutter_launcher_icons iOS generator).
-
-HarmonyOS
-  ohos/entry/src/main/resources/base/media/logo.jpg      startWindowIcon
-  ohos/AppScope/resources/base/media/background.png      layered icon, back
-  ohos/AppScope/resources/base/media/foreground.png      layered icon, front
-
-Rationale for per-platform treatment
-------------------------------------
-Android ships both a legacy icon and an adaptive icon. Without the adaptive
-icon, Android 8+ applies the legacy fallback: it shrinks the whole badge into
-the centre of a white rounded-square plate, which buries the artwork in white
-padding. The adaptive icon instead draws the artwork alone on a full-bleed
-brand-coloured field, so the launcher mask (circle / squircle / rounded
-square) crops the field, not the emblem. The ~66/108 inner safe area keeps the
-artwork clear of every mask shape.
-
-iOS, macOS and web get the badge flattened onto the badge's own border colour,
-so the rounded frame blends into a seamless full-bleed tile. iOS applies its
-own squircle mask and forbids alpha in App Store icons, so a full-bleed tile
-avoids both a double-rounded artefact and a validation failure.
+* Android legacy mipmaps (mipmap-*/launcher_icon.png) are NOT built here; they
+  come from `fvm dart run flutter_launcher_icons`. This script owns the
+  adaptive icon (API 26+), because flutter_launcher_icons cannot derive a
+  field-removed foreground layer on its own.
+* iOS/macOS/web/HarmonyOS badges are flattened onto the measured border colour
+  and inset to a mask-safe area. Without the adaptive icon Android 8+ shrinks
+  the badge into a white rounded plate; with it, the launcher mask crops the
+  brand field instead of the emblem.
 """
 from __future__ import annotations
 
