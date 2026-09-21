@@ -115,41 +115,11 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
 
   bool get isBusy => _settingsLoading || _settingsSaving;
 
-  /// 草稿与已存值是否不一致。
+  /// 最大周数草稿与已存值是否不一致。
   ///
-  /// 即改即存后仅用于测试与状态 introspection，不再驱动任何 UI。
+  /// 用于失焦提交时判断是否需要写入，也便于测试断言保存结果。
   bool get isMaxWeekDirty =>
       _draftMaxWeekText != _savedSettings.maxWeek.toString();
-
-  bool get isTimeSlotDirty =>
-      !_sameTimeSlotRanges(_savedSettings.timeSlotRanges, _draftTimeSlotRanges);
-
-  bool get isUpcomingDirty {
-    if (_draftUpcomingMode != _savedSettings.dashboardUpcomingMode) {
-      return true;
-    }
-    if (_draftUpcomingMode != DashboardUpcomingMode.count) {
-      return false;
-    }
-    final int? count = int.tryParse(_draftDashboardUpcomingCountText);
-    return count != _savedSettings.dashboardUpcomingCount;
-  }
-
-  bool get isUserCollectionDirty {
-    final Set<UserCollectionField> saved = _savedSettings.userCollectionFields;
-    if (saved.length != _draftUserCollectionFields.length) {
-      return true;
-    }
-    for (final UserCollectionField field in saved) {
-      if (!_draftUserCollectionFields.contains(field)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  bool get isLaunchWallpaperDirty =>
-      _draftLaunchWallpaperRef != _savedSettings.selectedLaunchWallpaperRef;
 
   bool get isMaxWeekInvalid {
     try {
@@ -580,22 +550,6 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
       data.userCollectionFields,
     );
     _draftLaunchWallpaperRef = data.selectedLaunchWallpaperRef;
-  }
-
-  bool _sameTimeSlotRanges(
-    List<TimePeriodRangeData> a,
-    List<TimePeriodRangeData> b,
-  ) {
-    if (a.length != b.length) {
-      return false;
-    }
-    for (int i = 0; i < a.length; i += 1) {
-      if (a[i].startMinutes != b[i].startMinutes ||
-          a[i].endMinutes != b[i].endMinutes) {
-        return false;
-      }
-    }
-    return true;
   }
 
   Future<void> setThemeColor(ThemeMode color) async {
