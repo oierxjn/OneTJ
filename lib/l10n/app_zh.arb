@@ -491,7 +491,6 @@
     "settingsDataCleanupFailed": "清理旧版本数据缓存失败，请稍后重试",
     "settingsResetDone": "设置已恢复为默认值",
     "settingsMaxWeekInvalidRange": "最大周数必须在1到52之间",
-    "settingsSaved": "设置已保存",
     "aboutDescription": "一款面向同济大学服务的第三方客户端。",
     "aboutAppNameLabel": "应用名称",
     "aboutVersionLabel": "版本号",

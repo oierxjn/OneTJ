@@ -12,7 +12,7 @@ class UpcomingCoursesCard extends StatelessWidget {
     required this.l10n,
     required this.mode,
     required this.countController,
-    required this.enabled,
+    required this.countFocusNode,
     required this.summaryText,
     required this.onModeChanged,
     required this.onCountChanged,
@@ -23,7 +23,7 @@ class UpcomingCoursesCard extends StatelessWidget {
   final AppLocalizations l10n;
   final DashboardUpcomingMode mode;
   final TextEditingController countController;
-  final bool enabled;
+  final FocusNode countFocusNode;
   final String summaryText;
   final ValueChanged<DashboardUpcomingMode> onModeChanged;
   final ValueChanged<String> onCountChanged;
@@ -51,12 +51,14 @@ class UpcomingCoursesCard extends StatelessWidget {
       visible: mode == DashboardUpcomingMode.count,
       child: TextField(
         controller: countController,
+        focusNode: countFocusNode,
         onChanged: onCountChanged,
         keyboardType: TextInputType.number,
+        textInputAction: TextInputAction.done,
+        onSubmitted: (_) => countFocusNode.unfocus(),
         inputFormatters: [
           FilteringTextInputFormatter.digitsOnly,
         ],
-        enabled: enabled,
         decoration: InputDecoration(
           isDense: true,
           border: const OutlineInputBorder(),
@@ -75,7 +77,6 @@ class UpcomingCoursesCard extends StatelessWidget {
       value: mode,
       options: _buildOptions(),
       onChanged: onModeChanged,
-      enabled: enabled,
       status: status,
       extraContent: _buildCountField(),
     );

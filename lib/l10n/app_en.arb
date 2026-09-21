@@ -491,7 +491,6 @@
   "settingsDataCleanupFailed": "Failed to clean legacy data cache. Please try again later",
   "settingsResetDone": "Settings reset to defaults",
 
-  "settingsSaved": "Settings saved",
   "aboutDescription": "A third-party client for Tongji University services.",
   "aboutAppNameLabel": "App Name",
   "aboutVersionLabel": "Version",

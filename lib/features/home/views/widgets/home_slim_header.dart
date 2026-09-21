@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 /// 一级页面顶部的纤细导航行。
 ///
 /// 仅在有内容时占位：网格布局下承载返回入口与页面标题，
-/// 设置页在有未保存改动时承载保存按钮；否则整体不占空间。
+/// 各页面可通过 actions 放置少量操作；否则整体不占空间。
 /// 状态栏避让由页面自身的 SafeArea 负责，这里不做处理。
 class HomeSlimHeader extends StatelessWidget {
   const HomeSlimHeader({

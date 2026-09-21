@@ -1005,9 +1005,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsResetDone => '设置已恢复为默认值';
 
   @override
-  String get settingsSaved => '设置已保存';
-
-  @override
   String get aboutDescription => '一款面向同济大学服务的第三方客户端。';
 
   @override
