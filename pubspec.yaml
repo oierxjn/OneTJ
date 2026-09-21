@@ -148,9 +148,7 @@ flutter:
   # see https://flutter.dev/to/font-from-package
   generate: true
 
-# Android 传统图标，读取 assets/icon/origin.png。
-# 替换母版后需执行：fvm dart run flutter_launcher_icons
-# 其余平台图标与 Android 自适应图标见 docs/app-icons.zh-CN.md
+# 图标见 docs/app-icons.zh-CN.md
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: false

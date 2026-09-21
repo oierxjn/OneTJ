@@ -1,25 +1,16 @@
 #!/usr/bin/env python3
 """Rebuild every app-icon artifact from the artist master.
 
-Source of truth: assets/icon/origin.png. Nothing downstream is hand-edited:
-run this script after replacing the master and every platform icon is
-regenerated consistently.
+Source of truth: assets/icon/origin.png; nothing downstream is hand-edited.
 
     python scripts/build_app_icons.py
 
-Usage, per-platform output list, verification steps and tuning knobs:
-docs/app-icons.zh-CN.md.
+Android legacy mipmaps (mipmap-*/launcher_icon.png) are NOT built here: they
+come from `fvm dart run flutter_launcher_icons`. This script owns the adaptive
+icon (API 26+), which that tool cannot build because deriving a field-removed
+foreground layer requires colour keying against the measured field colour.
 
-Two things are worth knowing before editing this file:
-
-* Android legacy mipmaps (mipmap-*/launcher_icon.png) are NOT built here; they
-  come from `fvm dart run flutter_launcher_icons`. This script owns the
-  adaptive icon (API 26+), because flutter_launcher_icons cannot derive a
-  field-removed foreground layer on its own.
-* iOS/macOS/web/HarmonyOS badges are flattened onto the measured border colour
-  and inset to a mask-safe area. Without the adaptive icon Android 8+ shrinks
-  the badge into a white rounded plate; with it, the launcher mask crops the
-  brand field instead of the emblem.
+Usage, per-platform outputs, verification and tuning: docs/app-icons.zh-CN.md
 """
 from __future__ import annotations
 
@@ -43,7 +34,6 @@ ICO_COPY = "windows/runner/resources/logo.ico"
 IOS_DIR = "ios/Runner/Assets.xcassets/AppIcon.appiconset"
 MACOS_DIR = "macos/Runner/Assets.xcassets/AppIcon.appiconset"
 
-# web/icons/Icon-*.png are square already; favicon is a standalone png.
 WEB_FILES = {
     "web/favicon.png": 64,
     "web/icons/Icon-192.png": 192,
@@ -59,14 +49,10 @@ OHOS_START_WINDOW = "ohos/entry/src/main/resources/base/media/logo.jpg"
 OHOS_LAYER_BACK = "ohos/AppScope/resources/base/media/background.png"
 OHOS_LAYER_FRONT = "ohos/AppScope/resources/base/media/foreground.png"
 OHOS_LAYER_SIZE = 1024
-# Share of the layered-icon canvas the foreground emblem may occupy.
 OHOS_FOREGROUND_SAFE = 0.72
 
-# Adaptive icon: the canvas is 108x108dp but only the central 66dp is
-# guaranteed visible; a circular mask keeps the inscribed square of the
-# canvas (1/sqrt(2) = 0.707). 0.70 therefore survives every launcher mask
-# shape (circle / squircle / rounded square / teardrop) without clipping the
-# emblem, while still reading as a full-bleed badge.
+# Adaptive icon foreground layers; emblem inset to the mask-safe area (0.70
+# clears every launcher mask shape — see docs/app-icons.zh-CN.md).
 ANDROID_FOREGROUND_DIRS = {
     "android/app/src/main/res/drawable-mdpi": 108,
     "android/app/src/main/res/drawable-hdpi": 162,
@@ -78,12 +64,10 @@ ANDROID_FOREGROUND_SAFE = 0.70
 ANDROID_FOREGROUND_NAME = "ic_launcher_foreground.png"
 ANDROID_ADAPTIVE_XML = "android/app/src/main/res/mipmap-anydpi-v26/launcher_icon.xml"
 ANDROID_COLORS_XML = "android/app/src/main/res/values/colors.xml"
-ANDROID_ICON_NAME = "launcher_icon"
 ANDROID_BACKGROUND_COLOR_NAME = "ic_launcher_background"
 
-# Distance-from-field thresholds for the soft key that separates artwork from
-# the badge's blue field. The field is flat to within ~3/255, so 24 sits well
-# clear of noise while keeping faint artwork (e.g. pale-blue clouds) intact.
+# Soft key (distance from the measured field colour): 24 clears the field's own
+# noise while keeping faint artwork intact.
 KEY_LO, KEY_HI = 24.0, 56.0
 
 DEFAULT_FIELD = (1, 91, 171)  # #015BAB, badge border; overridden by measurement
@@ -186,13 +170,10 @@ def rebuild_web(field: tuple[int, int, int]) -> None:
 def measure_interior_field(master: Image.Image) -> tuple[int, int, int]:
     """Median colour of the badge's flat interior field.
 
-    `measure_field_colour` samples the outermost opaque ring, which is the
-    anti-aliased rounded-corner edge and therefore slightly darker/noisier
-    than the flat fill the artwork sits on. The adaptive background must match
-    the artwork's own backdrop exactly, so this samples the interior, where the
-    pixel population is a two-mode mix of brand blue and white emblem; taking
-    the median over only the blue cluster (blue channel well above red) picks
-    the field rather than splitting the difference between the two.
+    Unlike `measure_field_colour` (the anti-aliased outer border), the adaptive
+    background must match the flat fill the artwork sits on. The interior is a
+    two-mode mix of brand blue and white emblem, so take the median over the
+    blue cluster only instead of splitting the difference between the two.
     """
     a = np.asarray(master)
     alpha = a[..., 3]
@@ -218,9 +199,8 @@ def build_android_foreground(master: Image.Image, size: int,
                              field: tuple[int, int, int]) -> Image.Image:
     """One adaptive foreground layer, emblem inset to the mask-safe area."""
     inner = max(1, round(size * ANDROID_FOREGROUND_SAFE))
-    # Resize colour and alpha independently at full resolution, then key the
-    # field out only once: keying before scaling would let the resize blur the
-    # softened edges back into the field colour.
+    # Key only after scaling: keying first would let the resize blur softened
+    # edges back into the field colour.
     scaled = resize(master, inner)
     a = np.asarray(scaled).astype(float)
     dist = np.sqrt(((a[..., :3] - np.array(field)) ** 2).sum(-1))
@@ -280,7 +260,8 @@ def _upsert_android_background_colour(field: tuple[int, int, int]) -> None:
         fh.write(text)
 
 
-def rebuild_ohos(master: Image.Image, field: tuple[int, int, int]) -> None:    # start window: plain square thumbnail, matching the old jpg behaviour
+def rebuild_ohos(master: Image.Image, field: tuple[int, int, int]) -> None:
+    # start window: plain square thumbnail, matching the old jpg behaviour
     os.makedirs(os.path.dirname(OHOS_START_WINDOW), exist_ok=True)
     flattened(master, 512, field).convert("RGB").save(
         OHOS_START_WINDOW, quality=92)

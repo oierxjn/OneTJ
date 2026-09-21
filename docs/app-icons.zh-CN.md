@@ -15,8 +15,8 @@
 | 1 | `fvm dart run flutter_launcher_icons` | Android 传统图标 `mipmap-*/launcher_icon.png` |
 | 2 | `python scripts/build_app_icons.py` | 其余全部（Android 自适应图标、iOS、macOS、Web、Windows、HarmonyOS、应用内 logo） |
 
-两步写入的路径不冲突，顺序也不影响结果，但要**两步都执行**，否则会留下
-一个平台没更新的图标。
+两步写入的路径不冲突，顺序任意；但必须**两步都执行**，否则会留下一个平台
+没更新的图标。
 
 替换母版后的完整流程：
 
@@ -189,8 +189,5 @@ adb exec-out screencap -p > appinfo.png
 
 **图形在圆形遮罩下显得偏小。** 检查 `ANDROID_FOREGROUND_SAFE`，以及母版
 中图形本身是否留有过多内边距——脚本只按比例内缩，不会裁剪母版留白。
-
-**`python scripts/build_app_icons.py` 报找不到 `PIL`/`numpy`。** 见第 2 节，
-先安装依赖。
 
 **证书/密钥未改动。** 本流水线只处理图标资源，不触碰签名配置。
