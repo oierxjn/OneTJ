@@ -425,5 +425,9 @@ fvm flutter pub upgrade
 
 - 请勿修改 `windows/flutter/ephemeral/` 目录下的自动生成文件；
 - 请勿手动编辑 `*.g.dart` 生成文件，需通过 `build_runner` 工具重新生成；
+- 请勿手动编辑应用图标产物（Android `mipmap-*`/`drawable-*`、iOS/macOS
+  `Assets.xcassets`、`web/icons`、OHOS media、`assets/icon/logo.*`），需从母版
+  `assets/icon/origin.png` 重新生成，详见
+  [`docs/app-icons.zh-CN.md`](docs/app-icons.zh-CN.md)；
 
 感谢您的贡献！

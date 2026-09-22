@@ -113,7 +113,7 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/icon/logo.jpg
+    - assets/icon/logo.png
     - assets/media/
     - assets/pictures/1.jpg
     - assets/icons/fluentemoji/
@@ -148,10 +148,11 @@ flutter:
   # see https://flutter.dev/to/font-from-package
   generate: true
 
+# 图标见 docs/app-icons.zh-CN.md
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: false
-  image_path: "assets/icon/logo.jpg"
+  image_path: "assets/icon/origin.png"
 
 dependency_overrides:
   win32: 5.10.1

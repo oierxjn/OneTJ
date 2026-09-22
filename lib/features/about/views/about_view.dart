@@ -293,7 +293,7 @@ class _AboutViewState extends State<AboutView> {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(12),
                       child: Image.asset(
-                        'assets/icon/logo.jpg',
+                        'assets/icon/logo.png',
                         width: 56,
                         height: 56,
                         fit: BoxFit.cover,
