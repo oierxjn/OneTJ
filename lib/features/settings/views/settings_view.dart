@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/app/exception/app_exception.dart';
+import 'package:onetj/features/home/views/widgets/home_slim_header.dart';
 import 'package:onetj/features/settings/models/event.dart';
 import 'package:onetj/features/settings/models/launch_wallpaper_editor_result.dart';
 import 'package:onetj/features/settings/view_models/settings_view_model.dart';
@@ -33,6 +34,10 @@ class _SettingsViewState extends State<SettingsView> {
   StreamSubscription<UiEvent>? _eventSub;
   late final TextEditingController _maxWeekController;
   late final TextEditingController _dashboardCountController;
+  late final FocusNode _maxWeekFocusNode;
+  late final FocusNode _dashboardCountFocusNode;
+  Timer? _successFlashTimer;
+  SettingsCardField? _successFlashField;
 
   @override
   void initState() {
@@ -40,6 +45,10 @@ class _SettingsViewState extends State<SettingsView> {
     _viewModel = widget.viewModel;
     _maxWeekController = TextEditingController();
     _dashboardCountController = TextEditingController();
+    _maxWeekFocusNode = FocusNode();
+    _dashboardCountFocusNode = FocusNode();
+    _maxWeekFocusNode.addListener(_onMaxWeekFocusChanged);
+    _dashboardCountFocusNode.addListener(_onDashboardCountFocusChanged);
     _eventSub = _viewModel.events.listen((event) {
       if (!mounted) {
         return;
@@ -55,12 +64,18 @@ class _SettingsViewState extends State<SettingsView> {
         context.go(event.route);
         return;
       }
-      if (event is SettingsSavedEvent) {
-        _syncControllersFromViewModel();
-        final AppLocalizations l10n = AppLocalizations.of(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.settingsSaved)),
-        );
+      if (event is SettingsSavedFeedbackEvent) {
+        _successFlashTimer?.cancel();
+        setState(() {
+          _successFlashField = event.field;
+        });
+        _successFlashTimer = Timer(const Duration(seconds: 2), () {
+          if (mounted) {
+            setState(() {
+              _successFlashField = null;
+            });
+          }
+        });
         return;
       }
       if (event is SettingsResetEvent) {
@@ -119,10 +134,31 @@ class _SettingsViewState extends State<SettingsView> {
   @override
   void dispose() {
     _eventSub?.cancel();
+    _successFlashTimer?.cancel();
+    _maxWeekFocusNode.removeListener(_onMaxWeekFocusChanged);
+    _dashboardCountFocusNode.removeListener(_onDashboardCountFocusChanged);
+    _maxWeekFocusNode.dispose();
+    _dashboardCountFocusNode.dispose();
     _maxWeekController.dispose();
     _dashboardCountController.dispose();
     _viewModel.dispose();
     super.dispose();
+  }
+
+  /// 文本框失去焦点即提交草稿。
+  ///
+  /// Flutter 默认点击文本框外部会先使其失焦，因此切换选项卡、打开
+  /// 子编辑器等离开操作都会先经过这里完成落盘。
+  void _onMaxWeekFocusChanged() {
+    if (!_maxWeekFocusNode.hasFocus) {
+      unawaited(_viewModel.commitMaxWeekText());
+    }
+  }
+
+  void _onDashboardCountFocusChanged() {
+    if (!_dashboardCountFocusNode.hasFocus) {
+      unawaited(_viewModel.commitDashboardUpcomingCountText());
+    }
   }
 
   String _resolveSettingsErrorMessage(
@@ -179,10 +215,6 @@ class _SettingsViewState extends State<SettingsView> {
       text: next,
       selection: TextSelection.collapsed(offset: next.length),
     );
-  }
-
-  Future<void> _submitSettings() async {
-    await _viewModel.saveSettings();
   }
 
   Future<void> _logout(BuildContext context) async {
@@ -380,13 +412,12 @@ class _SettingsViewState extends State<SettingsView> {
       l10n: l10n,
       maxWeekController: _maxWeekController,
       dashboardCountController: _dashboardCountController,
-      maxWeekDirty: _viewModel.isMaxWeekDirty,
+      maxWeekFocusNode: _maxWeekFocusNode,
+      dashboardCountFocusNode: _dashboardCountFocusNode,
       maxWeekInvalid: _viewModel.isMaxWeekInvalid,
-      timeSlotDirty: _viewModel.isTimeSlotDirty,
-      upcomingDirty: _viewModel.isUpcomingDirty,
       upcomingInvalid: _viewModel.isUpcomingInvalid,
-      userCollectionDirty: _viewModel.isUserCollectionDirty,
-      launchWallpaperDirty: _viewModel.isLaunchWallpaperDirty,
+      visibleSavingField: _viewModel.visibleSavingField,
+      successFlashField: _successFlashField,
       timeSlotSummary: _timeSlotSummary(l10n),
       dashboardUpcomingSummary: _dashboardUpcomingSummary(l10n),
       userCollectionSummary: _userCollectionSummary(l10n),
@@ -394,12 +425,12 @@ class _SettingsViewState extends State<SettingsView> {
       upcomingMode: _viewModel.draftUpcomingMode,
       themeColor: _viewModel.themeColor,
       homeLayout: _viewModel.homeLayout,
-      enabled: !_settingsBusy,
       hiveMigrationLoading: _viewModel.hiveMigrationLoading,
       hiveMigrationStateLoaded: _viewModel.hiveMigrationStateLoaded,
       legacyHiveDataAvailable: _viewModel.legacyHiveDataAvailable,
       onMaxWeekChanged: _viewModel.updateMaxWeekText,
-      onUpcomingModeChanged: _viewModel.updateUpcomingMode,
+      onUpcomingModeChanged: (mode) =>
+          unawaited(_viewModel.updateUpcomingMode(mode)),
       onDashboardCountChanged: _viewModel.updateDashboardUpcomingCountText,
       onThemeColorChanged: _viewModel.setThemeColor,
       onHomeLayoutChanged: _viewModel.setHomeLayout,
@@ -442,22 +473,19 @@ class _SettingsViewState extends State<SettingsView> {
         }
 
         return Scaffold(
-          appBar: AppBar(
-            leading: homeBackButton,
-            leadingWidth:
-                homeBackButton == null ? null : homeShellBackButtonLeadingWidth,
-            title: Text(l10n.tabSettings),
-            actions: [
-              IconButton(
-                tooltip: l10n.saveLabel,
-                icon: const Icon(Icons.save),
-                onPressed: !_viewModel.uiState.isHydrated || _settingsBusy
-                    ? null
-                    : _submitSettings,
-              ),
-            ],
+          body: SafeArea(
+            top: true,
+            bottom: false,
+            child: Column(
+              children: [
+                HomeSlimHeader(
+                  leading: homeBackButton,
+                  title: homeBackButton == null ? null : l10n.tabSettings,
+                ),
+                Expanded(child: body),
+              ],
+            ),
           ),
-          body: body,
         );
       },
     );

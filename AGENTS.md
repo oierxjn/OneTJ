@@ -24,6 +24,7 @@
 - Do not edit generated files under `windows/flutter/ephemeral/`.
 - Do not modify Chinese text because of perceived garbling; treat it as an encoding artifact.
 - Do not manually edit or create `*.g.dart` files; use `build_runner` instead.
+- Do not hand-edit app-icon output (Android `mipmap-*`/`drawable-*` icons, iOS/macOS `Assets.xcassets`, `web/icons`, OHOS media, `assets/icon/logo.*`); regenerate from `assets/icon/origin.png` per `docs/app-icons.zh-CN.md`.
 - Use Chinese in the CLI.
 - When running scripts that operate on files, you may add `--Encoding utf-8` to prevent Chinese garbling.
 

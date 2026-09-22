@@ -1,9 +1,17 @@
+import 'package:onetj/features/physics_lab/draft_save_coordinator.dart';
 import 'package:onetj/features/physics_lab/features/franck_hertz/models/franck_hertz_analysis_result.dart';
 import 'package:onetj/features/physics_lab/features/franck_hertz/models/franck_hertz_measurement_row.dart';
 import 'package:onetj/features/physics_lab/features/franck_hertz/models/franck_hertz_metadata.dart';
 import 'package:onetj/app/presentation/base_view_model.dart';
+import 'package:onetj/features/physics_lab/features/franck_hertz/application/franck_hertz_draft_service.dart';
+import 'package:onetj/features/physics_lab/features/franck_hertz/models/franck_hertz_draft.dart';
 
 class FranckHertzViewModel extends BaseViewModel<Never> {
+  FranckHertzViewModel({FranckHertzDraftService? draftService})
+      : _draftService = draftService {
+    _saveCoordinator = DraftSaveCoordinator(_persistNow);
+  }
+
   static const int defaultRowCount = 50;
   static const String defaultReferenceVoltageText = '11.61';
   static const List<List<String>> presetRows = <List<String>>[
@@ -188,6 +196,9 @@ class FranckHertzViewModel extends BaseViewModel<Never> {
     ),
   );
 
+  final FranckHertzDraftService? _draftService;
+  late final DraftSaveCoordinator _saveCoordinator;
+
   FranckHertzMetadata get metadata => FranckHertzMetadata(
         vfText: _vfText,
         vg1kText: _vg1kText,
@@ -211,6 +222,7 @@ class FranckHertzViewModel extends BaseViewModel<Never> {
       return;
     }
     _vfText = value;
+    _saveCoordinator.markEdited();
     notifyListeners();
   }
 
@@ -219,6 +231,7 @@ class FranckHertzViewModel extends BaseViewModel<Never> {
       return;
     }
     _vg1kText = value;
+    _saveCoordinator.markEdited();
     notifyListeners();
   }
 
@@ -227,6 +240,7 @@ class FranckHertzViewModel extends BaseViewModel<Never> {
       return;
     }
     _vg2aText = value;
+    _saveCoordinator.markEdited();
     notifyListeners();
   }
 
@@ -235,6 +249,7 @@ class FranckHertzViewModel extends BaseViewModel<Never> {
       return;
     }
     _referenceVoltageText = value;
+    _saveCoordinator.markEdited();
     notifyListeners();
   }
 
@@ -247,6 +262,7 @@ class FranckHertzViewModel extends BaseViewModel<Never> {
       return;
     }
     _rows[rowIndex] = row.copyWith(vg2kText: value);
+    _saveCoordinator.markEdited();
     notifyListeners();
   }
 
@@ -259,6 +275,7 @@ class FranckHertzViewModel extends BaseViewModel<Never> {
       return;
     }
     _rows[rowIndex] = row.copyWith(ipText: value);
+    _saveCoordinator.markEdited();
     notifyListeners();
   }
 
@@ -270,6 +287,7 @@ class FranckHertzViewModel extends BaseViewModel<Never> {
         ipText: '',
       ),
     );
+    _saveCoordinator.markEdited();
     notifyListeners();
   }
 
@@ -282,6 +300,7 @@ class FranckHertzViewModel extends BaseViewModel<Never> {
       final FranckHertzMeasurementRow row = _rows[index];
       _rows[index] = row.copyWith(index: index + 1);
     }
+    _saveCoordinator.markEdited();
     notifyListeners();
   }
 
@@ -310,6 +329,7 @@ class FranckHertzViewModel extends BaseViewModel<Never> {
         ipText: '',
       );
     }
+    _saveCoordinator.markEdited();
     notifyListeners();
   }
 
@@ -364,8 +384,63 @@ class FranckHertzViewModel extends BaseViewModel<Never> {
       }
     }
     if (changed) {
+      _saveCoordinator.markEdited();
       notifyListeners();
     }
+  }
+
+  Future<void> load() async {
+    final FranckHertzDraftService? service = _draftService;
+    if (service == null) {
+      return;
+    }
+    final int versionAtStart = _saveCoordinator.editVersion;
+    final FranckHertzDraft? draft = await service.load();
+    if (draft == null) {
+      return;
+    }
+    if (_saveCoordinator.editVersion != versionAtStart) {
+      return;
+    }
+    _vfText = draft.vfText;
+    _vg1kText = draft.vg1kText;
+    _vg2aText = draft.vg2aText;
+    _referenceVoltageText = draft.referenceVoltageText;
+    _rows.clear();
+    for (int index = 0; index < draft.rows.length; index += 1) {
+      final FranckHertzDraftRow row = draft.rows[index];
+      _rows.add(
+        FranckHertzMeasurementRow(
+          index: index + 1,
+          vg2kText: row.vg2kText,
+          ipText: row.ipText,
+        ),
+      );
+    }
+    notifyListeners();
+  }
+
+  Future<void> _persistNow() {
+    final FranckHertzDraftService? service = _draftService;
+    if (service == null) {
+      return Future<void>.value();
+    }
+    return service.save(
+      FranckHertzDraft(
+        vfText: _vfText,
+        vg1kText: _vg1kText,
+        vg2aText: _vg2aText,
+        referenceVoltageText: _referenceVoltageText,
+        rows: _rows
+            .map(
+              (FranckHertzMeasurementRow row) => FranckHertzDraftRow(
+                vg2kText: row.vg2kText,
+                ipText: row.ipText,
+              ),
+            )
+            .toList(growable: false),
+      ),
+    );
   }
 
   bool _isValidRowIndex(int rowIndex) {

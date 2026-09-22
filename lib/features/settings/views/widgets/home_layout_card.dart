@@ -9,7 +9,7 @@ class HomeLayoutCard extends StatelessWidget {
   const HomeLayoutCard({
     required this.l10n,
     required this.layout,
-    required this.enabled,
+    this.enabled = true,
     required this.onChanged,
     super.key,
   });

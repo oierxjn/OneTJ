@@ -19,5 +19,6 @@ jobs:
       - uses: oierxjn/daily-code-churn@latest
         with:
           days: "30"
+          branch: "develop"
           out: "daily-churn.svg"
           commit_branch: "metrics-renders"

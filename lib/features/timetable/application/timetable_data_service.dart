@@ -66,6 +66,25 @@ class TimetableDataService {
     return _indexBuilder.buildIndex(data);
   }
 
+  /// 强制刷新课表索引
+  ///
+  /// 绕过缓存 TTL 直接从服务器拉取课表，成功后写回缓存。
+  /// 学期标识仍由 [TermKeyResolver] 解析，换学期时缓存自动失效。
+  Future<TimetableIndex> refreshTimetableIndex() async {
+    final DateTime now = DateTime.now();
+    await _scheduleRepository.warmUp();
+    final String? termKey = await _termKeyResolver.resolveCurrentTermKey(
+      now: now,
+      fetchSchoolCalendar: _api.fetchSchoolCalendarCurrentTerm,
+    );
+    final CourseScheduleData data = await _scheduleRepository.refresh(
+      now: now,
+      termKey: termKey,
+      fetcher: _api.fetchStudentTimetable,
+    );
+    return _indexBuilder.buildIndex(data);
+  }
+
   Future<DateTime?> getLastFetchedAt() async {
     final CourseScheduleCacheMeta? meta =
         await _scheduleRepository.getCachedMeta(refreshFromStorage: false);

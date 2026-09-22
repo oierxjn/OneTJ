@@ -11,6 +11,7 @@ class PhysicsLabView extends StatelessWidget {
     PhysicsLabExperiment.michelsonInterferometer,
     PhysicsLabExperiment.diffractionGrating,
     PhysicsLabExperiment.franckHertz,
+    PhysicsLabExperiment.bohrTwistPendulum,
   ];
 
   @override
@@ -71,6 +72,8 @@ class _ExperimentTile extends StatelessWidget {
         return l10n.physicsLabDiffractionGratingTitle;
       case PhysicsLabExperiment.franckHertz:
         return l10n.physicsLabFranckHertzTitle;
+      case PhysicsLabExperiment.bohrTwistPendulum:
+        return l10n.physicsLabBohrTwistPendulumTitle;
     }
   }
 
@@ -82,6 +85,8 @@ class _ExperimentTile extends StatelessWidget {
         return l10n.physicsLabDiffractionGratingSubtitle;
       case PhysicsLabExperiment.franckHertz:
         return l10n.physicsLabFranckHertzSubtitle;
+      case PhysicsLabExperiment.bohrTwistPendulum:
+        return l10n.physicsLabBohrTwistPendulumSubtitle;
     }
   }
 }

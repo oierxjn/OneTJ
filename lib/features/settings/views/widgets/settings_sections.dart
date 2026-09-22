@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:onetj/l10n/app_localizations.dart';
 
+import 'package:onetj/features/settings/models/event.dart';
 import 'package:onetj/features/settings/views/widgets/home_layout_card.dart';
 import 'package:onetj/features/settings/views/widgets/settings_card.dart';
 import 'package:onetj/features/settings/views/widgets/settings_card_visual_state.dart';
@@ -15,13 +16,12 @@ class SettingsSections extends StatelessWidget {
     required this.l10n,
     required this.maxWeekController,
     required this.dashboardCountController,
-    required this.maxWeekDirty,
+    required this.maxWeekFocusNode,
+    required this.dashboardCountFocusNode,
     required this.maxWeekInvalid,
-    required this.timeSlotDirty,
-    required this.upcomingDirty,
     required this.upcomingInvalid,
-    required this.userCollectionDirty,
-    required this.launchWallpaperDirty,
+    required this.visibleSavingField,
+    required this.successFlashField,
     required this.timeSlotSummary,
     required this.dashboardUpcomingSummary,
     required this.userCollectionSummary,
@@ -29,7 +29,6 @@ class SettingsSections extends StatelessWidget {
     required this.upcomingMode,
     required this.themeColor,
     required this.homeLayout,
-    required this.enabled,
     required this.hiveMigrationLoading,
     required this.hiveMigrationStateLoaded,
     required this.legacyHiveDataAvailable,
@@ -54,13 +53,12 @@ class SettingsSections extends StatelessWidget {
   final AppLocalizations l10n;
   final TextEditingController maxWeekController;
   final TextEditingController dashboardCountController;
-  final bool maxWeekDirty;
+  final FocusNode maxWeekFocusNode;
+  final FocusNode dashboardCountFocusNode;
   final bool maxWeekInvalid;
-  final bool timeSlotDirty;
-  final bool upcomingDirty;
   final bool upcomingInvalid;
-  final bool userCollectionDirty;
-  final bool launchWallpaperDirty;
+  final SettingsCardField? visibleSavingField;
+  final SettingsCardField? successFlashField;
   final String timeSlotSummary;
   final String dashboardUpcomingSummary;
   final String userCollectionSummary;
@@ -68,7 +66,6 @@ class SettingsSections extends StatelessWidget {
   final DashboardUpcomingMode upcomingMode;
   final ThemeMode themeColor;
   final HomeLayout homeLayout;
-  final bool enabled;
   final bool hiveMigrationLoading;
   final bool hiveMigrationStateLoaded;
   final bool legacyHiveDataAvailable;
@@ -112,14 +109,12 @@ class SettingsSections extends StatelessWidget {
         ThemeColorCard(
           l10n: l10n,
           color: themeColor,
-          enabled: enabled,
           onColorChanged: onThemeColorChanged,
         ),
         const SizedBox(height: 12),
         HomeLayoutCard(
           l10n: l10n,
           layout: homeLayout,
-          enabled: enabled,
           onChanged: onHomeLayoutChanged,
         ),
         const SizedBox(height: 12),
@@ -143,28 +138,43 @@ class SettingsSections extends StatelessWidget {
     );
   }
 
-  SettingsCardStatus _status({required bool isDirty, bool hasError = false}) {
+  /// 把底层条件消解为卡片唯一显示状态：error > saving > success > normal。
+  SettingsCardStatus _status(
+    SettingsCardField field, {
+    bool hasError = false,
+  }) {
     if (hasError) {
       return SettingsCardStatus.error;
     }
-    return isDirty ? SettingsCardStatus.dirty : SettingsCardStatus.normal;
+    if (visibleSavingField == field) {
+      return SettingsCardStatus.saving;
+    }
+    if (successFlashField == field) {
+      return SettingsCardStatus.success;
+    }
+    return SettingsCardStatus.normal;
   }
 
   Widget _buildMaxWeekCard() {
     return SettingsCard(
-      status: _status(isDirty: maxWeekDirty, hasError: maxWeekInvalid),
+      status: _status(
+        SettingsCardField.maxWeek,
+        hasError: maxWeekInvalid,
+      ),
       title: Text(l10n.settingsMaxWeekTitle),
       subtitle: Text(l10n.settingsMaxWeekSubtitle),
       trailing: SizedBox(
         width: 100,
         child: TextField(
           controller: maxWeekController,
+          focusNode: maxWeekFocusNode,
           onChanged: onMaxWeekChanged,
           keyboardType: TextInputType.number,
+          textInputAction: TextInputAction.done,
+          onSubmitted: (_) => maxWeekFocusNode.unfocus(),
           inputFormatters: <TextInputFormatter>[
             FilteringTextInputFormatter.digitsOnly,
           ],
-          enabled: enabled,
           decoration: const InputDecoration(
             isDense: true,
             border: OutlineInputBorder(),
@@ -175,41 +185,44 @@ class SettingsSections extends StatelessWidget {
   }
 
   Widget _buildTimeSlotCard() => SettingsCard(
-        status: _status(isDirty: timeSlotDirty),
+        status: _status(SettingsCardField.timeSlots),
         leading: const Icon(Icons.schedule),
         title: Text(l10n.settingsTimeSlotsTitle),
         subtitle: Text(timeSlotSummary),
         trailing: const Icon(Icons.chevron_right),
-        onTap: enabled ? onOpenTimeSlotEditor : null,
+        onTap: onOpenTimeSlotEditor,
       );
 
   Widget _buildDashboardUpcomingCard() => UpcomingCoursesCard(
         l10n: l10n,
         mode: upcomingMode,
         countController: dashboardCountController,
-        enabled: enabled,
+        countFocusNode: dashboardCountFocusNode,
         summaryText: dashboardUpcomingSummary,
         onModeChanged: onUpcomingModeChanged,
         onCountChanged: onDashboardCountChanged,
-        status: _status(isDirty: upcomingDirty, hasError: upcomingInvalid),
+        status: _status(
+          SettingsCardField.upcoming,
+          hasError: upcomingInvalid,
+        ),
       );
 
   Widget _buildUserCollectionPolicyCard() => SettingsCard(
-        status: _status(isDirty: userCollectionDirty),
+        status: _status(SettingsCardField.userCollection),
         leading: const Icon(Icons.privacy_tip_outlined),
         title: Text(l10n.settingsUserCollectionPolicyTitle),
         subtitle: Text(userCollectionSummary),
         trailing: const Icon(Icons.chevron_right),
-        onTap: enabled ? onOpenUserCollectionPolicy : null,
+        onTap: onOpenUserCollectionPolicy,
       );
 
   Widget _buildLaunchWallpaperCard() => SettingsCard(
-        status: _status(isDirty: launchWallpaperDirty),
+        status: _status(SettingsCardField.launchWallpaper),
         leading: const Icon(Icons.wallpaper_outlined),
         title: Text(l10n.settingsLaunchWallpaperTitle),
         subtitle: Text(launchWallpaperSummary),
         trailing: const Icon(Icons.chevron_right),
-        onTap: enabled ? onOpenLaunchWallpaperEditor : null,
+        onTap: onOpenLaunchWallpaperEditor,
       );
 
   Widget _buildAboutCard() => SettingsCard(
@@ -224,18 +237,18 @@ class SettingsSections extends StatelessWidget {
         leading: const Icon(Icons.colorize),
         title: Text(l10n.settingsAppearanceCustomColorTitle),
         trailing: const Icon(Icons.chevron_right),
-        onTap: enabled ? onOpenCustomColor : null,
+        onTap: onOpenCustomColor,
       );
 
   Widget _buildResetCard() => SettingsCard(
         leading: const Icon(Icons.restore),
         title: Text(l10n.settingsResetTitle),
         subtitle: Text(l10n.settingsResetSubtitle),
-        onTap: enabled ? onReset : null,
+        onTap: onReset,
       );
 
   Widget _buildDataMigrationCard() {
-    final bool canTap = enabled && !hiveMigrationLoading;
+    final bool canTap = !hiveMigrationLoading;
     final String subtitle;
     if (hiveMigrationLoading) {
       subtitle = l10n.settingsDataMigrationLoading;

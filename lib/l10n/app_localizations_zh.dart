@@ -54,6 +54,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get timetableWeekView => '周视图';
 
   @override
+  String get timetableJumpToToday => '回到今天';
+
+  @override
+  String get timetableRefreshAction => '刷新课表';
+
+  @override
   String timetableLoadFailed(Object error) {
     return '加载课程表失败: $error';
   }
@@ -275,6 +281,74 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get physicsLabFranckHertzCurrentUnit => 'μA';
+
+  @override
+  String get physicsLabBohrTwistPendulumTitle => '波尔扭摆实验';
+
+  @override
+  String get physicsLabBohrTwistPendulumSubtitle => '受迫振动阻尼系数';
+
+  @override
+  String get physicsLabBohrTwistPendulumFormulaTitle => '计算规则';
+
+  @override
+  String get physicsLabBohrTwistPendulumDescription =>
+      '填写自由振动周期（或周期表格数据）与阻尼振动振幅表格数据，页面会用对数逐差法和作图法分别计算阻尼系数 β。周期和周期表格数据二选一，优先使用周期表格数据。';
+
+  @override
+  String get physicsLabBohrTwistPendulumFormulaBody =>
+      '先由周期表格数据第 3 列求平均周期 T；表格为空时回退到单行周期。振幅表格数据每行三列（序号、θₙ、θₙ₊₅），对数逐差法按 β = (ln θₙ − ln θₙ₊₅)/(5T) 求平均，作图法对 (n, ln θₙ) 与 (n+5, ln θₙ₊₅) 做最小二乘拟合，取斜率 k 后按 β = −k/T 计算。';
+
+  @override
+  String get physicsLabBohrTwistPendulumFreeVibrationTitle => '自由振动';
+
+  @override
+  String get physicsLabBohrTwistPendulumPeriodLabel => '周期';
+
+  @override
+  String get physicsLabBohrTwistPendulumPeriodUnit => 's';
+
+  @override
+  String get physicsLabBohrTwistPendulumPeriodTableLabel => '周期表格数据';
+
+  @override
+  String get physicsLabBohrTwistPendulumPeriodTableHint =>
+      '每行三列：序号、振幅、周期，用空格或换行分隔。';
+
+  @override
+  String get physicsLabBohrTwistPendulumDampedVibrationTitle => '阻尼振动';
+
+  @override
+  String get physicsLabBohrTwistPendulumAmplitudeTableLabel => '振幅表格数据';
+
+  @override
+  String get physicsLabBohrTwistPendulumAmplitudeTableHint =>
+      '每行三列：序号、θₙ、θₙ₊₅，用空格或换行分隔。';
+
+  @override
+  String get physicsLabBohrTwistPendulumResultTitle => '计算结果';
+
+  @override
+  String get physicsLabBohrTwistPendulumLogMethodLabel => '对数逐差法';
+
+  @override
+  String get physicsLabBohrTwistPendulumGraphMethodLabel => '作图法';
+
+  @override
+  String get physicsLabBohrTwistPendulumAveragePeriodLabel => '平均周期';
+
+  @override
+  String get physicsLabBohrTwistPendulumDampingUnit => 's⁻¹';
+
+  @override
+  String get physicsLabBohrTwistPendulumIncompleteHint =>
+      '请先填写有效的周期（或周期表格数据）和振幅表格数据。';
+
+  @override
+  String get physicsLabBohrTwistPendulumPresetFillLabel => '填充预设值';
+
+  @override
+  String get physicsLabBohrTwistPendulumClearAllLabel => '清空';
 
   @override
   String get physicsLabDiffractionGratingDescription =>
@@ -929,9 +1003,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsResetDone => '设置已恢复为默认值';
-
-  @override
-  String get settingsSaved => '设置已保存';
 
   @override
   String get aboutDescription => '一款面向同济大学服务的第三方客户端。';

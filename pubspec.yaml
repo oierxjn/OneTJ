@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 2.5.0+18
+version: 2.6.0+19
 
 environment:
   sdk: ^3.6.2
@@ -56,6 +56,7 @@ dependencies:
     git:
       url: "https://gitcode.com/openharmony-sig/fluttertpc_open_filex.git"
       ref: "br_v4.7.0_ohos"
+  file_picker: ^11.0.3
   file_picker_ohos:
     git:
       url: "https://gitcode.com/openharmony-sig/fluttertpc_file_picker.git"
@@ -112,7 +113,7 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/icon/logo.jpg
+    - assets/icon/logo.png
     - assets/media/
     - assets/pictures/1.jpg
     - assets/icons/fluentemoji/
@@ -147,10 +148,11 @@ flutter:
   # see https://flutter.dev/to/font-from-package
   generate: true
 
+# 图标见 docs/app-icons.zh-CN.md
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: false
-  image_path: "assets/icon/logo.jpg"
+  image_path: "assets/icon/origin.png"
 
 dependency_overrides:
   win32: 5.10.1

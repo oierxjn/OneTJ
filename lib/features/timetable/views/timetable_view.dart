@@ -3,9 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:onetj/l10n/app_localizations.dart';
 import 'package:onetj/features/home/views/widgets/home_shell_back_button.dart';
+import 'package:onetj/features/home/views/widgets/home_slim_header.dart';
 import 'package:onetj/app/logging/logger.dart';
 
 import 'package:onetj/features/timetable/view_models/timetable_view_model.dart';
+import 'package:onetj/features/timetable/views/widgets/timetable_action_dial.dart';
 import 'package:onetj/features/timetable/views/widgets/timetable_timeline_panel.dart';
 import 'package:onetj/features/timetable/models/event.dart';
 import 'package:onetj/app/presentation/ui_event.dart';
@@ -19,12 +21,19 @@ class TimetableView extends StatefulWidget {
   State<TimetableView> createState() => _TimetableViewState();
 }
 
+/// 刷新结束后触发器短暂显示的标记。
+enum _RefreshFeedback { none, success, failure }
+
 class _TimetableViewState extends State<TimetableView> {
   late final TimetableViewModel _viewModel;
   late final FixedExtentScrollController _dayController;
   late final FixedExtentScrollController _weekController;
   final ScrollController _scrollController = ScrollController();
   StreamSubscription<UiEvent>? _eventSub;
+
+  /// 刷新结束后的触发器标记：成功对勾 / 失败叉号，2 秒后收回。
+  _RefreshFeedback _refreshFeedback = _RefreshFeedback.none;
+  Timer? _refreshFeedbackTimer;
 
   @override
   void initState() {
@@ -52,11 +61,33 @@ class _TimetableViewState extends State<TimetableView> {
   @override
   void dispose() {
     _eventSub?.cancel();
+    _refreshFeedbackTimer?.cancel();
     _dayController.dispose();
     _weekController.dispose();
     _scrollController.dispose();
     _viewModel.dispose();
     super.dispose();
+  }
+
+  /// 拨盘动作：强制刷新课表。
+  ///
+  /// 过程反馈由触发器的转圈图标承担；结束显示 2 秒对勾/叉号后收回，
+  /// 失败详情由 ViewModel 的 [ShowSnackBarEvent] 负责。
+  Future<void> _refreshTimetable() async {
+    final bool success = await _viewModel.refresh();
+    if (!mounted) {
+      return;
+    }
+    _refreshFeedbackTimer?.cancel();
+    setState(() {
+      _refreshFeedback =
+          success ? _RefreshFeedback.success : _RefreshFeedback.failure;
+    });
+    _refreshFeedbackTimer = Timer(const Duration(seconds: 2), () {
+      if (mounted) {
+        setState(() => _refreshFeedback = _RefreshFeedback.none);
+      }
+    });
   }
 
   String _formatRoom(TimetableEntry entry) {
@@ -114,24 +145,23 @@ class _TimetableViewState extends State<TimetableView> {
     final l10n = AppLocalizations.of(context);
     final Widget? homeBackButton = buildHomeShellBackButton(context);
     return Scaffold(
-      appBar: AppBar(
-        leading: homeBackButton,
-        leadingWidth:
-            homeBackButton == null ? null : homeShellBackButtonLeadingWidth,
-        title: Text(l10n.tabTimetable),
-        actions: [
-          AnimatedBuilder(
-            animation: _viewModel,
-            builder: (context, _) => IconButton(
-              icon: const Icon(Icons.location_searching),
-              onPressed: _viewModel.isLoading ? null : _viewModel.jumpToToday,
+      body: SafeArea(
+        top: true,
+        bottom: false,
+        child: Column(
+          children: [
+            HomeSlimHeader(
+              leading: homeBackButton,
+              title: homeBackButton == null ? null : l10n.tabTimetable,
             ),
-          ),
-        ],
-      ),
-      body: AnimatedBuilder(
-        animation: _viewModel,
-        builder: (context, _) => _buildBody(context),
+            Expanded(
+              child: AnimatedBuilder(
+                animation: _viewModel,
+                builder: (context, _) => _buildBody(context),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -171,24 +201,63 @@ class _TimetableViewState extends State<TimetableView> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-          child: SegmentedButton<TimetableDisplayMode>(
-            segments: [
-              ButtonSegment(
-                value: TimetableDisplayMode.day,
-                label: Text(l10n.timetableDayView),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final double labelWidth = resolveTimelineLabelWidth(
+              constraints.maxWidth -
+                  kTimelinePanelLeftPadding -
+                  kTimelinePanelRightPadding,
+            );
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(
+                kTimelinePanelLeftPadding,
+                4,
+                16,
+                8,
               ),
-              ButtonSegment(
-                value: TimetableDisplayMode.week,
-                label: Text(l10n.timetableWeekView),
+              child: Row(
+                children: [
+                  TimetableActionDial(
+                    width: labelWidth,
+                    busy: _viewModel.isRefreshing,
+                    success: _refreshFeedback == _RefreshFeedback.success,
+                    failure: _refreshFeedback == _RefreshFeedback.failure,
+                    actions: [
+                      TimetableDialAction(
+                        icon: Icons.today,
+                        label: l10n.timetableJumpToToday,
+                        onTap: _viewModel.jumpToToday,
+                      ),
+                      TimetableDialAction(
+                        icon: Icons.refresh,
+                        label: l10n.timetableRefreshAction,
+                        onTap: () => unawaited(_refreshTimetable()),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: SegmentedButton<TimetableDisplayMode>(
+                      segments: [
+                        ButtonSegment(
+                          value: TimetableDisplayMode.day,
+                          label: Text(l10n.timetableDayView),
+                        ),
+                        ButtonSegment(
+                          value: TimetableDisplayMode.week,
+                          label: Text(l10n.timetableWeekView),
+                        ),
+                      ],
+                      selected: {_viewModel.mode},
+                      onSelectionChanged: (selection) {
+                        _viewModel.setMode(selection.first);
+                      },
+                    ),
+                  ),
+                ],
               ),
-            ],
-            selected: {_viewModel.mode},
-            onSelectionChanged: (selection) {
-              _viewModel.setMode(selection.first);
-            },
-          ),
+            );
+          },
         ),
         if (_viewModel.availableWeeks.isNotEmpty)
           SizedBox(

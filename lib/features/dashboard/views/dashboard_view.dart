@@ -119,13 +119,14 @@ class _DashboardViewState extends State<DashboardView>
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(
-        title: Text(AppLocalizations.of(context).tabDashboard),
-      ),
-      body: AnimatedBuilder(
-        animation:
-            Listenable.merge(<Listenable>[_viewModel, _themeChangeNotifier]),
-        builder: (context, _) => _buildBody(context, l10n),
+      body: SafeArea(
+        top: true,
+        bottom: false,
+        child: AnimatedBuilder(
+          animation:
+              Listenable.merge(<Listenable>[_viewModel, _themeChangeNotifier]),
+          builder: (context, _) => _buildBody(context, l10n),
+        ),
       ),
     );
   }

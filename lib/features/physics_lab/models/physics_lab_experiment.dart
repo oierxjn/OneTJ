@@ -6,6 +6,7 @@ enum PhysicsLabExperiment {
   michelsonInterferometer,
   diffractionGrating,
   franckHertz,
+  bohrTwistPendulum,
 }
 
 extension PhysicsLabExperimentMeta on PhysicsLabExperiment {
@@ -17,6 +18,8 @@ extension PhysicsLabExperimentMeta on PhysicsLabExperiment {
         return Icons.blur_on_outlined;
       case PhysicsLabExperiment.franckHertz:
         return Icons.show_chart_outlined;
+      case PhysicsLabExperiment.bohrTwistPendulum:
+        return Icons.rotate_right_outlined;
     }
   }
 
@@ -28,6 +31,8 @@ extension PhysicsLabExperimentMeta on PhysicsLabExperiment {
         return RoutePaths.homePhysicsLabDiffractionGrating;
       case PhysicsLabExperiment.franckHertz:
         return RoutePaths.homePhysicsLabFranckHertz;
+      case PhysicsLabExperiment.bohrTwistPendulum:
+        return RoutePaths.homePhysicsLabBohrTwistPendulum;
     }
   }
 }

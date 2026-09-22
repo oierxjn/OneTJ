@@ -8,7 +8,9 @@ import 'package:onetj/features/physics_lab/features/michelson/view_models/michel
 import 'package:onetj/features/physics_lab/widgets/physics_lab_formula.dart';
 
 class MichelsonInterferometerView extends StatefulWidget {
-  const MichelsonInterferometerView({super.key});
+  const MichelsonInterferometerView({required this.viewModel, super.key});
+
+  final MichelsonInterferometerViewModel viewModel;
 
   @override
   State<MichelsonInterferometerView> createState() =>
@@ -30,12 +32,18 @@ class _MichelsonInterferometerViewState
   @override
   void initState() {
     super.initState();
-    _viewModel = MichelsonInterferometerViewModel();
+    _viewModel = widget.viewModel;
     _controllers = List<TextEditingController>.generate(
       MichelsonInterferometerViewModel.positionCount,
       (_) => TextEditingController(),
       growable: false,
     );
+    _syncControllersFromViewModel();
+    _viewModel.load().then((_) {
+      if (mounted) {
+        _syncControllersFromViewModel();
+      }
+    });
   }
 
   @override
@@ -45,6 +53,16 @@ class _MichelsonInterferometerViewState
     }
     _viewModel.dispose();
     super.dispose();
+  }
+
+  void _syncControllersFromViewModel() {
+    for (int index = 0; index < _controllers.length; index += 1) {
+      final String text = _viewModel.positionTexts[index];
+      if (_controllers[index].text == text) {
+        continue;
+      }
+      _controllers[index].text = text;
+    }
   }
 
   @override
