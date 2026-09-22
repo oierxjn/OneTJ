@@ -139,14 +139,15 @@ def read_catalog_filenames(contents_path: str) -> list[tuple[str, int]]:
     return out
 
 
-def rebuild_catalog(dir_path: str, field: tuple[int, int, int]) -> int:
+def rebuild_catalog(master: Image.Image, dir_path: str,
+                    field: tuple[int, int, int]) -> int:
     contents = os.path.join(dir_path, "Contents.json")
     if not os.path.isfile(contents):
         print(f"  skip {dir_path} (no Contents.json)")
         return 0
     entries = read_catalog_filenames(contents)
     for name, px in entries:
-        flattened(master_ref, px, field).convert("RGB").save(
+        flattened(master, px, field).convert("RGB").save(
             os.path.join(dir_path, name), optimize=True)
     # Warn about files nothing references, so catalogs stay clean.
     declared = {n for n, _ in entries}
@@ -158,11 +159,11 @@ def rebuild_catalog(dir_path: str, field: tuple[int, int, int]) -> int:
     return len(entries)
 
 
-def rebuild_web(field: tuple[int, int, int]) -> None:
+def rebuild_web(master: Image.Image, field: tuple[int, int, int]) -> None:
     for path, size in WEB_FILES.items():
         safe = 0.80 if path in WEB_MASKABLE else 1.0
         os.makedirs(os.path.dirname(path), exist_ok=True)
-        flattened(master_ref, size, field, safe).convert("RGB").save(
+        flattened(master, size, field, safe).convert("RGB").save(
             path, optimize=True)
     print(f"  web: {len(WEB_FILES)} icons")
 
@@ -277,13 +278,8 @@ def rebuild_ohos(master: Image.Image, field: tuple[int, int, int]) -> None:
     print(f"  ohos: {OHOS_START_WINDOW} + layered back/foreground")
 
 
-master_ref: Image.Image  # set in main(), used by helpers
-
-
 def main() -> None:
-    global master_ref
     master = load_master()
-    master_ref = master
     field = measure_field_colour(master)
     print(f"master : {MASTER} {master.size}")
     print(f"field  : #{field[0]:02X}{field[1]:02X}{field[2]:02X} "
@@ -296,11 +292,11 @@ def main() -> None:
     write_ico(resize(master, 256))
 
     print("ios / macos")
-    rebuild_catalog(IOS_DIR, field)
-    rebuild_catalog(MACOS_DIR, field)
+    rebuild_catalog(master, IOS_DIR, field)
+    rebuild_catalog(master, MACOS_DIR, field)
 
     print("web")
-    rebuild_web(field)
+    rebuild_web(master, field)
 
     print("android")
     rebuild_android_adaptive(master, measure_interior_field(master))
