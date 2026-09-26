@@ -120,7 +120,7 @@ void configureDependencies() {
 
   // Theme
   appLocator.registerLazySingleton<ThemeChangeNotifier>(
-    ThemeChangeNotifier.new,
+    () => ThemeChangeNotifier(repository: appLocator<ThemeRepository>()),
   );
 }
 
