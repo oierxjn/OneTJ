@@ -6,8 +6,6 @@ import 'package:onetj/features/dashboard/application/dashboard_data_service.dart
 import 'package:onetj/features/grades/application/grades_data_service.dart';
 import 'package:onetj/features/student_exams/application/student_exam_data_service.dart';
 import 'package:onetj/features/timetable/application/timetable_data_service.dart';
-import 'package:onetj/features/cet_score/view_models/cet_score_view_model.dart';
-import 'package:onetj/features/student_exams/view_models/student_exam_view_model.dart';
 import 'package:onetj/features/physics_lab/features/michelson/application/michelson_draft_service.dart';
 import 'package:onetj/features/physics_lab/features/diffraction_grating/application/diffraction_grating_draft_service.dart';
 import 'package:onetj/features/physics_lab/features/franck_hertz/application/franck_hertz_draft_service.dart';
@@ -32,6 +30,7 @@ import 'package:onetj/services/external_launcher_service.dart';
 import 'package:onetj/services/term_key_resolver.dart';
 import 'package:onetj/services/tongji.dart';
 import 'package:onetj/services/user_collection_service.dart';
+import 'package:onetj/services/webview_environment_service.dart';
 
 final GetIt appLocator = GetIt.instance;
 
@@ -81,6 +80,9 @@ void configureDependencies() {
   appLocator.registerLazySingleton<ExternalLauncherService>(
     ExternalLauncherService.new,
   );
+  appLocator.registerLazySingleton<WebViewEnvironmentService>(
+    WebViewEnvironmentService.new,
+  );
   appLocator.registerLazySingleton<TongjiApi>(
     () => TongjiApi(auth: appLocator<AuthTokenProvider>()),
   );
@@ -121,18 +123,10 @@ void configureDependencies() {
       repository: appLocator<CetScoreRepository>(),
     ),
   );
-  appLocator.registerFactory<CetScoreViewModel>(
-    () => CetScoreViewModel(dataSource: appLocator<CetScoreDataService>()),
-  );
   appLocator.registerLazySingleton<StudentExamDataService>(
     () => StudentExamDataService(
       api: appLocator<TongjiApi>(),
       repository: appLocator<StudentExamRepository>(),
-    ),
-  );
-  appLocator.registerFactory<StudentExamViewModel>(
-    () => StudentExamViewModel(
-      dataSource: appLocator<StudentExamDataService>(),
     ),
   );
   appLocator.registerLazySingleton<MichelsonDraftService>(

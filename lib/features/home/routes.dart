@@ -21,8 +21,10 @@ import 'package:onetj/services/external_launcher_service.dart';
 import 'package:onetj/services/user_collection_service.dart';
 
 final StatefulShellRoute homeShellRoute = StatefulShellRoute.indexedStack(
-  builder: (context, state, navigationShell) =>
-      HomeView(navigationShell: navigationShell),
+  builder: (context, state, navigationShell) => HomeView(
+    navigationShell: navigationShell,
+    themeChangeNotifier: appLocator<ThemeChangeNotifier>(),
+  ),
   branches: [
     StatefulShellBranch(
       routes: [

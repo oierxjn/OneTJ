@@ -12,8 +12,13 @@ import 'package:onetj/models/settings_data.dart';
 import 'package:onetj/models/settings_defaults.dart';
 import 'package:onetj/models/time_period_range.dart';
 import 'package:onetj/models/user_collection_field.dart';
+import 'package:onetj/repo/course_schedule_repository.dart';
+import 'package:onetj/repo/school_calendar_repository.dart';
 import 'package:onetj/repo/settings_repository.dart';
+import 'package:onetj/repo/student_info_repository.dart';
 import 'package:onetj/repo/theme_repository.dart';
+import 'package:onetj/repo/token_repository.dart';
+import 'package:onetj/services/webview_environment_service.dart';
 
 class _FakeCetScoreDataService implements CetScoreDataService {
   @override
@@ -63,6 +68,36 @@ void main() {
   late ThemeChangeNotifier themeChangeNotifier;
   late SettingsViewModel viewModel;
 
+  /// 登出清理与 Cookie 依赖：本测试不覆盖，用真实空实现即可。
+  SettingsViewModel buildViewModel({
+    SettingsRepository? settingsRepository,
+    ThemeChangeNotifier? themeChangeNotifier,
+    Duration savingFeedbackDelay = const Duration(milliseconds: 300),
+  }) {
+    return SettingsViewModel(
+      settingsRepository: settingsRepository ?? SettingsRepository(
+        storage: InMemorySettingsStorage(),
+      ),
+      themeChangeNotifier: themeChangeNotifier ??
+          ThemeChangeNotifier(
+            repository: ThemeRepository(storage: InMemoryThemeStorage()),
+          ),
+      cetScoreDataService: _FakeCetScoreDataService(),
+      tokenRepository: TokenRepository(storage: InMemoryTokenStorage()),
+      studentInfoRepository: StudentInfoRepository(
+        storage: InMemoryStudentInfoStorage(),
+      ),
+      schoolCalendarRepository: SchoolCalendarRepository(
+        storage: InMemorySchoolCalendarStorage(),
+      ),
+      courseScheduleRepository: CourseScheduleRepository(
+        storage: InMemoryCourseScheduleStorage(),
+      ),
+      webViewEnvironmentService: WebViewEnvironmentService(),
+      savingFeedbackDelay: savingFeedbackDelay,
+    );
+  }
+
   setUp(() {
     storage = InMemorySettingsStorage();
     countingStorage = _CountingSettingsStorage(storage);
@@ -70,10 +105,9 @@ void main() {
     themeChangeNotifier = ThemeChangeNotifier(
       repository: ThemeRepository(storage: InMemoryThemeStorage()),
     );
-    viewModel = SettingsViewModel(
+    viewModel = buildViewModel(
       settingsRepository: settingsRepository,
       themeChangeNotifier: themeChangeNotifier,
-      cetScoreDataService: _FakeCetScoreDataService(),
     );
   });
 
@@ -260,10 +294,9 @@ void main() {
     });
 
     test('超过延迟阈值仍未写完时点亮蓝条，结束后熄灭', () async {
-      final SettingsViewModel slowViewModel = SettingsViewModel(
+      final SettingsViewModel slowViewModel = buildViewModel(
         settingsRepository: settingsRepository,
         themeChangeNotifier: themeChangeNotifier,
-        cetScoreDataService: _FakeCetScoreDataService(),
         savingFeedbackDelay: Duration.zero,
       );
       try {

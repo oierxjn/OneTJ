@@ -1,5 +1,4 @@
 import 'package:onetj/app/constant/route_paths.dart';
-import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/app/logging/logger.dart';
 import 'package:onetj/app/logging/logging_bootstrap.dart';
 import 'package:onetj/app/theme/theme_change_notifier.dart';
@@ -16,8 +15,24 @@ import 'package:onetj/services/launch_wallpaper_file_service.dart';
 import 'package:onetj/services/webview_environment_service.dart';
 
 class LauncherViewModel extends BaseViewModel<UiEvent> {
-  LauncherViewModel() : _hiveStorageService = HiveStorageService();
+  LauncherViewModel({
+    required ThemeChangeNotifier themeChangeNotifier,
+    required SettingsRepository settingsRepository,
+    required TokenRepository tokenRepository,
+    required AuthTokenProvider authTokenProvider,
+    required WebViewEnvironmentService webViewEnvironmentService,
+  })  : _themeChangeNotifier = themeChangeNotifier,
+        _settingsRepository = settingsRepository,
+        _tokenRepository = tokenRepository,
+        _authTokenProvider = authTokenProvider,
+        _webViewEnvironmentService = webViewEnvironmentService,
+        _hiveStorageService = HiveStorageService();
 
+  final ThemeChangeNotifier _themeChangeNotifier;
+  final SettingsRepository _settingsRepository;
+  final TokenRepository _tokenRepository;
+  final AuthTokenProvider _authTokenProvider;
+  final WebViewEnvironmentService _webViewEnvironmentService;
   final HiveStorageService _hiveStorageService;
   String? _wallpaperFilePath;
   String? _wallpaperAssetPath;
@@ -56,12 +71,11 @@ class LauncherViewModel extends BaseViewModel<UiEvent> {
     await _hiveStorageService.initializeHive();
 
     // 在 Hive 路径正确初始化后立即加载主题偏好
-    await appLocator<ThemeChangeNotifier>().initialize();
+    await _themeChangeNotifier.initialize();
 
     final Future<void> webViewInitFuture =
-        WebViewEnvironmentService.instance.initialize();
-    final Future<SettingsData> settingsFuture =
-        appLocator<SettingsRepository>().getSettings(
+        _webViewEnvironmentService.initialize();
+    final Future<SettingsData> settingsFuture = _settingsRepository.getSettings(
       refreshFromStorage: true,
     );
 
@@ -113,8 +127,9 @@ class LauncherViewModel extends BaseViewModel<UiEvent> {
   ///
   /// 如果 token 有效，则返回 [RoutePaths.home]，否则返回 [RoutePaths.login]。
   Future<String> _resolveInitialRoute() async {
-    final TokenRepository repo = appLocator<TokenRepository>();
-    final TokenData? token = await repo.getToken(refreshFromStorage: true);
+    final TokenData? token = await _tokenRepository.getToken(
+      refreshFromStorage: true,
+    );
 
     if (token == null) {
       AppLogger.info(
@@ -126,7 +141,7 @@ class LauncherViewModel extends BaseViewModel<UiEvent> {
     }
 
     try {
-      await appLocator<AuthTokenProvider>().getValidAccessToken();
+      await _authTokenProvider.getValidAccessToken();
       AppLogger.info(
         'Resolved route by valid token',
         loggerName: 'LauncherViewModel',

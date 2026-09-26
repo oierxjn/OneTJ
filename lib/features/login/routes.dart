@@ -16,7 +16,8 @@ final List<GoRoute> loginRoutes = [
       viewModel: LoginViewModel(
         model: LoginModel(auth: appLocator<AuthTokenProvider>()),
       ),
-      webViewEnvironment: WebViewEnvironmentService.instance.environment,
+      webViewEnvironment:
+          appLocator<WebViewEnvironmentService>().environment,
     ),
   ),
 ];

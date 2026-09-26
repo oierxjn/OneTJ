@@ -7,10 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:onetj/app/logging/logger.dart';
 
 class WebViewEnvironmentService {
-  WebViewEnvironmentService._();
-
-  static final WebViewEnvironmentService instance =
-      WebViewEnvironmentService._();
+  WebViewEnvironmentService();
 
   WebViewEnvironment? _environment;
   bool _initialized = false;

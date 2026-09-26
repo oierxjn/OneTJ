@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/app/logging/logger.dart';
 import 'package:onetj/app/theme/theme_change_notifier.dart';
 import 'package:onetj/models/theme_preferences.dart';
@@ -44,12 +43,10 @@ enum ImportColorResult {
 /// 进入页面时快照当前主题偏好，支持实时预览、撤销回退、预设保存/删除。
 class ColorPickerViewModel extends ChangeNotifier {
   ColorPickerViewModel({
-    ThemeChangeNotifier? themeChangeNotifier,
-    ColorPresetRepository? presetRepository,
-  })  : _themeChangeNotifier =
-            themeChangeNotifier ?? appLocator<ThemeChangeNotifier>(),
-        _presetRepository =
-            presetRepository ?? appLocator<ColorPresetRepository>() {
+    required ThemeChangeNotifier themeChangeNotifier,
+    required ColorPresetRepository presetRepository,
+  })  : _themeChangeNotifier = themeChangeNotifier,
+        _presetRepository = presetRepository {
     _snapshot = _themeChangeNotifier.preferences;
     _current = _snapshot;
     _presetName = '';
