@@ -4,7 +4,9 @@ import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/features/about/views/about_view.dart';
 import 'package:onetj/features/cet_score/application/cet_score_data_service.dart';
+import 'package:onetj/features/settings/models/developer_settings_model.dart';
 import 'package:onetj/features/settings/view_models/color_picker_view_model.dart';
+import 'package:onetj/features/settings/view_models/developer_settings_view_model.dart';
 import 'package:onetj/features/settings/view_models/settings_view_model.dart';
 import 'package:onetj/features/settings/views/color_picker_page.dart';
 import 'package:onetj/features/settings/views/developer_settings_view.dart';
@@ -17,6 +19,9 @@ import 'package:onetj/models/launch_wallpaper_ref.dart';
 import 'package:onetj/models/settings_defaults.dart';
 import 'package:onetj/models/time_period_range.dart';
 import 'package:onetj/models/user_collection_field.dart';
+import 'package:onetj/repo/student_info_repository.dart';
+import 'package:onetj/services/tongji.dart';
+import 'package:onetj/services/user_collection_service.dart';
 
 /// 主页 Shell 中的设置一级页面。
 final List<GoRoute> settingsShellRoutes = [
@@ -82,7 +87,15 @@ final List<GoRoute> settingsDetailRoutes = [
   GoRoute(
     path: RoutePaths.homeSettingsDeveloper,
     name: 'settings-developer',
-    builder: (context, state) => const DeveloperSettingsView(),
+    builder: (context, state) => DeveloperSettingsView(
+      viewModel: DeveloperSettingsViewModel(
+        model: DeveloperSettingsModel(
+          studentInfoRepository: appLocator<StudentInfoRepository>(),
+          tongjiApi: appLocator<TongjiApi>(),
+          userCollectionService: appLocator<UserCollectionService>(),
+        ),
+      ),
+    ),
   ),
   GoRoute(
     path: RoutePaths.homeSettingsDeveloperLogs,

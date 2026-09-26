@@ -1,16 +1,13 @@
-import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/repo/course_schedule_repository.dart';
 import 'package:onetj/models/school_calendar_data.dart';
 import 'package:onetj/repo/school_calendar_repository.dart';
 
 class TermKeyResolver {
   TermKeyResolver({
-    SchoolCalendarRepository? calendarRepository,
-    CourseScheduleRepository? scheduleRepository,
-  })  : _calendarRepository =
-            calendarRepository ?? appLocator<SchoolCalendarRepository>(),
-        _scheduleRepository =
-            scheduleRepository ?? appLocator<CourseScheduleRepository>();
+    required SchoolCalendarRepository calendarRepository,
+    required CourseScheduleRepository scheduleRepository,
+  })  : _calendarRepository = calendarRepository,
+        _scheduleRepository = scheduleRepository;
 
   final SchoolCalendarRepository _calendarRepository;
   final CourseScheduleRepository _scheduleRepository;

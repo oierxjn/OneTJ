@@ -2,37 +2,35 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'dart:async';
 
-import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/app/presentation/ui_event.dart';
 import 'package:onetj/features/timetable/application/timetable_data_service.dart';
 import 'package:onetj/features/timetable/models/event.dart';
 import 'package:onetj/features/timetable/view_models/timetable_view_model.dart';
 import 'package:onetj/models/course_schedule_data.dart';
 import 'package:onetj/models/timetable_index.dart';
-import 'package:onetj/repo/course_schedule_repository.dart';
-import 'package:onetj/repo/school_calendar_repository.dart';
 import 'package:onetj/repo/settings_repository.dart';
 
 void main() {
-  setUp(() {
-    appLocator.registerSingleton<SettingsRepository>(
-      SettingsRepository(storage: InMemorySettingsStorage()),
-    );
-    appLocator.registerSingleton<SchoolCalendarRepository>(
-      SchoolCalendarRepository(storage: InMemorySchoolCalendarStorage()),
-    );
-    appLocator.registerSingleton<CourseScheduleRepository>(
-      CourseScheduleRepository(storage: InMemoryCourseScheduleStorage()),
-    );
-  });
+  late SettingsRepository settingsRepository;
 
-  tearDown(() async {
-    await resetDependencies();
+  TimetableViewModel buildViewModel({
+    required TimetableDataSource dataService,
+  }) {
+    return TimetableViewModel(
+      dataService: dataService,
+      settingsRepository: settingsRepository,
+    );
+  }
+
+  setUp(() {
+    settingsRepository = SettingsRepository(
+      storage: InMemorySettingsStorage(),
+    );
   });
 
   group('TimetableViewModel.load 滚轮同步时机', () {
     test('仅在加载完成、滚轮可渲染后发出 SyncWheelEvent', () async {
-      final TimetableViewModel viewModel = TimetableViewModel(
+      final TimetableViewModel viewModel = buildViewModel(
         dataService: _FakeTimetableDataService(
           index: _buildIndex(entryCount: 1),
         ),
@@ -60,7 +58,7 @@ void main() {
     });
 
     test('课表为空时不发出 SyncWheelEvent', () async {
-      final TimetableViewModel viewModel = TimetableViewModel(
+      final TimetableViewModel viewModel = buildViewModel(
         dataService: _FakeTimetableDataService(
           index: _buildIndex(entryCount: 0),
         ),
@@ -78,7 +76,7 @@ void main() {
     });
 
     test('课表加载失败时不发出 SyncWheelEvent', () async {
-      final TimetableViewModel viewModel = TimetableViewModel(
+      final TimetableViewModel viewModel = buildViewModel(
         dataService: _FakeTimetableDataService(
           error: Exception('timetable load failed'),
         ),
@@ -106,7 +104,7 @@ void main() {
         refreshGate: gate,
         lastFetchedAt: DateTime(2026, 9, 19, 12),
       );
-      final TimetableViewModel viewModel = TimetableViewModel(
+      final TimetableViewModel viewModel = buildViewModel(
         dataService: dataService,
       );
 
@@ -141,7 +139,7 @@ void main() {
     });
 
     test('失败时保留旧索引并通过 SnackBar 提示', () async {
-      final TimetableViewModel viewModel = TimetableViewModel(
+      final TimetableViewModel viewModel = buildViewModel(
         dataService: _FakeTimetableDataService(
           index: _buildIndex(entryCount: 1),
           refreshError: Exception('refresh boom'),
@@ -173,7 +171,7 @@ void main() {
         refreshIndex: _buildIndex(entryCount: 2),
         refreshGate: gate,
       );
-      final TimetableViewModel viewModel = TimetableViewModel(
+      final TimetableViewModel viewModel = buildViewModel(
         dataService: dataService,
       );
       await viewModel.load();
@@ -225,7 +223,7 @@ TimetableEntry _buildEntry(int index) {
   );
 }
 
-class _FakeTimetableDataService extends TimetableDataService {
+class _FakeTimetableDataService implements TimetableDataSource {
   _FakeTimetableDataService({
     this.index,
     this.error,

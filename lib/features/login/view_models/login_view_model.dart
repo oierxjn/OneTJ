@@ -9,8 +9,8 @@ import 'package:onetj/app/presentation/base_view_model.dart';
 
 class LoginViewModel extends BaseViewModel<UiEvent> {
   LoginViewModel({
-    LoginModel? model,
-  }) : _model = model ?? LoginModel();
+    required LoginModel model,
+  }) : _model = model;
 
   final LoginModel _model;
 

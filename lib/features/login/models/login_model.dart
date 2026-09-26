@@ -2,13 +2,11 @@ import 'package:uuid/uuid.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
 import 'package:onetj/app/constant/site_constant.dart';
-import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/services/auth_token_provider.dart';
 
 class LoginModel {
-  LoginModel({AuthTokenProvider? auth})
-      : _auth = auth ?? appLocator<AuthTokenProvider>();
+  LoginModel({required AuthTokenProvider auth}) : _auth = auth;
 
   final AuthTokenProvider _auth;
   final String _baseUrl = tongjiApiBaseUrl;

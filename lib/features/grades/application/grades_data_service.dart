@@ -1,21 +1,23 @@
-import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/services/tongji.dart';
 import 'package:onetj/models/undergraduate_score_data.dart';
 import 'package:onetj/repo/undergraduate_score_repository.dart';
 
 class GradesDataService {
-  GradesDataService({TongjiApi? api}) : _api = api ?? TongjiApi();
+  GradesDataService({
+    required TongjiApi api,
+    required UndergraduateScoreRepository repository,
+  })  : _api = api,
+        _repository = repository;
 
   final TongjiApi _api;
+  final UndergraduateScoreRepository _repository;
 
   Future<UndergraduateScoreData> fetchUndergraduateScore({int? calendarId}) {
     return _api.fetchUndergraduateScore(calendarId: calendarId);
   }
 
   Future<UndergraduateScoreData> getUndergraduateScore() async {
-    final UndergraduateScoreRepository repo =
-        appLocator<UndergraduateScoreRepository>();
-    return repo.getOrFetch(
+    return _repository.getOrFetch(
       now: DateTime.now(),
       fetcher: () => fetchUndergraduateScore(calendarId: -1),
       ttl: const Duration(hours: 0),
@@ -23,15 +25,11 @@ class GradesDataService {
   }
 
   Future<void> warmUpCache() async {
-    final UndergraduateScoreRepository repo =
-        appLocator<UndergraduateScoreRepository>();
-    await repo.warmUp();
+    await _repository.warmUp();
   }
 
   Future<UndergraduateScoreData> refreshUndergraduateScore() async {
-    final UndergraduateScoreRepository repo =
-        appLocator<UndergraduateScoreRepository>();
-    return repo.refresh(
+    return _repository.refresh(
       now: DateTime.now(),
       fetcher: () => fetchUndergraduateScore(calendarId: -1),
     );

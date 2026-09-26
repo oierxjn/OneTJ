@@ -4,8 +4,8 @@ import 'package:onetj/features/grades/application/grades_data_service.dart';
 import 'package:onetj/features/grades/models/grades_view_data.dart';
 
 class GradesViewModel extends BaseViewModel<UiEvent> {
-  GradesViewModel({GradesDataService? dataService})
-      : _dataService = dataService ?? GradesDataService();
+  GradesViewModel({required GradesDataService dataService})
+      : _dataService = dataService;
 
   final GradesDataService _dataService;
   GradesViewData? _viewData;

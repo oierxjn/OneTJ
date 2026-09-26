@@ -13,7 +13,9 @@ import 'package:onetj/features/settings/views/widgets/settings_card.dart';
 import 'package:onetj/app/presentation/ui_event.dart';
 
 class DeveloperSettingsView extends StatefulWidget {
-  const DeveloperSettingsView({super.key});
+  const DeveloperSettingsView({super.key, required this.viewModel});
+
+  final DeveloperSettingsViewModel viewModel;
 
   @override
   State<DeveloperSettingsView> createState() => _DeveloperSettingsViewState();
@@ -40,7 +42,7 @@ class _DeveloperSettingsViewState extends State<DeveloperSettingsView> {
   @override
   void initState() {
     super.initState();
-    _viewModel = DeveloperSettingsViewModel();
+    _viewModel = widget.viewModel;
     _eventSub = _viewModel.events.listen((UiEvent event) {
       if (!mounted) {
         return;

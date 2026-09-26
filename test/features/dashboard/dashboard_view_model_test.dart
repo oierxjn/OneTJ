@@ -1,28 +1,54 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:onetj/app/di/dependencies.dart';
+import 'package:onetj/features/dashboard/application/dashboard_data_service.dart';
 import 'package:onetj/features/dashboard/view_models/dashboard_view_model.dart';
 import 'package:onetj/app/presentation/ui_event.dart';
 import 'package:onetj/repo/course_schedule_repository.dart';
 import 'package:onetj/repo/school_calendar_repository.dart';
 import 'package:onetj/repo/settings_repository.dart';
+import 'package:onetj/repo/student_info_repository.dart';
+import 'package:onetj/repo/token_repository.dart';
 import 'package:onetj/services/app_update_service.dart';
+import 'package:onetj/services/auth_token_provider.dart';
+import 'package:onetj/services/term_key_resolver.dart';
+import 'package:onetj/services/tongji.dart';
+import 'package:onetj/services/user_collection_service.dart';
 
 void main() {
-  setUp(() {
-    appLocator.registerSingleton<SettingsRepository>(
-      SettingsRepository(storage: InMemorySettingsStorage()),
+  /// 组装一个所有依赖都已显式注入的视图模型，测试用例只需给出更新服务。
+  DashboardViewModel buildViewModel({
+    required AppUpdateService appUpdateService,
+  }) {
+    final CourseScheduleRepository scheduleRepository =
+        CourseScheduleRepository(storage: InMemoryCourseScheduleStorage());
+    final SchoolCalendarRepository calendarRepository =
+        SchoolCalendarRepository(storage: InMemorySchoolCalendarStorage());
+    return DashboardViewModel(
+      dataService: DashboardDataService(
+        api: TongjiApi(
+          auth: AuthTokenProvider(
+            repository: TokenRepository(storage: InMemoryTokenStorage()),
+          ),
+        ),
+        termKeyResolver: TermKeyResolver(
+          calendarRepository: calendarRepository,
+          scheduleRepository: scheduleRepository,
+        ),
+        studentInfoRepository: StudentInfoRepository(
+          storage: InMemoryStudentInfoStorage(),
+        ),
+        courseScheduleRepository: scheduleRepository,
+      ),
+      settingsRepository: SettingsRepository(
+        storage: InMemorySettingsStorage(),
+      ),
+      studentInfoRepository: StudentInfoRepository(
+        storage: InMemoryStudentInfoStorage(),
+      ),
+      schoolCalendarRepository: calendarRepository,
+      userCollectionService: UserCollectionService(),
+      appUpdateService: appUpdateService,
     );
-    appLocator.registerSingleton<SchoolCalendarRepository>(
-      SchoolCalendarRepository(storage: InMemorySchoolCalendarStorage()),
-    );
-    appLocator.registerSingleton<CourseScheduleRepository>(
-      CourseScheduleRepository(storage: InMemoryCourseScheduleStorage()),
-    );
-  });
-
-  tearDown(() async {
-    await resetDependencies();
-  });
+  }
 
   group('DashboardViewModel.skipUpdateVersion', () {
     test('returns true when skip version succeeds', () async {
@@ -31,7 +57,7 @@ void main() {
         onSkipVersion: (_) async {},
       );
       final DashboardViewModel viewModel =
-          DashboardViewModel(appUpdateService: service);
+          buildViewModel(appUpdateService: service);
 
       final bool result = await viewModel.skipUpdateVersion('v2.3.0');
 
@@ -48,7 +74,7 @@ void main() {
         onSkipVersion: (_) async => throw error,
       );
       final DashboardViewModel viewModel =
-          DashboardViewModel(appUpdateService: service);
+          buildViewModel(appUpdateService: service);
 
       final Future<UiEvent> nextEvent = viewModel.events.first;
       final bool result = await viewModel.skipUpdateVersion('v2.3.0');

@@ -2,7 +2,10 @@ import 'package:get_it/get_it.dart';
 
 import 'package:onetj/app/theme/theme_change_notifier.dart';
 import 'package:onetj/features/cet_score/application/cet_score_data_service.dart';
+import 'package:onetj/features/dashboard/application/dashboard_data_service.dart';
+import 'package:onetj/features/grades/application/grades_data_service.dart';
 import 'package:onetj/features/student_exams/application/student_exam_data_service.dart';
+import 'package:onetj/features/timetable/application/timetable_data_service.dart';
 import 'package:onetj/features/cet_score/view_models/cet_score_view_model.dart';
 import 'package:onetj/features/student_exams/view_models/student_exam_view_model.dart';
 import 'package:onetj/features/physics_lab/features/michelson/application/michelson_draft_service.dart';
@@ -26,7 +29,9 @@ import 'package:onetj/services/app_update_api.dart';
 import 'package:onetj/services/app_update_service.dart';
 import 'package:onetj/services/auth_token_provider.dart';
 import 'package:onetj/services/external_launcher_service.dart';
+import 'package:onetj/services/term_key_resolver.dart';
 import 'package:onetj/services/tongji.dart';
+import 'package:onetj/services/user_collection_service.dart';
 
 final GetIt appLocator = GetIt.instance;
 
@@ -76,7 +81,40 @@ void configureDependencies() {
   appLocator.registerLazySingleton<ExternalLauncherService>(
     ExternalLauncherService.new,
   );
-  appLocator.registerLazySingleton<TongjiApi>(TongjiApi.new);
+  appLocator.registerLazySingleton<TongjiApi>(
+    () => TongjiApi(auth: appLocator<AuthTokenProvider>()),
+  );
+  appLocator.registerLazySingleton<UserCollectionService>(
+    UserCollectionService.new,
+  );
+  appLocator.registerLazySingleton<TermKeyResolver>(
+    () => TermKeyResolver(
+      calendarRepository: appLocator<SchoolCalendarRepository>(),
+      scheduleRepository: appLocator<CourseScheduleRepository>(),
+    ),
+  );
+  appLocator.registerLazySingleton<DashboardDataService>(
+    () => DashboardDataService(
+      api: appLocator<TongjiApi>(),
+      termKeyResolver: appLocator<TermKeyResolver>(),
+      studentInfoRepository: appLocator<StudentInfoRepository>(),
+      courseScheduleRepository: appLocator<CourseScheduleRepository>(),
+    ),
+  );
+  appLocator.registerLazySingleton<GradesDataService>(
+    () => GradesDataService(
+      api: appLocator<TongjiApi>(),
+      repository: appLocator<UndergraduateScoreRepository>(),
+    ),
+  );
+  appLocator.registerLazySingleton<TimetableDataService>(
+    () => TimetableDataService(
+      api: appLocator<TongjiApi>(),
+      scheduleRepository: appLocator<CourseScheduleRepository>(),
+      calendarRepository: appLocator<SchoolCalendarRepository>(),
+      termKeyResolver: appLocator<TermKeyResolver>(),
+    ),
+  );
   appLocator.registerLazySingleton<CetScoreDataService>(
     () => CetScoreDataService(
       api: appLocator<TongjiApi>(),

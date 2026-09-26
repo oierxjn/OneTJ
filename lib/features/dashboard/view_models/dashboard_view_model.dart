@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:onetj/features/dashboard/application/dashboard_data_service.dart';
 import 'package:onetj/features/dashboard/models/dashboard_upcoming_entry_data.dart';
 import 'package:onetj/features/dashboard/models/upcoming_entries_calculator.dart';
-import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/app/presentation/base_view_model.dart';
 import 'package:onetj/models/dashboard_upcoming_mode.dart';
 import 'package:onetj/app/presentation/ui_event.dart';
@@ -24,21 +23,25 @@ import 'package:onetj/app/logging/logger.dart';
 
 class DashboardViewModel extends BaseViewModel<UiEvent> {
   DashboardViewModel({
-    DashboardDataService? dataService,
-    SettingsRepository? settingsRepository,
-    UserCollectionService? userCollectionService,
-    AppUpdateService? appUpdateService,
-  })  : _dataService = dataService ?? DashboardDataService(),
-        _settingsRepository =
-            settingsRepository ?? appLocator<SettingsRepository>(),
-        _userCollectionService =
-            userCollectionService ?? UserCollectionService(),
-        _appUpdateService = appUpdateService ?? appLocator<AppUpdateService>() {
+    required DashboardDataService dataService,
+    required SettingsRepository settingsRepository,
+    required StudentInfoRepository studentInfoRepository,
+    required SchoolCalendarRepository schoolCalendarRepository,
+    required UserCollectionService userCollectionService,
+    required AppUpdateService appUpdateService,
+  })  : _dataService = dataService,
+        _settingsRepository = settingsRepository,
+        _studentInfoRepository = studentInfoRepository,
+        _schoolCalendarRepository = schoolCalendarRepository,
+        _userCollectionService = userCollectionService,
+        _appUpdateService = appUpdateService {
     _settingsSub = _settingsRepository.stream.listen(_listenSettingsChanged);
   }
 
   final DashboardDataService _dataService;
   final SettingsRepository _settingsRepository;
+  final StudentInfoRepository _studentInfoRepository;
+  final SchoolCalendarRepository _schoolCalendarRepository;
   final UserCollectionService _userCollectionService;
   final AppUpdateService _appUpdateService;
   StreamSubscription<SettingsData>? _settingsSub;
@@ -206,8 +209,8 @@ class DashboardViewModel extends BaseViewModel<UiEvent> {
 
   Future<void> _uploadUserCollectionWhenStudentInfoLoaded() async {
     try {
-      final StudentInfoRepository repo = appLocator<StudentInfoRepository>();
-      final StudentInfoData studentInfo = await repo.getOrFetch(
+      final StudentInfoData studentInfo = await _studentInfoRepository
+          .getOrFetch(
         now: DateTime.now(),
         fetcher: _dataService.fetchStudentInfo,
         ttl: const Duration(days: 1),
@@ -228,12 +231,10 @@ class DashboardViewModel extends BaseViewModel<UiEvent> {
   }
 
   Future<void> loadSchoolCalendar() async {
-    final SchoolCalendarRepository repo =
-        appLocator<SchoolCalendarRepository>();
     try {
       final DateTime now = DateTime.now();
-      await repo.warmUp();
-      final SchoolCalendarData data = await repo.getOrFetch(
+      await _schoolCalendarRepository.warmUp();
+      final SchoolCalendarData data = await _schoolCalendarRepository.getOrFetch(
         now: now,
         fetcher: _dataService.fetchSchoolCalendar,
       );

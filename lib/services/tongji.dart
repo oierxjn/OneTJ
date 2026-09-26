@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import 'package:onetj/app/constant/site_constant.dart';
-import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/app/logging/logger.dart';
 import 'package:onetj/models/api_response.dart';
@@ -23,21 +22,9 @@ import 'package:onetj/services/auth_token_provider.dart';
 import 'package:onetj/services/logged_http.dart';
 
 class TongjiApi {
-  TongjiApi._([this._authOverride]);
+  TongjiApi({required AuthTokenProvider auth}) : _auth = auth;
 
-  /// 获取 [TongjiApi] 实例。
-  ///
-  /// 这是一个单例模式，确保在整个应用程序中只有一个实例。
-  /// 传入 [auth] 时会返回一个使用该实例的新对象，便于测试注入。
-  factory TongjiApi({AuthTokenProvider? auth}) =>
-      auth == null ? _instance : TongjiApi._(auth);
-
-  static final TongjiApi _instance = TongjiApi._();
-
-  final AuthTokenProvider? _authOverride;
-
-  AuthTokenProvider get _auth =>
-      _authOverride ?? appLocator<AuthTokenProvider>();
+  final AuthTokenProvider _auth;
 
   final String _baseUrl = tongjiApiBaseUrl;
 
