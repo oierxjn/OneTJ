@@ -250,7 +250,10 @@ View → ViewModel → Application service → Repository / Shared service → �
 依赖装配约定：
 
 - 新 application service 必须通过构造器注入依赖。
-- `appLocator` 仅可在 `lib/app/di/` 和必要的 composition root 中使用；不要在 ViewModel 或 application service 中新增 service locator 查询。
+- composition root 仅限三处：`lib/app/di/dependencies.dart`、`lib/main.dart`、各 feature 的 `routes.dart`。只有这三处允许调用 `appLocator`。
+- ViewModel、application service、model、shared service 一律通过构造参数接收依赖，禁止使用 `appLocator` 查询，也禁止 `dep ?? appLocator<Dep>()` 这类兜底写法。
+- View 不自行构造 ViewModel，也不查询 locator；由 `routes.dart` 构造 ViewModel 并以 `required` 参数传入。
+- 单例只由 `dependencies.dart` 决定：需要全局共享实例用 `registerLazySingleton`，需要每次新建用 `registerFactory`。不要在类里写 `static _instance` 手写单例。
 - 共享展示层基础设施 `BaseViewModel` 与 `UiEvent` 位于 `lib/app/presentation/`。
 
 文件结构：

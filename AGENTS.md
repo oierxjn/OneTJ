@@ -62,4 +62,6 @@
 ## Feature MVVM layering
 - ViewModels maintain UI state and emit `UiEvent`; they must not call APIs directly or access cache repositories directly.
 - Application services own feature-level API/repository/cache/fallback orchestration and must receive dependencies through constructor injection.
-- Restrict `appLocator` to `lib/app/di/` and necessary composition roots. Do not introduce `appLocator` lookups into ViewModels or application services; pass dependencies from the composition root instead.
+- `appLocator` is allowed only in the three composition roots: `lib/app/di/dependencies.dart`, `lib/main.dart`, and each feature's `routes.dart`. Never use it in ViewModels, application services, models, shared services, or Views, and never write `dep ?? appLocator<Dep>()` fallbacks.
+- Views do not construct their own ViewModels and do not query the locator; `routes.dart` builds the ViewModel and passes it in as a `required` parameter.
+- Singleton policy lives only in `dependencies.dart`: `registerLazySingleton` for shared instances, `registerFactory` for per-use instances. Do not hand-roll `static _instance` singletons in classes.
