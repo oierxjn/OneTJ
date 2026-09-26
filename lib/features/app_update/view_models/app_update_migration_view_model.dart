@@ -1,6 +1,5 @@
 import 'package:flutter/services.dart';
 
-import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/app/logging/logger.dart';
 import 'package:onetj/features/app_update/models/event.dart';
 import 'package:onetj/app/presentation/base_view_model.dart';
@@ -9,9 +8,8 @@ import 'package:onetj/services/external_launcher_service.dart';
 
 class AppUpdateMigrationViewModel extends BaseViewModel<UiEvent> {
   AppUpdateMigrationViewModel({
-    ExternalLauncherService? externalLauncherService,
-  }) : _externalLauncherService =
-            externalLauncherService ?? appLocator<ExternalLauncherService>();
+    required ExternalLauncherService externalLauncherService,
+  }) : _externalLauncherService = externalLauncherService;
 
   final ExternalLauncherService _externalLauncherService;
 

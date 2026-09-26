@@ -6,8 +6,8 @@ import 'package:onetj/app/presentation/base_view_model.dart';
 import 'package:onetj/app/presentation/ui_event.dart';
 
 class DeveloperSettingsViewModel extends BaseViewModel<UiEvent> {
-  DeveloperSettingsViewModel({DeveloperSettingsModel? model})
-      : _model = model ?? DeveloperSettingsModel();
+  DeveloperSettingsViewModel({required DeveloperSettingsModel model})
+      : _model = model;
 
   final DeveloperSettingsModel _model;
 

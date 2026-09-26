@@ -2,6 +2,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/app/di/dependencies.dart';
+import 'package:onetj/features/student_exams/application/student_exam_data_service.dart';
 import 'package:onetj/features/student_exams/view_models/student_exam_view_model.dart';
 import 'package:onetj/features/student_exams/views/student_exams_view.dart';
 
@@ -11,7 +12,9 @@ final List<GoRoute> studentExamsDetailRoutes = <GoRoute>[
     path: RoutePaths.homeStudentExams,
     name: 'student-exams',
     builder: (context, state) => StudentExamsView(
-      viewModel: appLocator<StudentExamViewModel>(),
+      viewModel: StudentExamViewModel(
+        dataSource: appLocator<StudentExamDataService>(),
+      ),
     ),
   ),
 ];

@@ -9,7 +9,9 @@ import 'package:onetj/app/presentation/ui_event.dart';
 import 'package:onetj/models/settings_defaults.dart';
 
 class LauncherView extends StatefulWidget {
-  const LauncherView({super.key});
+  const LauncherView({super.key, required this.viewModel});
+
+  final LauncherViewModel viewModel;
 
   @override
   State<LauncherView> createState() => _LauncherViewState();
@@ -23,7 +25,7 @@ class _LauncherViewState extends State<LauncherView> {
   @override
   void initState() {
     super.initState();
-    _viewModel = LauncherViewModel();
+    _viewModel = widget.viewModel;
     _eventSub = _viewModel.events.listen((event) {
       if (event is NavigateEvent) {
         if (!mounted) return;

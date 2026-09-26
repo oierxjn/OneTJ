@@ -5,7 +5,6 @@ import 'package:onetj/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:onetj/app/constant/route_paths.dart';
-import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/app/theme/theme_change_notifier.dart';
 import 'package:onetj/features/app_update/app_update_flow_coordinator.dart';
 import 'package:onetj/features/dashboard/view_models/dashboard_view_model.dart';
@@ -19,7 +18,6 @@ import 'package:onetj/models/timetable_index.dart';
 import 'package:onetj/models/theme_preferences.dart';
 import 'package:onetj/models/time_slot.dart';
 import 'package:onetj/models/school_calendar_data.dart';
-import 'package:onetj/services/app_update_service.dart';
 import 'package:onetj/widgets/course_detail_bottom_sheet.dart';
 
 const double _kUpcomingTimeBadgeWidth = 95;
@@ -28,7 +26,16 @@ const double _kUpcomingContentLeftInset =
     _kUpcomingTimeBadgeWidth + _kUpcomingTimeBadgeGap;
 
 class DashboardView extends StatefulWidget {
-  const DashboardView({super.key});
+  const DashboardView({
+    super.key,
+    required this.viewModel,
+    required this.themeChangeNotifier,
+    required this.appUpdateCoordinator,
+  });
+
+  final DashboardViewModel viewModel;
+  final ThemeChangeNotifier themeChangeNotifier;
+  final AppUpdateFlowCoordinator appUpdateCoordinator;
 
   @override
   State<DashboardView> createState() => _DashboardViewState();
@@ -38,7 +45,6 @@ class _DashboardViewState extends State<DashboardView>
     with WidgetsBindingObserver {
   late final DashboardViewModel _viewModel;
   late final ThemeChangeNotifier _themeChangeNotifier;
-  late final AppUpdateService _appUpdateService;
   late final AppUpdateFlowCoordinator _appUpdateCoordinator;
   StreamSubscription<UiEvent>? _eventSub;
   bool _updateDialogVisible = false;
@@ -47,12 +53,9 @@ class _DashboardViewState extends State<DashboardView>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _themeChangeNotifier = appLocator<ThemeChangeNotifier>();
-    _appUpdateService = appLocator<AppUpdateService>();
-    _appUpdateCoordinator = AppUpdateFlowCoordinator(
-      appUpdateService: _appUpdateService,
-    );
-    _viewModel = DashboardViewModel(appUpdateService: _appUpdateService);
+    _viewModel = widget.viewModel;
+    _themeChangeNotifier = widget.themeChangeNotifier;
+    _appUpdateCoordinator = widget.appUpdateCoordinator;
     _eventSub = _viewModel.events.listen((event) {
       if (event is ShowSnackBarEvent) {
         if (!mounted) return;

@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import 'package:onetj/app/constant/site_constant.dart';
-import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/models/data/code2token.dart';
 import 'package:onetj/models/token_data.dart';
@@ -11,11 +10,9 @@ import 'package:onetj/repo/token_repository.dart';
 import 'package:onetj/services/logged_http.dart';
 
 /// 负责认证令牌的生命周期管理:授权码交换、过期检查与刷新。
-///
-/// 通过 `appLocator<AuthTokenProvider>()` 获取实例。
 class AuthTokenProvider {
-  AuthTokenProvider({TokenRepository? repository})
-      : _repository = repository ?? appLocator<TokenRepository>();
+  AuthTokenProvider({required TokenRepository repository})
+      : _repository = repository;
 
   final TokenRepository _repository;
 

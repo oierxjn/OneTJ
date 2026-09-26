@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
-import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/app/logging/logger.dart';
@@ -46,17 +45,24 @@ class SettingsUiState {
 /// 在草稿更新后立即持久化；文本框草稿只在失去焦点提交时落盘。
 class SettingsViewModel extends BaseViewModel<UiEvent> {
   SettingsViewModel({
-    SettingsRepository? settingsRepository,
-    ThemeChangeNotifier? themeChangeNotifier,
+    required SettingsRepository settingsRepository,
+    required ThemeChangeNotifier themeChangeNotifier,
     required CetScoreDataService cetScoreDataService,
+    required TokenRepository tokenRepository,
+    required StudentInfoRepository studentInfoRepository,
+    required SchoolCalendarRepository schoolCalendarRepository,
+    required CourseScheduleRepository courseScheduleRepository,
+    required WebViewEnvironmentService webViewEnvironmentService,
     this.savingFeedbackDelay = const Duration(milliseconds: 300),
-  })  : _settingsRepository =
-            settingsRepository ?? appLocator<SettingsRepository>(),
-        _themeChangeNotifier =
-            themeChangeNotifier ?? appLocator<ThemeChangeNotifier>(),
+  })  : _settingsRepository = settingsRepository,
+        _themeChangeNotifier = themeChangeNotifier,
         _cetScoreDataService = cetScoreDataService,
+        _tokenRepository = tokenRepository,
+        _studentInfoRepository = studentInfoRepository,
+        _schoolCalendarRepository = schoolCalendarRepository,
+        _courseScheduleRepository = courseScheduleRepository,
         _hiveStorageService = HiveStorageService(),
-        _webViewEnvironment = WebViewEnvironmentService.instance.environment {
+        _webViewEnvironment = webViewEnvironmentService.environment {
     _savedSettings = _settingsRepository.peekCachedOrDefault();
     _applySavedToDraft(_savedSettings);
     _themeChangeNotifier.addListener(_onThemeChanged);
@@ -68,6 +74,10 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
   final SettingsRepository _settingsRepository;
   final ThemeChangeNotifier _themeChangeNotifier;
   final CetScoreDataService _cetScoreDataService;
+  final TokenRepository _tokenRepository;
+  final StudentInfoRepository _studentInfoRepository;
+  final SchoolCalendarRepository _schoolCalendarRepository;
+  final CourseScheduleRepository _courseScheduleRepository;
   final HiveStorageService _hiveStorageService;
   final WebViewEnvironment? _webViewEnvironment;
 
@@ -267,10 +277,10 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
     errorMessage = null;
     notifyListeners();
     try {
-      await appLocator<TokenRepository>().clearToken();
-      await appLocator<StudentInfoRepository>().clearCache();
-      await appLocator<SchoolCalendarRepository>().clearCache();
-      await appLocator<CourseScheduleRepository>().clearCache();
+      await _tokenRepository.clearToken();
+      await _studentInfoRepository.clearCache();
+      await _schoolCalendarRepository.clearCache();
+      await _courseScheduleRepository.clearCache();
       await _cetScoreDataService.clearCachedData();
       await CookieManager.instance(webViewEnvironment: _webViewEnvironment)
           .deleteAllCookies();

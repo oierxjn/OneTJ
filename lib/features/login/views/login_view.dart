@@ -11,8 +11,13 @@ import 'package:onetj/app/exception/app_exception.dart';
 import '../view_models/login_view_model.dart';
 
 class LoginView extends StatefulWidget {
-  const LoginView({super.key, this.webViewEnvironment});
+  const LoginView({
+    super.key,
+    required this.viewModel,
+    this.webViewEnvironment,
+  });
 
+  final LoginViewModel viewModel;
   final WebViewEnvironment? webViewEnvironment;
 
   @override
@@ -26,7 +31,7 @@ class _LoginViewState extends State<LoginView> {
   @override
   void initState() {
     super.initState();
-    viewModel = LoginViewModel();
+    viewModel = widget.viewModel;
 
     // 订阅Stream事件
     _eventSub = viewModel.events.listen((event) {

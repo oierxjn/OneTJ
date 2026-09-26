@@ -16,21 +16,29 @@ const String _kQqGroupId = '322324184';
 const String _kQqGroupQrAsset = 'assets/media/qq_group_qrcode.png';
 
 class AboutView extends StatefulWidget {
-  const AboutView({super.key});
+  const AboutView({
+    super.key,
+    required this.viewModel,
+    required this.appUpdateCoordinator,
+  });
+
+  final AboutViewModel viewModel;
+  final AppUpdateFlowCoordinator appUpdateCoordinator;
 
   @override
   State<AboutView> createState() => _AboutViewState();
 }
 
 class _AboutViewState extends State<AboutView> {
-  final AboutViewModel _viewModel = AboutViewModel();
-  final AppUpdateFlowCoordinator _appUpdateCoordinator =
-      AppUpdateFlowCoordinator();
+  late final AboutViewModel _viewModel;
+  late final AppUpdateFlowCoordinator _appUpdateCoordinator;
   StreamSubscription<UiEvent>? _eventSub;
 
   @override
   void initState() {
     super.initState();
+    _viewModel = widget.viewModel;
+    _appUpdateCoordinator = widget.appUpdateCoordinator;
     _eventSub = _viewModel.events.listen(_handleEvent);
   }
 
