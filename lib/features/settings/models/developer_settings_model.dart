@@ -1,36 +1,17 @@
 import 'package:onetj/features/settings/models/developer_settings_exception.dart';
-import 'package:onetj/models/student_info_data.dart';
-import 'package:onetj/repo/student_info_repository.dart';
-import 'package:onetj/services/tongji.dart';
-import 'package:onetj/services/user_collection_service.dart';
 
+/// 开发者设置页的纯逻辑：调试上报 endpoint 的解析与校验。
+///
+/// 只做格式校验，不涉及任何 I/O；上报编排见
+/// `settings/application/developer_settings_service.dart`。
 class DeveloperSettingsModel {
-  DeveloperSettingsModel({
-    required StudentInfoRepository studentInfoRepository,
-    required TongjiApi tongjiApi,
-    required UserCollectionService userCollectionService,
-  })  : _studentInfoRepository = studentInfoRepository,
-        _tongjiApi = tongjiApi,
-        _userCollectionService = userCollectionService;
+  const DeveloperSettingsModel._();
 
-  final StudentInfoRepository _studentInfoRepository;
-  final TongjiApi _tongjiApi;
-  final UserCollectionService _userCollectionService;
-
-  Future<void> sendDebugCollection({
-    required Uri endpoint,
-  }) async {
-    final StudentInfoData studentInfo = await _studentInfoRepository.getOrFetch(
-      now: DateTime.now(),
-      fetcher: _tongjiApi.fetchStudentInfo,
-    );
-    await _userCollectionService.sendDebugCollectionFromCurrentUser(
-      studentInfo,
-      endpoint: endpoint,
-    );
-  }
-
-  Uri parseDebugEndpoint(String raw) {
+  /// 解析并校验调试上报 endpoint。
+  ///
+  /// 必须是带 scheme 与 authority 的 http/https 地址，否则抛出
+  /// [DeveloperDebugEndpointException]。
+  static Uri parseDebugEndpoint(String raw) {
     final String trimmed = raw.trim();
     final Uri? uri = Uri.tryParse(trimmed);
     if (uri == null || !uri.hasScheme || !uri.hasAuthority) {

@@ -6,8 +6,8 @@ import 'package:onetj/app/theme/theme_change_notifier.dart';
 import 'package:onetj/features/about/view_models/about_view_model.dart';
 import 'package:onetj/features/about/views/about_view.dart';
 import 'package:onetj/features/app_update/app_update_flow_coordinator.dart';
+import 'package:onetj/features/settings/application/developer_settings_service.dart';
 import 'package:onetj/features/settings/application/logout_service.dart';
-import 'package:onetj/features/settings/models/developer_settings_model.dart';
 import 'package:onetj/features/settings/view_models/color_picker_view_model.dart';
 import 'package:onetj/features/settings/view_models/developer_settings_view_model.dart';
 import 'package:onetj/features/settings/view_models/settings_view_model.dart';
@@ -24,11 +24,8 @@ import 'package:onetj/models/time_period_range.dart';
 import 'package:onetj/models/user_collection_field.dart';
 import 'package:onetj/repo/color_preset_repository.dart';
 import 'package:onetj/repo/settings_repository.dart';
-import 'package:onetj/repo/student_info_repository.dart';
 import 'package:onetj/services/app_update_service.dart';
 import 'package:onetj/services/external_launcher_service.dart';
-import 'package:onetj/services/tongji.dart';
-import 'package:onetj/services/user_collection_service.dart';
 
 /// 主页 Shell 中的设置一级页面。
 final List<GoRoute> settingsShellRoutes = [
@@ -106,11 +103,7 @@ final List<GoRoute> settingsDetailRoutes = [
     name: 'settings-developer',
     builder: (context, state) => DeveloperSettingsView(
       viewModel: DeveloperSettingsViewModel(
-        model: DeveloperSettingsModel(
-          studentInfoRepository: appLocator<StudentInfoRepository>(),
-          tongjiApi: appLocator<TongjiApi>(),
-          userCollectionService: appLocator<UserCollectionService>(),
-        ),
+        service: appLocator<DeveloperSettingsService>(),
       ),
     ),
   ),
