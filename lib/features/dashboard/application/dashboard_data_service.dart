@@ -1,5 +1,6 @@
 import 'package:onetj/models/course_schedule_data.dart';
 import 'package:onetj/models/school_calendar_data.dart';
+import 'package:onetj/models/settings_data.dart';
 import 'package:onetj/models/student_info_data.dart';
 import 'package:onetj/repo/course_schedule_repository.dart';
 import 'package:onetj/repo/school_calendar_repository.dart';
@@ -82,7 +83,7 @@ class DashboardDataService {
   /// 组合学生信息与当前设置；失败由调用方决定如何处理。
   Future<void> uploadUserCollectionForProduction() async {
     final StudentInfoData studentInfo = await getStudentInfo();
-    final settings = await _settingsRepository.getSettings();
+    final SettingsData settings = await _settingsRepository.getSettings();
     await _userCollectionService.uploadForProduction(
       studentInfo: studentInfo,
       settings: settings,
