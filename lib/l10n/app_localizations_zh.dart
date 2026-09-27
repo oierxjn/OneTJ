@@ -1223,4 +1223,16 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get studentExamsUnavailable => '该功能暂未开放，请等待信息办恢复。';
+
+  @override
+  String get launcherBootFailedTitle => '启动失败';
+
+  @override
+  String get launcherBootFailedMessage => '应用启动时出现问题，请重新加载；或退出应用后重试。';
+
+  @override
+  String get launcherBootFailedRetry => '重新加载';
+
+  @override
+  String get launcherBootFailedExit => '退出';
 }

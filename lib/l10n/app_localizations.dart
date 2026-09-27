@@ -2342,6 +2342,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This feature is temporarily unavailable. Please wait for the service to be restored.'**
   String get studentExamsUnavailable;
+
+  /// No description provided for @launcherBootFailedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Startup failed'**
+  String get launcherBootFailedTitle;
+
+  /// No description provided for @launcherBootFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong while starting the app. Reload, or exit and try again.'**
+  String get launcherBootFailedMessage;
+
+  /// No description provided for @launcherBootFailedRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Reload'**
+  String get launcherBootFailedRetry;
+
+  /// No description provided for @launcherBootFailedExit.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit'**
+  String get launcherBootFailedExit;
 }
 
 class _AppLocalizationsDelegate

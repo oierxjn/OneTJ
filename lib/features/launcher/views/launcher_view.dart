@@ -1,6 +1,8 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:onetj/l10n/app_localizations.dart';
 
 import 'package:onetj/features/launcher/view_models/launcher_view_model.dart';
 import 'package:onetj/models/settings_defaults.dart';
@@ -15,7 +17,6 @@ class LauncherView extends StatefulWidget {
 }
 
 class _LauncherViewState extends State<LauncherView> {
-  static Future<void>? _initFuture;
   late final LauncherViewModel _viewModel;
 
   @override
@@ -23,7 +24,8 @@ class _LauncherViewState extends State<LauncherView> {
     super.initState();
     _viewModel = widget.viewModel;
     // 引导结果通过 SessionController 发布，跳转由路由守卫完成，此处无需订阅事件。
-    _initFuture ??= _viewModel.initialize();
+    // 不做 static future 缓存：引导失败后用户重试需要能再次执行 initialize()。
+    _viewModel.initialize();
   }
 
   @override
@@ -37,11 +39,75 @@ class _LauncherViewState extends State<LauncherView> {
     return Scaffold(
       body: AnimatedBuilder(
         animation: _viewModel,
-        builder: (context, _) => SizedBox.expand(
-          child: _buildWallpaper(),
+        builder: (context, _) {
+          final LauncherBootFailure? failure = _viewModel.failure;
+          return Stack(
+            fit: StackFit.expand,
+            children: <Widget>[
+              _buildWallpaper(),
+              if (failure != null) _buildBootFailureOverlay(failure),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  /// 引导失败面板：提示用户重试或退出，避免永久停留在启动页。
+  Widget _buildBootFailureOverlay(LauncherBootFailure failure) {
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    final ColorScheme colors = Theme.of(context).colorScheme;
+    return ColoredBox(
+      color: colors.scrim.withValues(alpha: 0.6),
+      child: Center(
+        child: Card(
+          margin: const EdgeInsets.symmetric(horizontal: 32),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Icon(Icons.error_outline, color: colors.error, size: 40),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.launcherBootFailedTitle,
+                  style: Theme.of(context).textTheme.titleMedium,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  l10n.launcherBootFailedMessage,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: <Widget>[
+                    TextButton(
+                      onPressed: _viewModel.isInitializing ? null : _exitApp,
+                      child: Text(l10n.launcherBootFailedExit),
+                    ),
+                    const SizedBox(width: 8),
+                    FilledButton(
+                      onPressed:
+                          _viewModel.isInitializing ? null : _viewModel.initialize,
+                      child: Text(l10n.launcherBootFailedRetry),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
+  }
+
+  /// 退出应用。仅 Android 等移动平台支持通过 [SystemNavigator] 结束进程；
+  /// 桌面端无此语义，调用无效但不会崩溃。
+  void _exitApp() {
+    SystemNavigator.pop();
   }
 
   Widget _buildWallpaper() {
