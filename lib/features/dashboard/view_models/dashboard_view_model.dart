@@ -11,38 +11,26 @@ import 'package:onetj/models/time_period_range.dart';
 import 'package:onetj/models/timetable_index.dart';
 import 'package:onetj/models/course_schedule_data.dart';
 import 'package:onetj/models/school_calendar_data.dart';
-import 'package:onetj/repo/school_calendar_repository.dart';
 import 'package:onetj/models/settings_data.dart';
 import 'package:onetj/repo/settings_repository.dart';
 import 'package:onetj/models/student_info_data.dart';
-import 'package:onetj/repo/student_info_repository.dart';
 import 'package:onetj/services/timetable_index_builder.dart';
 import 'package:onetj/services/app_update_service.dart';
-import 'package:onetj/services/user_collection_service.dart';
 import 'package:onetj/app/logging/logger.dart';
 
 class DashboardViewModel extends BaseViewModel<UiEvent> {
   DashboardViewModel({
     required DashboardDataService dataService,
     required SettingsRepository settingsRepository,
-    required StudentInfoRepository studentInfoRepository,
-    required SchoolCalendarRepository schoolCalendarRepository,
-    required UserCollectionService userCollectionService,
     required AppUpdateService appUpdateService,
   })  : _dataService = dataService,
         _settingsRepository = settingsRepository,
-        _studentInfoRepository = studentInfoRepository,
-        _schoolCalendarRepository = schoolCalendarRepository,
-        _userCollectionService = userCollectionService,
         _appUpdateService = appUpdateService {
     _settingsSub = _settingsRepository.stream.listen(_listenSettingsChanged);
   }
 
   final DashboardDataService _dataService;
   final SettingsRepository _settingsRepository;
-  final StudentInfoRepository _studentInfoRepository;
-  final SchoolCalendarRepository _schoolCalendarRepository;
-  final UserCollectionService _userCollectionService;
   final AppUpdateService _appUpdateService;
   StreamSubscription<SettingsData>? _settingsSub;
   Timer? _upcomingRefreshTimer;
@@ -209,17 +197,7 @@ class DashboardViewModel extends BaseViewModel<UiEvent> {
 
   Future<void> _uploadUserCollectionWhenStudentInfoLoaded() async {
     try {
-      final StudentInfoData studentInfo = await _studentInfoRepository
-          .getOrFetch(
-        now: DateTime.now(),
-        fetcher: _dataService.fetchStudentInfo,
-        ttl: const Duration(days: 1),
-      );
-      final SettingsData settings = await _settingsRepository.getSettings();
-      await _userCollectionService.uploadForProduction(
-        studentInfo: studentInfo,
-        settings: settings,
-      );
+      await _dataService.uploadUserCollectionForProduction();
     } catch (error, stackTrace) {
       AppLogger.warning(
         'Dashboard user collection upload failed',
@@ -233,11 +211,7 @@ class DashboardViewModel extends BaseViewModel<UiEvent> {
   Future<void> loadSchoolCalendar() async {
     try {
       final DateTime now = DateTime.now();
-      await _schoolCalendarRepository.warmUp();
-      final SchoolCalendarData data = await _schoolCalendarRepository.getOrFetch(
-        now: now,
-        fetcher: _dataService.fetchSchoolCalendar,
-      );
+      final SchoolCalendarData data = await _dataService.getSchoolCalendar();
       _calendar = data;
       _lastCalendarSyncDate = now;
     } catch (error) {

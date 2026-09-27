@@ -13,12 +13,9 @@ import 'package:onetj/features/timetable/application/timetable_data_service.dart
 import 'package:onetj/features/timetable/view_models/timetable_view_model.dart';
 import 'package:onetj/features/timetable/views/timetable_view.dart';
 import 'package:onetj/features/tools/routes.dart';
-import 'package:onetj/repo/school_calendar_repository.dart';
 import 'package:onetj/repo/settings_repository.dart';
-import 'package:onetj/repo/student_info_repository.dart';
 import 'package:onetj/services/app_update_service.dart';
 import 'package:onetj/services/external_launcher_service.dart';
-import 'package:onetj/services/user_collection_service.dart';
 
 final StatefulShellRoute homeShellRoute = StatefulShellRoute.indexedStack(
   builder: (context, state, navigationShell) => HomeView(
@@ -39,9 +36,6 @@ final StatefulShellRoute homeShellRoute = StatefulShellRoute.indexedStack(
             viewModel: DashboardViewModel(
               dataService: appLocator<DashboardDataService>(),
               settingsRepository: appLocator<SettingsRepository>(),
-              studentInfoRepository: appLocator<StudentInfoRepository>(),
-              schoolCalendarRepository: appLocator<SchoolCalendarRepository>(),
-              userCollectionService: appLocator<UserCollectionService>(),
               appUpdateService: appLocator<AppUpdateService>(),
             ),
             themeChangeNotifier: appLocator<ThemeChangeNotifier>(),

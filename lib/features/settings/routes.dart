@@ -6,7 +6,7 @@ import 'package:onetj/app/theme/theme_change_notifier.dart';
 import 'package:onetj/features/about/view_models/about_view_model.dart';
 import 'package:onetj/features/about/views/about_view.dart';
 import 'package:onetj/features/app_update/app_update_flow_coordinator.dart';
-import 'package:onetj/features/cet_score/application/cet_score_data_service.dart';
+import 'package:onetj/features/settings/application/logout_service.dart';
 import 'package:onetj/features/settings/models/developer_settings_model.dart';
 import 'package:onetj/features/settings/view_models/color_picker_view_model.dart';
 import 'package:onetj/features/settings/view_models/developer_settings_view_model.dart';
@@ -23,16 +23,12 @@ import 'package:onetj/models/settings_defaults.dart';
 import 'package:onetj/models/time_period_range.dart';
 import 'package:onetj/models/user_collection_field.dart';
 import 'package:onetj/repo/color_preset_repository.dart';
-import 'package:onetj/repo/course_schedule_repository.dart';
-import 'package:onetj/repo/school_calendar_repository.dart';
 import 'package:onetj/repo/settings_repository.dart';
 import 'package:onetj/repo/student_info_repository.dart';
-import 'package:onetj/repo/token_repository.dart';
 import 'package:onetj/services/app_update_service.dart';
 import 'package:onetj/services/external_launcher_service.dart';
 import 'package:onetj/services/tongji.dart';
 import 'package:onetj/services/user_collection_service.dart';
-import 'package:onetj/services/webview_environment_service.dart';
 
 /// 主页 Shell 中的设置一级页面。
 final List<GoRoute> settingsShellRoutes = [
@@ -43,12 +39,7 @@ final List<GoRoute> settingsShellRoutes = [
       viewModel: SettingsViewModel(
         settingsRepository: appLocator<SettingsRepository>(),
         themeChangeNotifier: appLocator<ThemeChangeNotifier>(),
-        cetScoreDataService: appLocator<CetScoreDataService>(),
-        tokenRepository: appLocator<TokenRepository>(),
-        studentInfoRepository: appLocator<StudentInfoRepository>(),
-        schoolCalendarRepository: appLocator<SchoolCalendarRepository>(),
-        courseScheduleRepository: appLocator<CourseScheduleRepository>(),
-        webViewEnvironmentService: appLocator<WebViewEnvironmentService>(),
+        logoutService: appLocator<LogoutService>(),
       ),
     ),
   ),

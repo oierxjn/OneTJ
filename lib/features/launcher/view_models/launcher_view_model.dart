@@ -1,39 +1,17 @@
 import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/app/logging/logger.dart';
 import 'package:onetj/app/logging/logging_bootstrap.dart';
-import 'package:onetj/app/theme/theme_change_notifier.dart';
 import 'package:onetj/app/presentation/base_view_model.dart';
 import 'package:onetj/app/presentation/ui_event.dart';
-import 'package:onetj/models/launch_wallpaper_ref.dart';
-import 'package:onetj/models/settings_data.dart';
-import 'package:onetj/repo/settings_repository.dart';
-import 'package:onetj/models/token_data.dart';
-import 'package:onetj/repo/token_repository.dart';
-import 'package:onetj/services/auth_token_provider.dart';
-import 'package:onetj/services/hive_storage_service.dart';
+import 'package:onetj/features/launcher/application/launcher_boot_service.dart';
 import 'package:onetj/services/launch_wallpaper_file_service.dart';
-import 'package:onetj/services/webview_environment_service.dart';
 
 class LauncherViewModel extends BaseViewModel<UiEvent> {
   LauncherViewModel({
-    required ThemeChangeNotifier themeChangeNotifier,
-    required SettingsRepository settingsRepository,
-    required TokenRepository tokenRepository,
-    required AuthTokenProvider authTokenProvider,
-    required WebViewEnvironmentService webViewEnvironmentService,
-  })  : _themeChangeNotifier = themeChangeNotifier,
-        _settingsRepository = settingsRepository,
-        _tokenRepository = tokenRepository,
-        _authTokenProvider = authTokenProvider,
-        _webViewEnvironmentService = webViewEnvironmentService,
-        _hiveStorageService = HiveStorageService();
+    required LauncherBootService bootService,
+  }) : _bootService = bootService;
 
-  final ThemeChangeNotifier _themeChangeNotifier;
-  final SettingsRepository _settingsRepository;
-  final TokenRepository _tokenRepository;
-  final AuthTokenProvider _authTokenProvider;
-  final WebViewEnvironmentService _webViewEnvironmentService;
-  final HiveStorageService _hiveStorageService;
+  final LauncherBootService _bootService;
   String? _wallpaperFilePath;
   String? _wallpaperAssetPath;
 
@@ -50,12 +28,14 @@ class LauncherViewModel extends BaseViewModel<UiEvent> {
       loggerName: 'LauncherViewModel',
     );
 
-    final Future<String> initFuture = _initialize();
+    final Future<String> routeFuture = _bootService.run(
+      onWallpaperResolved: _updateWallpaper,
+    );
     final Future<void> delayFuture = Future.delayed(
       const Duration(milliseconds: 1200),
     );
 
-    final String route = await initFuture;
+    final String route = await routeFuture;
     await delayFuture;
 
     AppLogger.logNavigation(
@@ -64,51 +44,6 @@ class LauncherViewModel extends BaseViewModel<UiEvent> {
       context: const <String, Object?>{'phase': 'launcher_initialize'},
     );
     emit(NavigateEvent(route));
-  }
-
-  /// 根据初始化状况返回初始路由
-  Future<String> _initialize() async {
-    await _hiveStorageService.initializeHive();
-
-    // 在 Hive 路径正确初始化后立即加载主题偏好
-    await _themeChangeNotifier.initialize();
-
-    final Future<void> webViewInitFuture =
-        _webViewEnvironmentService.initialize();
-    final Future<SettingsData> settingsFuture = _settingsRepository.getSettings(
-      refreshFromStorage: true,
-    );
-
-    final SettingsData settings = await settingsFuture;
-    final LaunchWallpaperResolved? resolved =
-        await _resolveWallpaper(settings.selectedLaunchWallpaperRef);
-    _updateWallpaper(resolved);
-    await webViewInitFuture;
-    final String route = await _resolveInitialRoute();
-    return route;
-  }
-
-  Future<LaunchWallpaperResolved?> _resolveWallpaper(
-    LaunchWallpaperRef wallpaperRef,
-  ) async {
-    final LaunchWallpaperResolved? resolved =
-        await LaunchWallpaperFileService.resolveWallpaper(wallpaperRef);
-    if (resolved == null) {
-      AppLogger.info(
-        'Launch wallpaper fallback to default by missing selected id',
-        loggerName: 'LauncherViewModel',
-      );
-      return null;
-    }
-    AppLogger.info(
-      'Launch wallpaper resolved',
-      loggerName: 'LauncherViewModel',
-      context: <String, Object?>{
-        'filePath': resolved.filePath,
-        'assetPath': resolved.assetPath,
-      },
-    );
-    return resolved;
   }
 
   void _updateWallpaper(LaunchWallpaperResolved? resolved) {
@@ -121,47 +56,5 @@ class LauncherViewModel extends BaseViewModel<UiEvent> {
     _wallpaperFilePath = nextFilePath;
     _wallpaperAssetPath = nextAssetPath;
     notifyListeners();
-  }
-
-  /// 通过判断 token 状态来确定初始路由
-  ///
-  /// 如果 token 有效，则返回 [RoutePaths.home]，否则返回 [RoutePaths.login]。
-  Future<String> _resolveInitialRoute() async {
-    final TokenData? token = await _tokenRepository.getToken(
-      refreshFromStorage: true,
-    );
-
-    if (token == null) {
-      AppLogger.info(
-        'Resolved route to login',
-        loggerName: 'LauncherViewModel',
-        context: const <String, Object?>{'route': RoutePaths.login},
-      );
-      return RoutePaths.login;
-    }
-
-    try {
-      await _authTokenProvider.getValidAccessToken();
-      AppLogger.info(
-        'Resolved route by valid token',
-        loggerName: 'LauncherViewModel',
-        context: const <String, Object?>{'route': RoutePaths.home},
-      );
-      return RoutePaths.home;
-    } catch (error, stackTrace) {
-      AppLogger.warning(
-        'Failed to resolve a valid token during launch',
-        loggerName: 'LauncherViewModel',
-        error: error,
-        stackTrace: stackTrace,
-      );
-    }
-
-    AppLogger.info(
-      'Resolved route to login',
-      loggerName: 'LauncherViewModel',
-      context: const <String, Object?>{'route': RoutePaths.login},
-    );
-    return RoutePaths.login;
   }
 }

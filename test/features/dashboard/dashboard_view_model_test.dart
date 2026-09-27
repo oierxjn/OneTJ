@@ -37,15 +37,15 @@ void main() {
           storage: InMemoryStudentInfoStorage(),
         ),
         courseScheduleRepository: scheduleRepository,
+        schoolCalendarRepository: calendarRepository,
+        settingsRepository: SettingsRepository(
+          storage: InMemorySettingsStorage(),
+        ),
+        userCollectionService: UserCollectionService(),
       ),
       settingsRepository: SettingsRepository(
         storage: InMemorySettingsStorage(),
       ),
-      studentInfoRepository: StudentInfoRepository(
-        storage: InMemoryStudentInfoStorage(),
-      ),
-      schoolCalendarRepository: calendarRepository,
-      userCollectionService: UserCollectionService(),
       appUpdateService: appUpdateService,
     );
   }
