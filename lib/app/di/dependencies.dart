@@ -4,6 +4,8 @@ import 'package:onetj/app/theme/theme_change_notifier.dart';
 import 'package:onetj/features/cet_score/application/cet_score_data_service.dart';
 import 'package:onetj/features/dashboard/application/dashboard_data_service.dart';
 import 'package:onetj/features/grades/application/grades_data_service.dart';
+import 'package:onetj/features/launcher/application/launcher_boot_service.dart';
+import 'package:onetj/features/settings/application/logout_service.dart';
 import 'package:onetj/features/student_exams/application/student_exam_data_service.dart';
 import 'package:onetj/features/timetable/application/timetable_data_service.dart';
 import 'package:onetj/features/physics_lab/features/michelson/application/michelson_draft_service.dart';
@@ -27,6 +29,7 @@ import 'package:onetj/services/app_update_api.dart';
 import 'package:onetj/services/app_update_service.dart';
 import 'package:onetj/services/auth_token_provider.dart';
 import 'package:onetj/services/external_launcher_service.dart';
+import 'package:onetj/services/hive_storage_service.dart';
 import 'package:onetj/services/term_key_resolver.dart';
 import 'package:onetj/services/tongji.dart';
 import 'package:onetj/services/user_collection_service.dart';
@@ -83,6 +86,9 @@ void configureDependencies() {
   appLocator.registerLazySingleton<WebViewEnvironmentService>(
     WebViewEnvironmentService.new,
   );
+  appLocator.registerLazySingleton<HiveStorageService>(
+    HiveStorageService.new,
+  );
   appLocator.registerLazySingleton<TongjiApi>(
     () => TongjiApi(auth: appLocator<AuthTokenProvider>()),
   );
@@ -101,6 +107,29 @@ void configureDependencies() {
       termKeyResolver: appLocator<TermKeyResolver>(),
       studentInfoRepository: appLocator<StudentInfoRepository>(),
       courseScheduleRepository: appLocator<CourseScheduleRepository>(),
+      schoolCalendarRepository: appLocator<SchoolCalendarRepository>(),
+      settingsRepository: appLocator<SettingsRepository>(),
+      userCollectionService: appLocator<UserCollectionService>(),
+    ),
+  );
+  appLocator.registerLazySingleton<LogoutService>(
+    () => LogoutService(
+      tokenRepository: appLocator<TokenRepository>(),
+      studentInfoRepository: appLocator<StudentInfoRepository>(),
+      schoolCalendarRepository: appLocator<SchoolCalendarRepository>(),
+      courseScheduleRepository: appLocator<CourseScheduleRepository>(),
+      cetScoreDataService: appLocator<CetScoreDataService>(),
+      webViewEnvironmentService: appLocator<WebViewEnvironmentService>(),
+    ),
+  );
+  appLocator.registerLazySingleton<LauncherBootService>(
+    () => LauncherBootService(
+      hiveStorageService: appLocator<HiveStorageService>(),
+      themeChangeNotifier: appLocator<ThemeChangeNotifier>(),
+      webViewEnvironmentService: appLocator<WebViewEnvironmentService>(),
+      settingsRepository: appLocator<SettingsRepository>(),
+      tokenRepository: appLocator<TokenRepository>(),
+      authTokenProvider: appLocator<AuthTokenProvider>(),
     ),
   );
   appLocator.registerLazySingleton<GradesDataService>(

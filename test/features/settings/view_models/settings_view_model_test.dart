@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:onetj/app/presentation/ui_event.dart';
 import 'package:onetj/app/theme/theme_change_notifier.dart';
 import 'package:onetj/features/cet_score/application/cet_score_data_service.dart';
+import 'package:onetj/features/settings/application/logout_service.dart';
 import 'package:onetj/features/settings/models/event.dart';
 import 'package:onetj/features/settings/view_models/settings_view_model.dart';
 import 'package:onetj/models/cet_score_data.dart';
@@ -75,25 +76,28 @@ void main() {
     Duration savingFeedbackDelay = const Duration(milliseconds: 300),
   }) {
     return SettingsViewModel(
-      settingsRepository: settingsRepository ?? SettingsRepository(
-        storage: InMemorySettingsStorage(),
-      ),
+      settingsRepository: settingsRepository ??
+          SettingsRepository(
+            storage: InMemorySettingsStorage(),
+          ),
       themeChangeNotifier: themeChangeNotifier ??
           ThemeChangeNotifier(
             repository: ThemeRepository(storage: InMemoryThemeStorage()),
           ),
-      cetScoreDataService: _FakeCetScoreDataService(),
-      tokenRepository: TokenRepository(storage: InMemoryTokenStorage()),
-      studentInfoRepository: StudentInfoRepository(
-        storage: InMemoryStudentInfoStorage(),
+      logoutService: LogoutService(
+        tokenRepository: TokenRepository(storage: InMemoryTokenStorage()),
+        studentInfoRepository: StudentInfoRepository(
+          storage: InMemoryStudentInfoStorage(),
+        ),
+        schoolCalendarRepository: SchoolCalendarRepository(
+          storage: InMemorySchoolCalendarStorage(),
+        ),
+        courseScheduleRepository: CourseScheduleRepository(
+          storage: InMemoryCourseScheduleStorage(),
+        ),
+        cetScoreDataService: _FakeCetScoreDataService(),
+        webViewEnvironmentService: WebViewEnvironmentService(),
       ),
-      schoolCalendarRepository: SchoolCalendarRepository(
-        storage: InMemorySchoolCalendarStorage(),
-      ),
-      courseScheduleRepository: CourseScheduleRepository(
-        storage: InMemoryCourseScheduleStorage(),
-      ),
-      webViewEnvironmentService: WebViewEnvironmentService(),
       savingFeedbackDelay: savingFeedbackDelay,
     );
   }

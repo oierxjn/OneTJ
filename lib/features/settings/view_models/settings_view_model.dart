@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
 import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/app/constant/route_paths.dart';
@@ -11,21 +10,16 @@ import 'package:onetj/models/dashboard_upcoming_mode.dart';
 import 'package:onetj/models/theme_preferences.dart';
 import 'package:onetj/models/launch_wallpaper_ref.dart';
 import 'package:onetj/models/user_collection_field.dart';
-import 'package:onetj/features/cet_score/application/cet_score_data_service.dart';
+import 'package:onetj/features/settings/application/logout_service.dart';
 import 'package:onetj/features/settings/models/event.dart';
 import 'package:onetj/features/settings/models/settings_model.dart';
 import 'package:onetj/app/presentation/base_view_model.dart';
 import 'package:onetj/app/presentation/ui_event.dart';
 import 'package:onetj/models/time_period_range.dart';
 import 'package:onetj/models/settings_defaults.dart';
-import 'package:onetj/repo/course_schedule_repository.dart';
-import 'package:onetj/repo/school_calendar_repository.dart';
 import 'package:onetj/models/settings_data.dart';
 import 'package:onetj/repo/settings_repository.dart';
-import 'package:onetj/repo/student_info_repository.dart';
-import 'package:onetj/repo/token_repository.dart';
 import 'package:onetj/services/hive_storage_service.dart';
-import 'package:onetj/services/webview_environment_service.dart';
 
 class SettingsUiState {
   const SettingsUiState({
@@ -47,22 +41,12 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
   SettingsViewModel({
     required SettingsRepository settingsRepository,
     required ThemeChangeNotifier themeChangeNotifier,
-    required CetScoreDataService cetScoreDataService,
-    required TokenRepository tokenRepository,
-    required StudentInfoRepository studentInfoRepository,
-    required SchoolCalendarRepository schoolCalendarRepository,
-    required CourseScheduleRepository courseScheduleRepository,
-    required WebViewEnvironmentService webViewEnvironmentService,
+    required LogoutService logoutService,
     this.savingFeedbackDelay = const Duration(milliseconds: 300),
   })  : _settingsRepository = settingsRepository,
         _themeChangeNotifier = themeChangeNotifier,
-        _cetScoreDataService = cetScoreDataService,
-        _tokenRepository = tokenRepository,
-        _studentInfoRepository = studentInfoRepository,
-        _schoolCalendarRepository = schoolCalendarRepository,
-        _courseScheduleRepository = courseScheduleRepository,
-        _hiveStorageService = HiveStorageService(),
-        _webViewEnvironment = webViewEnvironmentService.environment {
+        _logoutService = logoutService,
+        _hiveStorageService = HiveStorageService() {
     _savedSettings = _settingsRepository.peekCachedOrDefault();
     _applySavedToDraft(_savedSettings);
     _themeChangeNotifier.addListener(_onThemeChanged);
@@ -73,13 +57,8 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
 
   final SettingsRepository _settingsRepository;
   final ThemeChangeNotifier _themeChangeNotifier;
-  final CetScoreDataService _cetScoreDataService;
-  final TokenRepository _tokenRepository;
-  final StudentInfoRepository _studentInfoRepository;
-  final SchoolCalendarRepository _schoolCalendarRepository;
-  final CourseScheduleRepository _courseScheduleRepository;
+  final LogoutService _logoutService;
   final HiveStorageService _hiveStorageService;
-  final WebViewEnvironment? _webViewEnvironment;
 
   late SettingsData _savedSettings;
   late String _draftMaxWeekText;
@@ -277,13 +256,7 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
     errorMessage = null;
     notifyListeners();
     try {
-      await _tokenRepository.clearToken();
-      await _studentInfoRepository.clearCache();
-      await _schoolCalendarRepository.clearCache();
-      await _courseScheduleRepository.clearCache();
-      await _cetScoreDataService.clearCachedData();
-      await CookieManager.instance(webViewEnvironment: _webViewEnvironment)
-          .deleteAllCookies();
+      await _logoutService.clearSession();
       AppLogger.logNavigation(
         from: RoutePaths.homeSettings,
         to: RoutePaths.login,
