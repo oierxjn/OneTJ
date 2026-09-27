@@ -5,6 +5,9 @@ import 'package:onetj/features/cet_score/application/cet_score_data_service.dart
 import 'package:onetj/features/dashboard/application/dashboard_data_service.dart';
 import 'package:onetj/features/grades/application/grades_data_service.dart';
 import 'package:onetj/features/launcher/application/launcher_boot_service.dart';
+import 'package:onetj/features/login/application/login_data_service.dart';
+import 'package:onetj/features/login/models/login_model.dart';
+import 'package:onetj/features/settings/application/developer_settings_service.dart';
 import 'package:onetj/features/settings/application/logout_service.dart';
 import 'package:onetj/features/student_exams/application/student_exam_data_service.dart';
 import 'package:onetj/features/timetable/application/timetable_data_service.dart';
@@ -120,6 +123,20 @@ void configureDependencies() {
       courseScheduleRepository: appLocator<CourseScheduleRepository>(),
       cetScoreDataService: appLocator<CetScoreDataService>(),
       webViewEnvironmentService: appLocator<WebViewEnvironmentService>(),
+    ),
+  );
+  appLocator.registerLazySingleton<DeveloperSettingsService>(
+    () => DeveloperSettingsService(
+      studentInfoRepository: appLocator<StudentInfoRepository>(),
+      tongjiApi: appLocator<TongjiApi>(),
+      userCollectionService: appLocator<UserCollectionService>(),
+    ),
+  );
+  // 每次进入登录页都需要全新的 OAuth state（CSRF nonce），故用 factory。
+  appLocator.registerFactory<LoginDataService>(
+    () => LoginDataService(
+      model: LoginModel(),
+      authTokenProvider: appLocator<AuthTokenProvider>(),
     ),
   );
   appLocator.registerLazySingleton<LauncherBootService>(

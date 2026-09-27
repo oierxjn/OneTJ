@@ -1,23 +1,25 @@
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:onetj/app/exception/app_exception.dart';
+import 'package:onetj/features/login/application/login_data_service.dart';
 import 'package:onetj/features/login/models/login_model.dart';
 import 'package:onetj/repo/token_repository.dart';
 import 'package:onetj/services/auth_token_provider.dart';
 
 void main() {
-  late LoginModel model;
+  late LoginDataService service;
 
   setUp(() {
-    model = LoginModel(
-      auth: AuthTokenProvider(
+    service = LoginDataService(
+      model: LoginModel(),
+      authTokenProvider: AuthTokenProvider(
         repository: TokenRepository(storage: InMemoryTokenStorage()),
       ),
     );
   });
 
   test('非重定向URI返回false', () async {
-    final bool handled = await model.exchangeCodeIfRedirect(
+    final bool handled = await service.exchangeCodeIfRedirect(
       WebUri('https://ids.tongji.edu.cn/some/page'),
     );
 
@@ -26,7 +28,7 @@ void main() {
 
   test('重定向携带error时抛出AuthRedirectException并带上description', () async {
     await expectLater(
-      model.exchangeCodeIfRedirect(
+      service.exchangeCodeIfRedirect(
         WebUri(
           'https://fakeredir.jkljkluiouio.top'
           '?error=invalid_scope&error_description=Invalid+scopes&state=abc',
@@ -44,7 +46,7 @@ void main() {
 
   test('重定向缺少code时抛出AuthRedirectException', () async {
     await expectLater(
-      model.exchangeCodeIfRedirect(
+      service.exchangeCodeIfRedirect(
         WebUri('https://fakeredir.jkljkluiouio.top?state=abc'),
       ),
       throwsA(
@@ -59,7 +61,7 @@ void main() {
 
   test('state不匹配时抛出AuthStateMismatchException', () async {
     await expectLater(
-      model.exchangeCodeIfRedirect(
+      service.exchangeCodeIfRedirect(
         WebUri('https://fakeredir.jkljkluiouio.top?code=some-code&state=wrong'),
       ),
       throwsA(isA<AuthStateMismatchException>()),

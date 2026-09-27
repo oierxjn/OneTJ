@@ -4,17 +4,17 @@ import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/app/logging/logger.dart';
 import 'package:onetj/app/presentation/ui_event.dart';
-import 'package:onetj/features/login/models/login_model.dart';
+import 'package:onetj/features/login/application/login_data_service.dart';
 import 'package:onetj/app/presentation/base_view_model.dart';
 
 class LoginViewModel extends BaseViewModel<UiEvent> {
   LoginViewModel({
-    required LoginModel model,
-  }) : _model = model;
+    required LoginDataService dataService,
+  }) : _dataService = dataService;
 
-  final LoginModel _model;
+  final LoginDataService _dataService;
 
-  Uri get authUri => _model.buildAuthUri();
+  Uri get authUri => _dataService.authUri;
 
   static Map<String, Object?> redirectUriLogContext(WebUri uri) {
     return <String, Object?>{
@@ -33,7 +33,7 @@ class LoginViewModel extends BaseViewModel<UiEvent> {
       context: redirectUriLogContext(uri),
     );
     try {
-      final bool shouldNavigate = await _model.exchangeCodeIfRedirect(uri);
+      final bool shouldNavigate = await _dataService.exchangeCodeIfRedirect(uri);
       if (shouldNavigate) {
         AppLogger.logNavigation(
           from: RoutePaths.login,
