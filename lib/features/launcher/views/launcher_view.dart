@@ -89,6 +89,12 @@ class _LauncherViewState extends State<LauncherView> {
                       child: Text(l10n.launcherBootFailedExit),
                     ),
                     const SizedBox(width: 8),
+                    // TODO(oierxjn): 「重新加载」只是重跑 LauncherViewModel.initialize，
+                    // 并非真正的进程重启：已产生副作用的初始化步骤不会真正重试。
+                    // 例如 WebViewEnvironmentService.initialize 在 try 之前就置位
+                    // _initialized，其失败后重试会直接早退。若引导失败集中在这一步，
+                    // 需要改为可重入（把标志置位移到成功后）或提供进程级重启。
+                    // 另外桌面端 SystemNavigator.pop 无效果，此按钮是唯一出路。
                     FilledButton(
                       onPressed:
                           _viewModel.isInitializing ? null : _viewModel.initialize,
