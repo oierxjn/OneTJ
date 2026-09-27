@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:onetj/app/constant/route_paths.dart';
+import 'package:onetj/app/session/session_controller.dart';
 import 'package:onetj/app/theme/theme_change_notifier.dart';
 import 'package:onetj/features/launcher/application/launcher_boot_service.dart';
 import 'package:onetj/models/token_data.dart';
@@ -97,14 +97,14 @@ void main() {
     await _deleteTempDirBestEffort(tempDir);
   });
 
-  group('LauncherBootService.run 初始路由', () {
-    test('无令牌时进入登录页', () async {
-      final String route = await buildService().run();
+  group('LauncherBootService.run 初始会话状态', () {
+    test('无令牌时判定为未登录', () async {
+      final AuthStatus status = await buildService().run();
 
-      expect(route, RoutePaths.login);
+      expect(status, AuthStatus.unauthenticated);
     });
 
-    test('令牌有效时进入主页', () async {
+    test('令牌有效时判定为已登录', () async {
       await tokenRepository.saveToken(
         _buildToken(
           accessTokenExpiresIn: 3600,
@@ -112,12 +112,12 @@ void main() {
         ),
       );
 
-      final String route = await buildService().run();
+      final AuthStatus status = await buildService().run();
 
-      expect(route, RoutePaths.home);
+      expect(status, AuthStatus.authenticated);
     });
 
-    test('令牌已过期时进入登录页', () async {
+    test('令牌已过期时判定为未登录', () async {
       await tokenRepository.saveToken(
         _buildToken(
           accessTokenExpiresIn: -3600,
@@ -125,9 +125,9 @@ void main() {
         ),
       );
 
-      final String route = await buildService().run();
+      final AuthStatus status = await buildService().run();
 
-      expect(route, RoutePaths.login);
+      expect(status, AuthStatus.unauthenticated);
     });
   });
 

@@ -1283,4 +1283,17 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get studentExamsUnavailable =>
       'This feature is temporarily unavailable. Please wait for the service to be restored.';
+
+  @override
+  String get launcherBootFailedTitle => 'Startup failed';
+
+  @override
+  String get launcherBootFailedMessage =>
+      'Something went wrong while starting the app. Reload, or exit and try again.';
+
+  @override
+  String get launcherBootFailedRetry => 'Reload';
+
+  @override
+  String get launcherBootFailedExit => 'Exit';
 }

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:onetj/app/presentation/ui_event.dart';
+import 'package:onetj/app/session/session_controller.dart';
 import 'package:onetj/app/theme/theme_change_notifier.dart';
 import 'package:onetj/features/cet_score/application/cet_score_data_service.dart';
 import 'package:onetj/features/settings/application/logout_service.dart';
@@ -97,6 +98,7 @@ void main() {
         ),
         cetScoreDataService: _FakeCetScoreDataService(),
         webViewEnvironmentService: WebViewEnvironmentService(),
+        sessionController: SessionController(),
       ),
       savingFeedbackDelay: savingFeedbackDelay,
     );

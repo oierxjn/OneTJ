@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:onetj/l10n/app_localizations.dart';
-import 'package:go_router/go_router.dart';
 
 import 'package:onetj/app/presentation/ui_event.dart';
 import 'package:onetj/app/exception/app_exception.dart';
@@ -33,7 +32,8 @@ class _LoginViewState extends State<LoginView> {
     super.initState();
     viewModel = widget.viewModel;
 
-    // 订阅Stream事件
+    // 订阅Stream事件。登录成功不再经由此处跳转：视图模型更新会话状态后，
+    // 路由守卫会把当前登录页替换为回跳目标或首页。
     _eventSub = viewModel.events.listen((event) {
       if (event is ShowSnackBarEvent) {
         if (!mounted) return;
@@ -49,10 +49,6 @@ class _LoginViewState extends State<LoginView> {
           SnackBar(content: Text(event.message ?? '')),
         );
         return;
-      }
-      if (event is NavigateEvent) {
-        if (!mounted) return;
-        context.go(event.route);
       }
     });
   }
