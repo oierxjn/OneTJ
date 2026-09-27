@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:go_router/go_router.dart';
 import 'package:onetj/l10n/app_localizations.dart';
 
 import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/app/app_lifecycle_host.dart';
 import 'package:onetj/app/router/app_router.dart';
+import 'package:onetj/app/session/session_controller.dart';
 import 'package:onetj/app/theme/theme_change_notifier.dart';
 import 'package:onetj/services/app_update_service.dart';
 
@@ -49,9 +51,14 @@ class OneTJApp extends StatelessWidget {
             useMaterial3: true,
           ),
           themeMode: themeNotifier.themeMode,
-          routerConfig: AppRouter.router,
+          routerConfig: _router,
         );
       },
     );
   }
+
+  /// 路由表与本次运行共用同一个 [SessionController]，使登录态变化能被守卫感知。
+  static final GoRouter _router = AppRouter.build(
+    session: appLocator<SessionController>(),
+  );
 }

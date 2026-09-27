@@ -1,5 +1,5 @@
-import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/app/logging/logger.dart';
+import 'package:onetj/app/session/session_controller.dart';
 import 'package:onetj/app/theme/theme_change_notifier.dart';
 import 'package:onetj/models/launch_wallpaper_ref.dart';
 import 'package:onetj/models/settings_data.dart';
@@ -14,7 +14,7 @@ import 'package:onetj/services/webview_environment_service.dart';
 /// 启动引导编排。
 ///
 /// 负责按正确顺序完成 Hive / 主题 / WebView / 设置 / 令牌的初始化，
-/// 并据此决定初始路由与启动壁纸。
+/// 并据此决定会话的初始鉴权状态与启动壁纸。
 class LauncherBootService {
   LauncherBootService({
     required HiveStorageService hiveStorageService,
@@ -37,11 +37,14 @@ class LauncherBootService {
   final TokenRepository _tokenRepository;
   final AuthTokenProvider _authTokenProvider;
 
-  /// 完成启动初始化并返回初始路由。
+  /// 完成启动初始化并返回初始会话状态。
   ///
   /// [onWallpaperResolved] 会在壁纸解析完成、而 WebView 初始化与令牌校验
   /// 尚未结束时立即回调，使调用方能尽早展示启动壁纸，不必等待后续步骤。
-  Future<String> run({
+  ///
+  /// 返回值仅供调用方调试与测试断言使用；真正驱动跳转的是本方法写入
+  /// [SessionController] 的鉴权状态。
+  Future<AuthStatus> run({
     void Function(LaunchWallpaperResolved? wallpaper)? onWallpaperResolved,
   }) async {
     await _hiveStorageService.initializeHive();
@@ -58,7 +61,7 @@ class LauncherBootService {
         await _resolveWallpaper(settings.selectedLaunchWallpaperRef);
     onWallpaperResolved?.call(wallpaper);
     await webViewInitFuture;
-    return _resolveInitialRoute();
+    return _resolveInitialStatus();
   }
 
   Future<LaunchWallpaperResolved?> _resolveWallpaper(
@@ -84,31 +87,32 @@ class LauncherBootService {
     return resolved;
   }
 
-  /// 通过判断 token 状态来确定初始路由
+  /// 通过判断 token 状态确定初始会话状态
   ///
-  /// 如果 token 有效，则返回 [RoutePaths.home]，否则返回 [RoutePaths.login]。
-  Future<String> _resolveInitialRoute() async {
+  /// 如果 token 有效则返回 [AuthStatus.authenticated]，否则返回
+  /// [AuthStatus.unauthenticated]。
+  Future<AuthStatus> _resolveInitialStatus() async {
     final TokenData? token = await _tokenRepository.getToken(
       refreshFromStorage: true,
     );
 
     if (token == null) {
       AppLogger.info(
-        'Resolved route to login',
+        'Resolved session as unauthenticated',
         loggerName: 'LauncherBootService',
-        context: const <String, Object?>{'route': RoutePaths.login},
+        context: const <String, Object?>{'status': 'unauthenticated'},
       );
-      return RoutePaths.login;
+      return AuthStatus.unauthenticated;
     }
 
     try {
       await _authTokenProvider.getValidAccessToken();
       AppLogger.info(
-        'Resolved route by valid token',
+        'Resolved session as authenticated',
         loggerName: 'LauncherBootService',
-        context: const <String, Object?>{'route': RoutePaths.home},
+        context: const <String, Object?>{'status': 'authenticated'},
       );
-      return RoutePaths.home;
+      return AuthStatus.authenticated;
     } catch (error, stackTrace) {
       AppLogger.warning(
         'Failed to resolve a valid token during launch',
@@ -118,11 +122,6 @@ class LauncherBootService {
       );
     }
 
-    AppLogger.info(
-      'Resolved route to login',
-      loggerName: 'LauncherBootService',
-      context: const <String, Object?>{'route': RoutePaths.login},
-    );
-    return RoutePaths.login;
+    return AuthStatus.unauthenticated;
   }
 }

@@ -2,10 +2,8 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 import 'package:onetj/features/launcher/view_models/launcher_view_model.dart';
-import 'package:onetj/app/presentation/ui_event.dart';
 import 'package:onetj/models/settings_defaults.dart';
 
 class LauncherView extends StatefulWidget {
@@ -20,24 +18,17 @@ class LauncherView extends StatefulWidget {
 class _LauncherViewState extends State<LauncherView> {
   static Future<void>? _initFuture;
   late final LauncherViewModel _viewModel;
-  StreamSubscription<UiEvent>? _eventSub;
 
   @override
   void initState() {
     super.initState();
     _viewModel = widget.viewModel;
-    _eventSub = _viewModel.events.listen((event) {
-      if (event is NavigateEvent) {
-        if (!mounted) return;
-        context.go(event.route);
-      }
-    });
+    // 引导结果通过 SessionController 发布，跳转由路由守卫完成，此处无需订阅事件。
     _initFuture ??= _viewModel.initialize();
   }
 
   @override
   void dispose() {
-    _eventSub?.cancel();
     _viewModel.dispose();
     super.dispose();
   }

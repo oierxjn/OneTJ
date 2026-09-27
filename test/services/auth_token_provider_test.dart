@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:onetj/app/exception/app_exception.dart';
+import 'package:onetj/app/session/session_controller.dart';
 import 'package:onetj/models/token_data.dart';
 import 'package:onetj/repo/token_repository.dart';
 import 'package:onetj/services/auth_token_provider.dart';
@@ -76,6 +77,58 @@ void main() {
           ),
         ),
       );
+    });
+  });
+
+  group('AuthTokenProvider 向会话状态上报失效', () {
+    late SessionController session;
+
+    setUp(() {
+      session = SessionController()..completeBoot(AuthStatus.authenticated);
+      provider = AuthTokenProvider(
+        repository: repository,
+        sessionController: session,
+      );
+    });
+
+    test('缺少令牌时标记为未登录', () async {
+      await expectLater(
+        provider.getValidAccessToken(),
+        throwsA(isA<AppException>()),
+      );
+
+      expect(session.status, AuthStatus.unauthenticated);
+      expect(session.lastReason, 'missing_token');
+    });
+
+    test('refresh token 过期时标记为未登录', () async {
+      await repository.saveToken(
+        _buildToken(
+          accessTokenExpiresIn: -3600,
+          refreshTokenExpiresIn: -7200,
+        ),
+      );
+
+      await expectLater(
+        provider.getValidAccessToken(),
+        throwsA(isA<AppException>()),
+      );
+
+      expect(session.status, AuthStatus.unauthenticated);
+      expect(session.lastReason, 'refresh_token_expired');
+    });
+
+    test('access token 有效时不会翻转会话状态', () async {
+      await repository.saveToken(
+        _buildToken(
+          accessTokenExpiresIn: 3600,
+          refreshTokenExpiresIn: 7200,
+        ),
+      );
+
+      await provider.getValidAccessToken();
+
+      expect(session.status, AuthStatus.authenticated);
     });
   });
 }

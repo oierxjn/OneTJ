@@ -1,5 +1,6 @@
 import 'package:get_it/get_it.dart';
 
+import 'package:onetj/app/session/session_controller.dart';
 import 'package:onetj/app/theme/theme_change_notifier.dart';
 import 'package:onetj/features/cet_score/application/cet_score_data_service.dart';
 import 'package:onetj/features/dashboard/application/dashboard_data_service.dart';
@@ -73,8 +74,13 @@ void configureDependencies() {
   );
 
   // Services
+  // 会话状态源：路由守卫的 refreshListenable，也是启动/登录/登出/失效的唯一状态出口。
+  appLocator.registerLazySingleton<SessionController>(SessionController.new);
   appLocator.registerLazySingleton<AuthTokenProvider>(
-    () => AuthTokenProvider(repository: appLocator<TokenRepository>()),
+    () => AuthTokenProvider(
+      repository: appLocator<TokenRepository>(),
+      sessionController: appLocator<SessionController>(),
+    ),
   );
   appLocator.registerLazySingleton<AppUpdateApi>(AppUpdateApi.new);
   appLocator.registerLazySingleton<AppUpdateService>(
@@ -93,7 +99,10 @@ void configureDependencies() {
     HiveStorageService.new,
   );
   appLocator.registerLazySingleton<TongjiApi>(
-    () => TongjiApi(auth: appLocator<AuthTokenProvider>()),
+    () => TongjiApi(
+      auth: appLocator<AuthTokenProvider>(),
+      sessionController: appLocator<SessionController>(),
+    ),
   );
   appLocator.registerLazySingleton<UserCollectionService>(
     UserCollectionService.new,
@@ -123,6 +132,7 @@ void configureDependencies() {
       courseScheduleRepository: appLocator<CourseScheduleRepository>(),
       cetScoreDataService: appLocator<CetScoreDataService>(),
       webViewEnvironmentService: appLocator<WebViewEnvironmentService>(),
+      sessionController: appLocator<SessionController>(),
     ),
   );
   appLocator.registerLazySingleton<DeveloperSettingsService>(

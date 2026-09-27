@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/app/router/app_router.dart';
+import 'package:onetj/app/session/session_controller.dart';
 import 'package:onetj/features/physics_lab/routes.dart';
 import 'package:onetj/features/settings/routes.dart';
 import 'package:onetj/features/tools/routes.dart';
@@ -24,7 +25,8 @@ void main() {
   });
 
   test('应用根路由注册全部详情页面', () {
-    final Iterable<String> topLevelPaths = AppRouter.router.configuration.routes
+    final GoRouter router = AppRouter.build(session: SessionController());
+    final Iterable<String> topLevelPaths = router.configuration.routes
         .whereType<GoRoute>()
         .map((GoRoute route) => route.path);
 

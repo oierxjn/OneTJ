@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 
 import 'package:onetj/app/constant/site_constant.dart';
 import 'package:onetj/app/exception/app_exception.dart';
+import 'package:onetj/app/session/session_controller.dart';
 import 'package:onetj/models/data/code2token.dart';
 import 'package:onetj/models/token_data.dart';
 import 'package:onetj/repo/token_repository.dart';
@@ -11,10 +12,18 @@ import 'package:onetj/services/logged_http.dart';
 
 /// 负责认证令牌的生命周期管理:授权码交换、过期检查与刷新。
 class AuthTokenProvider {
-  AuthTokenProvider({required TokenRepository repository})
-      : _repository = repository;
+  AuthTokenProvider({
+    required TokenRepository repository,
+    SessionController? sessionController,
+  })  : _repository = repository,
+        _sessionController = sessionController;
 
   final TokenRepository _repository;
+
+  /// 令牌失效时用于把会话状态同步给路由守卫。
+  ///
+  /// 可选：单元测试与不关心导航的调用方可以不注入。
+  final SessionController? _sessionController;
 
   final String _baseUrl = tongjiApiBaseUrl;
   static const Duration _tokenSkew = Duration(seconds: 30);
@@ -53,16 +62,21 @@ class AuthTokenProvider {
   /// access token 过期时会用 refresh token 刷新,并写回 [TokenRepository]。
   /// 没有 token 时抛出 `AppException('AUTH_REQUIRED')`;
   /// refresh token 也过期时抛出 `AppException('AUTH_EXPIRED')`。
+  ///
+  /// 后两种情况会同时把 [SessionController] 标记为未登录，使路由守卫把用户
+  /// 送回登录页；`AUTH_REQUIRED` 在启动引导期间不会触发跳转（状态仍为 unknown）。
   Future<String> getValidAccessToken() async {
     final TokenData? token =
         await _repository.getToken(refreshFromStorage: true);
     if (token == null) {
+      _sessionController?.markUnauthenticated(reason: 'missing_token');
       throw AppException('AUTH_REQUIRED', 'Missing access token');
     }
     if (!token.isAccessTokenExpired(skew: _tokenSkew)) {
       return token.accessToken;
     }
     if (token.isRefreshTokenExpired(skew: _tokenSkew)) {
+      _sessionController?.markUnauthenticated(reason: 'refresh_token_expired');
       throw AppException('AUTH_EXPIRED', 'Refresh token expired');
     }
     final Code2TokenData refreshed = await _refreshToken(token.refreshToken);

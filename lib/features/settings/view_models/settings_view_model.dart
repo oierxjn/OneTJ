@@ -256,13 +256,13 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
     errorMessage = null;
     notifyListeners();
     try {
+      // 清理完成后 LogoutService 会把会话标记为已登出，路由守卫随即跳转登录页。
       await _logoutService.clearSession();
       AppLogger.logNavigation(
         from: RoutePaths.homeSettings,
         to: RoutePaths.login,
         context: const <String, Object?>{'reason': 'logout'},
       );
-      emit(const NavigateEvent(RoutePaths.login));
     } catch (error) {
       final String message = 'Failed to log out: $error';
       errorMessage = message;
