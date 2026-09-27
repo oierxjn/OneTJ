@@ -81,12 +81,15 @@ class SessionController extends ChangeNotifier {
     final bool statusChanged = _status != next;
     _status = next;
     _lastReason = reason;
-    if (next == AuthStatus.unauthenticated) {
-      // 会话已结束，不再回跳旧页面。
-      _pendingLocation = null;
-    }
     if (!statusChanged) {
+      // 重复上报（如多个并发请求同时收到 401）：状态未变，不做任何清理。
+      // 特别是不能清空待回跳位置——它可能正是守卫在处理首次失效时刚记录的。
       return;
+    }
+    if (next == AuthStatus.unauthenticated) {
+      // 真正进入未登录态：上一次会话的待回跳位置已失效，清掉。
+      // 注意顺序：随后守卫会在 redirect 中记录本次所在页面。
+      _pendingLocation = null;
     }
     AppLogger.info(
       'Session status changed',

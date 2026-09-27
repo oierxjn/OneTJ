@@ -10,13 +10,40 @@ import 'package:onetj/models/token_data.dart';
 import 'package:onetj/repo/token_repository.dart';
 import 'package:onetj/services/logged_http.dart';
 
+/// 发起一次表单 POST 的可注入入口，默认走带日志的 [loggedHttpPost]。
+typedef AuthHttpPost = Future<http.Response> Function(
+  Uri uri, {
+  Map<String, String>? headers,
+  Object? body,
+  Encoding? encoding,
+  String loggerName,
+});
+
 /// 负责认证令牌的生命周期管理:授权码交换、过期检查与刷新。
 class AuthTokenProvider {
   AuthTokenProvider({
     required TokenRepository repository,
     SessionController? sessionController,
+    AuthHttpPost? httpPost,
   })  : _repository = repository,
-        _sessionController = sessionController;
+        _sessionController = sessionController,
+        _httpPost = httpPost ?? _defaultHttpPost;
+
+  static Future<http.Response> _defaultHttpPost(
+    Uri uri, {
+    Map<String, String>? headers,
+    Object? body,
+    Encoding? encoding,
+    String loggerName = 'Http',
+  }) {
+    return loggedHttpPost(
+      uri,
+      headers: headers,
+      body: body,
+      encoding: encoding,
+      loggerName: loggerName,
+    );
+  }
 
   final TokenRepository _repository;
 
@@ -25,13 +52,16 @@ class AuthTokenProvider {
   /// 可选：单元测试与不关心导航的调用方可以不注入。
   final SessionController? _sessionController;
 
+  /// HTTP 入口，注入用于测试刷新被拒等网络路径。
+  final AuthHttpPost _httpPost;
+
   final String _baseUrl = tongjiApiBaseUrl;
   static const Duration _tokenSkew = Duration(seconds: 30);
 
   /// 用授权码交换 token,成功后写入 [TokenRepository]。
   Future<void> exchangeCode(String code) async {
     final Uri uri = Uri.https(_baseUrl, code2tokenPath);
-    final http.Response response = await loggedHttpPost(
+    final http.Response response = await _httpPost(
       uri,
       loggerName: 'AuthTokenProvider',
       body: <String, String>{
@@ -79,7 +109,18 @@ class AuthTokenProvider {
       _sessionController?.markUnauthenticated(reason: 'refresh_token_expired');
       throw AppException('AUTH_EXPIRED', 'Refresh token expired');
     }
-    final Code2TokenData refreshed = await _refreshToken(token.refreshToken);
+    final Code2TokenData refreshed;
+    try {
+      refreshed = await _refreshToken(token.refreshToken);
+    } on NetworkException catch (error) {
+      // 本地看 refresh token 未过期，但服务端明确拒绝（401，例如令牌被吊销）。
+      // 这是确定的认证失败，上报未登录；其余状态码与网络故障不上报，避免
+      // 瞬时抖动把用户误登出。
+      if (error.statusCode == 401) {
+        _sessionController?.markUnauthenticated(reason: 'refresh_rejected_401');
+      }
+      rethrow;
+    }
     await _repository.saveFromCode2Token(refreshed);
     return refreshed.accessToken;
   }
@@ -87,7 +128,7 @@ class AuthTokenProvider {
   /// 用 refresh token 刷新 token,返回新的 [Code2TokenData],不写存储。
   Future<Code2TokenData> _refreshToken(String refreshToken) async {
     final Uri uri = Uri.https(_baseUrl, code2tokenPath);
-    final http.Response response = await loggedHttpPost(
+    final http.Response response = await _httpPost(
       uri,
       loggerName: 'AuthTokenProvider',
       body: <String, String>{

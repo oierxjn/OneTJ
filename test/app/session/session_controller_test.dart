@@ -91,6 +91,31 @@ void main() {
       expect(controller.pendingLocation, isNull);
     });
 
+    test('重复的失效上报不会清掉守卫刚记录的回跳位置', () {
+      // 并发请求同时收到 401 时，首次上报翻转状态、守卫随即记录当前页面；
+      // 后续的重复上报是 no-op，必须保留该位置，否则登录后回不到原页面。
+      final SessionController controller = SessionController()
+        ..completeBoot(AuthStatus.authenticated);
+
+      controller.markUnauthenticated(reason: 'first_401');
+      controller.rememberPendingLocation('/home/timetable');
+      controller.markUnauthenticated(reason: 'second_401');
+
+      expect(controller.status, AuthStatus.unauthenticated);
+      expect(controller.pendingLocation, '/home/timetable');
+    });
+
+    test('登出后重复登出同样保留回跳位置', () {
+      final SessionController controller = SessionController()
+        ..completeBoot(AuthStatus.authenticated)
+        ..markSignedOut();
+      controller.rememberPendingLocation('/home/grades');
+
+      controller.markSignedOut();
+
+      expect(controller.pendingLocation, '/home/grades');
+    });
+
     test('登录成功时保留待回跳位置，供守卫消费', () {
       final SessionController controller = SessionController();
       controller.rememberPendingLocation('/home/grades');

@@ -42,8 +42,9 @@ class LauncherBootService {
   /// [onWallpaperResolved] 会在壁纸解析完成、而 WebView 初始化与令牌校验
   /// 尚未结束时立即回调，使调用方能尽早展示启动壁纸，不必等待后续步骤。
   ///
-  /// 返回值仅供调用方调试与测试断言使用；真正驱动跳转的是本方法写入
-  /// [SessionController] 的鉴权状态。
+  /// 返回值是初始鉴权状态的**唯一出口**：调用方（`LauncherViewModel`）会把它
+  /// 交给 `SessionController.completeBoot`，再由路由守卫据此跳转。本方法自身
+  /// 不写 `SessionController`——发布时机由调用方掌握（需等启动页最短展示时间）。
   Future<AuthStatus> run({
     void Function(LaunchWallpaperResolved? wallpaper)? onWallpaperResolved,
   }) async {
