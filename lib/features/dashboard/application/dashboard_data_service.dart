@@ -81,8 +81,15 @@ class DashboardDataService {
   /// 学生信息加载后按用户采集策略上报一次埋点。
   ///
   /// 组合学生信息与当前设置；失败由调用方决定如何处理。
+  ///
+  /// 这里刻意不复用 [getStudentInfo]：那条路径会先 `warmUp()` 读一次存储，
+  /// 而埋点只需要内存缓存/网络结果，保持与原有行为一致以避免多余的 I/O。
   Future<void> uploadUserCollectionForProduction() async {
-    final StudentInfoData studentInfo = await getStudentInfo();
+    final StudentInfoData studentInfo = await _studentInfoRepository.getOrFetch(
+      now: DateTime.now(),
+      fetcher: fetchStudentInfo,
+      ttl: const Duration(days: 1),
+    );
     final SettingsData settings = await _settingsRepository.getSettings();
     await _userCollectionService.uploadForProduction(
       studentInfo: studentInfo,
