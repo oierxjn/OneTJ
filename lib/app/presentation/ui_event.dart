@@ -18,11 +18,6 @@ class ShowSnackBarEvent extends UiEvent {
   const ShowSnackBarEvent({super.message, super.code});
 }
 
-class NavigateEvent extends UiEvent {
-  final String route;
-  const NavigateEvent(this.route);
-}
-
 class AppUpdateAvailableEvent extends UiEvent {
   const AppUpdateAvailableEvent({
     required this.updateInfo,
