@@ -81,6 +81,7 @@ void main() {
       );
 
       expect(decision.redirectTo, RoutePaths.home);
+      expect(decision.consumePendingLocation, isFalse);
     });
 
     test('停留在登录页时回到待回跳页面', () {
@@ -91,6 +92,8 @@ void main() {
       );
 
       expect(decision.redirectTo, RoutePaths.homeTimetable);
+      // 使用后必须消费，否则该值会残留到下一次登出/失效。
+      expect(decision.consumePendingLocation, isTrue);
     });
 
     test('待回跳页面为空时回到首页', () {
@@ -101,6 +104,7 @@ void main() {
       );
 
       expect(decision.redirectTo, RoutePaths.home);
+      expect(decision.consumePendingLocation, isFalse);
     });
   });
 

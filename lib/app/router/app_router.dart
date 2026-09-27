@@ -32,6 +32,10 @@ class AppRouter {
         if (decision.rememberLocation) {
           session.rememberPendingLocation(state.matchedLocation);
         }
+        if (decision.consumePendingLocation) {
+          // 待回跳位置只消费一次，避免残留值把后续的登录页访问带向过期目标。
+          session.consumePendingLocation();
+        }
         if (decision.redirectTo == null) {
           return null;
         }
