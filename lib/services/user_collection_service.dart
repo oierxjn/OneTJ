@@ -13,15 +13,11 @@ import 'package:onetj/models/student_info_data.dart';
 import 'package:onetj/services/device_info_service.dart';
 
 class UserCollectionService {
-  UserCollectionService._({
+  UserCollectionService({
     http.Client? client,
     DeviceInfoService? deviceInfoService,
   })  : _client = client ?? http.Client(),
         _deviceInfoService = deviceInfoService ?? DeviceInfoService();
-
-  static final UserCollectionService _instance = UserCollectionService._();
-
-  factory UserCollectionService() => _instance;
 
   final http.Client _client;
   final DeviceInfoService _deviceInfoService;

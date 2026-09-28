@@ -62,4 +62,13 @@
 ## Feature MVVM layering
 - ViewModels maintain UI state and emit `UiEvent`; they must not call APIs directly or access cache repositories directly.
 - Application services own feature-level API/repository/cache/fallback orchestration and must receive dependencies through constructor injection.
-- Restrict `appLocator` to `lib/app/di/` and necessary composition roots. Do not introduce `appLocator` lookups into ViewModels or application services; pass dependencies from the composition root instead.
+- `appLocator` is allowed only in the three composition roots: `lib/app/di/dependencies.dart`, `lib/main.dart`, and each feature's `routes.dart`. Never use it in ViewModels, application services, models, shared services, or Views, and never write `dep ?? appLocator<Dep>()` fallbacks.
+- Views do not construct their own ViewModels and do not query the locator; `routes.dart` builds the ViewModel and passes it in as a `required` parameter.
+- Singleton policy lives only in `dependencies.dart`: `registerLazySingleton` for shared instances, `registerFactory` for per-use instances. Do not hand-roll `static _instance` singletons in classes.
+
+## Navigation & session gating
+- **Navigation is decided in the View, not the ViewModel.** A View may call `context.go` / `context.push` directly for user-intent taps whose destination is a constant (e.g. `onGradesTap: () => context.push(RoutePaths.homeGrades)`). The destination of a tap is UI structure, so it belongs to the View.
+- **ViewModels must not carry route knowledge.** Do not emit an event whose payload is a destination (the removed `NavigateEvent(route)` was exactly this). It leaks UI structure into the ViewModel and turns navigation tests into `expect(event.route, RoutePaths.x)` tautologies.
+- When an async outcome must decide the flow, the ViewModel emits a **semantic result event** describing *what happened* (`AppUpdateAvailableEvent` / `AppUpdateAlreadyLatestEvent` / `AppUpdateFailedEvent` are the reference examples), and the View maps that event to navigation or feedback. Test the classification (`expect(event, isA<...>())`), not a route string.
+- Keep `await context.push<T>(...)`-style "go and return a result" flows in the View: the View transports the result, then calls the ViewModel to update state. Do not push from the ViewModel.
+- **Login-state gating is centralized in the router guard**, not per-screen checks: `SessionController` is the synchronously readable source of truth and the `GoRouter` `refreshListenable`; `resolveAuthDecision` (pure function in `lib/app/router/auth_guard.dart`) decides redirects. Login, logout, and token invalidation only update `SessionController`; they must not navigate directly. Do not add `redirect`/guards per screen.

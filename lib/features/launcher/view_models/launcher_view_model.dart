@@ -1,32 +1,57 @@
 import 'package:onetj/app/constant/route_paths.dart';
-import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/app/logging/logger.dart';
 import 'package:onetj/app/logging/logging_bootstrap.dart';
-import 'package:onetj/app/theme/theme_change_notifier.dart';
 import 'package:onetj/app/presentation/base_view_model.dart';
-import 'package:onetj/app/presentation/ui_event.dart';
-import 'package:onetj/models/launch_wallpaper_ref.dart';
-import 'package:onetj/models/settings_data.dart';
-import 'package:onetj/repo/settings_repository.dart';
-import 'package:onetj/models/token_data.dart';
-import 'package:onetj/repo/token_repository.dart';
-import 'package:onetj/services/auth_token_provider.dart';
-import 'package:onetj/services/hive_storage_service.dart';
+import 'package:onetj/app/session/session_controller.dart';
+import 'package:onetj/features/launcher/application/launcher_boot_service.dart';
 import 'package:onetj/services/launch_wallpaper_file_service.dart';
-import 'package:onetj/services/webview_environment_service.dart';
 
-class LauncherViewModel extends BaseViewModel<UiEvent> {
-  LauncherViewModel() : _hiveStorageService = HiveStorageService();
+/// 启动页视图模型。
+///
+/// 引导流程结束后不会自行跳转，而是在启动页最短展示时间用满后，把结果写入
+/// [SessionController]，由路由守卫统一完成跳转。这样启动页的展示时长与鉴权
+/// 判定互不干扰，也避免「先跳走再回退」的抖动。
+///
+/// 引导失败时进入 [LauncherBootFailure] 状态：状态停留在 `unknown`（守卫不放行），
+/// 由视图展示错误并提供重试或退出，避免用户永久卡在启动页。
+class LauncherViewModel extends BaseViewModel<Never> {
+  LauncherViewModel({
+    required LauncherBootService bootService,
+    required SessionController sessionController,
+    this.minimumSplashDuration = const Duration(milliseconds: 1200),
+  })  : _bootService = bootService,
+        _sessionController = sessionController;
 
-  final HiveStorageService _hiveStorageService;
+  /// 启动页最短展示时间，避免引导过快导致壁纸一闪而过。
+  final Duration minimumSplashDuration;
+
+  final LauncherBootService _bootService;
+  final SessionController _sessionController;
+
   String? _wallpaperFilePath;
   String? _wallpaperAssetPath;
+  LauncherBootFailure? _failure;
+  bool _isInitializing = false;
 
   String? get wallpaperFilePath => _wallpaperFilePath;
   String? get wallpaperAssetPath => _wallpaperAssetPath;
 
-  /// 进行初始化任务和跳转路由
+  /// 引导失败信息；为 null 表示未失败（进行中或已完成）。
+  LauncherBootFailure? get failure => _failure;
+
+  /// 是否正在引导；重试期间用于禁用按钮，避免并发重复引导。
+  bool get isInitializing => _isInitializing;
+
+  /// 进行初始化任务，并在最短展示时间用满后发布会话状态。
+  ///
+  /// 失败时记录 [failure] 并通知视图，不发布会话状态——守卫继续把用户留在
+  /// 启动页，直到用户重试成功或退出。
   Future<void> initialize() async {
+    if (_isInitializing) {
+      return;
+    }
+    _isInitializing = true;
+
     // 同步任务
     AppLoggingBootstrap.ensureInitialized();
 
@@ -35,66 +60,46 @@ class LauncherViewModel extends BaseViewModel<UiEvent> {
       loggerName: 'LauncherViewModel',
     );
 
-    final Future<String> initFuture = _initialize();
-    final Future<void> delayFuture = Future.delayed(
-      const Duration(milliseconds: 1200),
-    );
+    _failure = null;
+    notifyListeners();
 
-    final String route = await initFuture;
+    final Future<AuthStatus> statusFuture = _bootService.run(
+      onWallpaperResolved: _updateWallpaper,
+    );
+    final Future<void> delayFuture = Future<void>.delayed(minimumSplashDuration);
+
+    final AuthStatus status;
+    try {
+      status = await statusFuture;
+    } catch (error, stackTrace) {
+      // 引导失败（Hive 初始化、设置读取、WebView 初始化等）：停在启动页并
+      // 提供重试，绝不能让 completeBoot 永不调用导致状态永远为 unknown。
+      _failure = LauncherBootFailure(
+        error: error,
+        stackTrace: stackTrace,
+      );
+      _isInitializing = false;
+      AppLogger.error(
+        'Launcher boot failed',
+        loggerName: 'LauncherViewModel',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      notifyListeners();
+      return;
+    }
     await delayFuture;
 
     AppLogger.logNavigation(
       from: RoutePaths.launcher,
-      to: route,
-      context: const <String, Object?>{'phase': 'launcher_initialize'},
-    );
-    emit(NavigateEvent(route));
-  }
-
-  /// 根据初始化状况返回初始路由
-  Future<String> _initialize() async {
-    await _hiveStorageService.initializeHive();
-
-    // 在 Hive 路径正确初始化后立即加载主题偏好
-    await appLocator<ThemeChangeNotifier>().initialize();
-
-    final Future<void> webViewInitFuture =
-        WebViewEnvironmentService.instance.initialize();
-    final Future<SettingsData> settingsFuture =
-        appLocator<SettingsRepository>().getSettings(
-      refreshFromStorage: true,
-    );
-
-    final SettingsData settings = await settingsFuture;
-    final LaunchWallpaperResolved? resolved =
-        await _resolveWallpaper(settings.selectedLaunchWallpaperRef);
-    _updateWallpaper(resolved);
-    await webViewInitFuture;
-    final String route = await _resolveInitialRoute();
-    return route;
-  }
-
-  Future<LaunchWallpaperResolved?> _resolveWallpaper(
-    LaunchWallpaperRef wallpaperRef,
-  ) async {
-    final LaunchWallpaperResolved? resolved =
-        await LaunchWallpaperFileService.resolveWallpaper(wallpaperRef);
-    if (resolved == null) {
-      AppLogger.info(
-        'Launch wallpaper fallback to default by missing selected id',
-        loggerName: 'LauncherViewModel',
-      );
-      return null;
-    }
-    AppLogger.info(
-      'Launch wallpaper resolved',
-      loggerName: 'LauncherViewModel',
+      to: status == AuthStatus.authenticated ? RoutePaths.home : RoutePaths.login,
       context: <String, Object?>{
-        'filePath': resolved.filePath,
-        'assetPath': resolved.assetPath,
+        'phase': 'launcher_initialize',
+        'status': status.name,
       },
     );
-    return resolved;
+    // 发布状态后守卫会立即重新求值并离开启动页。
+    _sessionController.completeBoot(status);
   }
 
   void _updateWallpaper(LaunchWallpaperResolved? resolved) {
@@ -108,45 +113,12 @@ class LauncherViewModel extends BaseViewModel<UiEvent> {
     _wallpaperAssetPath = nextAssetPath;
     notifyListeners();
   }
+}
 
-  /// 通过判断 token 状态来确定初始路由
-  ///
-  /// 如果 token 有效，则返回 [RoutePaths.home]，否则返回 [RoutePaths.login]。
-  Future<String> _resolveInitialRoute() async {
-    final TokenRepository repo = appLocator<TokenRepository>();
-    final TokenData? token = await repo.getToken(refreshFromStorage: true);
+/// 启动引导失败的一次记录。
+class LauncherBootFailure {
+  const LauncherBootFailure({required this.error, this.stackTrace});
 
-    if (token == null) {
-      AppLogger.info(
-        'Resolved route to login',
-        loggerName: 'LauncherViewModel',
-        context: const <String, Object?>{'route': RoutePaths.login},
-      );
-      return RoutePaths.login;
-    }
-
-    try {
-      await appLocator<AuthTokenProvider>().getValidAccessToken();
-      AppLogger.info(
-        'Resolved route by valid token',
-        loggerName: 'LauncherViewModel',
-        context: const <String, Object?>{'route': RoutePaths.home},
-      );
-      return RoutePaths.home;
-    } catch (error, stackTrace) {
-      AppLogger.warning(
-        'Failed to resolve a valid token during launch',
-        loggerName: 'LauncherViewModel',
-        error: error,
-        stackTrace: stackTrace,
-      );
-    }
-
-    AppLogger.info(
-      'Resolved route to login',
-      loggerName: 'LauncherViewModel',
-      context: const <String, Object?>{'route': RoutePaths.login},
-    );
-    return RoutePaths.login;
-  }
+  final Object error;
+  final StackTrace? stackTrace;
 }

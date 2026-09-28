@@ -7,7 +7,9 @@ import 'package:onetj/features/grades/view_models/grades_view_model.dart';
 import 'package:onetj/app/presentation/ui_event.dart';
 
 class GradesView extends StatefulWidget {
-  const GradesView({super.key});
+  const GradesView({super.key, required this.viewModel});
+
+  final GradesViewModel viewModel;
 
   @override
   State<GradesView> createState() => _GradesViewState();
@@ -20,7 +22,7 @@ class _GradesViewState extends State<GradesView> {
   @override
   void initState() {
     super.initState();
-    _viewModel = GradesViewModel();
+    _viewModel = widget.viewModel;
     _eventSub = _viewModel.events.listen((event) {
       if (event is ShowSnackBarEvent) {
         if (!mounted) return;

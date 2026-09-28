@@ -1,10 +1,17 @@
 import 'package:get_it/get_it.dart';
 
+import 'package:onetj/app/session/session_controller.dart';
 import 'package:onetj/app/theme/theme_change_notifier.dart';
 import 'package:onetj/features/cet_score/application/cet_score_data_service.dart';
+import 'package:onetj/features/dashboard/application/dashboard_data_service.dart';
+import 'package:onetj/features/grades/application/grades_data_service.dart';
+import 'package:onetj/features/launcher/application/launcher_boot_service.dart';
+import 'package:onetj/features/login/application/login_data_service.dart';
+import 'package:onetj/features/login/models/login_model.dart';
+import 'package:onetj/features/settings/application/developer_settings_service.dart';
+import 'package:onetj/features/settings/application/logout_service.dart';
 import 'package:onetj/features/student_exams/application/student_exam_data_service.dart';
-import 'package:onetj/features/cet_score/view_models/cet_score_view_model.dart';
-import 'package:onetj/features/student_exams/view_models/student_exam_view_model.dart';
+import 'package:onetj/features/timetable/application/timetable_data_service.dart';
 import 'package:onetj/features/physics_lab/features/michelson/application/michelson_draft_service.dart';
 import 'package:onetj/features/physics_lab/features/diffraction_grating/application/diffraction_grating_draft_service.dart';
 import 'package:onetj/features/physics_lab/features/franck_hertz/application/franck_hertz_draft_service.dart';
@@ -26,7 +33,11 @@ import 'package:onetj/services/app_update_api.dart';
 import 'package:onetj/services/app_update_service.dart';
 import 'package:onetj/services/auth_token_provider.dart';
 import 'package:onetj/services/external_launcher_service.dart';
+import 'package:onetj/services/hive_storage_service.dart';
+import 'package:onetj/services/term_key_resolver.dart';
 import 'package:onetj/services/tongji.dart';
+import 'package:onetj/services/user_collection_service.dart';
+import 'package:onetj/services/webview_environment_service.dart';
 
 final GetIt appLocator = GetIt.instance;
 
@@ -63,8 +74,13 @@ void configureDependencies() {
   );
 
   // Services
+  // 会话状态源：路由守卫的 refreshListenable，也是启动/登录/登出/失效的唯一状态出口。
+  appLocator.registerLazySingleton<SessionController>(SessionController.new);
   appLocator.registerLazySingleton<AuthTokenProvider>(
-    () => AuthTokenProvider(repository: appLocator<TokenRepository>()),
+    () => AuthTokenProvider(
+      repository: appLocator<TokenRepository>(),
+      sessionController: appLocator<SessionController>(),
+    ),
   );
   appLocator.registerLazySingleton<AppUpdateApi>(AppUpdateApi.new);
   appLocator.registerLazySingleton<AppUpdateService>(
@@ -76,25 +92,97 @@ void configureDependencies() {
   appLocator.registerLazySingleton<ExternalLauncherService>(
     ExternalLauncherService.new,
   );
-  appLocator.registerLazySingleton<TongjiApi>(TongjiApi.new);
+  appLocator.registerLazySingleton<WebViewEnvironmentService>(
+    WebViewEnvironmentService.new,
+  );
+  appLocator.registerLazySingleton<HiveStorageService>(
+    HiveStorageService.new,
+  );
+  appLocator.registerLazySingleton<TongjiApi>(
+    () => TongjiApi(
+      auth: appLocator<AuthTokenProvider>(),
+      sessionController: appLocator<SessionController>(),
+    ),
+  );
+  appLocator.registerLazySingleton<UserCollectionService>(
+    UserCollectionService.new,
+  );
+  appLocator.registerLazySingleton<TermKeyResolver>(
+    () => TermKeyResolver(
+      calendarRepository: appLocator<SchoolCalendarRepository>(),
+      scheduleRepository: appLocator<CourseScheduleRepository>(),
+    ),
+  );
+  appLocator.registerLazySingleton<DashboardDataService>(
+    () => DashboardDataService(
+      api: appLocator<TongjiApi>(),
+      termKeyResolver: appLocator<TermKeyResolver>(),
+      studentInfoRepository: appLocator<StudentInfoRepository>(),
+      courseScheduleRepository: appLocator<CourseScheduleRepository>(),
+      schoolCalendarRepository: appLocator<SchoolCalendarRepository>(),
+      settingsRepository: appLocator<SettingsRepository>(),
+      userCollectionService: appLocator<UserCollectionService>(),
+    ),
+  );
+  appLocator.registerLazySingleton<LogoutService>(
+    () => LogoutService(
+      tokenRepository: appLocator<TokenRepository>(),
+      studentInfoRepository: appLocator<StudentInfoRepository>(),
+      schoolCalendarRepository: appLocator<SchoolCalendarRepository>(),
+      courseScheduleRepository: appLocator<CourseScheduleRepository>(),
+      cetScoreDataService: appLocator<CetScoreDataService>(),
+      webViewEnvironmentService: appLocator<WebViewEnvironmentService>(),
+      sessionController: appLocator<SessionController>(),
+    ),
+  );
+  appLocator.registerLazySingleton<DeveloperSettingsService>(
+    () => DeveloperSettingsService(
+      studentInfoRepository: appLocator<StudentInfoRepository>(),
+      tongjiApi: appLocator<TongjiApi>(),
+      userCollectionService: appLocator<UserCollectionService>(),
+    ),
+  );
+  // 每次进入登录页都需要全新的 OAuth state（CSRF nonce），故用 factory。
+  appLocator.registerFactory<LoginDataService>(
+    () => LoginDataService(
+      model: LoginModel(),
+      authTokenProvider: appLocator<AuthTokenProvider>(),
+    ),
+  );
+  appLocator.registerLazySingleton<LauncherBootService>(
+    () => LauncherBootService(
+      hiveStorageService: appLocator<HiveStorageService>(),
+      themeChangeNotifier: appLocator<ThemeChangeNotifier>(),
+      webViewEnvironmentService: appLocator<WebViewEnvironmentService>(),
+      settingsRepository: appLocator<SettingsRepository>(),
+      tokenRepository: appLocator<TokenRepository>(),
+      authTokenProvider: appLocator<AuthTokenProvider>(),
+    ),
+  );
+  appLocator.registerLazySingleton<GradesDataService>(
+    () => GradesDataService(
+      api: appLocator<TongjiApi>(),
+      repository: appLocator<UndergraduateScoreRepository>(),
+    ),
+  );
+  appLocator.registerLazySingleton<TimetableDataService>(
+    () => TimetableDataService(
+      api: appLocator<TongjiApi>(),
+      scheduleRepository: appLocator<CourseScheduleRepository>(),
+      calendarRepository: appLocator<SchoolCalendarRepository>(),
+      termKeyResolver: appLocator<TermKeyResolver>(),
+    ),
+  );
   appLocator.registerLazySingleton<CetScoreDataService>(
     () => CetScoreDataService(
       api: appLocator<TongjiApi>(),
       repository: appLocator<CetScoreRepository>(),
     ),
   );
-  appLocator.registerFactory<CetScoreViewModel>(
-    () => CetScoreViewModel(dataSource: appLocator<CetScoreDataService>()),
-  );
   appLocator.registerLazySingleton<StudentExamDataService>(
     () => StudentExamDataService(
       api: appLocator<TongjiApi>(),
       repository: appLocator<StudentExamRepository>(),
-    ),
-  );
-  appLocator.registerFactory<StudentExamViewModel>(
-    () => StudentExamViewModel(
-      dataSource: appLocator<StudentExamDataService>(),
     ),
   );
   appLocator.registerLazySingleton<MichelsonDraftService>(
@@ -120,7 +208,7 @@ void configureDependencies() {
 
   // Theme
   appLocator.registerLazySingleton<ThemeChangeNotifier>(
-    ThemeChangeNotifier.new,
+    () => ThemeChangeNotifier(repository: appLocator<ThemeRepository>()),
   );
 }
 

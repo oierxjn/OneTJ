@@ -1,3 +1,23 @@
+2.6.0 (19)
+---
+Version: 2.6.0
+Build Time: 2026.09.22-14:14
+
+### Update Log:
++ 新增波尔扭摆实验，支持周期表格与振幅表格录入，用对数逐差法和作图法计算阻尼系数 β
++ 新增物理实验草稿自动保存与恢复，覆盖所有实验
++ 新增课程表「刷新课表」动作，可绕过缓存强制拉取最新课表
++ 一级页面改用纤细顶行并移除 AppBar，课程表操作收进动作拨盘（回到今天 / 刷新课表）
+* 设置页改为即改即存，移除顶部保存按钮与保存提示
+* 更换应用图标，Android 新增自适应图标（前景层 + 品牌色背景）
+* 修复 Android/iOS 上日志导出静默回退到应用私有目录的问题，改用标准 file_picker
+* 修复日志导出防重名文件名日期重复、难以阅读的问题
+* 修复课程表加载完成后滚轮未同步到当前周次的问题
+
+### Contributors:
+[oierxjn](https://github.com/oierxjn)
+[WALKERKILLER](https://github.com/WALKERKILLER)
+
 2.5.0 (18)
 ---
 Version: 2.5.0
@@ -12,7 +32,6 @@ Build Time: 2026.08.17-11:34
 * 修复登录授权回调错误处理，校验 error/code 参数并暂时禁用未开通的 scope
 * 重构各页面路由与导航栈管理，统一依赖注入与登录态 token 生命周期管理
 * 升级 HarmonyOS Flutter SDK，新增桌面平台 quickjs_engine 插件支持
-* 更换应用图标，Android 新增自适应图标（前景层 + 品牌色背景），修复图标被系统缩入白色底板的问题
 
 ### Contributors:
 [oierxjn](https://github.com/oierxjn)

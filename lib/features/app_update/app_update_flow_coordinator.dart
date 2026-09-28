@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:onetj/l10n/app_localizations.dart';
 
-import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/features/app_update/view_models/app_update_flow_view_model.dart';
 import 'package:onetj/features/app_update/view_models/app_update_migration_view_model.dart';
 import 'package:onetj/features/app_update/view_models/app_update_prompt_view_model.dart';
@@ -14,11 +13,10 @@ import 'package:onetj/services/external_launcher_service.dart';
 
 class AppUpdateFlowCoordinator {
   AppUpdateFlowCoordinator({
-    AppUpdateService? appUpdateService,
-    ExternalLauncherService? externalLauncherService,
-  })  : _appUpdateService = appUpdateService ?? appLocator<AppUpdateService>(),
-        _externalLauncherService =
-            externalLauncherService ?? appLocator<ExternalLauncherService>();
+    required AppUpdateService appUpdateService,
+    required ExternalLauncherService externalLauncherService,
+  })  : _appUpdateService = appUpdateService,
+        _externalLauncherService = externalLauncherService;
 
   final AppUpdateService _appUpdateService;
   final ExternalLauncherService _externalLauncherService;

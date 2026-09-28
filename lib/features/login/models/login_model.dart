@@ -2,15 +2,16 @@ import 'package:uuid/uuid.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
 import 'package:onetj/app/constant/site_constant.dart';
-import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/app/exception/app_exception.dart';
-import 'package:onetj/services/auth_token_provider.dart';
 
+/// 登录用的 OAuth 授权参数与回调解析。
+///
+/// 只负责纯逻辑：拼装授权 URI、校验并解析回调 URI，不做任何 I/O。
+/// 授权码到令牌的交换由 `LoginDataService` 编排。
 class LoginModel {
-  LoginModel({AuthTokenProvider? auth})
-      : _auth = auth ?? appLocator<AuthTokenProvider>();
+  LoginModel({String? state}) : _state = state ?? const Uuid().v4();
 
-  final AuthTokenProvider _auth;
+  final String _state;
   final String _baseUrl = tongjiApiBaseUrl;
   final String _path = loginEndpointPath;
 
@@ -20,8 +21,6 @@ class LoginModel {
   final String _clientId = tongjiClientID;
 
   final String _redirectUri = oneTJredirectUri;
-
-  final String _state = Uuid().v4();
 
   Uri buildAuthUri() {
     return Uri.https(
@@ -38,16 +37,15 @@ class LoginModel {
     );
   }
 
-  /// 处理重定向URI，提取code并交换token
+  /// 校验并解析回调 URI，返回授权码。
   ///
-  /// 如果URI不是重定向URI，返回false。
+  /// 如果 URI 不是重定向 URI，返回 null。
   /// 如果重定向携带 `error`（如 `invalid_scope`）或缺少 `code`，
-  /// 抛出[AuthRedirectException]，不会拿空 code 去请求 token 接口。
-  /// 如果state不匹配，抛出[AuthStateMismatchException]。
-  /// 否则，调用[AuthTokenProvider.exchangeCode]交换token，并返回true。
-  Future<bool> exchangeCodeIfRedirect(WebUri uri) async {
+  /// 抛出 [AuthRedirectException]，不会拿空 code 去请求 token 接口。
+  /// 如果 state 不匹配，抛出 [AuthStateMismatchException]。
+  String? parseAuthorizationCode(WebUri uri) {
     if (!uri.toString().startsWith(_redirectUri)) {
-      return false;
+      return null;
     }
     final String? error = uri.queryParameters['error'];
     if (error != null && error.isNotEmpty) {
@@ -56,15 +54,14 @@ class LoginModel {
         errorDescription: uri.queryParameters['error_description'],
       );
     }
-    final code = uri.queryParameters['code'] ?? '';
+    final String code = uri.queryParameters['code'] ?? '';
     if (code.isEmpty) {
       throw AuthRedirectException(error: 'missing_code');
     }
-    final state = uri.queryParameters['state'] ?? '';
+    final String state = uri.queryParameters['state'] ?? '';
     if (state != _state) {
       throw AuthStateMismatchException();
     }
-    await _auth.exchangeCode(code);
-    return true;
+    return code;
   }
 }

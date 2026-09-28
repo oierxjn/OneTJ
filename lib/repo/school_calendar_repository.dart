@@ -1,21 +1,16 @@
 import 'dart:convert';
 
 import 'package:hive/hive.dart';
+import 'package:onetj/app/logging/logger.dart';
 import 'package:onetj/models/school_calendar_data.dart';
 import 'package:onetj/repo/base_cached_repository.dart';
 
 class SchoolCalendarCacheMeta extends BaseMeta {
-  const SchoolCalendarCacheMeta({
-    required super.lastFetchedAtMillis,
-    required this.weekBeginDay,
-  }) : super();
-
-  final int weekBeginDay;
+  const SchoolCalendarCacheMeta({required super.lastFetchedAtMillis}) : super();
 
   factory SchoolCalendarCacheMeta.fromJson(Map<String, dynamic> json) {
     return SchoolCalendarCacheMeta(
       lastFetchedAtMillis: json['lastFetchedAtMillis'] as int? ?? 0,
-      weekBeginDay: json['weekBeginDay'] as int? ?? 0,
     );
   }
 
@@ -23,7 +18,6 @@ class SchoolCalendarCacheMeta extends BaseMeta {
   Map<String, dynamic> toJson() {
     return {
       'lastFetchedAtMillis': lastFetchedAtMillis,
-      'weekBeginDay': weekBeginDay,
     };
   }
 }
@@ -127,12 +121,30 @@ class SchoolCalendarRepository extends BaseNetCachedRepository<
     SchoolCalendarData data, {
     String? requestKey,
   }) {
+    AppLogger.info(
+      'School calendar fetched',
+      loggerName: 'SchoolCalendarRepository',
+      context: <String, Object?>{
+        'week': data.week,
+        'term': '${data.schoolCalendar.year}-${data.schoolCalendar.term}',
+        'termBeginDay': data.schoolCalendar.beginDay,
+        'serverNow': data.now,
+      },
+    );
     return SchoolCalendarCacheMeta(
       lastFetchedAtMillis: now.millisecondsSinceEpoch,
-      weekBeginDay: data.schoolCalendar.weekBeginDay,
     );
   }
 
+  /// 判定是否需要重新拉取校历
+  ///
+  /// 在基础 TTL 之上增加跨周判定：教学周固定从周一起算，一旦越过上次
+  /// 拉取日之后的下一个周一零点，就强制刷新，保证周一当天能读到新周数。
+  ///
+  /// 刻意不使用服务器返回的 weekBenginDay 参与判定：官方 API 文档示例中，
+  /// 开学日分别在周一（2021-2022 学年第 2 学期）和周二（2027-2028 学年
+  /// 第 1 学期）的两个学期，该字段均为常量 2，没有真实语义。若误信它，
+  /// 刷新边界会被推迟到周二，导致周一整天显示上一周的周数。
   @override
   bool shouldFetch({
     required DateTime now,
@@ -151,11 +163,6 @@ class SchoolCalendarRepository extends BaseNetCachedRepository<
     if (baseShouldFetch || meta == null) {
       return baseShouldFetch;
     }
-    final int weekBeginDay = meta.weekBeginDay;
-    if (weekBeginDay < DateTime.monday || weekBeginDay > DateTime.sunday) {
-      return false;
-    }
-
     final DateTime fetchedAt =
         DateTime.fromMillisecondsSinceEpoch(meta.lastFetchedAtMillis);
     final DateTime startOfFetchedDay = DateTime(
@@ -163,12 +170,12 @@ class SchoolCalendarRepository extends BaseNetCachedRepository<
       fetchedAt.month,
       fetchedAt.day,
     );
-    int daysUntilNextWeekBoundary = (weekBeginDay - fetchedAt.weekday + 7) % 7;
-    if (daysUntilNextWeekBoundary == 0) {
-      daysUntilNextWeekBoundary = 7;
+    int daysUntilNextMonday = (DateTime.monday - fetchedAt.weekday + 7) % 7;
+    if (daysUntilNextMonday == 0) {
+      daysUntilNextMonday = 7;
     }
     final DateTime nextWeekBoundary = startOfFetchedDay.add(
-      Duration(days: daysUntilNextWeekBoundary),
+      Duration(days: daysUntilNextMonday),
     );
     return !now.isBefore(nextWeekBoundary);
   }

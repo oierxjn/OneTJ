@@ -4,7 +4,6 @@ import 'package:onetj/l10n/app_localizations.dart';
 
 import 'package:onetj/app/constant/layout_constants.dart';
 import 'package:onetj/app/constant/route_paths.dart';
-import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/features/home/views/widgets/home_shell_layout_scope.dart';
 import 'package:onetj/app/theme/theme_change_notifier.dart';
 import 'package:onetj/models/theme_preferences.dart';
@@ -54,14 +53,14 @@ class HomeView extends StatelessWidget {
   const HomeView({
     super.key,
     required this.navigationShell,
+    required this.themeChangeNotifier,
   });
 
   final StatefulNavigationShell navigationShell;
+  final ThemeChangeNotifier themeChangeNotifier;
 
   @override
   Widget build(BuildContext context) {
-    final ThemeChangeNotifier themeChangeNotifier =
-        appLocator<ThemeChangeNotifier>();
     return HomeShellLayoutScope(
       notifier: themeChangeNotifier,
       child: AnimatedBuilder(

@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:onetj/features/dashboard/application/dashboard_data_service.dart';
 import 'package:onetj/features/dashboard/models/dashboard_upcoming_entry_data.dart';
 import 'package:onetj/features/dashboard/models/upcoming_entries_calculator.dart';
-import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/app/presentation/base_view_model.dart';
 import 'package:onetj/models/dashboard_upcoming_mode.dart';
 import 'package:onetj/app/presentation/ui_event.dart';
@@ -12,34 +11,26 @@ import 'package:onetj/models/time_period_range.dart';
 import 'package:onetj/models/timetable_index.dart';
 import 'package:onetj/models/course_schedule_data.dart';
 import 'package:onetj/models/school_calendar_data.dart';
-import 'package:onetj/repo/school_calendar_repository.dart';
 import 'package:onetj/models/settings_data.dart';
 import 'package:onetj/repo/settings_repository.dart';
 import 'package:onetj/models/student_info_data.dart';
-import 'package:onetj/repo/student_info_repository.dart';
 import 'package:onetj/services/timetable_index_builder.dart';
 import 'package:onetj/services/app_update_service.dart';
-import 'package:onetj/services/user_collection_service.dart';
 import 'package:onetj/app/logging/logger.dart';
 
 class DashboardViewModel extends BaseViewModel<UiEvent> {
   DashboardViewModel({
-    DashboardDataService? dataService,
-    SettingsRepository? settingsRepository,
-    UserCollectionService? userCollectionService,
-    AppUpdateService? appUpdateService,
-  })  : _dataService = dataService ?? DashboardDataService(),
-        _settingsRepository =
-            settingsRepository ?? appLocator<SettingsRepository>(),
-        _userCollectionService =
-            userCollectionService ?? UserCollectionService(),
-        _appUpdateService = appUpdateService ?? appLocator<AppUpdateService>() {
+    required DashboardDataService dataService,
+    required SettingsRepository settingsRepository,
+    required AppUpdateService appUpdateService,
+  })  : _dataService = dataService,
+        _settingsRepository = settingsRepository,
+        _appUpdateService = appUpdateService {
     _settingsSub = _settingsRepository.stream.listen(_listenSettingsChanged);
   }
 
   final DashboardDataService _dataService;
   final SettingsRepository _settingsRepository;
-  final UserCollectionService _userCollectionService;
   final AppUpdateService _appUpdateService;
   StreamSubscription<SettingsData>? _settingsSub;
   Timer? _upcomingRefreshTimer;
@@ -206,17 +197,7 @@ class DashboardViewModel extends BaseViewModel<UiEvent> {
 
   Future<void> _uploadUserCollectionWhenStudentInfoLoaded() async {
     try {
-      final StudentInfoRepository repo = appLocator<StudentInfoRepository>();
-      final StudentInfoData studentInfo = await repo.getOrFetch(
-        now: DateTime.now(),
-        fetcher: _dataService.fetchStudentInfo,
-        ttl: const Duration(days: 1),
-      );
-      final SettingsData settings = await _settingsRepository.getSettings();
-      await _userCollectionService.uploadForProduction(
-        studentInfo: studentInfo,
-        settings: settings,
-      );
+      await _dataService.uploadUserCollectionForProduction();
     } catch (error, stackTrace) {
       AppLogger.warning(
         'Dashboard user collection upload failed',
@@ -228,18 +209,18 @@ class DashboardViewModel extends BaseViewModel<UiEvent> {
   }
 
   Future<void> loadSchoolCalendar() async {
-    final SchoolCalendarRepository repo =
-        appLocator<SchoolCalendarRepository>();
     try {
       final DateTime now = DateTime.now();
-      await repo.warmUp();
-      final SchoolCalendarData data = await repo.getOrFetch(
-        now: now,
-        fetcher: _dataService.fetchSchoolCalendar,
-      );
+      final SchoolCalendarData data = await _dataService.getSchoolCalendar();
       _calendar = data;
       _lastCalendarSyncDate = now;
-    } catch (error) {
+    } catch (error, stackTrace) {
+      AppLogger.warning(
+        'School calendar load failed',
+        loggerName: 'DashboardViewModel',
+        error: error,
+        stackTrace: stackTrace,
+      );
       emit(
         ShowSnackBarEvent(message: 'Failed to load school calendar: $error'),
       );

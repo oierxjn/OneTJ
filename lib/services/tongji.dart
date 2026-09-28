@@ -3,9 +3,9 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import 'package:onetj/app/constant/site_constant.dart';
-import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/app/logging/logger.dart';
+import 'package:onetj/app/session/session_controller.dart';
 import 'package:onetj/models/api_response.dart';
 import 'package:onetj/models/course_schedule_data.dart';
 import 'package:onetj/models/data/course_schedule_net_data.dart';
@@ -23,23 +23,30 @@ import 'package:onetj/services/auth_token_provider.dart';
 import 'package:onetj/services/logged_http.dart';
 
 class TongjiApi {
-  TongjiApi._([this._authOverride]);
+  TongjiApi({
+    required AuthTokenProvider auth,
+    SessionController? sessionController,
+  })  : _auth = auth,
+        _sessionController = sessionController;
 
-  /// 获取 [TongjiApi] 实例。
+  final AuthTokenProvider _auth;
+
+  /// 服务端主动吊销令牌（HTTP 401）时用于把会话状态同步给路由守卫。
   ///
-  /// 这是一个单例模式，确保在整个应用程序中只有一个实例。
-  /// 传入 [auth] 时会返回一个使用该实例的新对象，便于测试注入。
-  factory TongjiApi({AuthTokenProvider? auth}) =>
-      auth == null ? _instance : TongjiApi._(auth);
-
-  static final TongjiApi _instance = TongjiApi._();
-
-  final AuthTokenProvider? _authOverride;
-
-  AuthTokenProvider get _auth =>
-      _authOverride ?? appLocator<AuthTokenProvider>();
+  /// 可选：只读或测试场景可以不注入。403 表示权限不足而非登录失效，不在此列。
+  final SessionController? _sessionController;
 
   final String _baseUrl = tongjiApiBaseUrl;
+
+  /// 收到 401 时把会话标记为未登录；其余状态码不动状态。
+  ///
+  /// 注意：令牌过期走的是 [AuthTokenProvider.getValidAccessToken]，在发请求前
+  /// 就已上报；这里的 401 覆盖服务端在令牌「看起来仍有效」时主动拒绝的情况。
+  void _reportAuthStatusCode(int statusCode) {
+    if (statusCode == 401) {
+      _sessionController?.markUnauthenticated(reason: 'http_401');
+    }
+  }
 
   Future<http.Response> _authorizedGet(
     Uri uri, {
@@ -75,6 +82,7 @@ class TongjiApi {
   }) async {
     final http.Response response = await _authorizedGet(uri, headers: headers);
     if (response.statusCode < 200 || response.statusCode >= 300) {
+      _reportAuthStatusCode(response.statusCode);
       throw NetworkException.http(
         statusCode: response.statusCode,
         uri: uri,

@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/features/timetable/models/event.dart';
 import 'package:onetj/features/timetable/application/timetable_data_service.dart';
@@ -19,17 +18,16 @@ enum TimetableDisplayMode {
 
 class TimetableViewModel extends BaseViewModel<UiEvent> {
   TimetableViewModel({
-    TimetableDataService? dataService,
+    required TimetableDataSource dataService,
+    required SettingsRepository settingsRepository,
     int maxWeek = 22,
-    SettingsRepository? settingsRepository,
-  })  : _dataService = dataService ?? TimetableDataService(),
-        _settingsRepository =
-            settingsRepository ?? appLocator<SettingsRepository>(),
+  })  : _dataService = dataService,
+        _settingsRepository = settingsRepository,
         _maxWeek = maxWeek {
     _settingsSub = _settingsRepository.stream.listen(_handleSettingsChanged);
   }
 
-  final TimetableDataService _dataService;
+  final TimetableDataSource _dataService;
   final SettingsRepository _settingsRepository;
   StreamSubscription<SettingsData>? _settingsSub;
   int _maxWeek;

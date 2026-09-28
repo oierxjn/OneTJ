@@ -60,10 +60,6 @@ class _SettingsViewState extends State<SettingsView> {
         );
         return;
       }
-      if (event is NavigateEvent) {
-        context.go(event.route);
-        return;
-      }
       if (event is SettingsSavedFeedbackEvent) {
         _successFlashTimer?.cancel();
         setState(() {

@@ -8,7 +8,6 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import 'package:onetj/app/constant/app_version_constant.dart';
-import 'package:onetj/app/di/dependencies.dart';
 import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/app/logging/logger.dart';
 import 'package:onetj/models/app_update_info.dart';
@@ -28,10 +27,10 @@ enum AppUpdateDownloadStage {
 
 class AppUpdateService {
   AppUpdateService({
-    AppUpdateApi? api,
-    AppUpdateStateRepository? repository,
-  })  : _api = api ?? appLocator<AppUpdateApi>(),
-        _repository = repository ?? appLocator<AppUpdateStateRepository>();
+    required AppUpdateApi api,
+    required AppUpdateStateRepository repository,
+  })  : _api = api,
+        _repository = repository;
 
   final AppUpdateApi _api;
   final AppUpdateStateRepository _repository;

@@ -15,7 +15,9 @@ import 'package:onetj/models/timetable_index.dart';
 import 'package:onetj/widgets/course_detail_bottom_sheet.dart';
 
 class TimetableView extends StatefulWidget {
-  const TimetableView({super.key});
+  const TimetableView({super.key, required this.viewModel});
+
+  final TimetableViewModel viewModel;
 
   @override
   State<TimetableView> createState() => _TimetableViewState();
@@ -38,7 +40,7 @@ class _TimetableViewState extends State<TimetableView> {
   @override
   void initState() {
     super.initState();
-    _viewModel = TimetableViewModel();
+    _viewModel = widget.viewModel;
     _dayController = FixedExtentScrollController(
       initialItem: _viewModel.selectedDay - 1,
     );
