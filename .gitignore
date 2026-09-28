@@ -51,3 +51,5 @@ dist/
 
 # FVM Version Cache
 .fvm/
+
+.zcodeignore
