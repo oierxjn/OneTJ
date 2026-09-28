@@ -1,3 +1,4 @@
+import 'package:onetj/app/logging/logger.dart';
 import 'package:onetj/repo/course_schedule_repository.dart';
 import 'package:onetj/models/school_calendar_data.dart';
 import 'package:onetj/repo/school_calendar_repository.dart';
@@ -23,10 +24,19 @@ class TermKeyResolver {
         fetcher: fetchSchoolCalendar,
       );
       return formatTermKey(calendar);
-    } catch (_) {
+    } catch (error, stackTrace) {
       await _scheduleRepository.warmUp();
       final CourseScheduleCacheMeta? meta =
           await _scheduleRepository.getCachedMeta(refreshFromStorage: false);
+      AppLogger.warning(
+        'Term key from school calendar failed, fell back to schedule cache meta',
+        loggerName: 'TermKeyResolver',
+        error: error,
+        stackTrace: stackTrace,
+        context: <String, Object?>{
+          'fallbackTermKey': meta?.termKey,
+        },
+      );
       return meta?.termKey;
     }
   }
