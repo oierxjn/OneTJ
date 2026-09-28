@@ -214,7 +214,13 @@ class DashboardViewModel extends BaseViewModel<UiEvent> {
       final SchoolCalendarData data = await _dataService.getSchoolCalendar();
       _calendar = data;
       _lastCalendarSyncDate = now;
-    } catch (error) {
+    } catch (error, stackTrace) {
+      AppLogger.warning(
+        'School calendar load failed',
+        loggerName: 'DashboardViewModel',
+        error: error,
+        stackTrace: stackTrace,
+      );
       emit(
         ShowSnackBarEvent(message: 'Failed to load school calendar: $error'),
       );
