@@ -69,10 +69,17 @@ class AuthTokenProvider {
   /// 单飞（single-flight）保证同一时刻只有一次刷新在飞，后来者 join 同一个
   /// future，共用其结果或异常。
   ///
-  /// 已知边界：若刷新在飞期间 [exchangeCode] 重新登录，在飞的那次仍会写回
-  /// 旧 refresh token 派生的结果。窗口极窄（刷新失败本身意味着旧令牌已不可
-  /// 用），此处不做代次校验以避免引入更复杂的失效判定。
+  /// 已知边界：请求本身无法取消（`Future` 不可取消），因此拦截点在写回而非
+  /// 发送——见 [_tokenGeneration] 与 [_refreshOnce]。
   Future<String>? _inFlightRefresh;
+
+  /// 令牌代次。
+  ///
+  /// 每次 [exchangeCode] 成功写入新令牌后自增，用于作废「起飞于更早代次」的
+  /// 在飞刷新——那些刷新基于已被替换的 refresh token，其结果不应再写回仓库。
+  ///
+  /// `Future` 不可取消，请求一旦发出就停不下来，所以拦截点是写回而非请求本身。
+  int _tokenGeneration = 0;
 
   /// 用授权码交换 token,成功后写入 [TokenRepository]。
   Future<void> exchangeCode(String code) async {
@@ -94,6 +101,9 @@ class AuthTokenProvider {
       final Code2TokenData data =
           Code2TokenData.fromJson(json.decode(response.body));
       await _repository.saveFromCode2Token(data);
+      // 必须在写回成功之后才自增：交换失败时旧 refresh token 仍可能是救场的
+      // 唯一途径，提前作废在飞的刷新会让本次登录平白丢掉可用令牌。
+      _tokenGeneration += 1;
       return;
     }
     throw NetworkException.http(
@@ -134,7 +144,12 @@ class AuthTokenProvider {
   }
 
   /// 用 refresh token 刷新并写回仓库，供 [_inFlightRefresh] 单飞去重。
+  ///
+  /// 若刷新期间发生过 [exchangeCode]（即 [_tokenGeneration] 已推进），说明这次
+  /// 刷新基于的是已被新登录替换掉的 refresh token，结果不再写回：否则切换账号
+  /// 时，旧账号派生的令牌会覆盖刚写入的新令牌，造成数据串号。
   Future<String> _refreshOnce(TokenData token) async {
+    final int generationAtStart = _tokenGeneration;
     final Code2TokenData refreshed;
     try {
       refreshed = await _refreshToken(token.refreshToken);
@@ -144,6 +159,15 @@ class AuthTokenProvider {
         _sessionController?.markUnauthenticated(reason: 'refresh_rejected_401');
       }
       rethrow;
+    }
+    if (generationAtStart != _tokenGeneration) {
+      // 已有更新的令牌，不写回。join 在这个 future 上的调用者仍需要一个可用
+      // 结果，因此返回仓库里的当前令牌，而不是让它们白白失败。
+      final TokenData? current = await _repository.getToken();
+      if (current != null && !current.isAccessTokenExpired(skew: _tokenSkew)) {
+        return current.accessToken;
+      }
+      throw AppException('AUTH_EXPIRED', 'Token replaced by a newer login');
     }
     await _repository.saveFromCode2Token(refreshed);
     return refreshed.accessToken;
