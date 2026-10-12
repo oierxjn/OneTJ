@@ -74,6 +74,19 @@ class TokenRepository {
   final TokenStorage _storage;
   TokenData? _cached;
 
+  int _generation = 0;
+
+  /// 令牌代次，每次 [saveToken] / [clearToken] 后自增。
+  ///
+  /// 读取方可用它判断「自己读到之后令牌是否已被替换或清除」：例如一次基于旧
+  /// refresh token 起飞的网络刷新，在写回前比对代次，即可发现期间发生过登录或
+  /// 登出，从而丢弃自己那份已过时的结果。
+  ///
+  /// 计数器与它所保护的状态放在一起，使任何新增的写入或清除路径都自动受
+  /// 保护——包括 [AuthTokenProvider] 调用不到的登出路径（`LogoutService` 直接
+  /// 调 [clearToken]，从不经过 token provider）。
+  int get generation => _generation;
+
   Future<TokenData?> getToken({bool refreshFromStorage = false}) async {
     if (!refreshFromStorage && _cached != null) {
       return _cached;
@@ -84,6 +97,7 @@ class TokenRepository {
 
   Future<void> saveToken(TokenData token) async {
     _cached = token;
+    _generation += 1;
     await _storage.save(token);
   }
 
@@ -95,6 +109,7 @@ class TokenRepository {
 
   Future<void> clearToken() async {
     _cached = null;
+    _generation += 1;
     await _storage.clear();
   }
 }
