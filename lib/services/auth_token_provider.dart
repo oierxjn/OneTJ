@@ -58,20 +58,14 @@ class AuthTokenProvider {
   final String _baseUrl = tongjiApiBaseUrl;
   static const Duration _tokenSkew = Duration(seconds: 30);
 
-  /// 当前在飞的那一次刷新，同一时刻至多一个。
+  /// 当前在飞的那一次刷新。
   ///
-  /// 去重范围是整个应用：本类以 `registerLazySingleton` 注册，这个实例字段
-  /// 因此被所有调用方共享。
+  /// 服务端按单次轮换 refresh token，用过即作废。多个请求同时发现 access token
+  /// 过期时若各自刷新，后到的必然拿到 401，被 [SessionController] 当成登录失效
+  /// 把用户踢回登录页。共享同一个 future 可避免重复刷新，后来者复用其结果或异常。
   ///
-  /// 服务端按单次轮换 refresh token：一旦某个 refresh token 被用过就立即作废。
-  /// 多个请求同时发现 access token 过期时若各自发一次刷新，后到的请求必然拿到
-  /// 401，并被 [SessionController] 当成「登录失效」把用户踢回登录页。这里用
-  /// 单飞（single-flight）保证同一时刻只有一次刷新在飞，后来者 join 同一个
-  /// future，共用其结果或异常。
-  ///
-  /// 已知边界：若刷新在飞期间 [exchangeCode] 重新登录，在飞的那次仍会写回
-  /// 旧 refresh token 派生的结果。窗口极窄（刷新失败本身意味着旧令牌已不可
-  /// 用），此处不做代次校验以避免引入更复杂的失效判定。
+  /// 去重范围是整个应用：本类以 `registerLazySingleton` 注册，实例字段由所有
+  /// 调用方共享。
   Future<String>? _inFlightRefresh;
 
   /// 用授权码交换 token,成功后写入 [TokenRepository]。
@@ -112,9 +106,7 @@ class AuthTokenProvider {
   /// 后两种情况会同时把 [SessionController] 标记为未登录，使路由守卫把用户
   /// 送回登录页；`AUTH_REQUIRED` 在启动引导期间不会触发跳转（状态仍为 unknown）。
   ///
-  /// 并发调用时刷新走单飞：同一时刻只有一次刷新请求在飞，后来者 join 同一个
-  /// future，因此不会出现「后到的请求因 refresh token 已轮换而拿到 401」被
-  /// 误判为登录失效的情况。
+  /// 并发调用共用一次刷新，详见 [_inFlightRefresh]。
   Future<String> getValidAccessToken() async {
     final TokenData? token =
         await _repository.getToken(refreshFromStorage: true);
@@ -133,8 +125,18 @@ class AuthTokenProvider {
         .whenComplete(() => _inFlightRefresh = null);
   }
 
-  /// 用 refresh token 刷新并写回仓库，供 [_inFlightRefresh] 单飞去重。
+  /// 刷新并写回仓库，供 [_inFlightRefresh] 单飞去重。
+  ///
+  /// 令牌在刷新期间被替换或清除（[TokenRepository.generation] 已推进）时，
+  /// 结果不再写回，因为这次刷新基于的是已失效的 refresh token：
+  ///
+  /// - 重新登录：切换账号时旧令牌会覆盖新令牌，造成数据串号
+  /// - 登出：令牌会在 [TokenRepository.clearToken] 之后被写回，下次启动
+  ///   [LauncherBootService] 读到它会把用户重新判定为已登录
+  ///
+  /// 请求本身无法取消，拦截点只能是写回。
   Future<String> _refreshOnce(TokenData token) async {
+    final int generationAtStart = _repository.generation;
     final Code2TokenData refreshed;
     try {
       refreshed = await _refreshToken(token.refreshToken);
@@ -144,6 +146,18 @@ class AuthTokenProvider {
         _sessionController?.markUnauthenticated(reason: 'refresh_rejected_401');
       }
       rethrow;
+    }
+    if (generationAtStart != _repository.generation) {
+      // 期间发生过写入或清除：这次刷新基于的 refresh token 已失效，结果作废。
+      // 重新登录时 join 在此的调用者需要可用结果，返回仓库当前的令牌——那才是
+      // 用户现在所处的会话。登出时没有可用令牌可返回，如实抛出。
+      final TokenData? current = await _repository.getToken();
+      if (current != null && !current.isAccessTokenExpired(skew: _tokenSkew)) {
+        return current.accessToken;
+      }
+      // 会话状态不重复上报：登出路径已由登出编排置为未登录；重新登录时会话
+      // 本就有效，这里只表示这一请求拿不到令牌。
+      throw AppException('AUTH_EXPIRED', 'Token replaced or cleared');
     }
     await _repository.saveFromCode2Token(refreshed);
     return refreshed.accessToken;

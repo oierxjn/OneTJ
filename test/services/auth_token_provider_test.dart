@@ -328,6 +328,176 @@ void main() {
       expect(session.lastReason, 'refresh_rejected_401');
     });
 
+    test('刷新在飞期间重新登录：旧结果不覆盖新令牌', () async {
+      await repository.saveToken(expiredAccessToken());
+      final Completer<void> refreshGate = Completer<void>();
+      // 刷新与登录交换共用同一个可注入入口，靠 grant_type 区分。
+      final AuthTokenProvider provider = AuthTokenProvider(
+        repository: repository,
+        sessionController: session,
+        httpPost: (
+          Uri uri, {
+          Map<String, String>? headers,
+          Object? body,
+          Encoding? encoding,
+          String loggerName = 'Http',
+        }) async {
+          final Map<String, dynamic> fields =
+              (body! as Map<String, dynamic>).cast<String, dynamic>();
+          if (fields['grant_type'] == 'authorization_code') {
+            return http.Response(
+              '{"access_token":"brand-new-access",'
+              '"refresh_token":"brand-new-refresh",'
+              '"token_type":"Bearer","scope":"s","id_token":"i",'
+              '"session_state":"ss","expires_in":3600,'
+              '"refresh_expires_in":7200}',
+              200,
+            );
+          }
+          await refreshGate.future;
+          return http.Response(
+            '{"access_token":"stale-access","refresh_token":"stale-refresh",'
+            '"token_type":"Bearer","scope":"s","id_token":"i",'
+            '"session_state":"ss","expires_in":3600,"refresh_expires_in":7200}',
+            200,
+          );
+        },
+      );
+
+      // 起飞刷新（access 已过期必然触发），随后在其挂起期间完成重新登录。
+      final Future<String> pendingRefresh = provider.getValidAccessToken();
+      await Future<void>.delayed(Duration.zero);
+      await provider.exchangeCode('new-code');
+      refreshGate.complete();
+
+      // 在飞的调用者拿到的是当前有效令牌，而不是基于旧 refresh token 的结果。
+      expect(await pendingRefresh, 'brand-new-access');
+
+      final TokenData stored = (await repository.getToken())!;
+      expect(stored.accessToken, 'brand-new-access',
+          reason: '陈旧的刷新结果不应覆盖新登录写入的令牌');
+      expect(stored.refreshToken, 'brand-new-refresh');
+    });
+
+    test('重新登录失败时在飞刷新仍然有效', () async {
+      await repository.saveToken(expiredAccessToken());
+      final Completer<void> refreshGate = Completer<void>();
+      final AuthTokenProvider provider = AuthTokenProvider(
+        repository: repository,
+        sessionController: session,
+        httpPost: (
+          Uri uri, {
+          Map<String, String>? headers,
+          Object? body,
+          Encoding? encoding,
+          String loggerName = 'Http',
+        }) async {
+          final Map<String, dynamic> fields =
+              (body! as Map<String, dynamic>).cast<String, dynamic>();
+          if (fields['grant_type'] == 'authorization_code') {
+            return http.Response('{}', 400);
+          }
+          await refreshGate.future;
+          return http.Response(
+            '{"access_token":"rescued-access","refresh_token":"rescued-refresh",'
+            '"token_type":"Bearer","scope":"s","id_token":"i",'
+            '"session_state":"ss","expires_in":3600,"refresh_expires_in":7200}',
+            200,
+          );
+        },
+      );
+
+      final Future<String> pendingRefresh = provider.getValidAccessToken();
+      await Future<void>.delayed(Duration.zero);
+      await expectLater(
+        provider.exchangeCode('bad-code'),
+        throwsA(isA<NetworkException>()),
+      );
+      refreshGate.complete();
+
+      // 交换失败没有推进代次，在飞刷新照常写回——否则会平白丢掉可用令牌。
+      expect(await pendingRefresh, 'rescued-access');
+      final TokenData stored = (await repository.getToken())!;
+      expect(stored.accessToken, 'rescued-access');
+    });
+
+    test('刷新在飞期间登出：令牌不会被写回', () async {
+      await repository.saveToken(expiredAccessToken());
+      final Completer<void> refreshGate = Completer<void>();
+      final SessionController session =
+          SessionController()..completeBoot(AuthStatus.authenticated);
+      final AuthTokenProvider provider = AuthTokenProvider(
+        repository: repository,
+        sessionController: session,
+        httpPost: (
+          Uri uri, {
+          Map<String, String>? headers,
+          Object? body,
+          Encoding? encoding,
+          String loggerName = 'Http',
+        }) async {
+          await refreshGate.future;
+          return http.Response(
+            '{"access_token":"resurrected-access","refresh_token":"r",'
+            '"token_type":"Bearer","scope":"s","id_token":"i",'
+            '"session_state":"ss","expires_in":3600,"refresh_expires_in":7200}',
+            200,
+          );
+        },
+      );
+
+      final Future<String> pendingRefresh = provider.getValidAccessToken();
+      await Future<void>.delayed(Duration.zero);
+      // 登出：LogoutService 直接清仓库，不经过 token provider。
+      await repository.clearToken();
+      session.markSignedOut();
+      refreshGate.complete();
+
+      await expectLater(pendingRefresh, throwsA(isA<AppException>()));
+
+      expect(await repository.getToken(), isNull,
+          reason: '登出后在飞刷新不得把令牌写回，否则下次启动会被判定为已登录');
+    });
+
+    test('并发调用期间登出：全部失败且仓库保持为空', () async {
+      await repository.saveToken(expiredAccessToken());
+      final Completer<void> refreshGate = Completer<void>();
+      final AuthTokenProvider provider = AuthTokenProvider(
+        repository: repository,
+        sessionController: session,
+        httpPost: (
+          Uri uri, {
+          Map<String, String>? headers,
+          Object? body,
+          Encoding? encoding,
+          String loggerName = 'Http',
+        }) async {
+          await refreshGate.future;
+          return http.Response(
+            '{"access_token":"resurrected-access","refresh_token":"r",'
+            '"token_type":"Bearer","scope":"s","id_token":"i",'
+            '"session_state":"ss","expires_in":3600,"refresh_expires_in":7200}',
+            200,
+          );
+        },
+      );
+
+      // 单飞去重会把这三次调用合并到同一个在飞刷新上。
+      final List<Future<String>> pending = <Future<String>>[
+        provider.getValidAccessToken(),
+        provider.getValidAccessToken(),
+        provider.getValidAccessToken(),
+      ];
+      await Future<void>.delayed(Duration.zero);
+      await repository.clearToken();
+      refreshGate.complete();
+
+      for (final Future<String> call in pending) {
+        await expectLater(call, throwsA(isA<AppException>()));
+      }
+      expect(await repository.getToken(), isNull);
+    });
+
     test('刷新完成后新一轮调用会重新发起刷新', () async {
       await repository.saveToken(expiredAccessToken());
       int calls = 0;
