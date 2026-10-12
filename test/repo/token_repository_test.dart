@@ -100,7 +100,8 @@ void main() {
       expect(await pending, isNull);
       expect(await repository.getToken(), isNull,
           reason: '读取不得把登出前读到的令牌重新写回缓存');
-      expect(await storage.read().then((_) => null), isNull);
+      expect(await storage.read(), isNull,
+          reason: '存储中的令牌也必须已清除');
     });
 
     test('读取期间重新登录，应返回新令牌而非旧快照', () async {
