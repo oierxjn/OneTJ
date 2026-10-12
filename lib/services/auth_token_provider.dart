@@ -58,7 +58,10 @@ class AuthTokenProvider {
   final String _baseUrl = tongjiApiBaseUrl;
   static const Duration _tokenSkew = Duration(seconds: 30);
 
-  /// 正在进行的刷新，键为 [AuthTokenProvider] 实例（全局单例）。
+  /// 当前在飞的那一次刷新，同一时刻至多一个。
+  ///
+  /// 去重范围是整个应用：本类以 `registerLazySingleton` 注册，这个实例字段
+  /// 因此被所有调用方共享。
   ///
   /// 服务端按单次轮换 refresh token：一旦某个 refresh token 被用过就立即作废。
   /// 多个请求同时发现 access token 过期时若各自发一次刷新，后到的请求必然拿到
