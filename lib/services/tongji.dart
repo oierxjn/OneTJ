@@ -22,14 +22,38 @@ import 'package:onetj/models/undergraduate_score_data.dart';
 import 'package:onetj/services/auth_token_provider.dart';
 import 'package:onetj/services/logged_http.dart';
 
+/// 发起一次鉴权 GET 的可注入入口，默认走带日志的 [loggedHttpGet]。
+typedef ApiHttpGet = Future<http.Response> Function(
+  Uri uri, {
+  Map<String, String>? headers,
+  String loggerName,
+});
+
+/// 发起一次鉴权 POST 的可注入入口，默认走带日志的 [loggedHttpPost]。
+typedef ApiHttpPost = Future<http.Response> Function(
+  Uri uri, {
+  Map<String, String>? headers,
+  Object? body,
+  Encoding? encoding,
+  String loggerName,
+});
+
 class TongjiApi {
   TongjiApi({
     required AuthTokenProvider auth,
     SessionController? sessionController,
+    ApiHttpGet? httpGet,
+    ApiHttpPost? httpPost,
   })  : _auth = auth,
-        _sessionController = sessionController;
+        _sessionController = sessionController,
+        _httpGet = httpGet ?? loggedHttpGet,
+        _httpPost = httpPost ?? loggedHttpPost;
 
   final AuthTokenProvider _auth;
+
+  /// HTTP 入口，注入用于测试状态码与会话上报行为。
+  final ApiHttpGet _httpGet;
+  final ApiHttpPost _httpPost;
 
   /// 服务端主动吊销令牌（HTTP 401）时用于把会话状态同步给路由守卫。
   ///
@@ -58,7 +82,11 @@ class TongjiApi {
       if (headers != null) ...headers,
     };
     try {
-      return await loggedHttpGet(uri, headers: requestHeaders);
+      return await _httpGet(
+        uri,
+        headers: requestHeaders,
+        loggerName: 'TongjiApi',
+      );
     } catch (error, stackTrace) {
       AppLogger.error(
         'Authorized GET failed',
@@ -75,12 +103,16 @@ class TongjiApi {
     }
   }
 
-  Future<T> _authorizedGetData<T>(
-    Uri uri, {
-    required T Function(Object? data) parseData,
-    Map<String, String>? headers,
-  }) async {
-    final http.Response response = await _authorizedGet(uri, headers: headers);
+  /// 校验状态码并解析 [ApiResponse] 包裹的 data 字段。
+  ///
+  /// GET 与 POST 共用同一实现：这样「401 上报会话失效、其余状态码不动会话」
+  /// 这条规则只有一处定义，两条路径不会各自漂移。曾经 POST 路径漏掉
+  /// [_reportAuthStatusCode]，导致同一次令牌吊销在 GET 下登出、在 POST 下静默失败。
+  T _unwrapData<T>(
+    http.Response response,
+    Uri uri,
+    T Function(Object? data) parseData,
+  ) {
     if (response.statusCode < 200 || response.statusCode >= 300) {
       _reportAuthStatusCode(response.statusCode);
       throw NetworkException.http(
@@ -104,6 +136,15 @@ class TongjiApi {
     return payload.data;
   }
 
+  Future<T> _authorizedGetData<T>(
+    Uri uri, {
+    required T Function(Object? data) parseData,
+    Map<String, String>? headers,
+  }) async {
+    final http.Response response = await _authorizedGet(uri, headers: headers);
+    return _unwrapData<T>(response, uri, parseData);
+  }
+
   Future<http.Response> _authorizedPost(
     Uri uri, {
     Map<String, String>? headers,
@@ -116,11 +157,12 @@ class TongjiApi {
       if (headers != null) ...headers,
     };
     try {
-      return await loggedHttpPost(
+      return await _httpPost(
         uri,
         headers: requestHeaders,
         body: body,
         encoding: encoding,
+        loggerName: 'TongjiApi',
       );
     } catch (error, stackTrace) {
       AppLogger.error(
@@ -152,23 +194,7 @@ class TongjiApi {
       body: body,
       encoding: encoding,
     );
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw NetworkException.http(
-        statusCode: response.statusCode,
-        uri: uri,
-        responseBody: response.body,
-      );
-    }
-    final Map<String, dynamic> jsonBody;
-    final ApiResponse<T> payload;
-    try {
-      jsonBody = json.decode(response.body) as Map<String, dynamic>;
-      payload = ApiResponse.fromJson(jsonBody, parseData);
-    } catch (error) {
-      throw JSONResolveException(
-          message: 'Failed to parse response JSON', cause: error);
-    }
-    return payload.data;
+    return _unwrapData<T>(response, uri, parseData);
   }
 
   Future<StudentInfoData> fetchStudentInfo() async {
