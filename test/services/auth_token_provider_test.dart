@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -212,6 +213,150 @@ void main() {
 
       expect(token, 'new-access');
       expect(session.status, AuthStatus.authenticated);
+    });
+  });
+
+  group('AuthTokenProvider 并发刷新去重', () {
+    late SessionController session;
+
+    /// access 已过期、refresh 仍有效，从而走到真实刷新请求。
+    TokenData expiredAccessToken() => _buildToken(
+          accessTokenExpiresIn: -3600,
+          refreshTokenExpiresIn: 7200,
+        );
+
+    const String refreshBody =
+        '{"access_token":"new-access","refresh_token":"new-refresh",'
+        '"token_type":"Bearer","scope":"s","id_token":"i",'
+        '"session_state":"ss","expires_in":3600,"refresh_expires_in":7200}';
+
+    setUp(() {
+      session = SessionController()..completeBoot(AuthStatus.authenticated);
+    });
+
+    /// 构造一个会阻塞在刷新上的 provider，返回它与调用计数。
+    ///
+    /// [gate] 未完成前不发响应，使并发调用必然落在同一个刷新窗口内，
+    /// 从而确定性地覆盖「服务端按单次轮换 refresh token」的场景。
+    ({
+      AuthTokenProvider provider,
+      int Function() callCount,
+      void Function() release,
+    }) buildBlockingProvider() {
+      int calls = 0;
+      final Completer<void> gate = Completer<void>();
+      final AuthTokenProvider created = AuthTokenProvider(
+        repository: repository,
+        sessionController: session,
+        httpPost: (
+          Uri uri, {
+          Map<String, String>? headers,
+          Object? body,
+          Encoding? encoding,
+          String loggerName = 'Http',
+        }) async {
+          calls += 1;
+          await gate.future;
+          return http.Response(refreshBody, 200);
+        },
+      );
+      return (
+        provider: created,
+        callCount: () => calls,
+        release: gate.complete,
+      );
+    }
+
+    test('并发调用只发一次刷新请求', () async {
+      await repository.saveToken(expiredAccessToken());
+      final (
+        provider: AuthTokenProvider provider,
+        callCount: int Function() callCount,
+        release: void Function() release,
+      ) = buildBlockingProvider();
+
+      final List<Future<String>> pending = <Future<String>>[
+        provider.getValidAccessToken(),
+        provider.getValidAccessToken(),
+        provider.getValidAccessToken(),
+      ];
+      // 让三个调用都跑到刷新处再放行，确保窗口重叠。
+      await Future<void>.delayed(Duration.zero);
+      release();
+
+      final List<String> tokens = await Future.wait(pending);
+
+      expect(callCount(), 1, reason: '刷新请求应只发一次');
+      expect(tokens, <String>['new-access', 'new-access', 'new-access']);
+      expect(session.status, AuthStatus.authenticated);
+    });
+
+    test('刷新失败时所有并发调用共享同一个异常', () async {
+      await repository.saveToken(expiredAccessToken());
+      int calls = 0;
+      final Completer<void> gate = Completer<void>();
+      final AuthTokenProvider provider = AuthTokenProvider(
+        repository: repository,
+        sessionController: session,
+        httpPost: (
+          Uri uri, {
+          Map<String, String>? headers,
+          Object? body,
+          Encoding? encoding,
+          String loggerName = 'Http',
+        }) async {
+          calls += 1;
+          await gate.future;
+          // 第二次使用同一个 refresh token 会被服务端拒绝。
+          return http.Response('{}', 401);
+        },
+      );
+
+      final List<Future<String>> pending = <Future<String>>[
+        provider.getValidAccessToken(),
+        provider.getValidAccessToken(),
+      ];
+      await Future<void>.delayed(Duration.zero);
+      gate.complete();
+
+      for (final Future<String> call in pending) {
+        await expectLater(call, throwsA(isA<NetworkException>()));
+      }
+
+      expect(calls, 1, reason: '失败的刷新同样只发一次');
+      expect(session.status, AuthStatus.unauthenticated);
+      expect(session.lastReason, 'refresh_rejected_401');
+    });
+
+    test('刷新完成后新一轮调用会重新发起刷新', () async {
+      await repository.saveToken(expiredAccessToken());
+      int calls = 0;
+      // 每次刷新都返回一个 access token 仍然过期的结果，模拟持续过期场景，
+      // 从而验证单飞窗口确实在完成后关闭，而不是被永久缓存。
+      final AuthTokenProvider provider = AuthTokenProvider(
+        repository: repository,
+        sessionController: session,
+        httpPost: (
+          Uri uri, {
+          Map<String, String>? headers,
+          Object? body,
+          Encoding? encoding,
+          String loggerName = 'Http',
+        }) async {
+          calls += 1;
+          return http.Response(
+            '{"access_token":"new-access","refresh_token":"new-refresh",'
+            '"token_type":"Bearer","scope":"s","id_token":"i",'
+            '"session_state":"ss","expires_in":-3600,"refresh_expires_in":7200}',
+            200,
+          );
+        },
+      );
+
+      await provider.getValidAccessToken();
+      await provider.getValidAccessToken();
+
+      expect(calls, 2, reason: '前一次刷新结束后应允许新的刷新');
     });
   });
 }

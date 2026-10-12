@@ -58,6 +58,19 @@ class AuthTokenProvider {
   final String _baseUrl = tongjiApiBaseUrl;
   static const Duration _tokenSkew = Duration(seconds: 30);
 
+  /// 正在进行的刷新，键为 [AuthTokenProvider] 实例（全局单例）。
+  ///
+  /// 服务端按单次轮换 refresh token：一旦某个 refresh token 被用过就立即作废。
+  /// 多个请求同时发现 access token 过期时若各自发一次刷新，后到的请求必然拿到
+  /// 401，并被 [SessionController] 当成「登录失效」把用户踢回登录页。这里用
+  /// 单飞（single-flight）保证同一时刻只有一次刷新在飞，后来者 join 同一个
+  /// future，共用其结果或异常。
+  ///
+  /// 已知边界：若刷新在飞期间 [exchangeCode] 重新登录，在飞的那次仍会写回
+  /// 旧 refresh token 派生的结果。窗口极窄（刷新失败本身意味着旧令牌已不可
+  /// 用），此处不做代次校验以避免引入更复杂的失效判定。
+  Future<String>? _inFlightRefresh;
+
   /// 用授权码交换 token,成功后写入 [TokenRepository]。
   Future<void> exchangeCode(String code) async {
     final Uri uri = Uri.https(_baseUrl, code2tokenPath);
@@ -95,6 +108,10 @@ class AuthTokenProvider {
   ///
   /// 后两种情况会同时把 [SessionController] 标记为未登录，使路由守卫把用户
   /// 送回登录页；`AUTH_REQUIRED` 在启动引导期间不会触发跳转（状态仍为 unknown）。
+  ///
+  /// 并发调用时刷新走单飞：同一时刻只有一次刷新请求在飞，后来者 join 同一个
+  /// future，因此不会出现「后到的请求因 refresh token 已轮换而拿到 401」被
+  /// 误判为登录失效的情况。
   Future<String> getValidAccessToken() async {
     final TokenData? token =
         await _repository.getToken(refreshFromStorage: true);
@@ -109,13 +126,17 @@ class AuthTokenProvider {
       _sessionController?.markUnauthenticated(reason: 'refresh_token_expired');
       throw AppException('AUTH_EXPIRED', 'Refresh token expired');
     }
+    return _inFlightRefresh ??= _refreshOnce(token)
+        .whenComplete(() => _inFlightRefresh = null);
+  }
+
+  /// 用 refresh token 刷新并写回仓库，供 [_inFlightRefresh] 单飞去重。
+  Future<String> _refreshOnce(TokenData token) async {
     final Code2TokenData refreshed;
     try {
       refreshed = await _refreshToken(token.refreshToken);
     } on NetworkException catch (error) {
-      // 本地看 refresh token 未过期，但服务端明确拒绝（401，例如令牌被吊销）。
-      // 这是确定的认证失败，上报未登录；其余状态码与网络故障不上报，避免
-      // 瞬时抖动把用户误登出。
+      // 见 [getValidAccessToken]：只有明确的 401 才算登录失效，瞬时故障不上报。
       if (error.statusCode == 401) {
         _sessionController?.markUnauthenticated(reason: 'refresh_rejected_401');
       }
