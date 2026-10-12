@@ -46,32 +46,8 @@ class TongjiApi {
     ApiHttpPost? httpPost,
   })  : _auth = auth,
         _sessionController = sessionController,
-        _httpGet = httpGet ?? _defaultHttpGet,
-        _httpPost = httpPost ?? _defaultHttpPost;
-
-  static Future<http.Response> _defaultHttpGet(
-    Uri uri, {
-    Map<String, String>? headers,
-    String loggerName = 'Http',
-  }) {
-    return loggedHttpGet(uri, headers: headers, loggerName: loggerName);
-  }
-
-  static Future<http.Response> _defaultHttpPost(
-    Uri uri, {
-    Map<String, String>? headers,
-    Object? body,
-    Encoding? encoding,
-    String loggerName = 'Http',
-  }) {
-    return loggedHttpPost(
-      uri,
-      headers: headers,
-      body: body,
-      encoding: encoding,
-      loggerName: loggerName,
-    );
-  }
+        _httpGet = httpGet ?? loggedHttpGet,
+        _httpPost = httpPost ?? loggedHttpPost;
 
   final AuthTokenProvider _auth;
 
