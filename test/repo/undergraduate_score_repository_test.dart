@@ -57,6 +57,9 @@ void main() {
         },
       );
 
+      // 持久化是 fire-and-forget，断言落盘结果前须显式等队列排空。
+      await repo.flush();
+
       final UndergraduateScoreCacheMeta? meta =
           await repo.getCachedMeta(refreshFromStorage: true);
 
@@ -108,6 +111,9 @@ void main() {
         fetcher: fetcher,
       );
 
+      // 持久化是 fire-and-forget，断言落盘结果前须显式等队列排空。
+      await repo.flush();
+
       final UndergraduateScoreCacheMeta? meta =
           await repo.getCachedMeta(refreshFromStorage: true);
       expect(fetchCount, 2);
@@ -155,6 +161,9 @@ void main() {
         versionKey: 'v2',
         fetcher: fetcher,
       );
+
+      // 持久化是 fire-and-forget，断言落盘结果前须显式等队列排空。
+      await repo.flush();
 
       final UndergraduateScoreCacheMeta? meta =
           await repo.getCachedMeta(refreshFromStorage: true);

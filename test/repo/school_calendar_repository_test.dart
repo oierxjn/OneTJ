@@ -135,6 +135,9 @@ void main() {
         fetcher: () async => _calendarData(2),
       );
 
+      // 持久化是 fire-and-forget，断言落盘结果前须显式等队列排空。
+      await repo.flush();
+
       final SchoolCalendarCacheMeta? meta = await storage.readMeta();
 
       expect(meta?.lastFetchedAtMillis,

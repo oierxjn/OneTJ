@@ -31,6 +31,15 @@ abstract class BaseNetCachedRepository<TData extends BaseData,
 
   TData? _cachedData;
   TMeta? _cachedMeta;
+
+  /// 持久化写入链，链头永远是错误自由的。
+  ///
+  /// 存储操作必须串行：data 与 meta 是同一次缓存的两个部分，并发写会让两者
+  /// 交错落盘，出现「缓存是新值、元数据是旧值」这类不一致。链头为何只留吞错
+  /// 后的版本，详见 [_queuePersist]。
+  Future<void> _persistChain = Future<void>.value();
+
+  /// 最近一次排入队列的写入，供 [flush] 等待；链本身见 [_persistChain]。
   Future<void>? _pendingPersist;
   Future<TData>? _inFlightFetch;
   Object? _inFlightRequestKey;
@@ -121,8 +130,17 @@ abstract class BaseNetCachedRepository<TData extends BaseData,
     );
   }
 
+  /// 等待在飞的持久化完成。
+  ///
+  /// 只用于「等一等」，不用于取结果，因此吞掉错误：一次磁盘写失败不该让
+  /// [clearCache] 跟着失败——登出编排会串行 await 各仓库的 [clearCache]，任一
+  /// 抛异常都会中断其后所有仓库的清理，并把会话留在半登出状态。
   Future<void> flush() {
-    return _pendingPersist ?? Future.value();
+    final Future<void>? pending = _pendingPersist;
+    if (pending == null) {
+      return Future<void>.value();
+    }
+    return pending.catchError((_) {});
   }
 
   Future<void> flushInFlight() async {
@@ -145,7 +163,6 @@ abstract class BaseNetCachedRepository<TData extends BaseData,
     try {
       await flushInFlight();
       await flush();
-      _pendingPersist = null;
       _cachedData = null;
       _cachedMeta = null;
       _inFlightFetch = null;
@@ -256,15 +273,25 @@ abstract class BaseNetCachedRepository<TData extends BaseData,
     }
   }
 
+  /// 把一次 data/meta 写入排到持久化链末尾，返回它自身的完成期。
+  ///
+  /// 返回的是写入的真实结果，失败照常抛给调用方；链头只保存吞错后的版本，因此
+  /// 单次失败不会堵死后续写入——刻意不做「前一个失败就整体丢弃」的短路。
+  ///
+  /// 注意 [persistData] / [persistMeta] 必须在 `then` 内部调用：若在外部先把
+  /// `Future.wait` 构造出来再链接，两个存储操作当下就已启动，串行形同虚设。
   Future<void> _queuePersist(
     TData data,
     TMeta meta,
   ) {
-    final Future<void> task = Future.wait([
-      persistData(data),
-      persistMeta(meta),
-    ]).then((_) => null);
-    _pendingPersist = (_pendingPersist ?? Future.value()).then((_) => task);
-    return _pendingPersist!;
+    final Future<void> result = _persistChain.then(
+      (_) => Future.wait(<Future<void>>[
+        persistData(data),
+        persistMeta(meta),
+      ]),
+    );
+    _persistChain = result.catchError((_) {});
+    _pendingPersist = result;
+    return result;
   }
 }
