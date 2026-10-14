@@ -26,6 +26,9 @@ void main() {
         },
       );
 
+      // 持久化是 fire-and-forget，断言落盘结果前须显式等队列排空。
+      await repo.flush();
+
       final CourseScheduleCacheMeta? meta =
           await repo.getCachedMeta(refreshFromStorage: true);
 
@@ -76,6 +79,8 @@ void main() {
       );
 
       expect(fetchCount, 2);
+      // 持久化是 fire-and-forget，断言落盘结果前须显式等队列排空。
+      await repo.flush();
       final CourseScheduleCacheMeta? meta =
           await repo.getCachedMeta(refreshFromStorage: true);
       expect(meta?.termKey, '2025-2');
@@ -121,6 +126,9 @@ void main() {
         termKey: '2025-2',
         fetcher: fetcher,
       );
+
+      // 持久化是 fire-and-forget，断言落盘结果前须显式等队列排空。
+      await repo.flush();
 
       final CourseScheduleCacheMeta? meta =
           await repo.getCachedMeta(refreshFromStorage: true);
@@ -187,6 +195,9 @@ void main() {
         secondRequest,
       ]);
 
+      // 持久化是 fire-and-forget，断言落盘结果前须显式等队列排空。
+      await repo.flush();
+
       final CourseScheduleCacheMeta? meta =
           await repo.getCachedMeta(refreshFromStorage: true);
       expect(firstFetchCount, 1);
@@ -226,6 +237,9 @@ void main() {
         firstRequest,
         secondRequest,
       ]);
+
+      // 持久化是 fire-and-forget，断言落盘结果前须显式等队列排空。
+      await repo.flush();
 
       final CourseScheduleCacheMeta? meta =
           await repo.getCachedMeta(refreshFromStorage: true);

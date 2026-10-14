@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+
 import 'package:onetj/app/exception/app_exception.dart';
+import 'package:onetj/app/logging/logger.dart';
 import 'package:onetj/models/base_data.dart';
 
 /// 基础元数据类，所有缓存元数据都必须实现该类
@@ -31,6 +33,14 @@ abstract class BaseNetCachedRepository<TData extends BaseData,
 
   TData? _cachedData;
   TMeta? _cachedMeta;
+
+  /// 持久化写入链，链头保持无错，使后续入队不被上一次失败短路。
+  ///
+  /// 存储操作必须串行：data 与 meta 是同一次缓存的两个部分，并发写会让两者
+  /// 交错落盘，出现「缓存是新值、元数据是旧值」这类不一致。
+  Future<void> _persistChain = Future<void>.value();
+
+  /// 最近一次排入队列的写入，供 [flush] 等待；链本身见 [_persistChain]。
   Future<void>? _pendingPersist;
   Future<TData>? _inFlightFetch;
   Object? _inFlightRequestKey;
@@ -121,8 +131,15 @@ abstract class BaseNetCachedRepository<TData extends BaseData,
     );
   }
 
+  /// 等待在飞的持久化落定。
+  ///
+  /// 不关心写入结果：落盘失败意味着下次启动重新拉取，不影响本次流程。
   Future<void> flush() {
-    return _pendingPersist ?? Future.value();
+    final Future<void>? pending = _pendingPersist;
+    if (pending == null) {
+      return Future<void>.value();
+    }
+    return pending.catchError((_) {});
   }
 
   Future<void> flushInFlight() async {
@@ -145,7 +162,6 @@ abstract class BaseNetCachedRepository<TData extends BaseData,
     try {
       await flushInFlight();
       await flush();
-      _pendingPersist = null;
       _cachedData = null;
       _cachedMeta = null;
       _inFlightFetch = null;
@@ -228,6 +244,13 @@ abstract class BaseNetCachedRepository<TData extends BaseData,
     return fetched;
   }
 
+  /// 更新内存缓存，并按需把它排入持久化队列。
+  ///
+  /// 刻意不 await 写入：内存已经是权威副本，落盘失败只意味着下次启动重新拉取，
+  /// 不影响调用方拿到的结果。写入失败因此在本方法内就地记录后结束，不外抛、
+  /// 也不向上传播给 await [_queuePersist] 的人。
+  ///
+  /// 需要感知写入结果的调用方应自行 await [_queuePersist]，而不是依赖这里。
   void _saveCache({
     TData? data,
     TMeta? meta,
@@ -244,7 +267,19 @@ abstract class BaseNetCachedRepository<TData extends BaseData,
     }
     final TData dataToPersist = _cachedData as TData;
     final TMeta metaToPersist = _cachedMeta as TMeta;
-    _queuePersist(dataToPersist, metaToPersist);
+    // 队列无人在 await，这里是错误唯一的落脚点，因此就地记录。
+    unawaited(
+      _queuePersist(dataToPersist, metaToPersist).catchError(
+        (Object error, StackTrace stackTrace) {
+          AppLogger.warning(
+            'Cache persist failed, memory cache only',
+            loggerName: runtimeType.toString(),
+            error: error,
+            stackTrace: stackTrace,
+          );
+        },
+      ),
+    );
   }
 
   /// 轻量式检查是否正在清除缓存
@@ -256,15 +291,26 @@ abstract class BaseNetCachedRepository<TData extends BaseData,
     }
   }
 
+  /// 把一次 data/meta 写入排到持久化链末尾，返回它自身的完成期。
+  ///
+  /// 返回值带着写入的真实结果，失败照常抛出。当前 [_saveCache] 不 await 它：
+  /// 内存已先更新，落盘只是尽力而为，失败不打断主流程。将来某类缓存的磁盘
+  /// 镜像变得关键时，由新的写入方 await 这个方法接住错误，而不是改这里。
+  ///
+  /// 注意 [persistData] / [persistMeta] 必须在 `then` 内部调用：若在外部先把
+  /// `Future.wait` 构造出来再链接，两个存储操作当下就已启动，串行形同虚设。
   Future<void> _queuePersist(
     TData data,
     TMeta meta,
   ) {
-    final Future<void> task = Future.wait([
-      persistData(data),
-      persistMeta(meta),
-    ]).then((_) => null);
-    _pendingPersist = (_pendingPersist ?? Future.value()).then((_) => task);
-    return _pendingPersist!;
+    final Future<void> result = _persistChain.then(
+      (_) => Future.wait(<Future<void>>[
+        persistData(data),
+        persistMeta(meta),
+      ]),
+    );
+    _persistChain = result.catchError((_) {});
+    _pendingPersist = result;
+    return result;
   }
 }
