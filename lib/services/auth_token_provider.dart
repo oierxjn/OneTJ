@@ -108,8 +108,7 @@ class AuthTokenProvider {
   ///
   /// 并发调用共用一次刷新，详见 [_inFlightRefresh]。
   Future<String> getValidAccessToken() async {
-    final TokenData? token =
-        await _repository.getToken(refreshFromStorage: true);
+    final TokenData? token = await _repository.getToken();
     if (token == null) {
       _sessionController?.markUnauthenticated(reason: 'missing_token');
       throw AppException('AUTH_REQUIRED', 'Missing access token');

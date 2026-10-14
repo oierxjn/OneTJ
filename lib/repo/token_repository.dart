@@ -67,12 +67,22 @@ class InMemoryTokenStorage implements TokenStorage {
 }
 
 /// 用于存储和管理认证令牌的仓库类。
+///
+/// 可变状态只有两处：一次性的存储加载，以及此后的内存值 [_cached]。运行期
+/// 读取不再触碰存储——否则「读到旧值」与「存储写尚未落盘」这两个延迟会互相
+/// 交错，代次计数只能覆盖「读取期间已完成的变更」，补不上写入尚在飞的那段窗口。
 class TokenRepository {
   TokenRepository({TokenStorage? storage})
       : _storage = storage ?? HiveTokenStorage();
 
   final TokenStorage _storage;
   TokenData? _cached;
+
+  /// 是否已从存储加载过。
+  ///
+  /// 兼任两职：既保证只加载一次，也用来检测加载期间的并发写入——写入方会把
+  /// 它一并置位，于是加载完成时复判一次即可丢弃过时快照。
+  bool _loaded = false;
 
   int _generation = 0;
 
@@ -81,28 +91,33 @@ class TokenRepository {
   /// 读取方可用它判断自己读到的令牌是否已被替换或清除：一次基于旧 refresh
   /// token 起飞的网络刷新，在写回前比对代次即可发现期间发生过变更，从而丢弃
   /// 已过时的结果。
-  ///
-  /// 计数器与它保护的状态放在一起，任何新增的写入或清除路径都自动受保护。
-  /// 读取（[getToken]）不推进代次：它不是状态变更，但它读到的快照可能已经过时，
-  /// 因此写入缓存前同样要比对代次。
   int get generation => _generation;
 
-  Future<TokenData?> getToken({bool refreshFromStorage = false}) async {
-    if (!refreshFromStorage && _cached != null) {
+  /// 读取当前令牌。
+  ///
+  /// 首次调用从存储加载；此后一律返回内存值（可能为 null，表示已登出），不再
+  /// 读取存储。启动时那次加载发生在任何并发写者出现之前——路由守卫在会话
+  /// 状态为 unknown 期间把用户停在启动页，登录与登出都不可能发生。
+  ///
+  /// 本类不提供「强制重读存储」：那会让读取结果可能比已有缓存更旧，是制造竞态
+  /// 的入口而不是便利。确有重载需要时应显式新增方法。
+  Future<TokenData?> getToken() async {
+    if (_loaded) {
       return _cached;
     }
-    // 读取期间令牌可能被替换或清除。若代次已推进，那次变更的结果才是权威的，
-    // 不能用这次读取到的过时值覆盖缓存，否则会把登出前的令牌重新装回来。
-    final int generationBeforeRead = _generation;
     final TokenData? stored = await _storage.read();
-    if (_generation == generationBeforeRead) {
+    // 加载期间可能发生过写入或清除，而写入方已把 [_loaded] 一并置位。那次变更
+    // 才是权威结果，不能用加载到的旧快照覆盖它。
+    if (!_loaded) {
       _cached = stored;
+      _loaded = true;
     }
     return _cached;
   }
 
   Future<void> saveToken(TokenData token) async {
     _cached = token;
+    _loaded = true;
     _generation += 1;
     await _storage.save(token);
   }
@@ -115,6 +130,7 @@ class TokenRepository {
 
   Future<void> clearToken() async {
     _cached = null;
+    _loaded = true;
     _generation += 1;
     await _storage.clear();
   }
