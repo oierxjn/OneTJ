@@ -21,13 +21,21 @@ TokenData _token(String accessToken) {
 
 /// 可控时序的内存存储替身。
 ///
-/// [readGate] 非空时读取在返回前挂起，用来把「加载进行中」这段窗口做成确定性的。
-/// [clearIsNoOp] 模拟存储清除失败：数据仍留在盘上。
+/// [readGate] / [saveGate] 非空时对应操作在生效前挂起，用来把「某个存储操作
+/// 尚在飞」这段窗口做成确定性的。[clearIsNoOp] 模拟存储清除失败，
+/// [failNextSave] 模拟存储写入失败：仓库不能依赖存储操作成功来维持自身一致。
 class _Storage implements TokenStorage {
   TokenData? value;
   int readCount = 0;
   bool clearIsNoOp = false;
+  bool failNextSave = false;
   Completer<void>? readGate;
+  Completer<void>? saveGate;
+
+  /// 存储操作的落盘序号，用于断言串行顺序。
+  int saveOrder = 0;
+  int clearOrder = 0;
+  int _opCount = 0;
 
   @override
   Future<TokenData?> read() async {
@@ -41,7 +49,16 @@ class _Storage implements TokenStorage {
 
   @override
   Future<void> save(TokenData token) async {
+    if (saveGate != null) {
+      await saveGate!.future;
+    }
+    if (failNextSave) {
+      failNextSave = false;
+      throw Exception('simulated storage failure');
+    }
     value = token;
+    _opCount += 1;
+    saveOrder = _opCount;
   }
 
   @override
@@ -50,6 +67,8 @@ class _Storage implements TokenStorage {
       return;
     }
     value = null;
+    _opCount += 1;
+    clearOrder = _opCount;
   }
 }
 
@@ -132,45 +151,97 @@ void main() {
     });
   });
 
-  group('TokenRepository 代次契约', () {
-    test('写入推进代次', () async {
-      final TokenRepository repository =
-          TokenRepository(storage: _Storage());
-      final int before = repository.generation;
-
+  group('TokenRepository saveRefreshedToken', () {
+    test('基于当前 refresh token 时写入', () async {
+      final TokenRepository repository = TokenRepository(storage: _Storage());
       await repository.saveToken(_token('a'));
 
-      expect(repository.generation, before + 1);
+      final bool applied = await repository.saveRefreshedToken(
+        _token('a2'),
+        refreshTokenUsed: 'refresh-a',
+      );
+
+      expect(applied, isTrue);
+      expect((await repository.getToken())?.accessToken, 'a2');
     });
 
-    test('清除推进代次', () async {
-      final TokenRepository repository =
-          TokenRepository(storage: _Storage());
+    test('期间令牌被替换：不写回', () async {
+      final TokenRepository repository = TokenRepository(storage: _Storage());
       await repository.saveToken(_token('a'));
-      final int before = repository.generation;
+      await repository.saveToken(_token('b'));
 
+      final bool applied = await repository.saveRefreshedToken(
+        _token('stale'),
+        refreshTokenUsed: 'refresh-a',
+      );
+
+      expect(applied, isFalse);
+      expect((await repository.getToken())?.accessToken, 'b',
+          reason: '陈旧的刷新结果不得覆盖新登录的令牌');
+    });
+
+    test('期间令牌被清除：不写回', () async {
+      final TokenRepository repository = TokenRepository(storage: _Storage());
+      await repository.saveToken(_token('a'));
       await repository.clearToken();
 
-      expect(repository.generation, before + 1);
+      final bool applied = await repository.saveRefreshedToken(
+        _token('resurrected'),
+        refreshTokenUsed: 'refresh-a',
+      );
+
+      expect(applied, isFalse);
+      expect(await repository.getToken(), isNull);
     });
 
-    test('读取不推进代次', () async {
-      final TokenRepository repository =
-          TokenRepository(storage: _Storage()..value = _token('a'));
-      final int before = repository.generation;
+    test('尚未加载时拒绝写入', () async {
+      final TokenRepository repository = TokenRepository(storage: _Storage());
 
-      await repository.getToken();
+      final bool applied = await repository.saveRefreshedToken(
+        _token('a'),
+        refreshTokenUsed: 'refresh-a',
+      );
 
-      expect(repository.generation, before,
-          reason: '读取不是状态变更，不应推进代次');
+      expect(applied, isFalse,
+          reason: '内存为空说明没有会话，不能凭一次刷新凭空造出一个');
+    });
+  });
+
+  group('TokenRepository 存储写入串行', () {
+    test('登出排在前一次写入之后落盘', () async {
+      final _Storage storage = _Storage()..saveGate = Completer<void>();
+      final TokenRepository repository = TokenRepository(storage: storage);
+
+      // 写入已提交内存、正挂在存储队列上，此时用户登出。
+      final Future<void> saveDone = repository.saveToken(_token('new'));
+      final Future<void> clearDone = repository.clearToken();
+      storage.saveGate!.complete();
+      await saveDone;
+      await clearDone;
+
+      expect(await repository.getToken(), isNull, reason: '内存上登出优先');
+      expect(storage.value, isNull,
+          reason: '存储上清除也必须排在前一次写入之后，否则令牌会留在盘上');
+      expect(storage.clearOrder, greaterThan(storage.saveOrder));
+    });
+
+    test('存储写入失败不堵死后续操作', () async {
+      final _Storage storage = _Storage()..failNextSave = true;
+      final TokenRepository repository = TokenRepository(storage: storage);
+
+      await expectLater(
+        repository.saveToken(_token('a')),
+        throwsA(isA<Exception>()),
+      );
+
+      await repository.clearToken();
+      expect(storage.value, isNull, reason: '队列在上一次失败之后仍然可用');
     });
   });
 
   group('TokenRepository saveFromCode2Token', () {
-    test('写入推进代次', () async {
-      final TokenRepository repository =
-          TokenRepository(storage: _Storage());
-      final int before = repository.generation;
+    test('写入令牌', () async {
+      final TokenRepository repository = TokenRepository(storage: _Storage());
 
       await repository.saveFromCode2Token(Code2TokenData(
         accessToken: 'a',
@@ -184,7 +255,7 @@ void main() {
         refreshExpiresIn: 7200,
       ));
 
-      expect(repository.generation, before + 1);
+      expect((await repository.getToken())?.accessToken, 'a');
     });
   });
 }
