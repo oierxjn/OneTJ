@@ -32,11 +32,10 @@ abstract class BaseNetCachedRepository<TData extends BaseData,
   TData? _cachedData;
   TMeta? _cachedMeta;
 
-  /// 持久化写入链，链头永远是错误自由的。
+  /// 持久化写入链，链头保持无错，使后续入队不被上一次失败短路。
   ///
   /// 存储操作必须串行：data 与 meta 是同一次缓存的两个部分，并发写会让两者
-  /// 交错落盘，出现「缓存是新值、元数据是旧值」这类不一致。链头为何只留吞错
-  /// 后的版本，详见 [_queuePersist]。
+  /// 交错落盘，出现「缓存是新值、元数据是旧值」这类不一致。
   Future<void> _persistChain = Future<void>.value();
 
   /// 最近一次排入队列的写入，供 [flush] 等待；链本身见 [_persistChain]。
@@ -130,11 +129,9 @@ abstract class BaseNetCachedRepository<TData extends BaseData,
     );
   }
 
-  /// 等待在飞的持久化完成。
+  /// 等待在飞的持久化落定。
   ///
-  /// 只用于「等一等」，不用于取结果，因此吞掉错误：一次磁盘写失败不该让
-  /// [clearCache] 跟着失败——登出编排会串行 await 各仓库的 [clearCache]，任一
-  /// 抛异常都会中断其后所有仓库的清理，并把会话留在半登出状态。
+  /// 不关心写入结果：落盘失败意味着下次启动重新拉取，不影响本次流程。
   Future<void> flush() {
     final Future<void>? pending = _pendingPersist;
     if (pending == null) {
@@ -245,6 +242,10 @@ abstract class BaseNetCachedRepository<TData extends BaseData,
     return fetched;
   }
 
+  /// 更新内存缓存，并按需把它排入持久化队列。
+  ///
+  /// 刻意不 await 写入：内存已经是权威副本，落盘失败只意味着下次启动重新拉取。
+  /// 需要感知写入结果的调用方应自行 await [_queuePersist]。
   void _saveCache({
     TData? data,
     TMeta? meta,
@@ -275,8 +276,9 @@ abstract class BaseNetCachedRepository<TData extends BaseData,
 
   /// 把一次 data/meta 写入排到持久化链末尾，返回它自身的完成期。
   ///
-  /// 返回的是写入的真实结果，失败照常抛给调用方；链头只保存吞错后的版本，因此
-  /// 单次失败不会堵死后续写入——刻意不做「前一个失败就整体丢弃」的短路。
+  /// 返回值带着写入的真实结果，失败照常抛出。当前 [_saveCache] 不 await 它：
+  /// 内存已先更新，落盘只是尽力而为，失败不打断主流程。将来某类缓存的磁盘
+  /// 镜像变得关键时，由新的写入方 await 这个方法接住错误，而不是改这里。
   ///
   /// 注意 [persistData] / [persistMeta] 必须在 `then` 内部调用：若在外部先把
   /// `Future.wait` 构造出来再链接，两个存储操作当下就已启动，串行形同虚设。
