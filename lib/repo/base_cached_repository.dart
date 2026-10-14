@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+
 import 'package:onetj/app/exception/app_exception.dart';
+import 'package:onetj/app/logging/logger.dart';
 import 'package:onetj/models/base_data.dart';
 
 /// 基础元数据类，所有缓存元数据都必须实现该类
@@ -244,8 +246,11 @@ abstract class BaseNetCachedRepository<TData extends BaseData,
 
   /// 更新内存缓存，并按需把它排入持久化队列。
   ///
-  /// 刻意不 await 写入：内存已经是权威副本，落盘失败只意味着下次启动重新拉取。
-  /// 需要感知写入结果的调用方应自行 await [_queuePersist]。
+  /// 刻意不 await 写入：内存已经是权威副本，落盘失败只意味着下次启动重新拉取，
+  /// 不影响调用方拿到的结果。写入失败因此在本方法内就地记录后结束，不外抛、
+  /// 也不向上传播给 await [_queuePersist] 的人。
+  ///
+  /// 需要感知写入结果的调用方应自行 await [_queuePersist]，而不是依赖这里。
   void _saveCache({
     TData? data,
     TMeta? meta,
@@ -262,7 +267,19 @@ abstract class BaseNetCachedRepository<TData extends BaseData,
     }
     final TData dataToPersist = _cachedData as TData;
     final TMeta metaToPersist = _cachedMeta as TMeta;
-    _queuePersist(dataToPersist, metaToPersist);
+    // 队列无人在 await，这里是错误唯一的落脚点，因此就地记录。
+    unawaited(
+      _queuePersist(dataToPersist, metaToPersist).catchError(
+        (Object error, StackTrace stackTrace) {
+          AppLogger.warning(
+            'Cache persist failed, memory cache only',
+            loggerName: runtimeType.toString(),
+            error: error,
+            stackTrace: stackTrace,
+          );
+        },
+      ),
+    );
   }
 
   /// 轻量式检查是否正在清除缓存

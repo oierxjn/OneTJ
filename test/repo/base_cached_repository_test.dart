@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:onetj/app/logging/log_entry.dart';
+import 'package:onetj/app/logging/logger.dart';
 import 'package:onetj/models/student_info_data.dart';
 import 'package:onetj/repo/student_info_repository.dart';
 
@@ -163,6 +165,34 @@ void main() {
 
       expect(results, <String>['ok', 'ok'],
           reason: '前序仓库的写失败不得中断后续仓库的清理');
+    });
+
+    test('写失败记入日志，且不影响 getData 结果', () async {
+      final _Storage storage = _Storage()..failNext = true;
+      final StudentInfoRepository repository =
+          StudentInfoRepository(storage: storage);
+
+      final StudentInfoData data = await repository.getOrFetch(
+        now: DateTime(2026, 1, 1),
+        fetcher: () async => buildStudentInfo(),
+      );
+
+      // 单次写盘失败不打断主流程：调用方照常拿到数据。
+      expect(data.deptName, 'Computer Science');
+
+      await repository.flush();
+      await Future<void>.delayed(Duration.zero);
+
+      final List<AppLogEntry> entries = AppLogger.recent(limit: 100);
+      expect(
+        entries.where(
+          (AppLogEntry entry) =>
+              entry.loggerName == 'StudentInfoRepository' &&
+              entry.message == 'Cache persist failed, memory cache only',
+        ),
+        isNotEmpty,
+        reason: '队列无人 await，_saveCache 是错误唯一的落脚点，必须留下记录',
+      );
     });
 
     test('flush 等待在飞的写入', () async {
