@@ -415,7 +415,8 @@ void main() {
       );
       refreshGate.complete();
 
-      // 交换失败没有推进代次，在飞刷新照常写回——否则会平白丢掉可用令牌。
+      // 交换失败没有替换仓库里的 refresh token，在飞刷新照常写回——否则会
+      // 平白丢掉一个可用令牌。
       expect(await pendingRefresh, 'rescued-access');
       final TokenData stored = (await repository.getToken())!;
       expect(stored.accessToken, 'rescued-access');

@@ -108,8 +108,7 @@ class AuthTokenProvider {
   ///
   /// 并发调用共用一次刷新，详见 [_inFlightRefresh]。
   Future<String> getValidAccessToken() async {
-    final TokenData? token =
-        await _repository.getToken(refreshFromStorage: true);
+    final TokenData? token = await _repository.getToken();
     if (token == null) {
       _sessionController?.markUnauthenticated(reason: 'missing_token');
       throw AppException('AUTH_REQUIRED', 'Missing access token');
@@ -121,25 +120,24 @@ class AuthTokenProvider {
       _sessionController?.markUnauthenticated(reason: 'refresh_token_expired');
       throw AppException('AUTH_EXPIRED', 'Refresh token expired');
     }
-    return _inFlightRefresh ??= _refreshOnce(token)
+    return _inFlightRefresh ??= _refreshOnce(token.refreshToken)
         .whenComplete(() => _inFlightRefresh = null);
   }
 
   /// 刷新并写回仓库，供 [_inFlightRefresh] 单飞去重。
   ///
-  /// 令牌在刷新期间被替换或清除（[TokenRepository.generation] 已推进）时，
-  /// 结果不再写回，因为这次刷新基于的是已失效的 refresh token：
+  /// 写回前由 [TokenRepository.saveRefreshedToken] 做 CAS：只有这次刷新基于的
+  /// refresh token 仍是仓库当前令牌时才接受结果，否则作废——
   ///
-  /// - 重新登录：切换账号时旧令牌会覆盖新令牌，造成数据串号
+  /// - 重新登录：切换账号时旧账号的令牌会覆盖新令牌，造成数据串号
   /// - 登出：令牌会在 [TokenRepository.clearToken] 之后被写回，下次启动
   ///   [LauncherBootService] 读到它会把用户重新判定为已登录
   ///
   /// 请求本身无法取消，拦截点只能是写回。
-  Future<String> _refreshOnce(TokenData token) async {
-    final int generationAtStart = _repository.generation;
+  Future<String> _refreshOnce(String refreshTokenUsed) async {
     final Code2TokenData refreshed;
     try {
-      refreshed = await _refreshToken(token.refreshToken);
+      refreshed = await _refreshToken(refreshTokenUsed);
     } on NetworkException catch (error) {
       // 见 [getValidAccessToken]：只有明确的 401 才算登录失效，瞬时故障不上报。
       if (error.statusCode == 401) {
@@ -147,10 +145,13 @@ class AuthTokenProvider {
       }
       rethrow;
     }
-    if (generationAtStart != _repository.generation) {
-      // 期间发生过写入或清除：这次刷新基于的 refresh token 已失效，结果作废。
-      // 重新登录时 join 在此的调用者需要可用结果，返回仓库当前的令牌——那才是
-      // 用户现在所处的会话。登出时没有可用令牌可返回，如实抛出。
+    final TokenData token = TokenData.fromCode2TokenData(refreshed);
+    if (!await _repository.saveRefreshedToken(
+      token,
+      refreshTokenUsed: refreshTokenUsed,
+    )) {
+      // 期间令牌被替换或清除。重新登录时 join 在此的调用者需要可用结果，返回
+      // 仓库当前的令牌——那才是用户现在所处的会话。
       final TokenData? current = await _repository.getToken();
       if (current != null && !current.isAccessTokenExpired(skew: _tokenSkew)) {
         return current.accessToken;
@@ -159,8 +160,7 @@ class AuthTokenProvider {
       // 本就有效，这里只表示这一请求拿不到令牌。
       throw AppException('AUTH_EXPIRED', 'Token replaced or cleared');
     }
-    await _repository.saveFromCode2Token(refreshed);
-    return refreshed.accessToken;
+    return token.accessToken;
   }
 
   /// 用 refresh token 刷新 token,返回新的 [Code2TokenData],不写存储。

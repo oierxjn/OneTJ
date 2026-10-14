@@ -93,9 +93,7 @@ class LauncherBootService {
   /// 如果 token 有效则返回 [AuthStatus.authenticated]，否则返回
   /// [AuthStatus.unauthenticated]。
   Future<AuthStatus> _resolveInitialStatus() async {
-    final TokenData? token = await _tokenRepository.getToken(
-      refreshFromStorage: true,
-    );
+    final TokenData? token = await _tokenRepository.getToken();
 
     if (token == null) {
       AppLogger.info(
