@@ -99,10 +99,12 @@ class TokenRepository {
   ///
   /// 返回的是 [operation] 的真实结果，失败照常抛给调用方；链头只保存吞错后的
   /// 版本，因此单次失败不会堵死后续操作——刻意不做「前一个失败就整体丢弃」的
-  /// 短路，`base_cached_repository._queuePersist` 正是因此会在一次磁盘写失败后
-  /// 永久卡死。
+  /// 短路。
   ///
   /// 不变式：链头永远错误自由，所以入队时无需再防御前一个链接的错误。
+  ///
+  /// 注意 [operation] 必须在 `then` 内部调用。若在外部先把 future 构造出来再
+  /// 链接，存储操作当下就已启动，串行便形同虚设。
   Future<void> _enqueueStorage(Future<void> Function() operation) {
     final Future<void> result = _storageChain.then((_) => operation());
     _storageChain = result.catchError((_) {});
