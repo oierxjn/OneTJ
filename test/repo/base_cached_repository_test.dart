@@ -7,7 +7,7 @@ import 'package:onetj/app/logging/logger.dart';
 import 'package:onetj/models/student_info_data.dart';
 import 'package:onetj/repo/student_info_repository.dart';
 
-import 'student_info_repository_test.dart';
+import 'student_info_fixtures.dart';
 
 /// 可控时序与可控失败的存储替身。
 ///

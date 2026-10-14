@@ -3,53 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:onetj/models/student_info_data.dart';
 import 'package:onetj/repo/student_info_repository.dart';
 
-StudentInfoData buildStudentInfo({String deptName = 'Computer Science'}) {
-  return StudentInfoData(
-    campusCode: '01',
-    campusName: 'Main Campus',
-    createTime: '2026-01-01 00:00:00',
-    currentGrade: 2022,
-    deptCode: 'CS',
-    deptName: deptName,
-    enrolDate: '2022-09-01',
-    expGraduationDate: '2026-06-30',
-    isIncumbencyCode: null,
-    isIncumbencyName: null,
-    isMembershipCode: '0',
-    isMembershipName: 'No',
-    isOverseasCode: '0',
-    isOverseasName: 'No',
-    leaveSchoolCode: '0',
-    leaveSchoolName: 'In School',
-    lengthSchooling: '4',
-    managementCollege2Code: null,
-    managementCollege2Name: null,
-    name: 'Test User',
-    offSchool: null,
-    politicalStatusCode: '01',
-    politicalStatusName: '群众',
-    registrationStatusCode: '1',
-    registrationStatusName: 'Registered',
-    schoolCode: 'SDU',
-    schoolName: 'Shandong University',
-    secondDeptCode: 'CS',
-    secondDeptName: 'Computer Science',
-    sexCode: '1',
-    sexName: 'Male',
-    statusCode: '1',
-    statusName: 'Normal',
-    teacherId: 'T001',
-    trainingCategoryCode: 'A',
-    trainingCategoryName: 'General',
-    trainingLevelCode: 'UG',
-    trainingLevelName: 'Undergraduate',
-    updateTime: '2026-01-01 00:00:00',
-    userId: 'U001',
-    userTypeCode: 'STU',
-    userTypeName: 'Student',
-    viceTeacherId: null,
-  );
-}
+import 'student_info_fixtures.dart';
 
 void main() {
   group('StudentInfoRepository', () {
