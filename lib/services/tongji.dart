@@ -62,12 +62,11 @@ class TongjiApi {
 
   final String _baseUrl = tongjiApiBaseUrl;
 
-  /// 收到 401 时把会话标记为未登录；其余状态码不动状态。
+  /// 当前令牌收到 401 时把会话标记为未登录；其余状态码不动状态。
   ///
-  /// 注意：令牌过期走的是 [AuthTokenProvider.getValidAccessToken]，在发请求前
-  /// 就已上报；这里的 401 覆盖服务端在令牌「看起来仍有效」时主动拒绝的情况。
-  void _reportAuthStatusCode(int statusCode) {
-    if (statusCode == 401) {
+  /// 旧请求的 401 只返回给原调用方，不影响重新登录后的会话。
+  void _reportAuthStatusCode(int statusCode, String accessToken) {
+    if (statusCode == 401 && _auth.isCurrentAccessToken(accessToken)) {
       _sessionController?.markUnauthenticated(reason: 'http_401');
     }
   }
@@ -82,11 +81,13 @@ class TongjiApi {
       if (headers != null) ...headers,
     };
     try {
-      return await _httpGet(
+      final http.Response response = await _httpGet(
         uri,
         headers: requestHeaders,
         loggerName: 'TongjiApi',
       );
+      _reportAuthStatusCode(response.statusCode, accessToken);
+      return response;
     } catch (error, stackTrace) {
       AppLogger.error(
         'Authorized GET failed',
@@ -104,17 +105,12 @@ class TongjiApi {
   }
 
   /// 校验状态码并解析 [ApiResponse] 包裹的 data 字段。
-  ///
-  /// GET 与 POST 共用同一实现：这样「401 上报会话失效、其余状态码不动会话」
-  /// 这条规则只有一处定义，两条路径不会各自漂移。曾经 POST 路径漏掉
-  /// [_reportAuthStatusCode]，导致同一次令牌吊销在 GET 下登出、在 POST 下静默失败。
   T _unwrapData<T>(
     http.Response response,
     Uri uri,
     T Function(Object? data) parseData,
   ) {
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      _reportAuthStatusCode(response.statusCode);
       throw NetworkException.http(
         statusCode: response.statusCode,
         uri: uri,
@@ -157,13 +153,15 @@ class TongjiApi {
       if (headers != null) ...headers,
     };
     try {
-      return await _httpPost(
+      final http.Response response = await _httpPost(
         uri,
         headers: requestHeaders,
         body: body,
         encoding: encoding,
         loggerName: 'TongjiApi',
       );
+      _reportAuthStatusCode(response.statusCode, accessToken);
+      return response;
     } catch (error, stackTrace) {
       AppLogger.error(
         'Authorized POST failed',

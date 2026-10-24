@@ -9,10 +9,13 @@ import 'package:onetj/repo/token_repository.dart';
 import 'package:onetj/services/auth_token_provider.dart';
 import 'package:onetj/services/tongji.dart';
 
-TokenData _validToken() {
+TokenData _validToken({
+  String accessToken = 'access-token',
+  String refreshToken = 'refresh-token',
+}) {
   return TokenData(
-    accessToken: 'access-token',
-    refreshToken: 'refresh-token',
+    accessToken: accessToken,
+    refreshToken: refreshToken,
     tokenType: 'Bearer',
     scope: 'scope',
     idToken: 'id-token',
@@ -36,8 +39,8 @@ class _Harness {
 /// 令牌预置为未过期，使 `getValidAccessToken()` 直接返回而不发起刷新请求，
 /// 从而把测试聚焦在 [TongjiApi] 自身对响应状态码的处理上。
 Future<_Harness> _harness(int statusCode, {String responseBody = '{}'}) async {
-  final SessionController session =
-      SessionController()..completeBoot(AuthStatus.authenticated);
+  final SessionController session = SessionController()
+    ..completeBoot(AuthStatus.authenticated);
   final TokenRepository repository =
       TokenRepository(storage: InMemoryTokenStorage());
   await repository.saveToken(_validToken());
@@ -69,16 +72,47 @@ void main() {
     test('401 时标记为未登录', () async {
       final _Harness h = await _harness(401);
 
-      await expectLater(h.api.fetchCetScores(), throwsA(isA<NetworkException>()));
+      await expectLater(
+          h.api.fetchCetScores(), throwsA(isA<NetworkException>()));
 
       expect(h.session.status, AuthStatus.unauthenticated);
       expect(h.session.lastReason, 'http_401');
     });
 
+    test('旧请求的 401 不影响重新登录后的会话', () async {
+      final SessionController session = SessionController()
+        ..completeBoot(AuthStatus.authenticated);
+      final TokenRepository repository =
+          TokenRepository(storage: InMemoryTokenStorage());
+      await repository.saveToken(_validToken());
+      final TongjiApi api = TongjiApi(
+        auth: AuthTokenProvider(repository: repository),
+        sessionController: session,
+        httpGet: (
+          Uri uri, {
+          Map<String, String>? headers,
+          String loggerName = 'Http',
+        }) async {
+          await repository.saveToken(_validToken(
+            accessToken: 'brand-new-access',
+            refreshToken: 'brand-new-refresh',
+          ));
+          session.markAuthenticated();
+          return http.Response('{}', 401);
+        },
+      );
+
+      await expectLater(api.fetchCetScores(), throwsA(isA<NetworkException>()));
+
+      expect((await repository.getToken())?.accessToken, 'brand-new-access');
+      expect(session.status, AuthStatus.authenticated);
+    });
+
     test('403 不翻转会话状态', () async {
       final _Harness h = await _harness(403);
 
-      await expectLater(h.api.fetchCetScores(), throwsA(isA<NetworkException>()));
+      await expectLater(
+          h.api.fetchCetScores(), throwsA(isA<NetworkException>()));
 
       expect(h.session.status, AuthStatus.authenticated);
     });
@@ -86,7 +120,8 @@ void main() {
     test('5xx 等瞬时错误不翻转会话状态', () async {
       final _Harness h = await _harness(500);
 
-      await expectLater(h.api.fetchCetScores(), throwsA(isA<NetworkException>()));
+      await expectLater(
+          h.api.fetchCetScores(), throwsA(isA<NetworkException>()));
 
       expect(h.session.status, AuthStatus.authenticated);
     });
@@ -107,14 +142,15 @@ void main() {
     test('响应体非法 JSON 时抛 JSONResolveException 且不动会话', () async {
       final _Harness h = await _harness(200, responseBody: 'not-json');
 
-      await expectLater(h.api.fetchCetScores(), throwsA(isA<JSONResolveException>()));
+      await expectLater(
+          h.api.fetchCetScores(), throwsA(isA<JSONResolveException>()));
 
       expect(h.session.status, AuthStatus.authenticated);
     });
 
     test('传输层异常被包装为 NetworkException 且不动会话', () async {
-      final SessionController session =
-          SessionController()..completeBoot(AuthStatus.authenticated);
+      final SessionController session = SessionController()
+        ..completeBoot(AuthStatus.authenticated);
       final TokenRepository repository =
           TokenRepository(storage: InMemoryTokenStorage());
       await repository.saveToken(_validToken());
@@ -140,8 +176,8 @@ void main() {
       final TokenRepository repository =
           TokenRepository(storage: InMemoryTokenStorage());
       await repository.saveToken(_validToken());
-      final SessionController session =
-          SessionController()..completeBoot(AuthStatus.authenticated);
+      final SessionController session = SessionController()
+        ..completeBoot(AuthStatus.authenticated);
       Map<String, String>? capturedHeaders;
       final TongjiApi api = TongjiApi(
         auth: AuthTokenProvider(repository: repository),

@@ -133,6 +133,16 @@ class TokenRepository {
     return _cached;
   }
 
+  /// 判断指定 access token 是否仍属于当前内存会话。
+  bool isCurrentAccessToken(String accessToken) {
+    return _cached?.accessToken == accessToken;
+  }
+
+  /// 判断指定 refresh token 是否仍属于当前内存会话。
+  bool isCurrentRefreshToken(String refreshToken) {
+    return _cached?.refreshToken == refreshToken;
+  }
+
   /// 登录换来的令牌：无条件写入。
   ///
   /// 用户的登录决策是权威的，压倒在飞的刷新结果——由 [saveRefreshedToken] 的
