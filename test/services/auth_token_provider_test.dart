@@ -379,6 +379,49 @@ void main() {
       expect(stored.refreshToken, 'brand-new-refresh');
     });
 
+    test('旧刷新在新登录后返回 401：不误登出新会话', () async {
+      await repository.saveToken(expiredAccessToken());
+      final Completer<void> refreshGate = Completer<void>();
+      final AuthTokenProvider provider = AuthTokenProvider(
+        repository: repository,
+        sessionController: session,
+        httpPost: (
+          Uri uri, {
+          Map<String, String>? headers,
+          Object? body,
+          Encoding? encoding,
+          String loggerName = 'Http',
+        }) async {
+          final Map<String, dynamic> fields =
+              (body! as Map<String, dynamic>).cast<String, dynamic>();
+          if (fields['grant_type'] == 'authorization_code') {
+            return http.Response(
+              '{"access_token":"brand-new-access",'
+              '"refresh_token":"brand-new-refresh",'
+              '"token_type":"Bearer","scope":"s","id_token":"i",'
+              '"session_state":"ss","expires_in":3600,'
+              '"refresh_expires_in":7200}',
+              200,
+            );
+          }
+          await refreshGate.future;
+          return http.Response('{}', 401);
+        },
+      );
+
+      final Future<String> pendingRefresh = provider.getValidAccessToken();
+      await Future<void>.delayed(Duration.zero);
+      await provider.exchangeCode('new-code');
+      session.markAuthenticated();
+      refreshGate.complete();
+
+      await expectLater(pendingRefresh, throwsA(isA<NetworkException>()));
+      final TokenData stored = (await repository.getToken())!;
+      expect(stored.accessToken, 'brand-new-access');
+      expect(stored.refreshToken, 'brand-new-refresh');
+      expect(session.status, AuthStatus.authenticated);
+    });
+
     test('重新登录失败时在飞刷新仍然有效', () async {
       await repository.saveToken(expiredAccessToken());
       final Completer<void> refreshGate = Completer<void>();
@@ -425,8 +468,8 @@ void main() {
     test('刷新在飞期间登出：令牌不会被写回', () async {
       await repository.saveToken(expiredAccessToken());
       final Completer<void> refreshGate = Completer<void>();
-      final SessionController session =
-          SessionController()..completeBoot(AuthStatus.authenticated);
+      final SessionController session = SessionController()
+        ..completeBoot(AuthStatus.authenticated);
       final AuthTokenProvider provider = AuthTokenProvider(
         repository: repository,
         sessionController: session,

@@ -124,6 +124,11 @@ class AuthTokenProvider {
         .whenComplete(() => _inFlightRefresh = null);
   }
 
+  /// 判断一次请求使用的 access token 是否仍属于当前会话。
+  bool isCurrentAccessToken(String accessToken) {
+    return _repository.isCurrentAccessToken(accessToken);
+  }
+
   /// 刷新并写回仓库，供 [_inFlightRefresh] 单飞去重。
   ///
   /// 写回前由 [TokenRepository.saveRefreshedToken] 做 CAS：只有这次刷新基于的
@@ -139,8 +144,9 @@ class AuthTokenProvider {
     try {
       refreshed = await _refreshToken(refreshTokenUsed);
     } on NetworkException catch (error) {
-      // 见 [getValidAccessToken]：只有明确的 401 才算登录失效，瞬时故障不上报。
-      if (error.statusCode == 401) {
+      // 只有当前令牌的 401 才算登录失效；旧刷新不得误伤新登录的会话。
+      if (error.statusCode == 401 &&
+          _repository.isCurrentRefreshToken(refreshTokenUsed)) {
         _sessionController?.markUnauthenticated(reason: 'refresh_rejected_401');
       }
       rethrow;
