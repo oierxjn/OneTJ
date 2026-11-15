@@ -6,6 +6,7 @@ import 'package:onetj/l10n/app_localizations.dart';
 
 import 'package:onetj/app/presentation/ui_event.dart';
 import 'package:onetj/app/exception/app_exception.dart';
+import 'package:onetj/app/session/session_controller.dart';
 
 import '../view_models/login_view_model.dart';
 
@@ -13,10 +14,14 @@ class LoginView extends StatefulWidget {
   const LoginView({
     super.key,
     required this.viewModel,
+    required this.sessionStatus,
+    this.sessionLastReason,
     this.webViewEnvironment,
   });
 
   final LoginViewModel viewModel;
+  final AuthStatus sessionStatus;
+  final String? sessionLastReason;
   final WebViewEnvironment? webViewEnvironment;
 
   @override
@@ -62,20 +67,69 @@ class _LoginViewState extends State<LoginView> {
 
   @override
   Widget build(BuildContext context) {
+    final String? bannerText = _bannerText(context);
     return Scaffold(
-      body: InAppWebView(
-        webViewEnvironment: widget.webViewEnvironment,
-        initialUrlRequest: URLRequest(
-          url: WebUri(viewModel.authUri.toString()),
-        ),
-        shouldOverrideUrlLoading: (controller, navigationAction) async {
-          if (navigationAction.request.url == null) {
-            return NavigationActionPolicy.ALLOW;
-          }
-          return await viewModel.handleRedirectUri(
-              controller, navigationAction.request.url!);
-        },
+      body: Column(
+        children: [
+          if (bannerText != null)
+            Material(
+              color: Theme.of(context).colorScheme.secondaryContainer,
+              child: SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        color: Theme.of(context).colorScheme.onSecondaryContainer,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          bannerText,
+                          style: TextStyle(
+                            color:
+                                Theme.of(context).colorScheme.onSecondaryContainer,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          Expanded(
+            child: InAppWebView(
+              webViewEnvironment: widget.webViewEnvironment,
+              initialUrlRequest: URLRequest(
+                url: WebUri(viewModel.authUri.toString()),
+              ),
+              shouldOverrideUrlLoading: (controller, navigationAction) async {
+                if (navigationAction.request.url == null) {
+                  return NavigationActionPolicy.ALLOW;
+                }
+                return await viewModel.handleRedirectUri(
+                    controller, navigationAction.request.url!);
+              },
+            ),
+          ),
+        ],
       ),
     );
+  }
+
+  /// 按进入登录页的原因选择横幅文案；无明确原因时不显示。
+  String? _bannerText(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    if (widget.sessionStatus == AuthStatus.expired) {
+      return l10n.loginExpiredBanner;
+    }
+    if (widget.sessionStatus == AuthStatus.guest &&
+        widget.sessionLastReason == 'guard_redirect') {
+      return l10n.loginRequiredBanner;
+    }
+    return null;
   }
 }

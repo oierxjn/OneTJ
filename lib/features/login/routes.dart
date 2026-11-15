@@ -12,13 +12,18 @@ final List<GoRoute> loginRoutes = [
   GoRoute(
     path: RoutePaths.login,
     name: 'login',
-    builder: (context, state) => LoginView(
-      viewModel: LoginViewModel(
-        dataService: appLocator<LoginDataService>(),
-        sessionController: appLocator<SessionController>(),
-      ),
-      webViewEnvironment:
-          appLocator<WebViewEnvironmentService>().environment,
-    ),
+    builder: (context, state) {
+      final SessionController session = appLocator<SessionController>();
+      return LoginView(
+        viewModel: LoginViewModel(
+          dataService: appLocator<LoginDataService>(),
+          sessionController: session,
+        ),
+        sessionStatus: session.status,
+        sessionLastReason: session.lastReason,
+        webViewEnvironment:
+            appLocator<WebViewEnvironmentService>().environment,
+      );
+    },
   ),
 ];

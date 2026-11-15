@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:onetj/app/session/session_controller.dart';
 import 'package:onetj/features/dashboard/application/dashboard_data_service.dart';
 import 'package:onetj/features/dashboard/view_models/dashboard_view_model.dart';
 import 'package:onetj/app/presentation/ui_event.dart';
@@ -47,6 +48,8 @@ void main() {
         storage: InMemorySettingsStorage(),
       ),
       appUpdateService: appUpdateService,
+      sessionController: SessionController()
+        ..completeBoot(AuthStatus.authenticated),
     );
   }
 

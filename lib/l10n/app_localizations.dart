@@ -110,6 +110,48 @@ abstract class AppLocalizations {
   /// **'Auth state mismatch, possible network attack'**
   String get authStateMismatch;
 
+  /// No description provided for @sessionExpiredBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'Session expired, showing cached data'**
+  String get sessionExpiredBanner;
+
+  /// No description provided for @sessionExpiredRelogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in again'**
+  String get sessionExpiredRelogin;
+
+  /// No description provided for @loginExpiredBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'Session expired, please sign in again'**
+  String get loginExpiredBanner;
+
+  /// No description provided for @loginRequiredBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to use this feature'**
+  String get loginRequiredBanner;
+
+  /// No description provided for @dashboardGuestTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to OneTJ'**
+  String get dashboardGuestTitle;
+
+  /// No description provided for @dashboardGuestSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to view timetable, grades and calendar'**
+  String get dashboardGuestSubtitle;
+
+  /// No description provided for @dashboardGuestLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in'**
+  String get dashboardGuestLogin;
+
   /// No description provided for @tabDashboard.
   ///
   /// In en, this message translates to:

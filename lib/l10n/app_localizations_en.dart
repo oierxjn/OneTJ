@@ -16,6 +16,28 @@ class AppLocalizationsEn extends AppLocalizations {
       'Auth state mismatch, possible network attack';
 
   @override
+  String get sessionExpiredBanner => 'Session expired, showing cached data';
+
+  @override
+  String get sessionExpiredRelogin => 'Sign in again';
+
+  @override
+  String get loginExpiredBanner => 'Session expired, please sign in again';
+
+  @override
+  String get loginRequiredBanner => 'Sign in to use this feature';
+
+  @override
+  String get dashboardGuestTitle => 'Welcome to OneTJ';
+
+  @override
+  String get dashboardGuestSubtitle =>
+      'Sign in to view timetable, grades and calendar';
+
+  @override
+  String get dashboardGuestLogin => 'Sign in';
+
+  @override
   String get tabDashboard => 'Dashboard';
 
   @override

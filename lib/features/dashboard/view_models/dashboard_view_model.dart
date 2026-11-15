@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:onetj/app/session/session_controller.dart';
 import 'package:onetj/features/dashboard/application/dashboard_data_service.dart';
 import 'package:onetj/features/dashboard/models/dashboard_upcoming_entry_data.dart';
 import 'package:onetj/features/dashboard/models/upcoming_entries_calculator.dart';
@@ -23,18 +24,37 @@ class DashboardViewModel extends BaseViewModel<UiEvent> {
     required DashboardDataService dataService,
     required SettingsRepository settingsRepository,
     required AppUpdateService appUpdateService,
+    required SessionController sessionController,
   })  : _dataService = dataService,
         _settingsRepository = settingsRepository,
-        _appUpdateService = appUpdateService {
+        _appUpdateService = appUpdateService,
+        _sessionController = sessionController {
     _settingsSub = _settingsRepository.stream.listen(_listenSettingsChanged);
+    _sessionController.addListener(_onSessionChanged);
   }
 
   final DashboardDataService _dataService;
   final SettingsRepository _settingsRepository;
   final AppUpdateService _appUpdateService;
+  final SessionController _sessionController;
   StreamSubscription<SettingsData>? _settingsSub;
   Timer? _upcomingRefreshTimer;
   DateTime? _lastCalendarSyncDate;
+
+  /// 当前是否具备拉取平台数据的条件。
+  ///
+  /// 失效态（expired）本机缓存仍可读，允许走缓存；游客态没有令牌，
+  /// 跳过一切鉴权请求，避免触发 401 干扰会话状态。
+  bool get _canFetchPlatformData =>
+      _sessionController.status == AuthStatus.authenticated ||
+      _sessionController.status == AuthStatus.expired;
+
+  /// 会话恢复（重新登录成功）时自动重载数据。
+  void _onSessionChanged() {
+    if (_sessionController.status == AuthStatus.authenticated) {
+      unawaited(load());
+    }
+  }
 
   String? _departmentName;
   SchoolCalendarData? _calendar;
@@ -85,6 +105,15 @@ class DashboardViewModel extends BaseViewModel<UiEvent> {
     notifyListeners();
     unawaited(_checkUpdateInBackground());
     try {
+      if (!_canFetchPlatformData) {
+        // 游客态：只加载本地设置，平台数据留空，由视图展示登录引导。
+        _studentLoading = false;
+        _calendarLoading = false;
+        _timetableLoading = false;
+        await loadSettings();
+        notifyListeners();
+        return;
+      }
       await Future.wait([
         loadSettings(),
         loadStudentInfo(),
@@ -267,8 +296,9 @@ class DashboardViewModel extends BaseViewModel<UiEvent> {
 
   Future<void> onAppResumed() async {
     final DateTime now = DateTime.now();
-    final bool shouldSyncCalendar = _lastCalendarSyncDate == null ||
-        !_isSameDate(_lastCalendarSyncDate!, now);
+    final bool shouldSyncCalendar = _canFetchPlatformData &&
+        (_lastCalendarSyncDate == null ||
+            !_isSameDate(_lastCalendarSyncDate!, now));
     if (shouldSyncCalendar) {
       await loadSchoolCalendar();
       _scheduleUpcomingRefresh();
@@ -301,8 +331,9 @@ class DashboardViewModel extends BaseViewModel<UiEvent> {
       return;
     }
     final DateTime now = DateTime.now();
-    final bool shouldSyncCalendar = _lastCalendarSyncDate == null ||
-        !_isSameDate(_lastCalendarSyncDate!, now);
+    final bool shouldSyncCalendar = _canFetchPlatformData &&
+        (_lastCalendarSyncDate == null ||
+            !_isSameDate(_lastCalendarSyncDate!, now));
     if (shouldSyncCalendar) {
       await loadSchoolCalendar();
       _scheduleUpcomingRefresh();
@@ -366,6 +397,7 @@ class DashboardViewModel extends BaseViewModel<UiEvent> {
   void dispose() {
     _upcomingRefreshTimer?.cancel();
     _settingsSub?.cancel();
+    _sessionController.removeListener(_onSessionChanged);
     super.dispose();
   }
 }

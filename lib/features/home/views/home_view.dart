@@ -4,6 +4,7 @@ import 'package:onetj/l10n/app_localizations.dart';
 
 import 'package:onetj/app/constant/layout_constants.dart';
 import 'package:onetj/app/constant/route_paths.dart';
+import 'package:onetj/app/session/session_controller.dart';
 import 'package:onetj/features/home/views/widgets/home_shell_layout_scope.dart';
 import 'package:onetj/app/theme/theme_change_notifier.dart';
 import 'package:onetj/models/theme_preferences.dart';
@@ -54,17 +55,22 @@ class HomeView extends StatelessWidget {
     super.key,
     required this.navigationShell,
     required this.themeChangeNotifier,
+    required this.sessionController,
   });
 
   final StatefulNavigationShell navigationShell;
   final ThemeChangeNotifier themeChangeNotifier;
+  final SessionController sessionController;
 
   @override
   Widget build(BuildContext context) {
     return HomeShellLayoutScope(
       notifier: themeChangeNotifier,
       child: AnimatedBuilder(
-        animation: themeChangeNotifier,
+        animation: Listenable.merge(<Listenable>[
+          themeChangeNotifier,
+          sessionController,
+        ]),
         builder: (context, _) {
           final int currentIndex = navigationShell.currentIndex;
           final bool useBottomNavigation =
@@ -72,7 +78,15 @@ class HomeView extends StatelessWidget {
                   HomeLayout.bottomNavigation;
 
           return Scaffold(
-            body: navigationShell,
+            body: Column(
+              children: [
+                if (sessionController.status == AuthStatus.expired)
+                  _SessionExpiredBanner(
+                    onRelogin: () => context.push(RoutePaths.login),
+                  ),
+                Expanded(child: navigationShell),
+              ],
+            ),
             bottomNavigationBar: useBottomNavigation
                 ? NavigationBar(
                     height: kHomeBottomNavigationBarHeight,
@@ -90,6 +104,46 @@ class HomeView extends StatelessWidget {
                 : null,
           );
         },
+      ),
+    );
+  }
+}
+
+/// 会话失效横幅：仅在 [AuthStatus.expired] 时出现在首页壳层顶部。
+///
+/// 失效态不强制跳转（缓存仍可读），由用户点击「重新登录」自行决定。
+class _SessionExpiredBanner extends StatelessWidget {
+  const _SessionExpiredBanner({required this.onRelogin});
+
+  final VoidCallback onRelogin;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
+    return Material(
+      color: colorScheme.errorContainer,
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            children: [
+              Icon(Icons.info_outline, color: colorScheme.onErrorContainer),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  l10n.sessionExpiredBanner,
+                  style: TextStyle(color: colorScheme.onErrorContainer),
+                ),
+              ),
+              TextButton(
+                onPressed: onRelogin,
+                child: Text(l10n.sessionExpiredRelogin),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
