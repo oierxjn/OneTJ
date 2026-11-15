@@ -1,7 +1,10 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/app/session/session_controller.dart';
 import 'package:onetj/app/theme/theme_change_notifier.dart';
 import 'package:onetj/features/launcher/application/launcher_boot_service.dart';
@@ -58,7 +61,7 @@ void main() {
   late TokenRepository tokenRepository;
   late ThemeChangeNotifier themeNotifier;
 
-  LauncherBootService buildService() {
+  LauncherBootService buildService({AuthHttpPost? httpPost}) {
     return LauncherBootService(
       hiveStorageService: HiveStorageService(),
       themeChangeNotifier: themeNotifier,
@@ -67,7 +70,10 @@ void main() {
         storage: InMemorySettingsStorage(),
       ),
       tokenRepository: tokenRepository,
-      authTokenProvider: AuthTokenProvider(repository: tokenRepository),
+      authTokenProvider: AuthTokenProvider(
+        repository: tokenRepository,
+        httpPost: httpPost,
+      ),
     );
   }
 
@@ -126,6 +132,73 @@ void main() {
       );
 
       final AuthStatus status = await buildService().run();
+
+      expect(status, AuthStatus.expired);
+    });
+
+    test('离线冷启动（refresh 仍有效）乐观判已登录，不误报失效', () async {
+      // access 已过期、refresh 仍有效：启动会尝试联网刷新，离线时抛网络异常。
+      await tokenRepository.saveToken(
+        _buildToken(
+          accessTokenExpiresIn: -3600,
+          refreshTokenExpiresIn: 7200,
+        ),
+      );
+
+      final AuthStatus status = await buildService(
+        httpPost: (
+          Uri uri, {
+          Map<String, String>? headers,
+          Object? body,
+          Encoding? encoding,
+          String loggerName = 'Http',
+        }) async =>
+            throw NetworkException(message: 'offline'),
+      ).run();
+
+      expect(status, AuthStatus.authenticated);
+    });
+
+    test('刷新瞬时错误（5xx）不判失效，乐观判已登录', () async {
+      await tokenRepository.saveToken(
+        _buildToken(
+          accessTokenExpiresIn: -3600,
+          refreshTokenExpiresIn: 7200,
+        ),
+      );
+
+      final AuthStatus status = await buildService(
+        httpPost: (
+          Uri uri, {
+          Map<String, String>? headers,
+          Object? body,
+          Encoding? encoding,
+          String loggerName = 'Http',
+        }) async =>
+            http.Response('{}', 500),
+      ).run();
+
+      expect(status, AuthStatus.authenticated);
+    });
+
+    test('刷新被服务端 401 拒绝时判定为失效态', () async {
+      await tokenRepository.saveToken(
+        _buildToken(
+          accessTokenExpiresIn: -3600,
+          refreshTokenExpiresIn: 7200,
+        ),
+      );
+
+      final AuthStatus status = await buildService(
+        httpPost: (
+          Uri uri, {
+          Map<String, String>? headers,
+          Object? body,
+          Encoding? encoding,
+          String loggerName = 'Http',
+        }) async =>
+            http.Response('{}', 401),
+      ).run();
 
       expect(status, AuthStatus.expired);
     });
