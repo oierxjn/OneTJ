@@ -1,16 +1,25 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
+import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/app/presentation/ui_event.dart';
+import 'package:onetj/app/session/session_controller.dart';
 import 'package:onetj/features/student_exams/models/student_exam_view_data.dart';
 import 'package:onetj/features/student_exams/view_models/student_exam_view_model.dart';
 import 'package:onetj/l10n/app_localizations.dart';
+import 'package:onetj/widgets/login_prompt.dart';
 
 class StudentExamsView extends StatefulWidget {
-  const StudentExamsView({required this.viewModel, super.key});
+  const StudentExamsView({
+    required this.viewModel,
+    required this.sessionController,
+    super.key,
+  });
 
   final StudentExamViewModel viewModel;
+  final SessionController sessionController;
 
   @override
   State<StudentExamsView> createState() => _StudentExamsViewState();
@@ -80,52 +89,63 @@ class _StudentExamsViewState extends State<StudentExamsView> {
   @override
   Widget build(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.studentExamsTitle),
-        actions: <Widget>[
-          AnimatedBuilder(
-            animation: widget.viewModel,
-            builder: (BuildContext context, Widget? child) {
-              return IconButton(
-                tooltip: MaterialLocalizations.of(context)
-                    .refreshIndicatorSemanticLabel,
-                onPressed: widget.viewModel.loading
-                    ? null
-                    : () => widget.viewModel.refresh(),
-                icon: const Icon(Icons.refresh),
-              );
-            },
+    return AnimatedBuilder(
+      animation: Listenable.merge(<Listenable>[
+        widget.viewModel,
+        widget.sessionController,
+      ]),
+      builder: (BuildContext context, Widget? child) {
+        final bool isGuest =
+            widget.sessionController.status == AuthStatus.guest;
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(l10n.studentExamsTitle),
+            actions: <Widget>[
+              if (isGuest)
+                LoginActionButton(
+                  onLogin: () => context.push(RoutePaths.login),
+                )
+              else
+                IconButton(
+                  tooltip: MaterialLocalizations.of(context)
+                      .refreshIndicatorSemanticLabel,
+                  onPressed: widget.viewModel.loading
+                      ? null
+                      : () => widget.viewModel.refresh(),
+                  icon: const Icon(Icons.refresh),
+                ),
+            ],
           ),
-        ],
-      ),
-      body: AnimatedBuilder(
-        animation: widget.viewModel,
-        builder: (BuildContext context, Widget? child) {
-          final List<StudentExamViewRecord> records = widget.viewModel.records;
-          if (widget.viewModel.loading && records.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          return RefreshIndicator(
-            onRefresh: widget.viewModel.refresh,
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(16),
-              children: <Widget>[
-                if (widget.viewModel.termName.isNotEmpty)
-                  _TermHeader(
-                    label: l10n.studentExamsTermLabel,
-                    termName: widget.viewModel.termName,
-                  ),
-                if (records.isEmpty)
-                  _EmptyState(message: l10n.studentExamsEmpty)
-                else
-                  for (final StudentExamViewRecord record in records)
-                    _StudentExamCard(record: record),
-              ],
+          body: isGuest
+              ? LoginPrompt(onLogin: () => context.push(RoutePaths.login))
+              : _buildBody(context, l10n),
+        );
+      },
+    );
+  }
+
+  Widget _buildBody(BuildContext context, AppLocalizations l10n) {
+    final List<StudentExamViewRecord> records = widget.viewModel.records;
+    if (widget.viewModel.loading && records.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    return RefreshIndicator(
+      onRefresh: widget.viewModel.refresh,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        children: <Widget>[
+          if (widget.viewModel.termName.isNotEmpty)
+            _TermHeader(
+              label: l10n.studentExamsTermLabel,
+              termName: widget.viewModel.termName,
             ),
-          );
-        },
+          if (records.isEmpty)
+            _EmptyState(message: l10n.studentExamsEmpty)
+          else
+            for (final StudentExamViewRecord record in records)
+              _StudentExamCard(record: record),
+        ],
       ),
     );
   }

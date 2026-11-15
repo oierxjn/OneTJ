@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:onetj/app/session/session_controller.dart';
 import 'package:onetj/features/student_exams/application/student_exam_data_service.dart';
 import 'package:onetj/features/student_exams/models/student_exam_view_data.dart';
 import 'package:onetj/features/student_exams/view_models/student_exam_view_model.dart';
@@ -65,6 +66,8 @@ StudentExamData buildStudentExamData() {
 void main() {
   test('load sorts formal exams before non-exam arrangements', () async {
     final StudentExamViewModel viewModel = StudentExamViewModel(
+      sessionController: SessionController()
+        ..completeBoot(AuthStatus.authenticated),
       dataSource: _FakeStudentExamDataSource(
         loadResult: StudentExamLoadResult(data: buildStudentExamData()),
       ),
@@ -84,6 +87,8 @@ void main() {
   test('load emits a cache fallback event when the latest fetch fails',
       () async {
     final StudentExamViewModel viewModel = StudentExamViewModel(
+      sessionController: SessionController()
+        ..completeBoot(AuthStatus.authenticated),
       dataSource: _FakeStudentExamDataSource(
         loadResult: StudentExamLoadResult(
           data: buildStudentExamData(),
@@ -111,6 +116,8 @@ void main() {
       refreshError: StateError('offline'),
     );
     final StudentExamViewModel viewModel = StudentExamViewModel(
+      sessionController: SessionController()
+        ..completeBoot(AuthStatus.authenticated),
       dataSource: dataSource,
     );
     await viewModel.load();
@@ -129,6 +136,8 @@ void main() {
 
   test('load emits a retry event when no data can be fetched', () async {
     final StudentExamViewModel viewModel = StudentExamViewModel(
+      sessionController: SessionController()
+        ..completeBoot(AuthStatus.authenticated),
       dataSource: _FakeStudentExamDataSource(loadError: StateError('offline')),
     );
     final Future<StudentExamFetchFailedEvent> event = viewModel.events

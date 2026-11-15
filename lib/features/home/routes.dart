@@ -60,7 +60,9 @@ final StatefulShellRoute homeShellRoute = StatefulShellRoute.indexedStack(
             viewModel: TimetableViewModel(
               dataService: appLocator<TimetableDataService>(),
               settingsRepository: appLocator<SettingsRepository>(),
+              sessionController: appLocator<SessionController>(),
             ),
+            sessionController: appLocator<SessionController>(),
           ),
         ),
       ],

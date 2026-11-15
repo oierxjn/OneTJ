@@ -1,18 +1,41 @@
+import 'dart:async';
+
 import 'package:onetj/app/presentation/base_view_model.dart';
 import 'package:onetj/app/presentation/ui_event.dart';
+import 'package:onetj/app/session/session_controller.dart';
 import 'package:onetj/features/grades/application/grades_data_service.dart';
 import 'package:onetj/features/grades/models/grades_view_data.dart';
 
 class GradesViewModel extends BaseViewModel<UiEvent> {
-  GradesViewModel({required GradesDataService dataService})
-      : _dataService = dataService;
+  GradesViewModel({
+    required GradesDataService dataService,
+    required SessionController sessionController,
+  })  : _dataService = dataService,
+        _sessionController = sessionController {
+    _sessionController.addListener(_onSessionChanged);
+  }
 
   final GradesDataService _dataService;
+  final SessionController _sessionController;
   GradesViewData? _viewData;
   int _selectedTermIndex = 0;
 
   GradesViewData? get viewData => _viewData;
   int get selectedTermIndex => _selectedTermIndex;
+
+  bool get _isGuest => _sessionController.status == AuthStatus.guest;
+
+  /// 登录成功后自动重载；进入游客态时清空内存中的成绩。
+  void _onSessionChanged() {
+    final AuthStatus status = _sessionController.status;
+    if (status == AuthStatus.authenticated) {
+      unawaited(load());
+    } else if (status == AuthStatus.guest) {
+      _viewData = null;
+      _selectedTermIndex = 0;
+      notifyListeners();
+    }
+  }
 
   GradesTerm? get selectedTerm {
     final GradesViewData? data = _viewData;
@@ -24,6 +47,9 @@ class GradesViewModel extends BaseViewModel<UiEvent> {
   }
 
   Future<void> load() async {
+    if (_isGuest) {
+      return;
+    }
     loading = true;
     notifyListeners();
     try {
@@ -49,6 +75,9 @@ class GradesViewModel extends BaseViewModel<UiEvent> {
   }
 
   Future<void> refresh() async {
+    if (_isGuest) {
+      return;
+    }
     loading = true;
     notifyListeners();
     try {
@@ -69,5 +98,11 @@ class GradesViewModel extends BaseViewModel<UiEvent> {
   void selectTerm(int index) {
     _selectedTermIndex = index;
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _sessionController.removeListener(_onSessionChanged);
+    super.dispose();
   }
 }

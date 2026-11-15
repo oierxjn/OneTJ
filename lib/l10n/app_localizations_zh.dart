@@ -21,10 +21,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sessionExpiredRelogin => '重新登录';
 
   @override
-  String get loginExpiredBanner => '登录已失效，请重新登录';
+  String get continueAsGuest => '以游客身份继续';
 
   @override
-  String get loginRequiredBanner => '该功能需要登录后使用';
+  String get loginPromptTitle => '需要登录';
+
+  @override
+  String get loginPromptSubtitle => '登录后即可使用该功能';
+
+  @override
+  String get loginPromptAction => '登录';
 
   @override
   String get dashboardGuestTitle => '欢迎使用一统同济';
@@ -34,6 +40,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get dashboardGuestLogin => '登录';
+
+  @override
+  String get dashboardExpiredTitle => '登录已失效';
+
+  @override
+  String get dashboardExpiredSubtitle => '重新登录后即可恢复数据展示';
 
   @override
   String get tabDashboard => '仪表板';

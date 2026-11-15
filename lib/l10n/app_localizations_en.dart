@@ -22,10 +22,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sessionExpiredRelogin => 'Sign in again';
 
   @override
-  String get loginExpiredBanner => 'Session expired, please sign in again';
+  String get continueAsGuest => 'Continue as guest';
 
   @override
-  String get loginRequiredBanner => 'Sign in to use this feature';
+  String get loginPromptTitle => 'Sign in required';
+
+  @override
+  String get loginPromptSubtitle => 'Sign in to use this feature';
+
+  @override
+  String get loginPromptAction => 'Sign in';
 
   @override
   String get dashboardGuestTitle => 'Welcome to OneTJ';
@@ -36,6 +42,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dashboardGuestLogin => 'Sign in';
+
+  @override
+  String get dashboardExpiredTitle => 'Session expired';
+
+  @override
+  String get dashboardExpiredSubtitle => 'Sign in again to restore your data';
 
   @override
   String get tabDashboard => 'Dashboard';

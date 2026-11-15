@@ -152,7 +152,17 @@ class _DashboardViewState extends State<DashboardView>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (widget.sessionController.status == AuthStatus.guest)
-                  _GuestLoginCard(
+                  _LoginGuideCard(
+                    title: l10n.dashboardGuestTitle,
+                    subtitle: l10n.dashboardGuestSubtitle,
+                    actionLabel: l10n.dashboardGuestLogin,
+                    onLogin: () => context.push(RoutePaths.login),
+                  )
+                else if (widget.sessionController.status == AuthStatus.expired)
+                  _LoginGuideCard(
+                    title: l10n.dashboardExpiredTitle,
+                    subtitle: l10n.dashboardExpiredSubtitle,
+                    actionLabel: l10n.sessionExpiredRelogin,
                     onLogin: () => context.push(RoutePaths.login),
                   )
                 else
@@ -616,15 +626,24 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
-/// 游客态登录引导卡片：替代学籍/校历信息卡，登录与否由用户决定。
-class _GuestLoginCard extends StatelessWidget {
-  const _GuestLoginCard({required this.onLogin});
+/// 登录引导卡片：游客态与失效态共用，替代学籍/校历信息卡。
+///
+/// 文案由调用方按会话状态传入，登录与否/是否重新登录由用户决定。
+class _LoginGuideCard extends StatelessWidget {
+  const _LoginGuideCard({
+    required this.title,
+    required this.subtitle,
+    required this.actionLabel,
+    required this.onLogin,
+  });
 
+  final String title;
+  final String subtitle;
+  final String actionLabel;
   final VoidCallback onLogin;
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
     final colors = Theme.of(context).colorScheme;
     return Card(
       elevation: 0,
@@ -636,12 +655,12 @@ class _GuestLoginCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              l10n.dashboardGuestTitle,
+              title,
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 6),
             Text(
-              l10n.dashboardGuestSubtitle,
+              subtitle,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: colors.onSurfaceVariant,
                   ),
@@ -650,7 +669,7 @@ class _GuestLoginCard extends StatelessWidget {
             FilledButton.icon(
               onPressed: onLogin,
               icon: const Icon(Icons.login),
-              label: Text(l10n.dashboardGuestLogin),
+              label: Text(actionLabel),
             ),
           ],
         ),

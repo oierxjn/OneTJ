@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:onetj/app/exception/app_exception.dart';
+import 'package:onetj/app/session/session_controller.dart';
 import 'package:onetj/features/timetable/models/event.dart';
 import 'package:onetj/features/timetable/application/timetable_data_service.dart';
 import 'package:onetj/app/presentation/base_view_model.dart';
@@ -20,17 +21,41 @@ class TimetableViewModel extends BaseViewModel<UiEvent> {
   TimetableViewModel({
     required TimetableDataSource dataService,
     required SettingsRepository settingsRepository,
+    required SessionController sessionController,
     int maxWeek = 22,
   })  : _dataService = dataService,
         _settingsRepository = settingsRepository,
+        _sessionController = sessionController,
         _maxWeek = maxWeek {
     _settingsSub = _settingsRepository.stream.listen(_handleSettingsChanged);
+    _sessionController.addListener(_onSessionChanged);
   }
 
   final TimetableDataSource _dataService;
   final SettingsRepository _settingsRepository;
+  final SessionController _sessionController;
   StreamSubscription<SettingsData>? _settingsSub;
   int _maxWeek;
+
+  /// 游客态没有令牌，跳过平台数据拉取，由视图展示登录引导。
+  bool get _isGuest => _sessionController.status == AuthStatus.guest;
+
+  /// 课表 tab 常驻 IndexedStack，initState 只跑一次：必须监听会话，
+  /// 登录成功后自动重载，进入游客态时清空内存中的个人课表。
+  void _onSessionChanged() {
+    final AuthStatus status = _sessionController.status;
+    if (status == AuthStatus.authenticated) {
+      unawaited(load());
+    } else if (status == AuthStatus.guest) {
+      _index = null;
+      _currentWeek = null;
+      _selectedWeek = null;
+      _lastFetchedAt = null;
+      _error = null;
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 
   TimetableIndex? _index;
   Object? _error;
@@ -65,6 +90,12 @@ class TimetableViewModel extends BaseViewModel<UiEvent> {
     _error = null;
     notifyListeners();
     await _loadSettings();
+    if (_isGuest) {
+      // 游客态：只加载本地设置，课表留空，由视图展示登录引导。
+      _isLoading = false;
+      notifyListeners();
+      return;
+    }
     await _loadCurrentWeek();
     await _loadTimetable();
     await _loadLastFetchedAt();
@@ -83,7 +114,7 @@ class TimetableViewModel extends BaseViewModel<UiEvent> {
   /// 成功返回 true；刷新中重复调用或初始加载未完成时为 no-op，返回 false。
   /// 失败时旧数据不动，通过 [ShowSnackBarEvent] 提示错误。
   Future<bool> refresh() async {
-    if (_isRefreshing || _isLoading) {
+    if (_isRefreshing || _isLoading || _isGuest) {
       return false;
     }
     _isRefreshing = true;
@@ -309,6 +340,7 @@ class TimetableViewModel extends BaseViewModel<UiEvent> {
   @override
   void dispose() {
     _settingsSub?.cancel();
+    _sessionController.removeListener(_onSessionChanged);
     super.dispose();
   }
 }

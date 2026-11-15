@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:onetj/app/presentation/ui_event.dart';
+import 'package:onetj/app/session/session_controller.dart';
 import 'package:onetj/features/cet_score/application/cet_score_data_service.dart';
 import 'package:onetj/features/cet_score/view_models/cet_score_view_model.dart';
 import 'package:onetj/models/cet_score_data.dart';
@@ -42,6 +43,8 @@ CetScoreData buildCetScoreData({String score = '520'}) {
 void main() {
   test('load maps query results to presentation data', () async {
     final CetScoreViewModel viewModel = CetScoreViewModel(
+      sessionController: SessionController()
+        ..completeBoot(AuthStatus.authenticated),
       dataSource: _FakeCetScoreDataSource(loadResult: buildCetScoreData()),
     );
 
@@ -56,6 +59,8 @@ void main() {
 
   test('refresh replaces the displayed records', () async {
     final CetScoreViewModel viewModel = CetScoreViewModel(
+      sessionController: SessionController()
+        ..completeBoot(AuthStatus.authenticated),
       dataSource: _FakeCetScoreDataSource(
         loadResult: buildCetScoreData(score: '520'),
         refreshResult: buildCetScoreData(score: '600'),
@@ -71,6 +76,8 @@ void main() {
   });
   test('load reports an error through UiEvent', () async {
     final CetScoreViewModel viewModel = CetScoreViewModel(
+      sessionController: SessionController()
+        ..completeBoot(AuthStatus.authenticated),
       dataSource: _FakeCetScoreDataSource(loadError: StateError('offline')),
     );
     final Future<UiEvent> event = viewModel.events.first;

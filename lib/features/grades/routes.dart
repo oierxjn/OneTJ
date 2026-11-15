@@ -2,6 +2,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/app/di/dependencies.dart';
+import 'package:onetj/app/session/session_controller.dart';
 import 'package:onetj/features/grades/application/grades_data_service.dart';
 import 'package:onetj/features/grades/view_models/grades_view_model.dart';
 import 'package:onetj/features/grades/views/grades_view.dart';
@@ -14,7 +15,9 @@ final List<GoRoute> gradesDetailRoutes = [
     builder: (context, state) => GradesView(
       viewModel: GradesViewModel(
         dataService: appLocator<GradesDataService>(),
+        sessionController: appLocator<SessionController>(),
       ),
+      sessionController: appLocator<SessionController>(),
     ),
   ),
 ];

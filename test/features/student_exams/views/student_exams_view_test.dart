@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:onetj/app/session/session_controller.dart';
 import 'package:onetj/features/student_exams/application/student_exam_data_service.dart';
 import 'package:onetj/features/student_exams/view_models/student_exam_view_model.dart';
 import 'package:onetj/features/student_exams/views/student_exams_view.dart';
@@ -45,6 +46,8 @@ StudentExamData buildStudentExamData() {
 }
 
 Widget buildSubject({bool latestFetchFailed = false}) {
+  final SessionController session = SessionController()
+    ..completeBoot(AuthStatus.authenticated);
   return MaterialApp(
     locale: const Locale('zh'),
     localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -57,7 +60,9 @@ Widget buildSubject({bool latestFetchFailed = false}) {
             latestFetchFailed: latestFetchFailed,
           ),
         ),
+        sessionController: session,
       ),
+      sessionController: session,
     ),
   );
 }

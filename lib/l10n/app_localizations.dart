@@ -122,17 +122,29 @@ abstract class AppLocalizations {
   /// **'Sign in again'**
   String get sessionExpiredRelogin;
 
-  /// No description provided for @loginExpiredBanner.
+  /// No description provided for @continueAsGuest.
   ///
   /// In en, this message translates to:
-  /// **'Session expired, please sign in again'**
-  String get loginExpiredBanner;
+  /// **'Continue as guest'**
+  String get continueAsGuest;
 
-  /// No description provided for @loginRequiredBanner.
+  /// No description provided for @loginPromptTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in required'**
+  String get loginPromptTitle;
+
+  /// No description provided for @loginPromptSubtitle.
   ///
   /// In en, this message translates to:
   /// **'Sign in to use this feature'**
-  String get loginRequiredBanner;
+  String get loginPromptSubtitle;
+
+  /// No description provided for @loginPromptAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in'**
+  String get loginPromptAction;
 
   /// No description provided for @dashboardGuestTitle.
   ///
@@ -151,6 +163,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sign in'**
   String get dashboardGuestLogin;
+
+  /// No description provided for @dashboardExpiredTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Session expired'**
+  String get dashboardExpiredTitle;
+
+  /// No description provided for @dashboardExpiredSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in again to restore your data'**
+  String get dashboardExpiredSubtitle;
 
   /// No description provided for @tabDashboard.
   ///
