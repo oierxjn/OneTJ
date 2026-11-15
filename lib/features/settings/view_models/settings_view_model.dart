@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'package:onetj/app/exception/app_exception.dart';
-import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/app/logging/logger.dart';
 import 'package:onetj/app/theme/theme_change_notifier.dart';
 import 'package:onetj/models/dashboard_upcoming_mode.dart';
@@ -250,19 +249,16 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
     await _persist(field: SettingsCardField.launchWallpaper);
   }
 
-  Future<void> logout() async {
+  /// 执行登出编排；成功返回 true，由视图决定导航（游客态首页）。
+  Future<bool> logout() async {
     AppLogger.logUiAction(feature: 'Settings', action: 'logout_started');
     loading = true;
     errorMessage = null;
     notifyListeners();
     try {
-      // 清理完成后 LogoutService 会把会话标记为已登出，路由守卫随即跳转登录页。
+      // 清理完成后 LogoutService 会把会话标记为游客态；导航由视图完成。
       await _logoutService.clearSession();
-      AppLogger.logNavigation(
-        from: RoutePaths.homeSettings,
-        to: RoutePaths.login,
-        context: const <String, Object?>{'reason': 'logout'},
-      );
+      return true;
     } catch (error) {
       final String message = 'Failed to log out: $error';
       errorMessage = message;
@@ -272,6 +268,7 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
         error: error,
       );
       emit(ShowSnackBarEvent(message: message));
+      return false;
     } finally {
       loading = false;
       notifyListeners();

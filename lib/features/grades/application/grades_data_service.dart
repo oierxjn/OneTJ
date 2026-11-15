@@ -28,6 +28,9 @@ class GradesDataService {
     await _repository.warmUp();
   }
 
+  /// 清空成绩缓存，供登出编排调用，避免游客看到上一账号的数据。
+  Future<void> clearCachedData() => _repository.clearCache();
+
   Future<UndergraduateScoreData> refreshUndergraduateScore() async {
     return _repository.refresh(
       now: DateTime.now(),

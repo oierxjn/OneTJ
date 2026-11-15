@@ -2,6 +2,8 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
 import 'package:onetj/app/session/session_controller.dart';
 import 'package:onetj/features/cet_score/application/cet_score_data_service.dart';
+import 'package:onetj/features/grades/application/grades_data_service.dart';
+import 'package:onetj/features/student_exams/application/student_exam_data_service.dart';
 import 'package:onetj/repo/course_schedule_repository.dart';
 import 'package:onetj/repo/school_calendar_repository.dart';
 import 'package:onetj/repo/student_info_repository.dart';
@@ -19,6 +21,8 @@ class LogoutService {
     required SchoolCalendarRepository schoolCalendarRepository,
     required CourseScheduleRepository courseScheduleRepository,
     required CetScoreDataService cetScoreDataService,
+    required GradesDataService gradesDataService,
+    required StudentExamDataService studentExamDataService,
     required WebViewEnvironmentService webViewEnvironmentService,
     required SessionController sessionController,
   })  : _tokenRepository = tokenRepository,
@@ -26,6 +30,8 @@ class LogoutService {
         _schoolCalendarRepository = schoolCalendarRepository,
         _courseScheduleRepository = courseScheduleRepository,
         _cetScoreDataService = cetScoreDataService,
+        _gradesDataService = gradesDataService,
+        _studentExamDataService = studentExamDataService,
         _webViewEnvironment = webViewEnvironmentService.environment,
         _sessionController = sessionController;
 
@@ -34,6 +40,8 @@ class LogoutService {
   final SchoolCalendarRepository _schoolCalendarRepository;
   final CourseScheduleRepository _courseScheduleRepository;
   final CetScoreDataService _cetScoreDataService;
+  final GradesDataService _gradesDataService;
+  final StudentExamDataService _studentExamDataService;
   final WebViewEnvironment? _webViewEnvironment;
   final SessionController _sessionController;
 
@@ -47,6 +55,8 @@ class LogoutService {
     await _schoolCalendarRepository.clearCache();
     await _courseScheduleRepository.clearCache();
     await _cetScoreDataService.clearCachedData();
+    await _gradesDataService.clearCachedData();
+    await _studentExamDataService.clearCachedData();
     await CookieManager.instance(webViewEnvironment: _webViewEnvironment)
         .deleteAllCookies();
     _sessionController.markSignedOut();
