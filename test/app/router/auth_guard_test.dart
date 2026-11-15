@@ -108,16 +108,16 @@ void main() {
       }
     });
 
-    test('登录页放行（重新登录入口由用户主动进入）', () {
+    test('登录页放行，重新登录入口必须可达', () {
       final AuthRedirectDecision decision = resolveAuthDecision(
         status: AuthStatus.expired,
         location: RoutePaths.login,
-        pendingLocation: RoutePaths.homeTimetable,
       );
 
-      // 失效态视同已登录：停在登录页时按待回跳位置离开。
-      expect(decision.redirectTo, RoutePaths.homeTimetable);
-      expect(decision.consumePendingLocation, isTrue);
+      // 失效态不强制跳转：停在登录页等待用户完成重新登录，
+      // 登录成功后由 authenticated 分支按待回跳位置离开。
+      expect(decision.redirectTo, isNull);
+      expect(decision.consumePendingLocation, isFalse);
     });
 
     test('停留在启动页时进入首页', () {

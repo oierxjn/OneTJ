@@ -49,11 +49,29 @@ class DashboardViewModel extends BaseViewModel<UiEvent> {
       _sessionController.status == AuthStatus.authenticated ||
       _sessionController.status == AuthStatus.expired;
 
-  /// 会话恢复（重新登录成功）时自动重载数据。
+  /// 会话恢复（重新登录成功）时自动重载数据；进入游客态时清空内存中的
+  /// 个人数据——登出虽已清缓存，但 indexedStack 使本视图模型存活，
+  /// 不清内存会让游客继续看到上一账号的课程。
   void _onSessionChanged() {
-    if (_sessionController.status == AuthStatus.authenticated) {
+    final AuthStatus status = _sessionController.status;
+    if (status == AuthStatus.authenticated) {
       unawaited(load());
+    } else if (status == AuthStatus.guest) {
+      _clearPersonalData();
+      notifyListeners();
     }
+  }
+
+  /// 清空内存中的个人数据（学籍/校历/课表），保留本地设置。
+  void _clearPersonalData() {
+    _departmentName = null;
+    _calendar = null;
+    _timetableIndex = null;
+    _timetableEntries = const [];
+    _lastCalendarSyncDate = null;
+    _studentLoading = false;
+    _calendarLoading = false;
+    _timetableLoading = false;
   }
 
   String? _departmentName;
@@ -68,6 +86,7 @@ class DashboardViewModel extends BaseViewModel<UiEvent> {
   bool _studentLoading = true;
   bool _calendarLoading = true;
   bool _timetableLoading = true;
+  bool _loading = false;
 
   String? get departmentName => _departmentName;
   SchoolCalendarData? get calendar => _calendar;
@@ -98,6 +117,11 @@ class DashboardViewModel extends BaseViewModel<UiEvent> {
   }
 
   Future<void> load() async {
+    // 并发防护：登录恢复与前台恢复可能同时触发，避免重复拉取/重复检查更新。
+    if (_loading) {
+      return;
+    }
+    _loading = true;
     _studentLoading = true;
     _calendarLoading = true;
     _timetableLoading = true;
@@ -107,9 +131,7 @@ class DashboardViewModel extends BaseViewModel<UiEvent> {
     try {
       if (!_canFetchPlatformData) {
         // 游客态：只加载本地设置，平台数据留空，由视图展示登录引导。
-        _studentLoading = false;
-        _calendarLoading = false;
-        _timetableLoading = false;
+        _clearPersonalData();
         await loadSettings();
         notifyListeners();
         return;
@@ -122,6 +144,7 @@ class DashboardViewModel extends BaseViewModel<UiEvent> {
         _uploadUserCollectionWhenStudentInfoLoaded(),
       ]);
     } finally {
+      _loading = false;
       _scheduleUpcomingRefresh();
     }
   }

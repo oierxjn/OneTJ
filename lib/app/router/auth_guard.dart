@@ -55,8 +55,9 @@ class AuthRedirectDecision {
 /// 组合，包括最容易出错的「重定向到自身」循环。
 ///
 /// * [AuthStatus.unknown]：引导未结束，一律放行，停留在启动页。
-/// * 已登录或失效态且停在启动页/登录页：跳向待回跳位置或首页，并消费待回跳
-///   位置。失效态视同已登录放行——缓存仍可读，不打断用户当前操作。
+/// * 已登录且停在启动页/登录页：跳向待回跳位置或首页，并消费待回跳位置。
+/// * 失效态：不强制跳转，所有页面（含登录页）放行——缓存仍可读，重新登录
+///   入口必须可达；仅启动页跳向首页。
 /// * 游客态：登录页与公开页放行，数据页（见 [requiresAuthentication]）跳到
 ///   登录页并记下待回跳位置；启动页跳向首页而非登录页，登录与否由用户决定。
 AuthRedirectDecision resolveAuthDecision({
@@ -69,7 +70,6 @@ AuthRedirectDecision resolveAuthDecision({
       return const AuthRedirectDecision();
 
     case AuthStatus.authenticated:
-    case AuthStatus.expired:
       if (_isBootPlaceholder(location) || location == RoutePaths.login) {
         final bool hasPending =
             pendingLocation != null && pendingLocation.isNotEmpty;
@@ -78,6 +78,15 @@ AuthRedirectDecision resolveAuthDecision({
           consumePendingLocation: hasPending,
         );
       }
+      return const AuthRedirectDecision();
+
+    case AuthStatus.expired:
+      // 失效态不强制跳转：缓存仍可读，用户停在哪一层都不被打断。
+      if (_isBootPlaceholder(location)) {
+        return const AuthRedirectDecision(redirectTo: RoutePaths.home);
+      }
+      // 登录页放行——「重新登录」入口必须可达；登录成功后由
+      // authenticated 分支按待回跳位置离开。
       return const AuthRedirectDecision();
 
     case AuthStatus.guest:
