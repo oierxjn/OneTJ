@@ -90,18 +90,19 @@ class LauncherBootService {
 
   /// 通过判断 token 状态确定初始会话状态
   ///
-  /// 如果 token 有效则返回 [AuthStatus.authenticated]，否则返回
-  /// [AuthStatus.unauthenticated]。
+  /// 令牌有效返回 [AuthStatus.authenticated]；本机无令牌返回
+  /// [AuthStatus.guest]（从未登录或已登出）；持有令牌但校验失败返回
+  /// [AuthStatus.expired]（缓存仍可读，重新登录即可恢复）。
   Future<AuthStatus> _resolveInitialStatus() async {
     final TokenData? token = await _tokenRepository.getToken();
 
     if (token == null) {
       AppLogger.info(
-        'Resolved session as unauthenticated',
+        'Resolved session as guest',
         loggerName: 'LauncherBootService',
-        context: const <String, Object?>{'status': 'unauthenticated'},
+        context: const <String, Object?>{'status': 'guest'},
       );
-      return AuthStatus.unauthenticated;
+      return AuthStatus.guest;
     }
 
     try {
@@ -121,6 +122,6 @@ class LauncherBootService {
       );
     }
 
-    return AuthStatus.unauthenticated;
+    return AuthStatus.expired;
   }
 }

@@ -5,6 +5,19 @@ import 'package:onetj/app/session/session_controller.dart';
 /// [AuthStatus.unknown] 下被放行。登录页承载 OAuth 流程，任何状态下都可访问。
 bool _isBootPlaceholder(String location) => location == RoutePaths.launcher;
 
+/// 需要从学校平台拉取个人数据的页面（含其二级详情页）。
+///
+/// 游客态（[AuthStatus.guest]）下这些路径会被拦到登录页；其余路径
+/// （仪表盘、工具/物理实验、设置及其子页）对游客开放。
+/// 失效态（[AuthStatus.expired]）不拦截任何页面：本机缓存仍可读，
+/// 是否重新登录由用户决定。
+bool requiresAuthentication(String location) {
+  return location == RoutePaths.homeTimetable ||
+      location == RoutePaths.homeGrades ||
+      location == RoutePaths.homeCetScore ||
+      location == RoutePaths.homeStudentExams;
+}
+
 /// 会话状态与目标路径共同决定的一次跳转决策。
 ///
 /// 把「跳到哪里」与两项待施加的副作用都表达为纯数据，使全部状态转移都能
@@ -42,8 +55,10 @@ class AuthRedirectDecision {
 /// 组合，包括最容易出错的「重定向到自身」循环。
 ///
 /// * [AuthStatus.unknown]：引导未结束，一律放行，停留在启动页。
-/// * 已登录且停在启动页/登录页：跳向待回跳位置或首页，并消费待回跳位置。
-/// * 未登录：登录页放行，其余（含启动页）跳到登录页，并记下待回跳位置。
+/// * 已登录或失效态且停在启动页/登录页：跳向待回跳位置或首页，并消费待回跳
+///   位置。失效态视同已登录放行——缓存仍可读，不打断用户当前操作。
+/// * 游客态：登录页与公开页放行，数据页（见 [requiresAuthentication]）跳到
+///   登录页并记下待回跳位置；启动页跳向首页而非登录页，登录与否由用户决定。
 AuthRedirectDecision resolveAuthDecision({
   required AuthStatus status,
   required String location,
@@ -54,6 +69,7 @@ AuthRedirectDecision resolveAuthDecision({
       return const AuthRedirectDecision();
 
     case AuthStatus.authenticated:
+    case AuthStatus.expired:
       if (_isBootPlaceholder(location) || location == RoutePaths.login) {
         final bool hasPending =
             pendingLocation != null && pendingLocation.isNotEmpty;
@@ -64,15 +80,22 @@ AuthRedirectDecision resolveAuthDecision({
       }
       return const AuthRedirectDecision();
 
-    case AuthStatus.unauthenticated:
+    case AuthStatus.guest:
       if (location == RoutePaths.login) {
-        // 放行登录页本身，避免「未登录 → 跳登录 → 仍是未登录」的死循环。
+        // 放行登录页本身，避免「游客 → 跳登录 → 仍是游客」的死循环。
         return const AuthRedirectDecision();
       }
-      return AuthRedirectDecision(
-        redirectTo: RoutePaths.login,
+      if (_isBootPlaceholder(location)) {
+        // 启动引导结束后不再强制登录：落到首页，由用户决定是否登录。
         // 启动页不记入回跳目标，否则登录成功后会被送回启动页形成循环。
-        rememberLocation: !_isBootPlaceholder(location),
-      );
+        return const AuthRedirectDecision(redirectTo: RoutePaths.home);
+      }
+      if (requiresAuthentication(location)) {
+        return AuthRedirectDecision(
+          redirectTo: RoutePaths.login,
+          rememberLocation: true,
+        );
+      }
+      return const AuthRedirectDecision();
   }
 }

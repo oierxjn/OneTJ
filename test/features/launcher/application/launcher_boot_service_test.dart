@@ -98,10 +98,10 @@ void main() {
   });
 
   group('LauncherBootService.run 初始会话状态', () {
-    test('无令牌时判定为未登录', () async {
+    test('无令牌时判定为游客态', () async {
       final AuthStatus status = await buildService().run();
 
-      expect(status, AuthStatus.unauthenticated);
+      expect(status, AuthStatus.guest);
     });
 
     test('令牌有效时判定为已登录', () async {
@@ -117,7 +117,7 @@ void main() {
       expect(status, AuthStatus.authenticated);
     });
 
-    test('令牌已过期时判定为未登录', () async {
+    test('令牌已过期时判定为失效态（缓存保留）', () async {
       await tokenRepository.saveToken(
         _buildToken(
           accessTokenExpiresIn: -3600,
@@ -127,7 +127,7 @@ void main() {
 
       final AuthStatus status = await buildService().run();
 
-      expect(status, AuthStatus.unauthenticated);
+      expect(status, AuthStatus.expired);
     });
   });
 

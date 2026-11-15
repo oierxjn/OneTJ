@@ -69,13 +69,13 @@ Future<_Harness> _harness(int statusCode, {String responseBody = '{}'}) async {
 
 void main() {
   group('TongjiApi 状态码与会话上报', () {
-    test('401 时标记为未登录', () async {
+    test('401 时标记为失效态', () async {
       final _Harness h = await _harness(401);
 
       await expectLater(
           h.api.fetchCetScores(), throwsA(isA<NetworkException>()));
 
-      expect(h.session.status, AuthStatus.unauthenticated);
+      expect(h.session.status, AuthStatus.expired);
       expect(h.session.lastReason, 'http_401');
     });
 

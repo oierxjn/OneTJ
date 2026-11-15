@@ -38,25 +38,48 @@ void main() {
       expect(controller.status, AuthStatus.unknown);
     });
 
-    test('引导完成后的失效上报会翻转状态', () {
+    test('引导完成后的失效上报进入失效态（缓存保留）', () {
       final SessionController controller = SessionController();
       controller.completeBoot(AuthStatus.authenticated);
 
       controller.markUnauthenticated(reason: 'http_401');
 
-      expect(controller.status, AuthStatus.unauthenticated);
+      expect(controller.status, AuthStatus.expired);
       expect(controller.lastReason, 'http_401');
+    });
+
+    test('主动登出进入游客态', () {
+      final SessionController controller = SessionController();
+      controller.completeBoot(AuthStatus.authenticated);
+
+      controller.markSignedOut();
+
+      expect(controller.status, AuthStatus.guest);
+      expect(controller.lastReason, 'sign_out');
     });
 
     test('状态未变化时不重复通知', () {
       final SessionController controller = SessionController();
-      controller.completeBoot(AuthStatus.unauthenticated);
+      controller.completeBoot(AuthStatus.guest);
       int notifications = 0;
       controller.addListener(() => notifications += 1);
 
       controller.markSignedOut();
 
-      expect(controller.status, AuthStatus.unauthenticated);
+      expect(controller.status, AuthStatus.guest);
+      expect(notifications, 0);
+    });
+
+    test('守卫拦截标记只更新原因，不触发通知', () {
+      final SessionController controller = SessionController();
+      controller.completeBoot(AuthStatus.guest);
+      int notifications = 0;
+      controller.addListener(() => notifications += 1);
+
+      controller.markGuardRedirect();
+
+      expect(controller.lastReason, 'guard_redirect');
+      expect(controller.status, AuthStatus.guest);
       expect(notifications, 0);
     });
   });
@@ -101,7 +124,7 @@ void main() {
       controller.rememberPendingLocation('/home/timetable');
       controller.markUnauthenticated(reason: 'second_401');
 
-      expect(controller.status, AuthStatus.unauthenticated);
+      expect(controller.status, AuthStatus.expired);
       expect(controller.pendingLocation, '/home/timetable');
     });
 

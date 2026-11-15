@@ -31,6 +31,8 @@ class AppRouter {
         );
         if (decision.rememberLocation) {
           session.rememberPendingLocation(state.matchedLocation);
+          // 标记本次进入登录页的原因，供登录页横幅区分「需要登录」文案。
+          session.markGuardRedirect();
         }
         if (decision.consumePendingLocation) {
           // 待回跳位置只消费一次，避免残留值把后续的登录页访问带向过期目标。

@@ -6,7 +6,11 @@ import 'package:onetj/app/logging/logger.dart';
 ///
 /// [unknown] 表示启动引导（Hive / 主题 / 令牌校验）与启动页最短展示时间
 /// 尚未结束。守卫在 [unknown] 下不做任何跳转，避免初始位置抖动。
-enum AuthStatus { unknown, authenticated, unauthenticated }
+///
+/// [expired] 与 [guest] 都表示「当前没有可用令牌」，但数据语义不同：
+/// * [expired]：本机仍持有令牌但已失效，个人数据缓存保留，重新登录即可恢复；
+/// * [guest]：从未登录或已主动登出，无个人数据缓存，是否登录由用户决定。
+enum AuthStatus { unknown, authenticated, expired, guest }
 
 /// 应用级会话状态源。
 ///
@@ -48,18 +52,22 @@ class SessionController extends ChangeNotifier {
 
   /// 运行期发现令牌失效（刷新被拒或服务端 401）时调用。
   ///
+  /// 进入 [AuthStatus.expired]：本机缓存保留，用户重新登录即可恢复。
   /// 处于 [AuthStatus.unknown] 时忽略：启动期的校验失败由
   /// [LauncherBootService] 自行决定初始状态，不应在启动页未结束时触发跳转。
   void markUnauthenticated({required String reason}) {
     if (_status == AuthStatus.unknown) {
       return;
     }
-    _transitionTo(AuthStatus.unauthenticated, reason: reason);
+    _transitionTo(AuthStatus.expired, reason: reason);
   }
 
   /// 用户主动登出后调用。
+  ///
+  /// 进入 [AuthStatus.guest]：登出编排已清空个人数据缓存，此后以游客身份
+  /// 浏览公开页面，是否重新登录由用户决定。
   void markSignedOut() {
-    _transitionTo(AuthStatus.unauthenticated, reason: 'sign_out');
+    _transitionTo(AuthStatus.guest, reason: 'sign_out');
   }
 
   /// 记录登录后需要回跳的位置。
@@ -68,6 +76,13 @@ class SessionController extends ChangeNotifier {
       return;
     }
     _pendingLocation = location;
+  }
+
+  /// 守卫因数据页拦截而跳向登录页时调用，仅更新原因供登录页横幅使用。
+  ///
+  /// 不触发通知：这不是会话状态变化，不应引起守卫重新求值。
+  void markGuardRedirect() {
+    _lastReason = 'guard_redirect';
   }
 
   /// 取走并清空待回跳位置，保证只消费一次。
@@ -86,8 +101,8 @@ class SessionController extends ChangeNotifier {
       // 特别是不能清空待回跳位置——它可能正是守卫在处理首次失效时刚记录的。
       return;
     }
-    if (next == AuthStatus.unauthenticated) {
-      // 真正进入未登录态：上一次会话的待回跳位置已失效，清掉。
+    if (next == AuthStatus.expired || next == AuthStatus.guest) {
+      // 真正进入无可用令牌状态：上一次会话的待回跳位置已失效，清掉。
       // 注意顺序：随后守卫会在 redirect 中记录本次所在页面。
       _pendingLocation = null;
     }

@@ -124,7 +124,7 @@ void main() {
 
   test('重试期间重复调用不会并发重复引导', () async {
     final _FakeLauncherBootService boot =
-        buildBoot(result: AuthStatus.unauthenticated);
+        buildBoot(result: AuthStatus.guest);
     final LauncherViewModel viewModel = buildViewModel(boot);
 
     // 并发触发两次，第二次应被 isInitializing 挡住。

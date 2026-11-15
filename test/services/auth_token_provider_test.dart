@@ -101,7 +101,7 @@ void main() {
         throwsA(isA<AppException>()),
       );
 
-      expect(session.status, AuthStatus.unauthenticated);
+      expect(session.status, AuthStatus.expired);
       expect(session.lastReason, 'missing_token');
     });
 
@@ -118,7 +118,7 @@ void main() {
         throwsA(isA<AppException>()),
       );
 
-      expect(session.status, AuthStatus.unauthenticated);
+      expect(session.status, AuthStatus.expired);
       expect(session.lastReason, 'refresh_token_expired');
     });
 
@@ -173,7 +173,7 @@ void main() {
         throwsA(isA<NetworkException>()),
       );
 
-      expect(session.status, AuthStatus.unauthenticated);
+      expect(session.status, AuthStatus.expired);
       expect(session.lastReason, 'refresh_rejected_401');
     });
 
@@ -324,7 +324,7 @@ void main() {
       }
 
       expect(calls, 1, reason: '失败的刷新同样只发一次');
-      expect(session.status, AuthStatus.unauthenticated);
+      expect(session.status, AuthStatus.expired);
       expect(session.lastReason, 'refresh_rejected_401');
     });
 
