@@ -17,19 +17,15 @@ enum AuthStatus { unknown, authenticated, expired, guest }
 /// 路由守卫必须在 `redirect` 中同步拿到「当前是否已登录」，而
 /// [TokenRepository] 与 [AuthTokenProvider] 的判定都是异步的，因此这里把
 /// 登录态收敛为一个可同步读取、且能被 `GoRouter` 作为 `refreshListenable`
-/// 监听的状态：状态变化会触发守卫重新求值，用户无论停在哪一层页面，
-/// 登录态失效时都会被整体替换到登录页。
+/// 监听的状态：状态变化会触发守卫重新求值（启动页/登录页出口）。
 ///
-/// 本类只负责保存状态，不含路由知识；「哪些路径需要登录」由路由守卫决定。
+/// 本类只负责保存状态，不含路由知识。登录是可选的：守卫不再拦截数据页，
+/// 需登录的页面由各视图按 [status] 自行展示登录引导。
 class SessionController extends ChangeNotifier {
   AuthStatus _status = AuthStatus.unknown;
-  String? _pendingLocation;
   String? _lastReason;
 
   AuthStatus get status => _status;
-
-  /// 登录成功后要回跳的位置（如令牌中途失效时所在的页面）。仅驻留内存。
-  String? get pendingLocation => _pendingLocation;
 
   /// 最近一次状态变化的原因，便于排查跳转时机。
   String? get lastReason => _lastReason;
@@ -70,26 +66,16 @@ class SessionController extends ChangeNotifier {
     _transitionTo(AuthStatus.guest, reason: 'sign_out');
   }
 
-  /// 记录登录后需要回跳的位置。
-  void rememberPendingLocation(String location) {
-    if (location.isEmpty) {
+  /// 用户主动选择「以游客身份继续」时调用（如登录页的游客按钮）。
+  ///
+  /// 幂等：已处于 [AuthStatus.guest] 时完全无副作用——不通知、不改原因。
+  /// 调用方须先清空本机个人数据（令牌/缓存/Cookie），再调用本方法；
+  /// 本方法只负责状态翻转，不做清理。
+  void continueAsGuest() {
+    if (_status == AuthStatus.guest) {
       return;
     }
-    _pendingLocation = location;
-  }
-
-  /// 守卫因数据页拦截而跳向登录页时调用，仅更新原因供登录页横幅使用。
-  ///
-  /// 不触发通知：这不是会话状态变化，不应引起守卫重新求值。
-  void markGuardRedirect() {
-    _lastReason = 'guard_redirect';
-  }
-
-  /// 取走并清空待回跳位置，保证只消费一次。
-  String? consumePendingLocation() {
-    final String? location = _pendingLocation;
-    _pendingLocation = null;
-    return location;
+    _transitionTo(AuthStatus.guest, reason: 'continue_as_guest');
   }
 
   void _transitionTo(AuthStatus next, {required String reason}) {
@@ -97,14 +83,8 @@ class SessionController extends ChangeNotifier {
     _status = next;
     _lastReason = reason;
     if (!statusChanged) {
-      // 重复上报（如多个并发请求同时收到 401）：状态未变，不做任何清理。
-      // 特别是不能清空待回跳位置——它可能正是守卫在处理首次失效时刚记录的。
+      // 重复上报（如多个并发请求同时收到 401）：状态未变，不通知。
       return;
-    }
-    if (next == AuthStatus.expired || next == AuthStatus.guest) {
-      // 真正进入无可用令牌状态：上一次会话的待回跳位置已失效，清掉。
-      // 注意顺序：随后守卫会在 redirect 中记录本次所在页面。
-      _pendingLocation = null;
     }
     AppLogger.info(
       'Session status changed',

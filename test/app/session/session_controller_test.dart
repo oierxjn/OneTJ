@@ -8,7 +8,6 @@ void main() {
       final SessionController controller = SessionController();
 
       expect(controller.status, AuthStatus.unknown);
-      expect(controller.pendingLocation, isNull);
     });
 
     test('completeBoot 发布初始鉴权结果并通知监听者', () {
@@ -70,83 +69,54 @@ void main() {
       expect(notifications, 0);
     });
 
-    test('守卫拦截标记只更新原因，不触发通知', () {
+    test('continueAsGuest 从失效态进入游客态', () {
+      final SessionController controller = SessionController();
+      controller.completeBoot(AuthStatus.expired);
+
+      controller.continueAsGuest();
+
+      expect(controller.status, AuthStatus.guest);
+      expect(controller.lastReason, 'continue_as_guest');
+    });
+
+    test('continueAsGuest 已是游客时完全无副作用（幂等）', () {
       final SessionController controller = SessionController();
       controller.completeBoot(AuthStatus.guest);
+      final String? reasonBefore = controller.lastReason;
       int notifications = 0;
       controller.addListener(() => notifications += 1);
 
-      controller.markGuardRedirect();
+      controller.continueAsGuest();
 
-      expect(controller.lastReason, 'guard_redirect');
       expect(controller.status, AuthStatus.guest);
+      expect(controller.lastReason, reasonBefore);
       expect(notifications, 0);
     });
-  });
 
-  group('SessionController 待回跳位置', () {
-    test('remember 后可一次性取走', () {
-      final SessionController controller = SessionController();
-
-      controller.rememberPendingLocation('/home/timetable');
-
-      expect(controller.pendingLocation, '/home/timetable');
-      expect(controller.consumePendingLocation(), '/home/timetable');
-      expect(controller.pendingLocation, isNull);
-      expect(controller.consumePendingLocation(), isNull);
-    });
-
-    test('空位置被忽略', () {
-      final SessionController controller = SessionController();
-
-      controller.rememberPendingLocation('');
-
-      expect(controller.pendingLocation, isNull);
-    });
-
-    test('会话失效时清空待回跳位置', () {
-      final SessionController controller = SessionController();
-      controller.completeBoot(AuthStatus.authenticated);
-      controller.rememberPendingLocation('/home/timetable');
-
-      controller.markUnauthenticated(reason: 'refresh_token_expired');
-
-      expect(controller.pendingLocation, isNull);
-    });
-
-    test('重复的失效上报不会清掉守卫刚记录的回跳位置', () {
-      // 并发请求同时收到 401 时，首次上报翻转状态、守卫随即记录当前页面；
-      // 后续的重复上报是 no-op，必须保留该位置，否则登录后回不到原页面。
+    test('重复的失效上报不重复通知', () {
       final SessionController controller = SessionController()
         ..completeBoot(AuthStatus.authenticated);
 
       controller.markUnauthenticated(reason: 'first_401');
-      controller.rememberPendingLocation('/home/timetable');
+      int notifications = 0;
+      controller.addListener(() => notifications += 1);
       controller.markUnauthenticated(reason: 'second_401');
 
       expect(controller.status, AuthStatus.expired);
-      expect(controller.pendingLocation, '/home/timetable');
+      expect(notifications, 0);
     });
 
-    test('登出后重复登出同样保留回跳位置', () {
+    test('登录成功翻转为已登录并通知', () {
       final SessionController controller = SessionController()
-        ..completeBoot(AuthStatus.authenticated)
-        ..markSignedOut();
-      controller.rememberPendingLocation('/home/grades');
-
-      controller.markSignedOut();
-
-      expect(controller.pendingLocation, '/home/grades');
-    });
-
-    test('登录成功时保留待回跳位置，供守卫消费', () {
-      final SessionController controller = SessionController();
-      controller.rememberPendingLocation('/home/grades');
+        ..completeBoot(AuthStatus.guest);
+      int notifications = 0;
+      controller.addListener(() => notifications += 1);
 
       controller.markAuthenticated();
 
       expect(controller.status, AuthStatus.authenticated);
-      expect(controller.pendingLocation, '/home/grades');
+      expect(controller.lastReason, 'login');
+      expect(notifications, 1);
     });
   });
 }
