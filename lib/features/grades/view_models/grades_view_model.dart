@@ -61,6 +61,9 @@ class GradesViewModel extends BaseViewModel<UiEvent> {
     }
     try {
       final data = await _dataService.getUndergraduateScore();
+      if (_isGuest) {
+        return;
+      }
       _viewData = GradesViewData.fromScoreData(data);
       _selectedTermIndex = 0;
     } catch (error) {
@@ -82,6 +85,9 @@ class GradesViewModel extends BaseViewModel<UiEvent> {
     notifyListeners();
     try {
       final data = await _dataService.refreshUndergraduateScore();
+      if (_isGuest) {
+        return;
+      }
       _viewData = GradesViewData.fromScoreData(data);
       _selectedTermIndex = 0;
     } catch (error) {

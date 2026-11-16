@@ -121,7 +121,11 @@ class TimetableViewModel extends BaseViewModel<UiEvent> {
     notifyListeners();
     bool success = false;
     try {
-      _index = await _dataService.refreshTimetableIndex();
+      final TimetableIndex index = await _dataService.refreshTimetableIndex();
+      if (_isGuest) {
+        return false;
+      }
+      _index = index;
       _syncSelectedWeek();
       await _loadLastFetchedAt();
       success = true;
@@ -268,7 +272,11 @@ class TimetableViewModel extends BaseViewModel<UiEvent> {
   /// 如果加载失败，将当前周数设置为 null 并显示错误消息。
   Future<void> _loadCurrentWeek() async {
     try {
-      _currentWeek = await _dataService.getSchoolCalendarCurrentWeek();
+      final int week = await _dataService.getSchoolCalendarCurrentWeek();
+      if (_isGuest) {
+        return;
+      }
+      _currentWeek = week;
     } catch (error) {
       _currentWeek = null;
       emit(
@@ -283,7 +291,11 @@ class TimetableViewModel extends BaseViewModel<UiEvent> {
   /// 如果加载失败，将错误存储到 [_error] 中
   Future<void> _loadTimetable() async {
     try {
-      _index = await _dataService.getTimetableIndex();
+      final TimetableIndex index = await _dataService.getTimetableIndex();
+      if (_isGuest) {
+        return;
+      }
+      _index = index;
       _syncSelectedWeek();
     } catch (error) {
       emit(
@@ -294,7 +306,11 @@ class TimetableViewModel extends BaseViewModel<UiEvent> {
 
   Future<void> _loadLastFetchedAt() async {
     try {
-      _lastFetchedAt = await _dataService.getLastFetchedAt();
+      final DateTime? fetchedAt = await _dataService.getLastFetchedAt();
+      if (_isGuest) {
+        return;
+      }
+      _lastFetchedAt = fetchedAt;
     } catch (_) {
       _lastFetchedAt = null;
     }

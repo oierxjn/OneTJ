@@ -50,6 +50,9 @@ class CetScoreViewModel extends BaseViewModel<UiEvent> {
     notifyListeners();
     try {
       final CetScoreData data = await loader();
+      if (_isGuest) {
+        return;
+      }
       _records = data.records.map(CetScoreViewRecord.fromData).toList();
     } catch (error) {
       emit(

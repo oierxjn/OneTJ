@@ -56,6 +56,9 @@ class StudentExamViewModel extends BaseViewModel<UiEvent> {
     notifyListeners();
     try {
       final StudentExamLoadResult result = await loader();
+      if (_isGuest) {
+        return;
+      }
       _updateRecords(result.data);
       if (result.latestFetchFailed) {
         emit(const StudentExamFetchFailedEvent(showingCachedData: true));
