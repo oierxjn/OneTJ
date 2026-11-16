@@ -24,7 +24,7 @@ import 'package:onetj/repo/settings_repository.dart';
 import 'package:onetj/repo/student_info_repository.dart';
 import 'package:onetj/repo/theme_repository.dart';
 import 'package:onetj/repo/token_repository.dart';
-import 'package:onetj/services/webview_environment_service.dart';
+import 'package:onetj/services/cookie_clearer.dart';
 
 class _FakeCetScoreDataService implements CetScoreDataService {
   @override
@@ -136,7 +136,7 @@ void main() {
         cetScoreDataService: _FakeCetScoreDataService(),
         gradesDataService: _FakeGradesDataService(),
         studentExamDataService: _FakeStudentExamDataService(),
-        webViewEnvironmentService: WebViewEnvironmentService(),
+        cookieClearer: _NoopCookieClearer(),
         sessionController: SessionController(),
       ),
       savingFeedbackDelay: savingFeedbackDelay,
@@ -449,6 +449,12 @@ void main() {
   });
 }
 
+/// 无操作 Cookie 清理替身：本测试不覆盖 Cookie 路径。
+class _NoopCookieClearer implements CookieClearer {
+  @override
+  Future<void> deleteAllCookies() async {}
+}
+
 /// 只覆写登出编排的桩：返回预置结果或抛出预置错误。
 class _StubLogoutService extends LogoutService {
   _StubLogoutService({LogoutResult? result, this.error})
@@ -464,7 +470,7 @@ class _StubLogoutService extends LogoutService {
           cetScoreDataService: _FakeCetScoreDataService(),
           gradesDataService: _FakeGradesDataService(),
           studentExamDataService: _FakeStudentExamDataService(),
-          webViewEnvironmentService: WebViewEnvironmentService(),
+          cookieClearer: _NoopCookieClearer(),
           sessionController: SessionController(),
         );
 

@@ -32,6 +32,7 @@ import 'package:onetj/repo/physics_lab_draft_repository.dart';
 import 'package:onetj/services/app_update_api.dart';
 import 'package:onetj/services/app_update_service.dart';
 import 'package:onetj/services/auth_token_provider.dart';
+import 'package:onetj/services/cookie_clearer.dart';
 import 'package:onetj/services/external_launcher_service.dart';
 import 'package:onetj/services/hive_storage_service.dart';
 import 'package:onetj/services/term_key_resolver.dart';
@@ -124,6 +125,11 @@ void configureDependencies() {
       userCollectionService: appLocator<UserCollectionService>(),
     ),
   );
+  appLocator.registerLazySingleton<CookieClearer>(
+    () => WebViewCookieClearer(
+      environment: appLocator<WebViewEnvironmentService>().environment,
+    ),
+  );
   appLocator.registerLazySingleton<LogoutService>(
     () => LogoutService(
       tokenRepository: appLocator<TokenRepository>(),
@@ -133,7 +139,7 @@ void configureDependencies() {
       cetScoreDataService: appLocator<CetScoreDataService>(),
       gradesDataService: appLocator<GradesDataService>(),
       studentExamDataService: appLocator<StudentExamDataService>(),
-      webViewEnvironmentService: appLocator<WebViewEnvironmentService>(),
+      cookieClearer: appLocator<CookieClearer>(),
       sessionController: appLocator<SessionController>(),
     ),
   );

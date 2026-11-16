@@ -19,8 +19,8 @@ import 'package:onetj/repo/student_info_repository.dart';
 import 'package:onetj/repo/token_repository.dart';
 import 'package:onetj/repo/undergraduate_score_repository.dart';
 import 'package:onetj/services/auth_token_provider.dart';
+import 'package:onetj/services/cookie_clearer.dart';
 import 'package:onetj/services/tongji.dart';
-import 'package:onetj/services/webview_environment_service.dart';
 
 /// 只覆写清理方法的登出服务桩：记录调用次数，可注入失败。
 ///
@@ -50,7 +50,7 @@ class _FakeLogoutService extends LogoutService {
             repository:
                 StudentExamRepository(storage: InMemoryStudentExamStorage()),
           ),
-          webViewEnvironmentService: WebViewEnvironmentService(),
+          cookieClearer: _NoopCookieClearer(),
           sessionController: SessionController(),
         );
 
@@ -73,6 +73,12 @@ TongjiApi _api() => TongjiApi(
         repository: TokenRepository(storage: InMemoryTokenStorage()),
       ),
     );
+
+/// 无操作 Cookie 清理替身：本测试不覆盖 Cookie 路径。
+class _NoopCookieClearer implements CookieClearer {
+  @override
+  Future<void> deleteAllCookies() async {}
+}
 
 LoginViewModel _buildViewModel({
   required SessionController session,

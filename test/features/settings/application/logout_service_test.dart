@@ -4,131 +4,187 @@ import 'package:onetj/features/cet_score/application/cet_score_data_service.dart
 import 'package:onetj/features/grades/application/grades_data_service.dart';
 import 'package:onetj/features/settings/application/logout_service.dart';
 import 'package:onetj/features/settings/models/logout_result.dart';
-// LogoutCleanupException 由 logout_service.dart 导出。
 import 'package:onetj/features/student_exams/application/student_exam_data_service.dart';
-import 'package:onetj/models/cet_score_data.dart';
-import 'package:onetj/models/undergraduate_score_data.dart';
+import 'package:onetj/repo/cet_score_repository.dart';
 import 'package:onetj/repo/course_schedule_repository.dart';
 import 'package:onetj/repo/school_calendar_repository.dart';
+import 'package:onetj/repo/student_exam_repository.dart';
 import 'package:onetj/repo/student_info_repository.dart';
 import 'package:onetj/repo/token_repository.dart';
-import 'package:onetj/services/webview_environment_service.dart';
+import 'package:onetj/repo/undergraduate_score_repository.dart';
+import 'package:onetj/services/auth_token_provider.dart';
+import 'package:onetj/services/cookie_clearer.dart';
+import 'package:onetj/services/tongji.dart';
 
-/// 可注入失败的清理步骤替身：记录是否被调用。
-class _CleanupStep {
-  _CleanupStep({this.error});
+/// 可注入清理失败的存储：继承内存实现，仅覆写 clear。
+///
+/// 失败经真实仓库代码（clearCache/clearToken → 存储）传播到登出编排，
+/// 不绕过任何生产逻辑。[order] 记录清理发生顺序。
+class _FailingTokenStorage extends InMemoryTokenStorage {
+  _FailingTokenStorage(this.order);
 
-  final Object? error;
-  bool called = false;
+  final List<String> order;
+  bool failClear = false;
 
-  Future<void> run() async {
-    called = true;
-    if (error != null) {
-      throw error!;
-    }
+  @override
+  Future<void> clear() async {
+    order.add('token');
+    if (failClear) throw StateError('token store locked');
+    await super.clear();
   }
 }
 
-class _FakeCetScoreDataService implements CetScoreDataService {
-  _FakeCetScoreDataService(this.step);
+class _FailingStudentInfoStorage extends InMemoryStudentInfoStorage {
+  _FailingStudentInfoStorage(this.order);
 
-  final _CleanupStep step;
-
-  @override
-  Future<CetScoreData> load() async => throw UnimplementedError();
+  final List<String> order;
+  bool failClear = false;
 
   @override
-  Future<CetScoreData> refresh() async => throw UnimplementedError();
-
-  @override
-  Future<void> clearCachedData() => step.run();
+  Future<void> clear() async {
+    order.add('studentInfo');
+    if (failClear) throw StateError('disk full');
+    await super.clear();
+  }
 }
 
-class _FakeGradesDataService implements GradesDataService {
-  _FakeGradesDataService(this.step);
+class _FailingSchoolCalendarStorage extends InMemorySchoolCalendarStorage {
+  _FailingSchoolCalendarStorage(this.order);
 
-  final _CleanupStep step;
-
-  @override
-  Future<UndergraduateScoreData> fetchUndergraduateScore({int? calendarId}) =>
-      throw UnimplementedError();
+  final List<String> order;
+  bool failClear = false;
 
   @override
-  Future<UndergraduateScoreData> getUndergraduateScore() async =>
-      throw UnimplementedError();
-
-  @override
-  Future<void> warmUpCache() async {}
-
-  @override
-  Future<void> clearCachedData() => step.run();
-
-  @override
-  Future<UndergraduateScoreData> refreshUndergraduateScore() async =>
-      throw UnimplementedError();
+  Future<void> clear() async {
+    order.add('schoolCalendar');
+    if (failClear) throw StateError('disk full');
+    await super.clear();
+  }
 }
 
-class _FakeStudentExamDataService implements StudentExamDataService {
-  _FakeStudentExamDataService(this.step);
+class _FailingCourseScheduleStorage extends InMemoryCourseScheduleStorage {
+  _FailingCourseScheduleStorage(this.order);
 
-  final _CleanupStep step;
-
-  @override
-  Future<StudentExamLoadResult> load() async => throw UnimplementedError();
+  final List<String> order;
+  bool failClear = false;
 
   @override
-  Future<StudentExamLoadResult> refresh() async => throw UnimplementedError();
-
-  @override
-  Future<void> clearCachedData() => step.run();
+  Future<void> clear() async {
+    order.add('courseSchedule');
+    if (failClear) throw StateError('disk full');
+    await super.clear();
+  }
 }
+
+class _FailingCetScoreStorage extends InMemoryCetScoreStorage {
+  _FailingCetScoreStorage(this.order);
+
+  final List<String> order;
+  bool failClear = false;
+
+  @override
+  Future<void> clear() async {
+    order.add('cetScore');
+    if (failClear) throw StateError('box closed');
+    await super.clear();
+  }
+}
+
+class _FailingUndergraduateScoreStorage
+    extends InMemoryUndergraduateScoreStorage {
+  _FailingUndergraduateScoreStorage(this.order);
+
+  final List<String> order;
+  bool failClear = false;
+
+  @override
+  Future<void> clear() async {
+    order.add('grades');
+    if (failClear) throw StateError('box closed');
+    await super.clear();
+  }
+}
+
+class _FailingStudentExamStorage extends InMemoryStudentExamStorage {
+  _FailingStudentExamStorage(this.order);
+
+  final List<String> order;
+  bool failClear = false;
+
+  @override
+  Future<void> clear() async {
+    order.add('studentExams');
+    if (failClear) throw StateError('box closed');
+    await super.clear();
+  }
+}
+
+/// Cookie 清理替身：正常注入依赖，可注入失败。
+class _FakeCookieClearer implements CookieClearer {
+  _FakeCookieClearer(this.order);
+
+  final List<String> order;
+  Object? error;
+
+  @override
+  Future<void> deleteAllCookies() async {
+    order.add('cookies');
+    if (error != null) throw error!;
+  }
+}
+
+TongjiApi _api() => TongjiApi(
+      auth: AuthTokenProvider(
+        repository: TokenRepository(storage: InMemoryTokenStorage()),
+      ),
+    );
 
 void main() {
-  late _CleanupStep tokenStep;
-  late _CleanupStep studentInfoStep;
-  late _CleanupStep calendarStep;
-  late _CleanupStep courseStep;
-  late _CleanupStep cetStep;
-  late _CleanupStep gradesStep;
-  late _CleanupStep examStep;
-  late _CleanupStep cookieStep;
+  late List<String> order;
+  late _FailingTokenStorage tokenStorage;
+  late _FailingStudentInfoStorage studentInfoStorage;
+  late _FailingSchoolCalendarStorage calendarStorage;
+  late _FailingCourseScheduleStorage courseStorage;
+  late _FailingCetScoreStorage cetStorage;
+  late _FailingUndergraduateScoreStorage gradesStorage;
+  late _FailingStudentExamStorage examStorage;
+  late _FakeCookieClearer cookieClearer;
   late SessionController session;
   late LogoutService service;
 
-  /// 用可注入失败的步骤替身装配登出服务；会话先发布为已登录。
-  LogoutService buildService() {
-    return LogoutService(
-      tokenRepository: TokenRepository(storage: InMemoryTokenStorage()),
-      studentInfoRepository:
-          StudentInfoRepository(storage: InMemoryStudentInfoStorage()),
-      schoolCalendarRepository:
-          SchoolCalendarRepository(storage: InMemorySchoolCalendarStorage()),
-      courseScheduleRepository:
-          CourseScheduleRepository(storage: InMemoryCourseScheduleStorage()),
-      cetScoreDataService: _FakeCetScoreDataService(cetStep),
-      gradesDataService: _FakeGradesDataService(gradesStep),
-      studentExamDataService: _FakeStudentExamDataService(examStep),
-      webViewEnvironmentService: WebViewEnvironmentService(),
-      sessionController: session,
-      clearTokenOverride: tokenStep.run,
-      clearStudentInfoOverride: studentInfoStep.run,
-      clearSchoolCalendarOverride: calendarStep.run,
-      clearCourseScheduleOverride: courseStep.run,
-      clearCookiesOverride: cookieStep.run,
-    );
-  }
-
   setUp(() {
-    tokenStep = _CleanupStep();
-    studentInfoStep = _CleanupStep();
-    calendarStep = _CleanupStep();
-    courseStep = _CleanupStep();
-    cetStep = _CleanupStep();
-    gradesStep = _CleanupStep();
-    examStep = _CleanupStep();
-    cookieStep = _CleanupStep();
+    order = <String>[];
+    tokenStorage = _FailingTokenStorage(order);
+    studentInfoStorage = _FailingStudentInfoStorage(order);
+    calendarStorage = _FailingSchoolCalendarStorage(order);
+    courseStorage = _FailingCourseScheduleStorage(order);
+    cetStorage = _FailingCetScoreStorage(order);
+    gradesStorage = _FailingUndergraduateScoreStorage(order);
+    examStorage = _FailingStudentExamStorage(order);
+    cookieClearer = _FakeCookieClearer(order);
     session = SessionController()..completeBoot(AuthStatus.authenticated);
-    service = buildService();
+    service = LogoutService(
+      tokenRepository: TokenRepository(storage: tokenStorage),
+      studentInfoRepository: StudentInfoRepository(storage: studentInfoStorage),
+      schoolCalendarRepository:
+          SchoolCalendarRepository(storage: calendarStorage),
+      courseScheduleRepository:
+          CourseScheduleRepository(storage: courseStorage),
+      cetScoreDataService: CetScoreDataService(
+        api: _api(),
+        repository: CetScoreRepository(storage: cetStorage),
+      ),
+      gradesDataService: GradesDataService(
+        api: _api(),
+        repository: UndergraduateScoreRepository(storage: gradesStorage),
+      ),
+      studentExamDataService: StudentExamDataService(
+        api: _api(),
+        repository: StudentExamRepository(storage: examStorage),
+      ),
+      cookieClearer: cookieClearer,
+      sessionController: session,
+    );
   });
 
   group('LogoutService.clearSession 成功路径', () {
@@ -138,81 +194,49 @@ void main() {
       expect(session.status, AuthStatus.guest);
       expect(session.lastReason, 'sign_out');
       expect(result.isFullyClean, isTrue);
-      expect(tokenStep.called, isTrue);
-      expect(cookieStep.called, isTrue);
+      expect(order, contains('token'));
+      expect(order, contains('cookies'));
     });
 
     test('全部缓存先于令牌，Cookie 最后（清理顺序不变式）', () async {
-      final List<String> order = <String>[];
-      Future<void> Function() tracked(String name, _CleanupStep step) {
-        return () async {
-          order.add(name);
-          await step.run();
-        };
-      }
-
-      final _CleanupStep cetTracked = _CleanupStep();
-      final _CleanupStep gradesTracked = _CleanupStep();
-      final _CleanupStep examTracked = _CleanupStep();
-      service = LogoutService(
-        tokenRepository: TokenRepository(storage: InMemoryTokenStorage()),
-        studentInfoRepository:
-            StudentInfoRepository(storage: InMemoryStudentInfoStorage()),
-        schoolCalendarRepository:
-            SchoolCalendarRepository(storage: InMemorySchoolCalendarStorage()),
-        courseScheduleRepository:
-            CourseScheduleRepository(storage: InMemoryCourseScheduleStorage()),
-        cetScoreDataService: _FakeCetScoreDataService(cetTracked),
-        gradesDataService: _FakeGradesDataService(gradesTracked),
-        studentExamDataService: _FakeStudentExamDataService(examTracked),
-        webViewEnvironmentService: WebViewEnvironmentService(),
-        sessionController: session,
-        clearTokenOverride: tracked('token', tokenStep),
-        clearStudentInfoOverride: tracked('studentInfo', studentInfoStep),
-        clearSchoolCalendarOverride: tracked('schoolCalendar', calendarStep),
-        clearCourseScheduleOverride: tracked('courseSchedule', courseStep),
-        clearCookiesOverride: tracked('cookies', cookieStep),
-      );
-
       await service.clearSession();
 
-      expect(order.first, isNot('token'));
-      expect(order.indexOf('token'), greaterThan(order.indexOf('studentInfo')));
-      expect(order.indexOf('token'),
-          greaterThan(order.indexOf('schoolCalendar')));
-      expect(order.indexOf('token'),
-          greaterThan(order.indexOf('courseSchedule')));
+      const List<String> cacheSteps = <String>[
+        'studentInfo',
+        'schoolCalendar',
+        'courseSchedule',
+        'cetScore',
+        'grades',
+        'studentExams',
+      ];
+      final int tokenIndex = order.indexOf('token');
+      for (final String step in cacheSteps) {
+        expect(order.indexOf(step), lessThan(tokenIndex),
+            reason: '$step 应先于 token 清理');
+      }
       expect(order.last, 'cookies');
-      expect(cetTracked.called, isTrue);
-      expect(gradesTracked.called, isTrue);
-      expect(examTracked.called, isTrue);
     });
 
     test('缓存清理失败后重试成功：完整清完并进入游客态', () async {
-      // 第一次：校历清理失败，登出被拒。
-      calendarStep = _CleanupStep(error: StateError('transient'));
-      service = buildService();
+      calendarStorage.failClear = true;
       await expectLater(
         service.clearSession(),
         throwsA(isA<LogoutCleanupException>()),
       );
       expect(session.status, AuthStatus.authenticated);
 
-      // 第二次：故障消失，同一服务实例重试成功（幂等）。
-      calendarStep = _CleanupStep();
-      service = buildService();
+      // 故障消失后同一服务实例重试（幂等）。
+      calendarStorage.failClear = false;
       final LogoutResult result = await service.clearSession();
 
       expect(result.isFullyClean, isTrue);
       expect(session.status, AuthStatus.guest);
-      expect(tokenStep.called, isTrue);
     });
   });
 
   group('LogoutService.clearSession 缓存清理失败：不允许登出', () {
     test('任一缓存失败：异常上抛，令牌未动，状态保持已登录', () async {
-      calendarStep = _CleanupStep(error: StateError('disk full'));
-      service = buildService();
+      calendarStorage.failClear = true;
 
       await expectLater(
         service.clearSession(),
@@ -220,32 +244,37 @@ void main() {
       );
 
       expect(session.status, AuthStatus.authenticated);
-      expect(tokenStep.called, isFalse);
-      expect(cookieStep.called, isFalse);
+      expect(order, isNot(contains('token')));
+      expect(order, isNot(contains('cookies')));
     });
 
     test('多项缓存失败：收集全部失败后上抛，令牌仍未动', () async {
-      studentInfoStep = _CleanupStep(error: StateError('e1'));
-      gradesStep = _CleanupStep(error: StateError('e2'));
-      service = buildService();
+      studentInfoStorage.failClear = true;
+      gradesStorage.failClear = true;
 
-      await expectLater(
-        service.clearSession(),
-        throwsA(isA<LogoutCleanupException>()),
+      Object? caught;
+      try {
+        await service.clearSession();
+      } catch (error) {
+        caught = error;
+      }
+
+      expect(caught, isA<LogoutCleanupException>());
+      expect(
+        (caught as LogoutCleanupException).failedSteps,
+        containsAll(<String>['studentInfo', 'grades']),
       );
-
       expect(session.status, AuthStatus.authenticated);
-      expect(tokenStep.called, isFalse);
+      expect(order, isNot(contains('token')));
       // 失败不中断其余缓存步骤，便于一次重试清完。
-      expect(calendarStep.called, isTrue);
-      expect(examStep.called, isTrue);
+      expect(order, contains('schoolCalendar'));
+      expect(order, contains('studentExams'));
     });
   });
 
   group('LogoutService.clearSession 令牌清理失败', () {
     test('缓存已清但令牌删除失败：异常上抛，状态保持已登录', () async {
-      tokenStep = _CleanupStep(error: StateError('token store locked'));
-      service = buildService();
+      tokenStorage.failClear = true;
 
       await expectLater(
         service.clearSession(),
@@ -253,22 +282,21 @@ void main() {
       );
 
       expect(session.status, AuthStatus.authenticated);
-      expect(studentInfoStep.called, isTrue);
-      expect(cookieStep.called, isFalse);
+      expect(order, contains('studentInfo'));
+      expect(order, isNot(contains('cookies')));
     });
   });
 
   group('LogoutService.clearSession Cookie 失败：降级放行', () {
     test('Cookie 失败不阻塞登出：状态翻转，失败记入结果', () async {
-      cookieStep = _CleanupStep(error: StateError('cookie platform error'));
-      service = buildService();
+      cookieClearer.error = StateError('cookie platform error');
 
       final LogoutResult result = await service.clearSession();
 
       expect(session.status, AuthStatus.guest);
       expect(result.isFullyClean, isFalse);
       expect(result.residualFailures.keys, <String>['cookies']);
-      expect(tokenStep.called, isTrue);
+      expect(order, contains('token'));
     });
   });
 
@@ -281,8 +309,7 @@ void main() {
     });
 
     test('缓存清理失败时异常上抛且不翻转状态，令牌未动', () async {
-      cetStep = _CleanupStep(error: StateError('box closed'));
-      service = buildService();
+      cetStorage.failClear = true;
 
       await expectLater(
         service.clearLocalSessionData(),
@@ -290,12 +317,11 @@ void main() {
       );
 
       expect(session.status, AuthStatus.authenticated);
-      expect(tokenStep.called, isFalse);
+      expect(order, isNot(contains('token')));
     });
 
     test('令牌删除失败时异常上抛且不翻转状态', () async {
-      tokenStep = _CleanupStep(error: StateError('token store locked'));
-      service = buildService();
+      tokenStorage.failClear = true;
 
       await expectLater(
         service.clearLocalSessionData(),

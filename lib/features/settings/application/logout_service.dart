@@ -1,5 +1,3 @@
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-
 import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/app/logging/logger.dart';
 import 'package:onetj/app/session/session_controller.dart';
@@ -11,7 +9,7 @@ import 'package:onetj/repo/course_schedule_repository.dart';
 import 'package:onetj/repo/school_calendar_repository.dart';
 import 'package:onetj/repo/student_info_repository.dart';
 import 'package:onetj/repo/token_repository.dart';
-import 'package:onetj/services/webview_environment_service.dart';
+import 'package:onetj/services/cookie_clearer.dart';
 
 /// 个人数据缓存清理失败：登出/进入游客态被拒绝。
 ///
@@ -53,37 +51,27 @@ class LogoutService {
     required CetScoreDataService cetScoreDataService,
     required GradesDataService gradesDataService,
     required StudentExamDataService studentExamDataService,
-    required WebViewEnvironmentService webViewEnvironmentService,
+    required CookieClearer cookieClearer,
     required SessionController sessionController,
-    Future<void> Function()? clearTokenOverride,
-    Future<void> Function()? clearStudentInfoOverride,
-    Future<void> Function()? clearSchoolCalendarOverride,
-    Future<void> Function()? clearCourseScheduleOverride,
-    Future<void> Function()? clearCookiesOverride,
-  })  : _clearToken = clearTokenOverride ?? tokenRepository.clearToken,
-        _clearStudentInfo =
-            clearStudentInfoOverride ?? studentInfoRepository.clearCache,
-        _clearSchoolCalendar =
-            clearSchoolCalendarOverride ?? schoolCalendarRepository.clearCache,
-        _clearCourseSchedule =
-            clearCourseScheduleOverride ?? courseScheduleRepository.clearCache,
+  })  : _tokenRepository = tokenRepository,
+        _studentInfoRepository = studentInfoRepository,
+        _schoolCalendarRepository = schoolCalendarRepository,
+        _courseScheduleRepository = courseScheduleRepository,
         _cetScoreDataService = cetScoreDataService,
         _gradesDataService = gradesDataService,
         _studentExamDataService = studentExamDataService,
-        _webViewEnvironment = webViewEnvironmentService.environment,
-        _sessionController = sessionController,
-        _clearCookiesOverride = clearCookiesOverride;
+        _cookieClearer = cookieClearer,
+        _sessionController = sessionController;
 
-  final Future<void> Function() _clearToken;
-  final Future<void> Function() _clearStudentInfo;
-  final Future<void> Function() _clearSchoolCalendar;
-  final Future<void> Function() _clearCourseSchedule;
+  final TokenRepository _tokenRepository;
+  final StudentInfoRepository _studentInfoRepository;
+  final SchoolCalendarRepository _schoolCalendarRepository;
+  final CourseScheduleRepository _courseScheduleRepository;
   final CetScoreDataService _cetScoreDataService;
   final GradesDataService _gradesDataService;
   final StudentExamDataService _studentExamDataService;
-  final WebViewEnvironment? _webViewEnvironment;
+  final CookieClearer _cookieClearer;
   final SessionController _sessionController;
-  final Future<void> Function()? _clearCookiesOverride;
 
   /// 清空登录态数据并把会话标记为已登出（游客态）。
   ///
@@ -103,9 +91,12 @@ class LogoutService {
   Future<LogoutResult> clearLocalSessionData() async {
     // 第一步：清各功能缓存。逐项尝试，失败不中断其余，最后统一裁决。
     final List<String> cacheFailures = <String>[];
-    await _tryCacheClear('studentInfo', _clearStudentInfo, cacheFailures);
-    await _tryCacheClear('schoolCalendar', _clearSchoolCalendar, cacheFailures);
-    await _tryCacheClear('courseSchedule', _clearCourseSchedule, cacheFailures);
+    await _tryCacheClear(
+        'studentInfo', _studentInfoRepository.clearCache, cacheFailures);
+    await _tryCacheClear(
+        'schoolCalendar', _schoolCalendarRepository.clearCache, cacheFailures);
+    await _tryCacheClear(
+        'courseSchedule', _courseScheduleRepository.clearCache, cacheFailures);
     await _tryCacheClear(
         'cetScore', _cetScoreDataService.clearCachedData, cacheFailures);
     await _tryCacheClear(
@@ -118,12 +109,12 @@ class LogoutService {
     }
 
     // 第二步：缓存全部干净后才删令牌。失败上抛，状态同样不翻转。
-    await _clearToken();
+    await _tokenRepository.clearToken();
 
     // 第三步：Cookie 尽力清理，失败降级为警告，不阻塞登出。
     final Map<String, Object> residualFailures = <String, Object>{};
     try {
-      await _clearCookies();
+      await _cookieClearer.deleteAllCookies();
     } catch (error, stackTrace) {
       residualFailures['cookies'] = error;
       AppLogger.warning(
@@ -134,16 +125,6 @@ class LogoutService {
       );
     }
     return LogoutResult(residualFailures: residualFailures);
-  }
-
-  Future<void> _clearCookies() async {
-    final Future<void> Function()? override = _clearCookiesOverride;
-    if (override != null) {
-      await override();
-      return;
-    }
-    await CookieManager.instance(webViewEnvironment: _webViewEnvironment)
-        .deleteAllCookies();
   }
 
   /// 尝试清一个缓存域：失败记警告日志并收集步骤名，不中断其余步骤。
