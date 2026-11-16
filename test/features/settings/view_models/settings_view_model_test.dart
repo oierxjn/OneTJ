@@ -8,6 +8,7 @@ import 'package:onetj/features/cet_score/application/cet_score_data_service.dart
 import 'package:onetj/features/grades/application/grades_data_service.dart';
 import 'package:onetj/features/settings/application/logout_service.dart';
 import 'package:onetj/features/settings/models/event.dart';
+import 'package:onetj/features/settings/models/logout_result.dart';
 import 'package:onetj/features/settings/view_models/settings_view_model.dart';
 import 'package:onetj/features/student_exams/application/student_exam_data_service.dart';
 import 'package:onetj/models/cet_score_data.dart';
@@ -23,7 +24,7 @@ import 'package:onetj/repo/settings_repository.dart';
 import 'package:onetj/repo/student_info_repository.dart';
 import 'package:onetj/repo/theme_repository.dart';
 import 'package:onetj/repo/token_repository.dart';
-import 'package:onetj/services/webview_environment_service.dart';
+import 'package:onetj/services/cookie_clearer.dart';
 
 class _FakeCetScoreDataService implements CetScoreDataService {
   @override
@@ -104,11 +105,12 @@ void main() {
   late ThemeChangeNotifier themeChangeNotifier;
   late SettingsViewModel viewModel;
 
-  /// 登出清理与 Cookie 依赖：本测试不覆盖，用真实空实现即可。
+  /// 登出清理与 Cookie 依赖：默认用真实空实现，登出语义用例可注入桩。
   SettingsViewModel buildViewModel({
     SettingsRepository? settingsRepository,
     ThemeChangeNotifier? themeChangeNotifier,
     Duration savingFeedbackDelay = const Duration(milliseconds: 300),
+    LogoutService? logoutService,
   }) {
     return SettingsViewModel(
       settingsRepository: settingsRepository ??
@@ -119,7 +121,8 @@ void main() {
           ThemeChangeNotifier(
             repository: ThemeRepository(storage: InMemoryThemeStorage()),
           ),
-      logoutService: LogoutService(
+      logoutService: logoutService ??
+          LogoutService(
         tokenRepository: TokenRepository(storage: InMemoryTokenStorage()),
         studentInfoRepository: StudentInfoRepository(
           storage: InMemoryStudentInfoStorage(),
@@ -133,7 +136,7 @@ void main() {
         cetScoreDataService: _FakeCetScoreDataService(),
         gradesDataService: _FakeGradesDataService(),
         studentExamDataService: _FakeStudentExamDataService(),
-        webViewEnvironmentService: WebViewEnvironmentService(),
+        cookieClearer: _NoopCookieClearer(),
         sessionController: SessionController(),
       ),
       savingFeedbackDelay: savingFeedbackDelay,
@@ -380,4 +383,105 @@ void main() {
       expect(viewModel.visibleSavingField, isNull);
     });
   });
+
+  group('登出语义（issue #64）', () {
+    test('残留清理失败：仍返回 true 并发出警告事件', () async {
+      final SettingsViewModel vm = buildViewModel(
+        logoutService: _StubLogoutService(
+          result: LogoutResult(
+            residualFailures: <String, Object>{
+              'cookies': StateError('cookie platform error'),
+            },
+          ),
+        ),
+      );
+      try {
+        final Future<UiEvent> event = vm.events.first;
+
+        final bool success = await vm.logout();
+
+        expect(success, isTrue);
+        final UiEvent emitted = await event;
+        expect(emitted, isA<LogoutCompletedWithWarningEvent>());
+        expect(
+          (emitted as LogoutCompletedWithWarningEvent).failedSteps,
+          <String>['cookies'],
+        );
+      } finally {
+        vm.dispose();
+      }
+    });
+
+    test('全部清理成功：返回 true 且不发警告事件', () async {
+      final SettingsViewModel vm = buildViewModel(
+        logoutService: _StubLogoutService(result: LogoutResult()),
+      );
+      try {
+        final List<UiEvent> events = <UiEvent>[];
+        final StreamSubscription<UiEvent> sub = vm.events.listen(events.add);
+
+        final bool success = await vm.logout();
+        await Future<void>.delayed(Duration.zero);
+
+        expect(success, isTrue);
+        expect(events.whereType<LogoutCompletedWithWarningEvent>(), isEmpty);
+        await sub.cancel();
+      } finally {
+        vm.dispose();
+      }
+    });
+
+    test('令牌删除失败：返回 false、发 SnackBar，不发警告事件', () async {
+      final SettingsViewModel vm = buildViewModel(
+        logoutService: _StubLogoutService(error: StateError('token locked')),
+      );
+      try {
+        final Future<UiEvent> event = vm.events.first;
+
+        final bool success = await vm.logout();
+
+        expect(success, isFalse);
+        expect(await event, isA<ShowSnackBarEvent>());
+      } finally {
+        vm.dispose();
+      }
+    });
+  });
+}
+
+/// 无操作 Cookie 清理替身：本测试不覆盖 Cookie 路径。
+class _NoopCookieClearer implements CookieClearer {
+  @override
+  Future<void> deleteAllCookies() async {}
+}
+
+/// 只覆写登出编排的桩：返回预置结果或抛出预置错误。
+class _StubLogoutService extends LogoutService {
+  _StubLogoutService({LogoutResult? result, this.error})
+      : result = result ?? LogoutResult(),
+        super(
+          tokenRepository: TokenRepository(storage: InMemoryTokenStorage()),
+          studentInfoRepository:
+              StudentInfoRepository(storage: InMemoryStudentInfoStorage()),
+          schoolCalendarRepository:
+              SchoolCalendarRepository(storage: InMemorySchoolCalendarStorage()),
+          courseScheduleRepository:
+              CourseScheduleRepository(storage: InMemoryCourseScheduleStorage()),
+          cetScoreDataService: _FakeCetScoreDataService(),
+          gradesDataService: _FakeGradesDataService(),
+          studentExamDataService: _FakeStudentExamDataService(),
+          cookieClearer: _NoopCookieClearer(),
+          sessionController: SessionController(),
+        );
+
+  final LogoutResult result;
+  final Object? error;
+
+  @override
+  Future<LogoutResult> clearSession() async {
+    if (error != null) {
+      throw error!;
+    }
+    return result;
+  }
 }

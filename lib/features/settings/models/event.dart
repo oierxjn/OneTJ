@@ -24,6 +24,13 @@ class SettingsResetEvent extends UiEvent {
   final SettingsData settings;
 }
 
+/// 登出已完成，但 Cookie 清理失败。
+class LogoutCompletedWithWarningEvent extends UiEvent {
+  const LogoutCompletedWithWarningEvent({required this.failedSteps});
+
+  final List<String> failedSteps;
+}
+
 class SettingsDataMigrationEvent extends UiEvent {
   const SettingsDataMigrationEvent({required this.result});
 

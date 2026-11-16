@@ -8,6 +8,8 @@ import 'package:onetj/features/login/application/login_data_service.dart';
 import 'package:onetj/features/login/models/login_model.dart';
 import 'package:onetj/features/login/view_models/login_view_model.dart';
 import 'package:onetj/features/settings/application/logout_service.dart';
+import 'package:onetj/features/settings/models/event.dart';
+import 'package:onetj/features/settings/models/logout_result.dart';
 import 'package:onetj/features/student_exams/application/student_exam_data_service.dart';
 import 'package:onetj/repo/course_schedule_repository.dart';
 import 'package:onetj/repo/cet_score_repository.dart';
@@ -17,14 +19,14 @@ import 'package:onetj/repo/student_info_repository.dart';
 import 'package:onetj/repo/token_repository.dart';
 import 'package:onetj/repo/undergraduate_score_repository.dart';
 import 'package:onetj/services/auth_token_provider.dart';
+import 'package:onetj/services/cookie_clearer.dart';
 import 'package:onetj/services/tongji.dart';
-import 'package:onetj/services/webview_environment_service.dart';
 
 /// 只覆写清理方法的登出服务桩：记录调用次数，可注入失败。
 ///
 /// 其余依赖用内存存储真实构造（清理被覆写，不会触碰它们）。
 class _FakeLogoutService extends LogoutService {
-  _FakeLogoutService({this.clearError})
+  _FakeLogoutService({this.clearError, this.clearResult})
       : super(
           tokenRepository: TokenRepository(storage: InMemoryTokenStorage()),
           studentInfoRepository:
@@ -48,19 +50,21 @@ class _FakeLogoutService extends LogoutService {
             repository:
                 StudentExamRepository(storage: InMemoryStudentExamStorage()),
           ),
-          webViewEnvironmentService: WebViewEnvironmentService(),
+          cookieClearer: _NoopCookieClearer(),
           sessionController: SessionController(),
         );
 
   final Object? clearError;
+  final LogoutResult? clearResult;
   int clearCallCount = 0;
 
   @override
-  Future<void> clearLocalSessionData() async {
+  Future<LogoutResult> clearLocalSessionData() async {
     clearCallCount += 1;
     if (clearError != null) {
       throw clearError!;
     }
+    return clearResult ?? LogoutResult();
   }
 }
 
@@ -69,6 +73,12 @@ TongjiApi _api() => TongjiApi(
         repository: TokenRepository(storage: InMemoryTokenStorage()),
       ),
     );
+
+/// 无操作 Cookie 清理替身：本测试不覆盖 Cookie 路径。
+class _NoopCookieClearer implements CookieClearer {
+  @override
+  Future<void> deleteAllCookies() async {}
+}
 
 LoginViewModel _buildViewModel({
   required SessionController session,
@@ -149,6 +159,33 @@ void main() {
       expect(success, isFalse);
       expect(session.status, AuthStatus.expired);
       expect(await event, isA<ShowSnackBarEvent>());
+      viewModel.dispose();
+    });
+
+    test('残留清理失败：仍进入游客态并发出警告事件', () async {
+      final SessionController session = SessionController()
+        ..completeBoot(AuthStatus.expired);
+      final _FakeLogoutService logout = _FakeLogoutService(
+        clearResult: LogoutResult(
+          residualFailures: <String, Object>{
+            'cookies': StateError('cookie platform error'),
+          },
+        ),
+      );
+      final LoginViewModel viewModel =
+          _buildViewModel(session: session, logoutService: logout);
+      final Future<UiEvent> event = viewModel.events.first;
+
+      final bool success = await viewModel.continueAsGuest();
+
+      expect(success, isTrue);
+      expect(session.status, AuthStatus.guest);
+      final UiEvent emitted = await event;
+      expect(emitted, isA<LogoutCompletedWithWarningEvent>());
+      expect(
+        (emitted as LogoutCompletedWithWarningEvent).failedSteps,
+        <String>['cookies'],
+      );
       viewModel.dispose();
     });
   });

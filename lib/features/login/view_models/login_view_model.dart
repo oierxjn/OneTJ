@@ -7,6 +7,8 @@ import 'package:onetj/app/presentation/ui_event.dart';
 import 'package:onetj/app/session/session_controller.dart';
 import 'package:onetj/features/login/application/login_data_service.dart';
 import 'package:onetj/features/settings/application/logout_service.dart';
+import 'package:onetj/features/settings/models/event.dart';
+import 'package:onetj/features/settings/models/logout_result.dart';
 import 'package:onetj/app/presentation/base_view_model.dart';
 
 class LoginViewModel extends BaseViewModel<UiEvent> {
@@ -29,9 +31,7 @@ class LoginViewModel extends BaseViewModel<UiEvent> {
   Uri get authUri => _dataService.authUri;
 
   /// 以游客身份继续：清空本机登录态数据后进入游客态。
-  ///
-  /// 幂等：已是游客直接返回 true。清理失败时 emit SnackBar 并停留原态、
-  /// 返回 false（不翻转状态，避免清理不完整就进入游客态）。
+  /// 幂等：已是游客直接返回 true。清理失败停留原态并提示。
   Future<bool> continueAsGuest() async {
     if (_sessionController.status == AuthStatus.guest) {
       return true;
@@ -42,11 +42,21 @@ class LoginViewModel extends BaseViewModel<UiEvent> {
     _continuingAsGuest = true;
     notifyListeners();
     try {
-      await _logoutService.clearLocalSessionData();
+      final LogoutResult result = await _logoutService.clearLocalSessionData();
       _sessionController.continueAsGuest();
+      if (!result.isFullyClean) {
+        emit(LogoutCompletedWithWarningEvent(
+          failedSteps: result.residualFailures.keys.toList(growable: false),
+        ));
+      }
       return true;
     } catch (error) {
-      emit(ShowSnackBarEvent(message: 'Failed to continue as guest: $error'));
+      emit(ShowSnackBarEvent(
+        message: 'Failed to continue as guest: $error',
+        code: error is LogoutCleanupException
+            ? LogoutCleanupException.errorCode
+            : null,
+      ));
       return false;
     } finally {
       _continuingAsGuest = false;
