@@ -85,8 +85,6 @@ class _SettingsViewState extends State<SettingsView> {
         return;
       }
       if (event is LogoutCompletedWithWarningEvent) {
-        // 登出已完成（游客态），仅部分本地数据清理失败：降级警告，
-        // 导航仍由 _logout 的成功路径完成。
         final AppLocalizations l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(l10n.logoutResidualCleanupWarning)),

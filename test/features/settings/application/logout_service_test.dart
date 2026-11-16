@@ -16,10 +16,7 @@ import 'package:onetj/services/auth_token_provider.dart';
 import 'package:onetj/services/cookie_clearer.dart';
 import 'package:onetj/services/tongji.dart';
 
-/// 可注入清理失败的存储：继承内存实现，仅覆写 clear。
-///
-/// 失败经真实仓库代码（clearCache/clearToken → 存储）传播到登出编排，
-/// 不绕过任何生产逻辑。[order] 记录清理发生顺序。
+/// 可注入清理失败的存储，[order] 记录清理顺序。
 class _FailingTokenStorage extends InMemoryTokenStorage {
   _FailingTokenStorage(this.order);
 
@@ -119,7 +116,7 @@ class _FailingStudentExamStorage extends InMemoryStudentExamStorage {
   }
 }
 
-/// Cookie 清理替身：正常注入依赖，可注入失败。
+/// Cookie 清理替身，可注入失败。
 class _FakeCookieClearer implements CookieClearer {
   _FakeCookieClearer(this.order);
 

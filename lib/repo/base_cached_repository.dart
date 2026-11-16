@@ -159,9 +159,8 @@ abstract class BaseNetCachedRepository<TData extends BaseData,
     }
     final Completer<void> clearCompleter = Completer<void>();
     _clearCompleter = clearCompleter;
-    // 失败经下方 rethrow 抛给直接调用方；completer 只服务并发加入者。
-    // 无人加入时其错误无人监听，会成为未处理异步错误——预先挂一个
-    // 空监听兜底（不影响加入者各自收到错误）。
+    // 失败经 rethrow 抛给直接调用方；无人加入时 completer 的错误
+    // 无人监听，预挂空监听避免未处理异步错误。
     clearCompleter.future.catchError((Object _) {});
     try {
       await flushInFlight();

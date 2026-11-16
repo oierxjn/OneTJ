@@ -251,17 +251,13 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
   }
 
   /// 执行登出编排；成功返回 true，由视图决定导航（游客态首页）。
-  ///
-  /// 全有或全无：缓存或令牌清理失败时登出被拒绝（会话保持原态），
-  /// 返回 false 并提示重试；仅 Cookie 残留失败时仍登出成功，通过
-  /// [LogoutCompletedWithWarningEvent] 上报，由视图降级提示。
+  /// Cookie 残留失败时发 [LogoutCompletedWithWarningEvent]。
   Future<bool> logout() async {
     AppLogger.logUiAction(feature: 'Settings', action: 'logout_started');
     loading = true;
     errorMessage = null;
     notifyListeners();
     try {
-      // 清理完成后 LogoutService 会把会话标记为游客态；导航由视图完成。
       final LogoutResult result = await _logoutService.clearSession();
       if (!result.isFullyClean) {
         emit(LogoutCompletedWithWarningEvent(
@@ -277,7 +273,6 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
         loggerName: 'SettingsViewModel',
         error: error,
       );
-      // 携带错误码：视图据此映射本地化的「清理未完成，请重试」提示。
       emit(ShowSnackBarEvent(
         message: message,
         code: error is LogoutCleanupException

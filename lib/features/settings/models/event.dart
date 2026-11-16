@@ -24,10 +24,7 @@ class SettingsResetEvent extends UiEvent {
   final SettingsData settings;
 }
 
-/// 登出已完成（会话已翻转为游客态），但 Cookie 清理失败。
-///
-/// 缓存/令牌失败不会发出本事件——那种情况登出被拒绝。
-/// 语义结果事件：不携带路由；视图据此展示降级警告并照常完成登出导航。
+/// 登出已完成，但 Cookie 清理失败。
 class LogoutCompletedWithWarningEvent extends UiEvent {
   const LogoutCompletedWithWarningEvent({required this.failedSteps});
 

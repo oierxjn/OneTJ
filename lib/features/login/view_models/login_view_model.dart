@@ -31,10 +31,7 @@ class LoginViewModel extends BaseViewModel<UiEvent> {
   Uri get authUri => _dataService.authUri;
 
   /// 以游客身份继续：清空本机登录态数据后进入游客态。
-  ///
-  /// 幂等：已是游客直接返回 true。全有或全无：缓存或令牌清理失败时
-  /// emit SnackBar 并停留原态、返回 false（不允许带着残留个人数据进入
-  /// 游客态）；仅 Cookie 残留失败时仍进入游客态并发降级警告。
+  /// 幂等：已是游客直接返回 true。清理失败停留原态并提示。
   Future<bool> continueAsGuest() async {
     if (_sessionController.status == AuthStatus.guest) {
       return true;
@@ -48,7 +45,6 @@ class LoginViewModel extends BaseViewModel<UiEvent> {
       final LogoutResult result = await _logoutService.clearLocalSessionData();
       _sessionController.continueAsGuest();
       if (!result.isFullyClean) {
-        // 与设置页登出一致的降级警告：已进入游客态，仅 Cookie 残留失败。
         emit(LogoutCompletedWithWarningEvent(
           failedSteps: result.residualFailures.keys.toList(growable: false),
         ));

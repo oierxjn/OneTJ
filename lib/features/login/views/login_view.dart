@@ -63,7 +63,6 @@ class _LoginViewState extends State<LoginView> {
         return;
       }
       if (event is LogoutCompletedWithWarningEvent) {
-        // 游客路径的残留清理失败：已进入游客态，仅降级警告。
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
