@@ -34,15 +34,37 @@ class SessionController extends ChangeNotifier {
   ///
   /// 这是唯一能把状态移出 [AuthStatus.unknown] 的入口，从而保证启动页的
   /// 最短展示时间不会被令牌校验提前打断。
+  ///
+  /// 引导结论只负责「退出 unknown」：状态已被显式事件（登录成功、失效
+  /// 上报、登出等）移出 unknown 后，迟到的引导结论不得覆盖它——否则可能
+  /// 把引导期间刚登录成功的用户弹回登录页。重复调用完全无副作用。
   void completeBoot(AuthStatus status) {
     if (status == AuthStatus.unknown) {
+      return;
+    }
+    if (_status != AuthStatus.unknown) {
+      AppLogger.debug(
+        'Boot result ignored: session already left unknown',
+        loggerName: 'SessionController',
+        context: <String, Object?>{
+          'current': _status.name,
+          'bootResult': status.name,
+        },
+      );
       return;
     }
     _transitionTo(status, reason: 'boot');
   }
 
   /// 登录成功、已取得有效令牌时调用。
+  ///
+  /// 处于 [AuthStatus.unknown] 时忽略，与 [markUnauthenticated] 对称：
+  /// 引导未结束时 Hive 尚未初始化，令牌不可能已持久化，此时的登录上报
+  /// 视为无效；引导结论由 [completeBoot] 统一发布。
   void markAuthenticated() {
+    if (_status == AuthStatus.unknown) {
+      return;
+    }
     _transitionTo(AuthStatus.authenticated, reason: 'login');
   }
 
