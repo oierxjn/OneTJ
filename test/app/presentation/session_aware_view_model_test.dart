@@ -90,8 +90,11 @@ void main() {
       expect(viewModel.dataLoaded, isTrue);
     });
 
-    test('引导期间（unknown）不做任何动作', () async {
-      session.markUnauthenticated(reason: 'missing_token');
+    test('unknown 状态不触发 load 也不清内存', () async {
+      // 经 completeBoot 发布 unknown 会被忽略，这里直接构造停留在 unknown
+      // 的会话并手动通知，验证基类分发对 unknown 为 no-op。
+      expect(session.status, AuthStatus.unknown);
+      session.notifyListeners();
       await Future<void>.delayed(Duration.zero);
 
       expect(viewModel.loadCount, 0);
