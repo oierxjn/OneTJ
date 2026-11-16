@@ -614,6 +614,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Logged out, but browser session data could not be cleared. You may need to verify your identity again next time you log in.';
 
   @override
+  String get logoutCleanupFailed =>
+      'Log out failed: local data cleanup did not finish. Please try again.';
+
+  @override
   String get confirmLabel => 'Confirm';
 
   @override

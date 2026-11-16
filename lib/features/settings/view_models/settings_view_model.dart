@@ -277,7 +277,13 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
         loggerName: 'SettingsViewModel',
         error: error,
       );
-      emit(ShowSnackBarEvent(message: message));
+      // 携带错误码：视图据此映射本地化的「清理未完成，请重试」提示。
+      emit(ShowSnackBarEvent(
+        message: message,
+        code: error is LogoutCleanupException
+            ? LogoutCleanupException.errorCode
+            : null,
+      ));
       return false;
     } finally {
       loading = false;

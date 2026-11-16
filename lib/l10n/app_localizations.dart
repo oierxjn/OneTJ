@@ -1161,6 +1161,12 @@ abstract class AppLocalizations {
   /// **'Logged out, but browser session data could not be cleared. You may need to verify your identity again next time you log in.'**
   String get logoutResidualCleanupWarning;
 
+  /// No description provided for @logoutCleanupFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Log out failed: local data cleanup did not finish. Please try again.'**
+  String get logoutCleanupFailed;
+
   /// No description provided for @confirmLabel.
   ///
   /// In en, this message translates to:

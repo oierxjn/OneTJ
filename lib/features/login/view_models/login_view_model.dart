@@ -55,7 +55,12 @@ class LoginViewModel extends BaseViewModel<UiEvent> {
       }
       return true;
     } catch (error) {
-      emit(ShowSnackBarEvent(message: 'Failed to continue as guest: $error'));
+      emit(ShowSnackBarEvent(
+        message: 'Failed to continue as guest: $error',
+        code: error is LogoutCleanupException
+            ? LogoutCleanupException.errorCode
+            : null,
+      ));
       return false;
     } finally {
       _continuingAsGuest = false;

@@ -8,6 +8,7 @@ import 'package:onetj/l10n/app_localizations.dart';
 import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/app/presentation/ui_event.dart';
 import 'package:onetj/app/exception/app_exception.dart';
+import 'package:onetj/features/settings/application/logout_service.dart';
 import 'package:onetj/features/settings/models/event.dart';
 
 import '../view_models/login_view_model.dart';
@@ -44,6 +45,14 @@ class _LoginViewState extends State<LoginView> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
                 content: Text(AppLocalizations.of(context).authStateMismatch)),
+          );
+          return;
+        }
+        if (event.code == LogoutCleanupException.errorCode) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content:
+                    Text(AppLocalizations.of(context).logoutCleanupFailed)),
           );
           return;
         }

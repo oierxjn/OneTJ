@@ -142,10 +142,18 @@ void main() {
       expect(cookieStep.called, isTrue);
     });
 
-    test('缓存先于令牌清理（令牌是最后的关键步骤）', () async {
+    test('全部缓存先于令牌，Cookie 最后（清理顺序不变式）', () async {
       final List<String> order = <String>[];
-      studentInfoStep = _CleanupStep();
-      tokenStep = _CleanupStep();
+      Future<void> Function() tracked(String name, _CleanupStep step) {
+        return () async {
+          order.add(name);
+          await step.run();
+        };
+      }
+
+      final _CleanupStep cetTracked = _CleanupStep();
+      final _CleanupStep gradesTracked = _CleanupStep();
+      final _CleanupStep examTracked = _CleanupStep();
       service = LogoutService(
         tokenRepository: TokenRepository(storage: InMemoryTokenStorage()),
         studentInfoRepository:
@@ -154,27 +162,50 @@ void main() {
             SchoolCalendarRepository(storage: InMemorySchoolCalendarStorage()),
         courseScheduleRepository:
             CourseScheduleRepository(storage: InMemoryCourseScheduleStorage()),
-        cetScoreDataService: _FakeCetScoreDataService(cetStep),
-        gradesDataService: _FakeGradesDataService(gradesStep),
-        studentExamDataService: _FakeStudentExamDataService(examStep),
+        cetScoreDataService: _FakeCetScoreDataService(cetTracked),
+        gradesDataService: _FakeGradesDataService(gradesTracked),
+        studentExamDataService: _FakeStudentExamDataService(examTracked),
         webViewEnvironmentService: WebViewEnvironmentService(),
         sessionController: session,
-        clearTokenOverride: () async {
-          order.add('token');
-          await tokenStep.run();
-        },
-        clearStudentInfoOverride: () async {
-          order.add('studentInfo');
-          await studentInfoStep.run();
-        },
-        clearSchoolCalendarOverride: calendarStep.run,
-        clearCourseScheduleOverride: courseStep.run,
-        clearCookiesOverride: cookieStep.run,
+        clearTokenOverride: tracked('token', tokenStep),
+        clearStudentInfoOverride: tracked('studentInfo', studentInfoStep),
+        clearSchoolCalendarOverride: tracked('schoolCalendar', calendarStep),
+        clearCourseScheduleOverride: tracked('courseSchedule', courseStep),
+        clearCookiesOverride: tracked('cookies', cookieStep),
       );
 
       await service.clearSession();
 
-      expect(order, <String>['studentInfo', 'token']);
+      expect(order.first, isNot('token'));
+      expect(order.indexOf('token'), greaterThan(order.indexOf('studentInfo')));
+      expect(order.indexOf('token'),
+          greaterThan(order.indexOf('schoolCalendar')));
+      expect(order.indexOf('token'),
+          greaterThan(order.indexOf('courseSchedule')));
+      expect(order.last, 'cookies');
+      expect(cetTracked.called, isTrue);
+      expect(gradesTracked.called, isTrue);
+      expect(examTracked.called, isTrue);
+    });
+
+    test('缓存清理失败后重试成功：完整清完并进入游客态', () async {
+      // 第一次：校历清理失败，登出被拒。
+      calendarStep = _CleanupStep(error: StateError('transient'));
+      service = buildService();
+      await expectLater(
+        service.clearSession(),
+        throwsA(isA<LogoutCleanupException>()),
+      );
+      expect(session.status, AuthStatus.authenticated);
+
+      // 第二次：故障消失，同一服务实例重试成功（幂等）。
+      calendarStep = _CleanupStep();
+      service = buildService();
+      final LogoutResult result = await service.clearSession();
+
+      expect(result.isFullyClean, isTrue);
+      expect(session.status, AuthStatus.guest);
+      expect(tokenStep.called, isTrue);
     });
   });
 
