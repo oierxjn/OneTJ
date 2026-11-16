@@ -610,6 +610,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get logOutConfirmLabel => 'Are you sure you want to log out?';
 
   @override
+  String get logoutResidualCleanupWarning =>
+      'Logged out, but some local data could not be cleared. It will be fixed after you log in again.';
+
+  @override
   String get confirmLabel => 'Confirm';
 
   @override

@@ -8,6 +8,7 @@ import 'package:onetj/features/login/application/login_data_service.dart';
 import 'package:onetj/features/login/models/login_model.dart';
 import 'package:onetj/features/login/view_models/login_view_model.dart';
 import 'package:onetj/features/settings/application/logout_service.dart';
+import 'package:onetj/features/settings/models/logout_result.dart';
 import 'package:onetj/features/student_exams/application/student_exam_data_service.dart';
 import 'package:onetj/repo/course_schedule_repository.dart';
 import 'package:onetj/repo/cet_score_repository.dart';
@@ -56,11 +57,12 @@ class _FakeLogoutService extends LogoutService {
   int clearCallCount = 0;
 
   @override
-  Future<void> clearLocalSessionData() async {
+  Future<LogoutResult> clearLocalSessionData() async {
     clearCallCount += 1;
     if (clearError != null) {
       throw clearError!;
     }
+    return const LogoutResult();
   }
 }
 

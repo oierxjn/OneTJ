@@ -590,6 +590,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get logOutConfirmLabel => '确定退出登录吗？';
 
   @override
+  String get logoutResidualCleanupWarning => '已退出登录，部分本地数据清理失败，重新登录后将自动修复';
+
+  @override
   String get confirmLabel => '确认';
 
   @override

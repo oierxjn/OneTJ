@@ -30,8 +30,9 @@ class LoginViewModel extends BaseViewModel<UiEvent> {
 
   /// 以游客身份继续：清空本机登录态数据后进入游客态。
   ///
-  /// 幂等：已是游客直接返回 true。清理失败时 emit SnackBar 并停留原态、
-  /// 返回 false（不翻转状态，避免清理不完整就进入游客态）。
+  /// 幂等：已是游客直接返回 true。令牌删除失败时 emit SnackBar 并停留
+  /// 原态、返回 false；令牌删除成功后缓存/Cookie 的残留失败不阻塞进入
+  /// 游客态（残留数据会在下次登录刷新时覆盖）。
   Future<bool> continueAsGuest() async {
     if (_sessionController.status == AuthStatus.guest) {
       return true;
