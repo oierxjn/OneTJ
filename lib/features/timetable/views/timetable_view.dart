@@ -1,7 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:onetj/l10n/app_localizations.dart';
+import 'package:onetj/app/constant/route_paths.dart';
+import 'package:onetj/app/session/session_controller.dart';
 import 'package:onetj/features/home/views/widgets/home_shell_back_button.dart';
 import 'package:onetj/features/home/views/widgets/home_slim_header.dart';
 import 'package:onetj/app/logging/logger.dart';
@@ -13,11 +16,17 @@ import 'package:onetj/features/timetable/models/event.dart';
 import 'package:onetj/app/presentation/ui_event.dart';
 import 'package:onetj/models/timetable_index.dart';
 import 'package:onetj/widgets/course_detail_bottom_sheet.dart';
+import 'package:onetj/widgets/login_prompt.dart';
 
 class TimetableView extends StatefulWidget {
-  const TimetableView({super.key, required this.viewModel});
+  const TimetableView({
+    super.key,
+    required this.viewModel,
+    required this.sessionController,
+  });
 
   final TimetableViewModel viewModel;
+  final SessionController sessionController;
 
   @override
   State<TimetableView> createState() => _TimetableViewState();
@@ -150,19 +159,36 @@ class _TimetableViewState extends State<TimetableView> {
       body: SafeArea(
         top: true,
         bottom: false,
-        child: Column(
-          children: [
-            HomeSlimHeader(
-              leading: homeBackButton,
-              title: homeBackButton == null ? null : l10n.tabTimetable,
-            ),
-            Expanded(
-              child: AnimatedBuilder(
-                animation: _viewModel,
-                builder: (context, _) => _buildBody(context),
-              ),
-            ),
-          ],
+        child: AnimatedBuilder(
+          animation: Listenable.merge(<Listenable>[
+            _viewModel,
+            widget.sessionController,
+          ]),
+          builder: (context, _) {
+            final bool isGuest =
+                widget.sessionController.status == AuthStatus.guest;
+            return Column(
+              children: [
+                HomeSlimHeader(
+                  leading: homeBackButton,
+                  title: homeBackButton == null ? null : l10n.tabTimetable,
+                  actions: [
+                    if (isGuest)
+                      LoginActionButton(
+                        onLogin: () => context.push(RoutePaths.login),
+                      ),
+                  ],
+                ),
+                Expanded(
+                  child: isGuest
+                      ? LoginPrompt(
+                          onLogin: () => context.push(RoutePaths.login),
+                        )
+                      : _buildBody(context),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );

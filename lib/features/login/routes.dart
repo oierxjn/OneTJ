@@ -6,19 +6,23 @@ import 'package:onetj/app/session/session_controller.dart';
 import 'package:onetj/features/login/application/login_data_service.dart';
 import 'package:onetj/features/login/view_models/login_view_model.dart';
 import 'package:onetj/features/login/views/login_view.dart';
+import 'package:onetj/features/settings/application/logout_service.dart';
 import 'package:onetj/services/webview_environment_service.dart';
 
 final List<GoRoute> loginRoutes = [
   GoRoute(
     path: RoutePaths.login,
     name: 'login',
-    builder: (context, state) => LoginView(
-      viewModel: LoginViewModel(
-        dataService: appLocator<LoginDataService>(),
-        sessionController: appLocator<SessionController>(),
-      ),
-      webViewEnvironment:
-          appLocator<WebViewEnvironmentService>().environment,
-    ),
+    builder: (context, state) {
+      return LoginView(
+        viewModel: LoginViewModel(
+          dataService: appLocator<LoginDataService>(),
+          sessionController: appLocator<SessionController>(),
+          logoutService: appLocator<LogoutService>(),
+        ),
+        webViewEnvironment:
+            appLocator<WebViewEnvironmentService>().environment,
+      );
+    },
   ),
 ];

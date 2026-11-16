@@ -5,14 +5,17 @@ import 'package:onetj/app/presentation/ui_event.dart';
 import 'package:onetj/app/session/session_controller.dart';
 import 'package:onetj/app/theme/theme_change_notifier.dart';
 import 'package:onetj/features/cet_score/application/cet_score_data_service.dart';
+import 'package:onetj/features/grades/application/grades_data_service.dart';
 import 'package:onetj/features/settings/application/logout_service.dart';
 import 'package:onetj/features/settings/models/event.dart';
 import 'package:onetj/features/settings/view_models/settings_view_model.dart';
+import 'package:onetj/features/student_exams/application/student_exam_data_service.dart';
 import 'package:onetj/models/cet_score_data.dart';
 import 'package:onetj/models/dashboard_upcoming_mode.dart';
 import 'package:onetj/models/settings_data.dart';
 import 'package:onetj/models/settings_defaults.dart';
 import 'package:onetj/models/time_period_range.dart';
+import 'package:onetj/models/undergraduate_score_data.dart';
 import 'package:onetj/models/user_collection_field.dart';
 import 'package:onetj/repo/course_schedule_repository.dart';
 import 'package:onetj/repo/school_calendar_repository.dart';
@@ -28,6 +31,37 @@ class _FakeCetScoreDataService implements CetScoreDataService {
 
   @override
   Future<CetScoreData> refresh() async => throw UnimplementedError();
+
+  @override
+  Future<void> clearCachedData() async {}
+}
+
+class _FakeGradesDataService implements GradesDataService {
+  @override
+  Future<UndergraduateScoreData> fetchUndergraduateScore({int? calendarId}) =>
+      throw UnimplementedError();
+
+  @override
+  Future<UndergraduateScoreData> getUndergraduateScore() async =>
+      throw UnimplementedError();
+
+  @override
+  Future<void> warmUpCache() async {}
+
+  @override
+  Future<void> clearCachedData() async {}
+
+  @override
+  Future<UndergraduateScoreData> refreshUndergraduateScore() async =>
+      throw UnimplementedError();
+}
+
+class _FakeStudentExamDataService implements StudentExamDataService {
+  @override
+  Future<StudentExamLoadResult> load() async => throw UnimplementedError();
+
+  @override
+  Future<StudentExamLoadResult> refresh() async => throw UnimplementedError();
 
   @override
   Future<void> clearCachedData() async {}
@@ -97,6 +131,8 @@ void main() {
           storage: InMemoryCourseScheduleStorage(),
         ),
         cetScoreDataService: _FakeCetScoreDataService(),
+        gradesDataService: _FakeGradesDataService(),
+        studentExamDataService: _FakeStudentExamDataService(),
         webViewEnvironmentService: WebViewEnvironmentService(),
         sessionController: SessionController(),
       ),

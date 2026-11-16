@@ -17,9 +17,8 @@ class AppRouter {
 
   /// 构建应用路由表。
   ///
-  /// [session] 既作为 `refreshListenable`（登录态变化时重新求值守卫），
-  /// 也在守卫判定需要回跳时记录当前位置。这里显式注入而非读取
-  /// `appLocator`，使路由表本身可以脱离 DI 单独构造与测试。
+  /// [session] 作为 `refreshListenable`（登录态变化时重新求值守卫）。
+  /// 这里显式注入而非读取 `appLocator`，使路由表本身可以脱离 DI 单独构造与测试。
   static GoRouter build({required SessionController session}) {
     return GoRouter(
       refreshListenable: session,
@@ -27,15 +26,7 @@ class AppRouter {
         final AuthRedirectDecision decision = resolveAuthDecision(
           status: session.status,
           location: state.matchedLocation,
-          pendingLocation: session.pendingLocation,
         );
-        if (decision.rememberLocation) {
-          session.rememberPendingLocation(state.matchedLocation);
-        }
-        if (decision.consumePendingLocation) {
-          // 待回跳位置只消费一次，避免残留值把后续的登录页访问带向过期目标。
-          session.consumePendingLocation();
-        }
         if (decision.redirectTo == null) {
           return null;
         }

@@ -1,16 +1,25 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
+import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/app/presentation/ui_event.dart';
+import 'package:onetj/app/session/session_controller.dart';
 import 'package:onetj/features/cet_score/models/cet_score_view_data.dart';
 import 'package:onetj/features/cet_score/view_models/cet_score_view_model.dart';
 import 'package:onetj/l10n/app_localizations.dart';
+import 'package:onetj/widgets/login_prompt.dart';
 
 class CetScoreView extends StatefulWidget {
-  const CetScoreView({required this.viewModel, super.key});
+  const CetScoreView({
+    required this.viewModel,
+    required this.sessionController,
+    super.key,
+  });
 
   final CetScoreViewModel viewModel;
+  final SessionController sessionController;
 
   @override
   State<CetScoreView> createState() => _CetScoreViewState();
@@ -42,47 +51,58 @@ class _CetScoreViewState extends State<CetScoreView> {
   @override
   Widget build(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.cetScoreTitle),
-        actions: <Widget>[
-          AnimatedBuilder(
-            animation: widget.viewModel,
-            builder: (BuildContext context, Widget? child) {
-              return IconButton(
-                tooltip: MaterialLocalizations.of(context)
-                    .refreshIndicatorSemanticLabel,
-                onPressed: widget.viewModel.loading
-                    ? null
-                    : () => widget.viewModel.refresh(),
-                icon: const Icon(Icons.refresh),
-              );
-            },
+    return AnimatedBuilder(
+      animation: Listenable.merge(<Listenable>[
+        widget.viewModel,
+        widget.sessionController,
+      ]),
+      builder: (BuildContext context, Widget? child) {
+        final bool isGuest =
+            widget.sessionController.status == AuthStatus.guest;
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(l10n.cetScoreTitle),
+            actions: <Widget>[
+              if (isGuest)
+                LoginActionButton(
+                  onLogin: () => context.push(RoutePaths.login),
+                )
+              else
+                IconButton(
+                  tooltip: MaterialLocalizations.of(context)
+                      .refreshIndicatorSemanticLabel,
+                  onPressed: widget.viewModel.loading
+                      ? null
+                      : () => widget.viewModel.refresh(),
+                  icon: const Icon(Icons.refresh),
+                ),
+            ],
           ),
+          body: isGuest
+              ? LoginPrompt(onLogin: () => context.push(RoutePaths.login))
+              : _buildBody(context, l10n),
+        );
+      },
+    );
+  }
+
+  Widget _buildBody(BuildContext context, AppLocalizations l10n) {
+    final List<CetScoreViewRecord> records = widget.viewModel.records;
+    if (widget.viewModel.loading && records.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    return RefreshIndicator(
+      onRefresh: widget.viewModel.refresh,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        children: <Widget>[
+          if (records.isEmpty)
+            _EmptyState(message: l10n.cetScoreEmpty)
+          else
+            for (final CetScoreViewRecord record in records)
+              _CetScoreCard(record: record),
         ],
-      ),
-      body: AnimatedBuilder(
-        animation: widget.viewModel,
-        builder: (BuildContext context, Widget? child) {
-          final List<CetScoreViewRecord> records = widget.viewModel.records;
-          if (widget.viewModel.loading && records.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          return RefreshIndicator(
-            onRefresh: widget.viewModel.refresh,
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(16),
-              children: <Widget>[
-                if (records.isEmpty)
-                  _EmptyState(message: l10n.cetScoreEmpty)
-                else
-                  for (final CetScoreViewRecord record in records)
-                    _CetScoreCard(record: record),
-              ],
-            ),
-          );
-        },
       ),
     );
   }

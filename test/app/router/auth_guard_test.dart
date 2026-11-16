@@ -4,16 +4,27 @@ import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/app/router/auth_guard.dart';
 import 'package:onetj/app/session/session_controller.dart';
 
+/// 所有业务路径（数据页 + 公开页），守卫对已登录/失效/游客均应放行。
+const List<String> _businessLocations = <String>[
+  RoutePaths.home,
+  RoutePaths.homeDashboard,
+  RoutePaths.homeTimetable,
+  RoutePaths.homeGrades,
+  RoutePaths.homeCetScore,
+  RoutePaths.homeStudentExams,
+  RoutePaths.homeTools,
+  RoutePaths.homePhysicsLab,
+  RoutePaths.homeSettings,
+  RoutePaths.homeSettingsAbout,
+];
+
 void main() {
   group('resolveAuthDecision 启动引导中（unknown）', () {
     test('任何路径都放行，停留在启动页', () {
       for (final String location in <String>[
         RoutePaths.launcher,
         RoutePaths.login,
-        RoutePaths.home,
-        RoutePaths.homeDashboard,
-        RoutePaths.homeTimetable,
-        RoutePaths.homeGrades,
+        ..._businessLocations,
       ]) {
         final AuthRedirectDecision decision = resolveAuthDecision(
           status: AuthStatus.unknown,
@@ -21,50 +32,13 @@ void main() {
         );
 
         expect(decision.redirectTo, isNull, reason: 'location=$location');
-        expect(decision.rememberLocation, isFalse, reason: 'location=$location');
       }
     });
   });
 
-  group('resolveAuthDecision 未登录', () {
-    test('启动页重定向到登录页，且不记入回跳目标（避免循环）', () {
-      final AuthRedirectDecision decision = resolveAuthDecision(
-        status: AuthStatus.unauthenticated,
-        location: RoutePaths.launcher,
-      );
-
-      expect(decision.redirectTo, RoutePaths.login);
-      expect(decision.rememberLocation, isFalse);
-    });
-
-    test('登录页放行，不会重定向到自身', () {
-      final AuthRedirectDecision decision = resolveAuthDecision(
-        status: AuthStatus.unauthenticated,
-        location: RoutePaths.login,
-      );
-
-      expect(decision.redirectTo, isNull);
-    });
-
-    test('受保护页面重定向到登录页并记下当前位置', () {
-      final AuthRedirectDecision decision = resolveAuthDecision(
-        status: AuthStatus.unauthenticated,
-        location: RoutePaths.homeTimetable,
-      );
-
-      expect(decision.redirectTo, RoutePaths.login);
-      expect(decision.rememberLocation, isTrue);
-    });
-  });
-
   group('resolveAuthDecision 已登录', () {
-    test('受保护页面一律放行', () {
-      for (final String location in <String>[
-        RoutePaths.home,
-        RoutePaths.homeDashboard,
-        RoutePaths.homeSettings,
-        RoutePaths.homeGrades,
-      ]) {
+    test('业务页面一律放行', () {
+      for (final String location in _businessLocations) {
         final AuthRedirectDecision decision = resolveAuthDecision(
           status: AuthStatus.authenticated,
           location: location,
@@ -81,55 +55,104 @@ void main() {
       );
 
       expect(decision.redirectTo, RoutePaths.home);
-      expect(decision.consumePendingLocation, isFalse);
     });
 
-    test('停留在登录页时回到待回跳页面', () {
+    test('停留在登录页时回首页（登录成功出口）', () {
       final AuthRedirectDecision decision = resolveAuthDecision(
         status: AuthStatus.authenticated,
         location: RoutePaths.login,
-        pendingLocation: RoutePaths.homeTimetable,
-      );
-
-      expect(decision.redirectTo, RoutePaths.homeTimetable);
-      // 使用后必须消费，否则该值会残留到下一次登出/失效。
-      expect(decision.consumePendingLocation, isTrue);
-    });
-
-    test('待回跳页面为空时回到首页', () {
-      final AuthRedirectDecision decision = resolveAuthDecision(
-        status: AuthStatus.authenticated,
-        location: RoutePaths.login,
-        pendingLocation: '',
       );
 
       expect(decision.redirectTo, RoutePaths.home);
-      expect(decision.consumePendingLocation, isFalse);
     });
   });
 
-  test('未登录 → 登录页 → 已登录 不会产生重定向循环', () {
-    // 第一步：从受保护页面被拦到登录页，并记下原位置。
-    final AuthRedirectDecision blocked = resolveAuthDecision(
-      status: AuthStatus.unauthenticated,
-      location: RoutePaths.homeTimetable,
-    );
-    expect(blocked.redirectTo, RoutePaths.login);
-    expect(blocked.rememberLocation, isTrue);
+  group('resolveAuthDecision 失效态（expired）', () {
+    test('业务页面与登录页一律放行，不打断用户', () {
+      for (final String location in <String>[
+        ..._businessLocations,
+        RoutePaths.login,
+      ]) {
+        final AuthRedirectDecision decision = resolveAuthDecision(
+          status: AuthStatus.expired,
+          location: location,
+        );
 
-    // 第二步：登录页在未登录状态下必须放行，否则会不停重定向到自身。
-    final AuthRedirectDecision onLogin = resolveAuthDecision(
-      status: AuthStatus.unauthenticated,
-      location: RoutePaths.login,
-    );
-    expect(onLogin.redirectTo, isNull);
+        expect(decision.redirectTo, isNull, reason: 'location=$location');
+      }
+    });
 
-    // 第三步：登录成功后从登录页离开，回到原页面。
-    final AuthRedirectDecision resumed = resolveAuthDecision(
-      status: AuthStatus.authenticated,
-      location: RoutePaths.login,
-      pendingLocation: RoutePaths.homeTimetable,
+    test('停留在启动页时进入首页', () {
+      final AuthRedirectDecision decision = resolveAuthDecision(
+        status: AuthStatus.expired,
+        location: RoutePaths.launcher,
+      );
+
+      expect(decision.redirectTo, RoutePaths.home);
+    });
+  });
+
+  group('resolveAuthDecision 游客态（guest）', () {
+    test('业务页面（含数据页）与登录页一律放行，门禁下沉到页面', () {
+      for (final String location in <String>[
+        ..._businessLocations,
+        RoutePaths.login,
+      ]) {
+        final AuthRedirectDecision decision = resolveAuthDecision(
+          status: AuthStatus.guest,
+          location: location,
+        );
+
+        expect(decision.redirectTo, isNull, reason: 'location=$location');
+      }
+    });
+
+    test('停留在启动页时进入首页而非登录页', () {
+      final AuthRedirectDecision decision = resolveAuthDecision(
+        status: AuthStatus.guest,
+        location: RoutePaths.launcher,
+      );
+
+      expect(decision.redirectTo, RoutePaths.home);
+    });
+  });
+
+  test('游客访问数据页不再被重定向（页内门禁）', () {
+    for (final String location in <String>[
+      RoutePaths.homeTimetable,
+      RoutePaths.homeGrades,
+      RoutePaths.homeCetScore,
+      RoutePaths.homeStudentExams,
+    ]) {
+      final AuthRedirectDecision decision = resolveAuthDecision(
+        status: AuthStatus.guest,
+        location: location,
+      );
+
+      expect(decision.redirectTo, isNull, reason: 'location=$location');
+    }
+  });
+
+  test('登录成功出口无重定向循环', () {
+    // 游客在登录页放行；登录成功后从登录页回首页；首页放行。
+    expect(
+      resolveAuthDecision(status: AuthStatus.guest, location: RoutePaths.login)
+          .redirectTo,
+      isNull,
     );
-    expect(resumed.redirectTo, RoutePaths.homeTimetable);
+    expect(
+      resolveAuthDecision(
+        status: AuthStatus.authenticated,
+        location: RoutePaths.login,
+      ).redirectTo,
+      RoutePaths.home,
+    );
+    expect(
+      resolveAuthDecision(
+        status: AuthStatus.authenticated,
+        location: RoutePaths.home,
+      ).redirectTo,
+      isNull,
+    );
   });
 }

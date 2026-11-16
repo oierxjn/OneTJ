@@ -1,15 +1,24 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:onetj/l10n/app_localizations.dart';
 
+import 'package:onetj/app/constant/route_paths.dart';
+import 'package:onetj/app/session/session_controller.dart';
 import 'package:onetj/features/grades/view_models/grades_view_model.dart';
 import 'package:onetj/app/presentation/ui_event.dart';
+import 'package:onetj/widgets/login_prompt.dart';
 
 class GradesView extends StatefulWidget {
-  const GradesView({super.key, required this.viewModel});
+  const GradesView({
+    super.key,
+    required this.viewModel,
+    required this.sessionController,
+  });
 
   final GradesViewModel viewModel;
+  final SessionController sessionController;
 
   @override
   State<GradesView> createState() => _GradesViewState();
@@ -44,23 +53,34 @@ class _GradesViewState extends State<GradesView> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.scoreInquiryTitle),
-        actions: [
-          AnimatedBuilder(
-            animation: _viewModel,
-            builder: (context, _) => IconButton(
-              icon: const Icon(Icons.refresh),
-              onPressed: _viewModel.loading ? null : _viewModel.refresh,
-            ),
+    return AnimatedBuilder(
+      animation: Listenable.merge(<Listenable>[
+        _viewModel,
+        widget.sessionController,
+      ]),
+      builder: (context, _) {
+        final bool isGuest =
+            widget.sessionController.status == AuthStatus.guest;
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(l10n.scoreInquiryTitle),
+            actions: [
+              if (isGuest)
+                LoginActionButton(
+                  onLogin: () => context.push(RoutePaths.login),
+                )
+              else
+                IconButton(
+                  icon: const Icon(Icons.refresh),
+                  onPressed: _viewModel.loading ? null : _viewModel.refresh,
+                ),
+            ],
           ),
-        ],
-      ),
-      body: AnimatedBuilder(
-        animation: _viewModel,
-        builder: (context, _) => _buildBody(context, l10n),
-      ),
+          body: isGuest
+              ? LoginPrompt(onLogin: () => context.push(RoutePaths.login))
+              : _buildBody(context, l10n),
+        );
+      },
     );
   }
 

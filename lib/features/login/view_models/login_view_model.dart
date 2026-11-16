@@ -6,19 +6,53 @@ import 'package:onetj/app/logging/logger.dart';
 import 'package:onetj/app/presentation/ui_event.dart';
 import 'package:onetj/app/session/session_controller.dart';
 import 'package:onetj/features/login/application/login_data_service.dart';
+import 'package:onetj/features/settings/application/logout_service.dart';
 import 'package:onetj/app/presentation/base_view_model.dart';
 
 class LoginViewModel extends BaseViewModel<UiEvent> {
   LoginViewModel({
     required LoginDataService dataService,
     required SessionController sessionController,
+    required LogoutService logoutService,
   })  : _dataService = dataService,
-        _sessionController = sessionController;
+        _sessionController = sessionController,
+        _logoutService = logoutService;
 
   final LoginDataService _dataService;
   final SessionController _sessionController;
+  final LogoutService _logoutService;
+
+  /// 「以游客身份继续」是否正在处理（清理 + 状态翻转）。
+  bool _continuingAsGuest = false;
+  bool get continuingAsGuest => _continuingAsGuest;
 
   Uri get authUri => _dataService.authUri;
+
+  /// 以游客身份继续：清空本机登录态数据后进入游客态。
+  ///
+  /// 幂等：已是游客直接返回 true。清理失败时 emit SnackBar 并停留原态、
+  /// 返回 false（不翻转状态，避免清理不完整就进入游客态）。
+  Future<bool> continueAsGuest() async {
+    if (_sessionController.status == AuthStatus.guest) {
+      return true;
+    }
+    if (_continuingAsGuest) {
+      return false;
+    }
+    _continuingAsGuest = true;
+    notifyListeners();
+    try {
+      await _logoutService.clearLocalSessionData();
+      _sessionController.continueAsGuest();
+      return true;
+    } catch (error) {
+      emit(ShowSnackBarEvent(message: 'Failed to continue as guest: $error'));
+      return false;
+    } finally {
+      _continuingAsGuest = false;
+      notifyListeners();
+    }
+  }
 
   static Map<String, Object?> redirectUriLogContext(WebUri uri) {
     return <String, Object?>{
@@ -39,10 +73,10 @@ class LoginViewModel extends BaseViewModel<UiEvent> {
     try {
       final bool shouldNavigate = await _dataService.exchangeCodeIfRedirect(uri);
       if (shouldNavigate) {
-        // 只更新会话状态：跳转由路由守卫依据新状态完成（含回跳待处理页面）。
+        // 只更新会话状态：跳转由路由守卫依据新状态完成（回首页）。
         AppLogger.logNavigation(
           from: RoutePaths.login,
-          to: _sessionController.pendingLocation ?? RoutePaths.home,
+          to: RoutePaths.home,
           context: const <String, Object?>{'source': 'login_success'},
         );
         _sessionController.markAuthenticated();

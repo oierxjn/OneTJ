@@ -5,6 +5,7 @@ import 'package:onetj/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:onetj/app/constant/route_paths.dart';
+import 'package:onetj/app/session/session_controller.dart';
 import 'package:onetj/app/theme/theme_change_notifier.dart';
 import 'package:onetj/features/app_update/app_update_flow_coordinator.dart';
 import 'package:onetj/features/dashboard/view_models/dashboard_view_model.dart';
@@ -31,11 +32,13 @@ class DashboardView extends StatefulWidget {
     required this.viewModel,
     required this.themeChangeNotifier,
     required this.appUpdateCoordinator,
+    required this.sessionController,
   });
 
   final DashboardViewModel viewModel;
   final ThemeChangeNotifier themeChangeNotifier;
   final AppUpdateFlowCoordinator appUpdateCoordinator;
+  final SessionController sessionController;
 
   @override
   State<DashboardView> createState() => _DashboardViewState();
@@ -126,8 +129,11 @@ class _DashboardViewState extends State<DashboardView>
         top: true,
         bottom: false,
         child: AnimatedBuilder(
-          animation:
-              Listenable.merge(<Listenable>[_viewModel, _themeChangeNotifier]),
+          animation: Listenable.merge(<Listenable>[
+            _viewModel,
+            _themeChangeNotifier,
+            widget.sessionController,
+          ]),
           builder: (context, _) => _buildBody(context, l10n),
         ),
       ),
@@ -145,7 +151,22 @@ class _DashboardViewState extends State<DashboardView>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildHeroCard(context),
+                if (widget.sessionController.status == AuthStatus.guest)
+                  _LoginGuideCard(
+                    title: l10n.dashboardGuestTitle,
+                    subtitle: l10n.dashboardGuestSubtitle,
+                    actionLabel: l10n.dashboardGuestLogin,
+                    onLogin: () => context.push(RoutePaths.login),
+                  )
+                else if (widget.sessionController.status == AuthStatus.expired)
+                  _LoginGuideCard(
+                    title: l10n.dashboardExpiredTitle,
+                    subtitle: l10n.dashboardExpiredSubtitle,
+                    actionLabel: l10n.sessionExpiredRelogin,
+                    onLogin: () => context.push(RoutePaths.login),
+                  )
+                else
+                  _buildHeroCard(context),
                 const SizedBox(height: 24),
                 if (_themeChangeNotifier.preferences.homeLayout ==
                     HomeLayout.functionGrid) ...[
@@ -600,6 +621,58 @@ class _EmptyState extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// 登录引导卡片：游客态与失效态共用，替代学籍/校历信息卡。
+///
+/// 文案由调用方按会话状态传入，登录与否/是否重新登录由用户决定。
+class _LoginGuideCard extends StatelessWidget {
+  const _LoginGuideCard({
+    required this.title,
+    required this.subtitle,
+    required this.actionLabel,
+    required this.onLogin,
+  });
+
+  final String title;
+  final String subtitle;
+  final String actionLabel;
+  final VoidCallback onLogin;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Card(
+      elevation: 0,
+      color: colors.surfaceContainerHighest,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              subtitle,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: colors.onSurfaceVariant,
+                  ),
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: onLogin,
+              icon: const Icon(Icons.login),
+              label: Text(actionLabel),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/app/exception/app_exception.dart';
+import 'package:onetj/app/logging/logger.dart';
 import 'package:onetj/features/home/views/widgets/home_slim_header.dart';
 import 'package:onetj/features/settings/models/event.dart';
 import 'package:onetj/features/settings/models/launch_wallpaper_editor_result.dart';
@@ -234,7 +235,17 @@ class _SettingsViewState extends State<SettingsView> {
     if (confirmed != true) {
       return;
     }
-    await _viewModel.logout();
+    final bool success = await _viewModel.logout();
+    if (!success || !context.mounted) {
+      return;
+    }
+    // 登出后进入游客态：回到首页，是否重新登录由用户决定。
+    AppLogger.logNavigation(
+      from: RoutePaths.homeSettings,
+      to: RoutePaths.home,
+      context: const <String, Object?>{'reason': 'logout'},
+    );
+    context.go(RoutePaths.home);
   }
 
   Future<void> _confirmResetSettings(BuildContext context) async {

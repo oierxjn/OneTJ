@@ -2,6 +2,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/app/di/dependencies.dart';
+import 'package:onetj/app/session/session_controller.dart';
 import 'package:onetj/app/theme/theme_change_notifier.dart';
 import 'package:onetj/features/app_update/app_update_flow_coordinator.dart';
 import 'package:onetj/features/dashboard/application/dashboard_data_service.dart';
@@ -21,6 +22,7 @@ final StatefulShellRoute homeShellRoute = StatefulShellRoute.indexedStack(
   builder: (context, state, navigationShell) => HomeView(
     navigationShell: navigationShell,
     themeChangeNotifier: appLocator<ThemeChangeNotifier>(),
+    sessionController: appLocator<SessionController>(),
   ),
   branches: [
     StatefulShellBranch(
@@ -37,12 +39,14 @@ final StatefulShellRoute homeShellRoute = StatefulShellRoute.indexedStack(
               dataService: appLocator<DashboardDataService>(),
               settingsRepository: appLocator<SettingsRepository>(),
               appUpdateService: appLocator<AppUpdateService>(),
+              sessionController: appLocator<SessionController>(),
             ),
             themeChangeNotifier: appLocator<ThemeChangeNotifier>(),
             appUpdateCoordinator: AppUpdateFlowCoordinator(
               appUpdateService: appLocator<AppUpdateService>(),
               externalLauncherService: appLocator<ExternalLauncherService>(),
             ),
+            sessionController: appLocator<SessionController>(),
           ),
         ),
       ],
@@ -56,7 +60,9 @@ final StatefulShellRoute homeShellRoute = StatefulShellRoute.indexedStack(
             viewModel: TimetableViewModel(
               dataService: appLocator<TimetableDataService>(),
               settingsRepository: appLocator<SettingsRepository>(),
+              sessionController: appLocator<SessionController>(),
             ),
+            sessionController: appLocator<SessionController>(),
           ),
         ),
       ],

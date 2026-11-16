@@ -15,6 +15,39 @@ class AppLocalizationsZh extends AppLocalizations {
   String get authStateMismatch => '认证状态不匹配，可能遭受到网络攻击';
 
   @override
+  String get sessionExpiredBanner => '登录已失效，当前展示缓存数据';
+
+  @override
+  String get sessionExpiredRelogin => '重新登录';
+
+  @override
+  String get continueAsGuest => '以游客身份继续';
+
+  @override
+  String get loginPromptTitle => '需要登录';
+
+  @override
+  String get loginPromptSubtitle => '登录后即可使用该功能';
+
+  @override
+  String get loginPromptAction => '登录';
+
+  @override
+  String get dashboardGuestTitle => '欢迎使用一统同济';
+
+  @override
+  String get dashboardGuestSubtitle => '登录后可查看课表、成绩与校历';
+
+  @override
+  String get dashboardGuestLogin => '登录';
+
+  @override
+  String get dashboardExpiredTitle => '登录已失效';
+
+  @override
+  String get dashboardExpiredSubtitle => '重新登录后即可恢复数据展示';
+
+  @override
   String get tabDashboard => '仪表板';
 
   @override

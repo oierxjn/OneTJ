@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'dart:async';
 
 import 'package:onetj/app/presentation/ui_event.dart';
+import 'package:onetj/app/session/session_controller.dart';
 import 'package:onetj/features/timetable/application/timetable_data_service.dart';
 import 'package:onetj/features/timetable/models/event.dart';
 import 'package:onetj/features/timetable/view_models/timetable_view_model.dart';
@@ -19,6 +20,8 @@ void main() {
     return TimetableViewModel(
       dataService: dataService,
       settingsRepository: settingsRepository,
+      sessionController: SessionController()
+        ..completeBoot(AuthStatus.authenticated),
     );
   }
 

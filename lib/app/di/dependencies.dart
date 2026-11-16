@@ -131,6 +131,8 @@ void configureDependencies() {
       schoolCalendarRepository: appLocator<SchoolCalendarRepository>(),
       courseScheduleRepository: appLocator<CourseScheduleRepository>(),
       cetScoreDataService: appLocator<CetScoreDataService>(),
+      gradesDataService: appLocator<GradesDataService>(),
+      studentExamDataService: appLocator<StudentExamDataService>(),
       webViewEnvironmentService: appLocator<WebViewEnvironmentService>(),
       sessionController: appLocator<SessionController>(),
     ),

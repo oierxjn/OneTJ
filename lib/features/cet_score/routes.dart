@@ -2,6 +2,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/app/di/dependencies.dart';
+import 'package:onetj/app/session/session_controller.dart';
 import 'package:onetj/features/cet_score/application/cet_score_data_service.dart';
 import 'package:onetj/features/cet_score/view_models/cet_score_view_model.dart';
 import 'package:onetj/features/cet_score/views/cet_score_view.dart';
@@ -14,7 +15,9 @@ final List<GoRoute> cetScoreDetailRoutes = <GoRoute>[
     builder: (context, state) => CetScoreView(
       viewModel: CetScoreViewModel(
         dataSource: appLocator<CetScoreDataService>(),
+        sessionController: appLocator<SessionController>(),
       ),
+      sessionController: appLocator<SessionController>(),
     ),
   ),
 ];

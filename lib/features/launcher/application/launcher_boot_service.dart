@@ -1,3 +1,4 @@
+import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/app/logging/logger.dart';
 import 'package:onetj/app/session/session_controller.dart';
 import 'package:onetj/app/theme/theme_change_notifier.dart';
@@ -90,18 +91,23 @@ class LauncherBootService {
 
   /// 通过判断 token 状态确定初始会话状态
   ///
-  /// 如果 token 有效则返回 [AuthStatus.authenticated]，否则返回
-  /// [AuthStatus.unauthenticated]。
+  /// 令牌有效返回 [AuthStatus.authenticated]；本机无令牌返回
+  /// [AuthStatus.guest]（从未登录或已登出）；持有令牌但**确定性凭证失败**
+  /// 返回 [AuthStatus.expired]（缓存仍可读，重新登录即可恢复）。
+  ///
+  /// 网络/瞬时错误不判失效：离线冷启动时 refresh token 往往仍有效，只是
+  /// 此刻无法联网刷新。乐观判 authenticated 走缓存，与运行期「瞬时错误不
+  /// 登出」一致；联网后首个真实请求会由 [AuthTokenProvider] 正确分类。
   Future<AuthStatus> _resolveInitialStatus() async {
     final TokenData? token = await _tokenRepository.getToken();
 
     if (token == null) {
       AppLogger.info(
-        'Resolved session as unauthenticated',
+        'Resolved session as guest',
         loggerName: 'LauncherBootService',
-        context: const <String, Object?>{'status': 'unauthenticated'},
+        context: const <String, Object?>{'status': 'guest'},
       );
-      return AuthStatus.unauthenticated;
+      return AuthStatus.guest;
     }
 
     try {
@@ -113,14 +119,34 @@ class LauncherBootService {
       );
       return AuthStatus.authenticated;
     } catch (error, stackTrace) {
+      final bool credentialFailure = _isCredentialFailure(error);
       AppLogger.warning(
-        'Failed to resolve a valid token during launch',
+        credentialFailure
+            ? 'Credential failure during launch, resolved as expired'
+            : 'Transient token resolution failure during launch, '
+                'optimistically resolved as authenticated',
         loggerName: 'LauncherBootService',
         error: error,
         stackTrace: stackTrace,
       );
+      return credentialFailure ? AuthStatus.expired : AuthStatus.authenticated;
     }
+  }
 
-    return AuthStatus.unauthenticated;
+  /// 是否为确定性凭证失败（重新登录是必要且有效的动作）。
+  ///
+  /// * `AUTH_EXPIRED`：本地 refresh token 已过期，或令牌被替换/清除；
+  /// * 刷新被服务端 401 拒绝：refresh token 已作废。
+  ///
+  /// 其余（网络不可达、5xx 等瞬时错误）不算凭证失败——此时凭证大概率仍
+  /// 有效，只是无法验证，不应把用户导向「重新登录」。
+  bool _isCredentialFailure(Object error) {
+    if (error is AppException && error.code == 'AUTH_EXPIRED') {
+      return true;
+    }
+    if (error is NetworkException && error.statusCode == 401) {
+      return true;
+    }
+    return false;
   }
 }

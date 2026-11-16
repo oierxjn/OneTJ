@@ -110,6 +110,72 @@ abstract class AppLocalizations {
   /// **'Auth state mismatch, possible network attack'**
   String get authStateMismatch;
 
+  /// No description provided for @sessionExpiredBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'Session expired, showing cached data'**
+  String get sessionExpiredBanner;
+
+  /// No description provided for @sessionExpiredRelogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in again'**
+  String get sessionExpiredRelogin;
+
+  /// No description provided for @continueAsGuest.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue as guest'**
+  String get continueAsGuest;
+
+  /// No description provided for @loginPromptTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in required'**
+  String get loginPromptTitle;
+
+  /// No description provided for @loginPromptSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to use this feature'**
+  String get loginPromptSubtitle;
+
+  /// No description provided for @loginPromptAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in'**
+  String get loginPromptAction;
+
+  /// No description provided for @dashboardGuestTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to OneTJ'**
+  String get dashboardGuestTitle;
+
+  /// No description provided for @dashboardGuestSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to view timetable, grades and calendar'**
+  String get dashboardGuestSubtitle;
+
+  /// No description provided for @dashboardGuestLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in'**
+  String get dashboardGuestLogin;
+
+  /// No description provided for @dashboardExpiredTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Session expired'**
+  String get dashboardExpiredTitle;
+
+  /// No description provided for @dashboardExpiredSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in again to restore your data'**
+  String get dashboardExpiredSubtitle;
+
   /// No description provided for @tabDashboard.
   ///
   /// In en, this message translates to:

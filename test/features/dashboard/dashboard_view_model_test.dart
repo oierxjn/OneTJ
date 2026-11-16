@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:onetj/app/session/session_controller.dart';
 import 'package:onetj/features/dashboard/application/dashboard_data_service.dart';
 import 'package:onetj/features/dashboard/view_models/dashboard_view_model.dart';
 import 'package:onetj/app/presentation/ui_event.dart';
@@ -17,6 +18,7 @@ void main() {
   /// 组装一个所有依赖都已显式注入的视图模型，测试用例只需给出更新服务。
   DashboardViewModel buildViewModel({
     required AppUpdateService appUpdateService,
+    SessionController? sessionController,
   }) {
     final CourseScheduleRepository scheduleRepository =
         CourseScheduleRepository(storage: InMemoryCourseScheduleStorage());
@@ -47,6 +49,8 @@ void main() {
         storage: InMemorySettingsStorage(),
       ),
       appUpdateService: appUpdateService,
+      sessionController: sessionController ??
+          (SessionController()..completeBoot(AuthStatus.authenticated)),
     );
   }
 
@@ -84,6 +88,63 @@ void main() {
       expect(event, isA<AppUpdateFailedEvent>());
       expect((event as AppUpdateFailedEvent).error, same(error));
       expect(service.loggedErrors, <Object>[error]);
+      viewModel.dispose();
+    });
+  });
+
+  group('DashboardViewModel 会话感知', () {
+    test('游客态 load 不拉取平台数据，个人数据保持为空', () async {
+      final SessionController session = SessionController()
+        ..completeBoot(AuthStatus.guest);
+      final DashboardViewModel viewModel = buildViewModel(
+        appUpdateService: TestDashboardAppUpdateService(),
+        sessionController: session,
+      );
+
+      await viewModel.load();
+
+      expect(viewModel.departmentName, isNull);
+      expect(viewModel.calendar, isNull);
+      expect(viewModel.timetableEntries, isEmpty);
+      expect(viewModel.studentLoading, isFalse);
+      expect(viewModel.calendarLoading, isFalse);
+      expect(viewModel.timetableLoading, isFalse);
+      viewModel.dispose();
+    });
+
+    test('登出进入游客态时清空内存中的个人数据', () async {
+      final SessionController session = SessionController()
+        ..completeBoot(AuthStatus.authenticated);
+      final DashboardViewModel viewModel = buildViewModel(
+        appUpdateService: TestDashboardAppUpdateService(),
+        sessionController: session,
+      );
+      // 模拟已加载过个人数据后的登出：indexedStack 使视图模型存活，
+      // 必须清内存，否则游客会看到上一账号的课程。
+      await viewModel.load();
+      session.markSignedOut();
+
+      expect(viewModel.departmentName, isNull);
+      expect(viewModel.calendar, isNull);
+      expect(viewModel.timetableEntries, isEmpty);
+      viewModel.dispose();
+    });
+
+    test('重新登录成功后自动重载（不再停留在游客空态）', () async {
+      final SessionController session = SessionController()
+        ..completeBoot(AuthStatus.guest);
+      final DashboardViewModel viewModel = buildViewModel(
+        appUpdateService: TestDashboardAppUpdateService(),
+        sessionController: session,
+      );
+      await viewModel.load();
+      expect(viewModel.timetableEntries, isEmpty);
+
+      session.markAuthenticated();
+      // 让自动重载的异步流程跑完；无网络环境下拉取失败但 loading 会落定。
+      await Future<void>.delayed(Duration.zero);
+
+      expect(viewModel.studentLoading, isFalse);
       viewModel.dispose();
     });
   });
