@@ -19,6 +19,13 @@ class AppRouter {
   ///
   /// [session] 作为 `refreshListenable`（登录态变化时重新求值守卫）。
   /// 这里显式注入而非读取 `appLocator`，使路由表本身可以脱离 DI 单独构造与测试。
+  ///
+  /// 深链前置条件（见 issue #65）：当前隐含假设应用总是从 `/` 启动，
+  /// 由启动页执行引导并调用 `completeBoot` 退出 unknown。启用深链
+  /// （intent-filter / Universal Link / web URL）前，必须让引导不依赖
+  /// 初始路由——强制 `initialLocation: RoutePaths.launcher`（配合
+  /// `overridePlatformDefaultLocation`），或把引导移出启动页路由
+  /// （如在 `main()` 中完成），否则深链会绕过引导使状态永远 unknown。
   static GoRouter build({required SessionController session}) {
     return GoRouter(
       refreshListenable: session,
