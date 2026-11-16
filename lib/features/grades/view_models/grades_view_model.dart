@@ -1,40 +1,25 @@
-import 'dart:async';
-
-import 'package:onetj/app/presentation/base_view_model.dart';
+import 'package:onetj/app/presentation/session_aware_view_model.dart';
 import 'package:onetj/app/presentation/ui_event.dart';
-import 'package:onetj/app/session/session_controller.dart';
 import 'package:onetj/features/grades/application/grades_data_service.dart';
 import 'package:onetj/features/grades/models/grades_view_data.dart';
 
-class GradesViewModel extends BaseViewModel<UiEvent> {
+class GradesViewModel extends SessionAwareViewModel<UiEvent> {
   GradesViewModel({
     required GradesDataService dataService,
-    required SessionController sessionController,
-  })  : _dataService = dataService,
-        _sessionController = sessionController {
-    _sessionController.addListener(_onSessionChanged);
-  }
+    required super.sessionController,
+  }) : _dataService = dataService;
 
   final GradesDataService _dataService;
-  final SessionController _sessionController;
   GradesViewData? _viewData;
   int _selectedTermIndex = 0;
 
   GradesViewData? get viewData => _viewData;
   int get selectedTermIndex => _selectedTermIndex;
 
-  bool get _isGuest => _sessionController.status == AuthStatus.guest;
-
-  /// 登录成功后自动重载；进入游客态时清空内存中的成绩。
-  void _onSessionChanged() {
-    final AuthStatus status = _sessionController.status;
-    if (status == AuthStatus.authenticated) {
-      unawaited(load());
-    } else if (status == AuthStatus.guest) {
-      _viewData = null;
-      _selectedTermIndex = 0;
-      notifyListeners();
-    }
+  @override
+  void clearPersonalData() {
+    _viewData = null;
+    _selectedTermIndex = 0;
   }
 
   GradesTerm? get selectedTerm {
@@ -46,8 +31,9 @@ class GradesViewModel extends BaseViewModel<UiEvent> {
     return data.terms[index];
   }
 
+  @override
   Future<void> load() async {
-    if (_isGuest) {
+    if (isGuest) {
       return;
     }
     loading = true;
@@ -61,7 +47,7 @@ class GradesViewModel extends BaseViewModel<UiEvent> {
     }
     try {
       final data = await _dataService.getUndergraduateScore();
-      if (_isGuest) {
+      if (isGuest) {
         return;
       }
       _viewData = GradesViewData.fromScoreData(data);
@@ -78,14 +64,14 @@ class GradesViewModel extends BaseViewModel<UiEvent> {
   }
 
   Future<void> refresh() async {
-    if (_isGuest) {
+    if (isGuest) {
       return;
     }
     loading = true;
     notifyListeners();
     try {
       final data = await _dataService.refreshUndergraduateScore();
-      if (_isGuest) {
+      if (isGuest) {
         return;
       }
       _viewData = GradesViewData.fromScoreData(data);
@@ -104,11 +90,5 @@ class GradesViewModel extends BaseViewModel<UiEvent> {
   void selectTerm(int index) {
     _selectedTermIndex = index;
     notifyListeners();
-  }
-
-  @override
-  void dispose() {
-    _sessionController.removeListener(_onSessionChanged);
-    super.dispose();
   }
 }
