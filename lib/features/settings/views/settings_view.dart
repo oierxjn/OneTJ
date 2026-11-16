@@ -9,6 +9,7 @@ import 'package:onetj/app/constant/route_paths.dart';
 import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/app/logging/logger.dart';
 import 'package:onetj/features/home/views/widgets/home_slim_header.dart';
+import 'package:onetj/features/settings/application/logout_service.dart';
 import 'package:onetj/features/settings/models/event.dart';
 import 'package:onetj/features/settings/models/launch_wallpaper_editor_result.dart';
 import 'package:onetj/features/settings/view_models/settings_view_model.dart';
@@ -80,6 +81,15 @@ class _SettingsViewState extends State<SettingsView> {
         final AppLocalizations l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(l10n.settingsResetDone)),
+        );
+        return;
+      }
+      if (event is LogoutCompletedWithWarningEvent) {
+        // 登出已完成（游客态），仅部分本地数据清理失败：降级警告，
+        // 导航仍由 _logout 的成功路径完成。
+        final AppLocalizations l10n = AppLocalizations.of(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.logoutResidualCleanupWarning)),
         );
         return;
       }
@@ -163,6 +173,8 @@ class _SettingsViewState extends State<SettingsView> {
     ShowSnackBarEvent event,
   ) {
     switch (event.code) {
+      case LogoutCleanupException.errorCode:
+        return l10n.logoutCleanupFailed;
       case SettingsValidationException.maxWeekInvalidFormat:
         return l10n.settingsMaxWeekInvalidFormat;
       case SettingsValidationException.maxWeekOutOfRange:

@@ -11,6 +11,7 @@ import 'package:onetj/models/launch_wallpaper_ref.dart';
 import 'package:onetj/models/user_collection_field.dart';
 import 'package:onetj/features/settings/application/logout_service.dart';
 import 'package:onetj/features/settings/models/event.dart';
+import 'package:onetj/features/settings/models/logout_result.dart';
 import 'package:onetj/features/settings/models/settings_model.dart';
 import 'package:onetj/app/presentation/base_view_model.dart';
 import 'package:onetj/app/presentation/ui_event.dart';
@@ -250,6 +251,10 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
   }
 
   /// 执行登出编排；成功返回 true，由视图决定导航（游客态首页）。
+  ///
+  /// 全有或全无：缓存或令牌清理失败时登出被拒绝（会话保持原态），
+  /// 返回 false 并提示重试；仅 Cookie 残留失败时仍登出成功，通过
+  /// [LogoutCompletedWithWarningEvent] 上报，由视图降级提示。
   Future<bool> logout() async {
     AppLogger.logUiAction(feature: 'Settings', action: 'logout_started');
     loading = true;
@@ -257,7 +262,12 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
     notifyListeners();
     try {
       // 清理完成后 LogoutService 会把会话标记为游客态；导航由视图完成。
-      await _logoutService.clearSession();
+      final LogoutResult result = await _logoutService.clearSession();
+      if (!result.isFullyClean) {
+        emit(LogoutCompletedWithWarningEvent(
+          failedSteps: result.residualFailures.keys.toList(growable: false),
+        ));
+      }
       return true;
     } catch (error) {
       final String message = 'Failed to log out: $error';
@@ -267,7 +277,13 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
         loggerName: 'SettingsViewModel',
         error: error,
       );
-      emit(ShowSnackBarEvent(message: message));
+      // 携带错误码：视图据此映射本地化的「清理未完成，请重试」提示。
+      emit(ShowSnackBarEvent(
+        message: message,
+        code: error is LogoutCleanupException
+            ? LogoutCleanupException.errorCode
+            : null,
+      ));
       return false;
     } finally {
       loading = false;
