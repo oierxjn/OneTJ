@@ -4,7 +4,7 @@ import 'package:onetj/app/session/session_controller.dart';
 import 'package:onetj/features/dashboard/application/dashboard_data_service.dart';
 import 'package:onetj/features/dashboard/models/dashboard_upcoming_entry_data.dart';
 import 'package:onetj/features/dashboard/models/upcoming_entries_calculator.dart';
-import 'package:onetj/app/presentation/base_view_model.dart';
+import 'package:onetj/app/presentation/session_aware_view_model.dart';
 import 'package:onetj/models/dashboard_upcoming_mode.dart';
 import 'package:onetj/app/presentation/ui_event.dart';
 import 'package:onetj/models/settings_defaults.dart';
@@ -19,18 +19,17 @@ import 'package:onetj/services/timetable_index_builder.dart';
 import 'package:onetj/services/app_update_service.dart';
 import 'package:onetj/app/logging/logger.dart';
 
-class DashboardViewModel extends BaseViewModel<UiEvent> {
+class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
   DashboardViewModel({
     required DashboardDataService dataService,
     required SettingsRepository settingsRepository,
     required AppUpdateService appUpdateService,
-    required SessionController sessionController,
+    required super.sessionController,
   })  : _dataService = dataService,
         _settingsRepository = settingsRepository,
         _appUpdateService = appUpdateService,
         _sessionController = sessionController {
     _settingsSub = _settingsRepository.stream.listen(_listenSettingsChanged);
-    _sessionController.addListener(_onSessionChanged);
   }
 
   final DashboardDataService _dataService;
@@ -45,25 +44,15 @@ class DashboardViewModel extends BaseViewModel<UiEvent> {
   ///
   /// 失效态（expired）本机缓存仍可读，允许走缓存；游客态没有令牌，
   /// 跳过一切鉴权请求，避免触发 401 干扰会话状态。
+  /// 注意与基类 [isGuest] 不等价：本护栏在 unknown 下也拦截，保留原语义。
   bool get _canFetchPlatformData =>
       _sessionController.status == AuthStatus.authenticated ||
       _sessionController.status == AuthStatus.expired;
 
-  /// 会话恢复（重新登录成功）时自动重载数据；进入游客态时清空内存中的
-  /// 个人数据——登出虽已清缓存，但 indexedStack 使本视图模型存活，
-  /// 不清内存会让游客继续看到上一账号的课程。
-  void _onSessionChanged() {
-    final AuthStatus status = _sessionController.status;
-    if (status == AuthStatus.authenticated) {
-      unawaited(load());
-    } else if (status == AuthStatus.guest) {
-      _clearPersonalData();
-      notifyListeners();
-    }
-  }
-
   /// 清空内存中的个人数据（学籍/校历/课表），保留本地设置。
-  void _clearPersonalData() {
+  /// 登录恢复重载与游客态清内存的分发由基类监听承担。
+  @override
+  void clearPersonalData() {
     _departmentName = null;
     _calendar = null;
     _timetableIndex = null;
@@ -116,6 +105,7 @@ class DashboardViewModel extends BaseViewModel<UiEvent> {
     );
   }
 
+  @override
   Future<void> load() async {
     // 并发防护：登录恢复与前台恢复可能同时触发，避免重复拉取/重复检查更新。
     if (_loading) {
@@ -131,7 +121,7 @@ class DashboardViewModel extends BaseViewModel<UiEvent> {
     try {
       if (!_canFetchPlatformData) {
         // 游客态：只加载本地设置，平台数据留空，由视图展示登录引导。
-        _clearPersonalData();
+        clearPersonalData();
         await loadSettings();
         notifyListeners();
         return;
@@ -420,7 +410,6 @@ class DashboardViewModel extends BaseViewModel<UiEvent> {
   void dispose() {
     _upcomingRefreshTimer?.cancel();
     _settingsSub?.cancel();
-    _sessionController.removeListener(_onSessionChanged);
     super.dispose();
   }
 }
