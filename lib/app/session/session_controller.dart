@@ -84,17 +84,24 @@ class SessionController extends ChangeNotifier {
   ///
   /// 进入 [AuthStatus.guest]：登出编排已清空个人数据缓存，此后以游客身份
   /// 浏览公开页面，是否重新登录由用户决定。
+  ///
+  /// 处于 [AuthStatus.unknown] 时忽略，与 [markAuthenticated] 对称：
+  /// 引导期间不应提前退出 unknown，初始状态由 [completeBoot] 统一发布。
   void markSignedOut() {
+    if (_status == AuthStatus.unknown) {
+      return;
+    }
     _transitionTo(AuthStatus.guest, reason: 'sign_out');
   }
 
   /// 用户主动选择「以游客身份继续」时调用（如登录页的游客按钮）。
   ///
   /// 幂等：已处于 [AuthStatus.guest] 时完全无副作用——不通知、不改原因。
+  /// 处于 [AuthStatus.unknown] 时同样忽略（与 [markSignedOut] 一致）。
   /// 调用方须先清空本机个人数据（令牌/缓存/Cookie），再调用本方法；
   /// 本方法只负责状态翻转，不做清理。
   void continueAsGuest() {
-    if (_status == AuthStatus.guest) {
+    if (_status == AuthStatus.unknown || _status == AuthStatus.guest) {
       return;
     }
     _transitionTo(AuthStatus.guest, reason: 'continue_as_guest');

@@ -23,6 +23,11 @@ class CetScoreViewModel extends SessionAwareViewModel<UiEvent> {
   @override
   Future<void> load() => _load(_dataSource.load, action: 'load');
 
+  /// 登录成功后强刷四六级成绩：登出清理可能残留上一账号缓存（issue #64），
+  /// 绕过 TTL 重新拉取，用新账号数据覆盖。
+  @override
+  Future<void> reloadAfterLogin() => refresh();
+
   Future<void> refresh() => _load(_dataSource.refresh, action: 'refresh');
 
   Future<void> _load(

@@ -7,6 +7,8 @@ import 'package:onetj/app/presentation/ui_event.dart';
 import 'package:onetj/app/session/session_controller.dart';
 import 'package:onetj/features/login/application/login_data_service.dart';
 import 'package:onetj/features/settings/application/logout_service.dart';
+import 'package:onetj/features/settings/models/event.dart';
+import 'package:onetj/features/settings/models/logout_result.dart';
 import 'package:onetj/app/presentation/base_view_model.dart';
 
 class LoginViewModel extends BaseViewModel<UiEvent> {
@@ -43,8 +45,14 @@ class LoginViewModel extends BaseViewModel<UiEvent> {
     _continuingAsGuest = true;
     notifyListeners();
     try {
-      await _logoutService.clearLocalSessionData();
+      final LogoutResult result = await _logoutService.clearLocalSessionData();
       _sessionController.continueAsGuest();
+      if (!result.isFullyClean) {
+        // 与设置页登出一致的降级警告：已进入游客态，仅残留清理失败。
+        emit(LogoutCompletedWithWarningEvent(
+          failedSteps: result.residualFailures.keys.toList(growable: false),
+        ));
+      }
       return true;
     } catch (error) {
       emit(ShowSnackBarEvent(message: 'Failed to continue as guest: $error'));

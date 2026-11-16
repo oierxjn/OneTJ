@@ -32,6 +32,11 @@ class StudentExamViewModel extends SessionAwareViewModel<UiEvent> {
   @override
   Future<void> load() => _load(_dataSource.load);
 
+  /// 登录成功后强刷考试安排：登出清理可能残留上一账号缓存（issue #64），
+  /// 绕过 TTL 重新拉取，用新账号数据覆盖。
+  @override
+  Future<void> reloadAfterLogin() => refresh();
+
   Future<void> refresh() => _load(_dataSource.refresh);
 
   Future<void> _load(Future<StudentExamLoadResult> Function() loader) async {

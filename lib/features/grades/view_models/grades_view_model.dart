@@ -63,6 +63,11 @@ class GradesViewModel extends SessionAwareViewModel<UiEvent> {
     }
   }
 
+  /// 登录成功后强刷成绩：登出清理可能残留上一账号缓存（issue #64），
+  /// 绕过 TTL 重新拉取，用新账号数据覆盖。
+  @override
+  Future<void> reloadAfterLogin() => refresh();
+
   Future<void> refresh() async {
     if (isGuest) {
       return;

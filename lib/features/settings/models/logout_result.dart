@@ -5,7 +5,8 @@
 /// 但本机可能残留少量缓存/Cookie；调用方应据此给出降级警告，
 /// 而不是把登出当作失败。
 class LogoutResult {
-  const LogoutResult({this.residualFailures = const <String, Object>{}});
+  LogoutResult({Map<String, Object> residualFailures = const <String, Object>{}})
+      : residualFailures = Map<String, Object>.unmodifiable(residualFailures);
 
   final Map<String, Object> residualFailures;
 

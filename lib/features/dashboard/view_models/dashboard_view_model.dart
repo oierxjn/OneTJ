@@ -106,7 +106,14 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
   }
 
   @override
-  Future<void> load() async {
+  Future<void> load() => _load(forceRefresh: false);
+
+  /// 登录成功后强刷个人数据：登出清理可能残留上一账号缓存（issue #64），
+  /// 学籍/校历/课表全部绕过 TTL 重新拉取，用新账号数据覆盖。
+  @override
+  Future<void> reloadAfterLogin() => _load(forceRefresh: true);
+
+  Future<void> _load({required bool forceRefresh}) async {
     // 并发防护：登录恢复与前台恢复可能同时触发，避免重复拉取/重复检查更新。
     if (_loading) {
       return;
@@ -128,9 +135,9 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
       }
       await Future.wait([
         loadSettings(),
-        loadStudentInfo(),
-        loadSchoolCalendar(),
-        loadCourseSchedule(),
+        loadStudentInfo(forceRefresh: forceRefresh),
+        loadSchoolCalendar(forceRefresh: forceRefresh),
+        loadCourseSchedule(forceRefresh: forceRefresh),
         _uploadUserCollectionWhenStudentInfoLoaded(),
       ]);
     } finally {
@@ -223,9 +230,11 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
     return true;
   }
 
-  Future<void> loadStudentInfo() async {
+  Future<void> loadStudentInfo({bool forceRefresh = false}) async {
     try {
-      final StudentInfoData data = await _dataService.getStudentInfo();
+      final StudentInfoData data = forceRefresh
+          ? await _dataService.refreshStudentInfo()
+          : await _dataService.getStudentInfo();
       _departmentName = data.deptName;
     } catch (error) {
       emit(
@@ -250,10 +259,12 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
     }
   }
 
-  Future<void> loadSchoolCalendar() async {
+  Future<void> loadSchoolCalendar({bool forceRefresh = false}) async {
     try {
       final DateTime now = DateTime.now();
-      final SchoolCalendarData data = await _dataService.getSchoolCalendar();
+      final SchoolCalendarData data = forceRefresh
+          ? await _dataService.refreshSchoolCalendar()
+          : await _dataService.getSchoolCalendar();
       _calendar = data;
       _lastCalendarSyncDate = now;
     } catch (error, stackTrace) {
@@ -272,9 +283,11 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
     }
   }
 
-  Future<void> loadCourseSchedule() async {
+  Future<void> loadCourseSchedule({bool forceRefresh = false}) async {
     try {
-      final CourseScheduleData data = await _dataService.getCourseSchedule();
+      final CourseScheduleData data = forceRefresh
+          ? await _dataService.refreshCourseSchedule()
+          : await _dataService.getCourseSchedule();
       final TimetableIndex index =
           const TimetableIndexBuilder().buildIndex(data);
       final List<TimetableEntry> entries =

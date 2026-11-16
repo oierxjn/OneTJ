@@ -78,6 +78,40 @@ class DashboardDataService {
     );
   }
 
+  /// 登录成功后强制刷新课表：绕过缓存 TTL，用新账号数据覆盖可能残留的
+  /// 上一账号缓存（issue #64）。学籍与校历走各自的强刷方法。
+  Future<CourseScheduleData> refreshCourseSchedule() async {
+    final DateTime now = DateTime.now();
+    await _courseScheduleRepository.warmUp();
+    final String? termKey = await _termKeyResolver.resolveCurrentTermKey(
+      now: now,
+      fetchSchoolCalendar: fetchSchoolCalendar,
+    );
+    return _courseScheduleRepository.refresh(
+      now: now,
+      termKey: termKey,
+      fetcher: fetchCourseSchedule,
+    );
+  }
+
+  /// 登录成功后强制刷新学籍信息（绕过 1 天 TTL）。
+  Future<StudentInfoData> refreshStudentInfo() async {
+    await _studentInfoRepository.warmUp();
+    return _studentInfoRepository.refresh(
+      now: DateTime.now(),
+      fetcher: fetchStudentInfo,
+    );
+  }
+
+  /// 登录成功后强制刷新校历（绕过 7 天 TTL）。
+  Future<SchoolCalendarData> refreshSchoolCalendar() async {
+    await _schoolCalendarRepository.warmUp();
+    return _schoolCalendarRepository.refresh(
+      now: DateTime.now(),
+      fetcher: fetchSchoolCalendar,
+    );
+  }
+
   /// 学生信息加载后按用户采集策略上报一次埋点。
   ///
   /// 组合学生信息与当前设置；失败由调用方决定如何处理。

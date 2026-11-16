@@ -414,7 +414,7 @@ void main() {
 
     test('全部清理成功：返回 true 且不发警告事件', () async {
       final SettingsViewModel vm = buildViewModel(
-        logoutService: _StubLogoutService(result: const LogoutResult()),
+        logoutService: _StubLogoutService(result: LogoutResult()),
       );
       try {
         final List<UiEvent> events = <UiEvent>[];
@@ -451,8 +451,9 @@ void main() {
 
 /// 只覆写登出编排的桩：返回预置结果或抛出预置错误。
 class _StubLogoutService extends LogoutService {
-  _StubLogoutService({this.result = const LogoutResult(), this.error})
-      : super(
+  _StubLogoutService({LogoutResult? result, this.error})
+      : result = result ?? LogoutResult(),
+        super(
           tokenRepository: TokenRepository(storage: InMemoryTokenStorage()),
           studentInfoRepository:
               StudentInfoRepository(storage: InMemoryStudentInfoStorage()),

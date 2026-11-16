@@ -74,7 +74,14 @@ class TimetableViewModel extends SessionAwareViewModel<UiEvent> {
   List<int> get availableWeeks => _availableWeeks();
 
   @override
-  Future<void> load() async {
+  Future<void> load() => _load(forceRefresh: false);
+
+  /// 登录成功后强刷课表：登出清理可能残留上一账号缓存（issue #64），
+  /// 绕过 TTL 重新拉取，用新账号数据覆盖。
+  @override
+  Future<void> reloadAfterLogin() => _load(forceRefresh: true);
+
+  Future<void> _load({required bool forceRefresh}) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -86,7 +93,7 @@ class TimetableViewModel extends SessionAwareViewModel<UiEvent> {
       return;
     }
     await _loadCurrentWeek();
-    await _loadTimetable();
+    await _loadTimetable(forceRefresh: forceRefresh);
     await _loadLastFetchedAt();
     _isLoading = false;
     notifyListeners();
@@ -278,9 +285,12 @@ class TimetableViewModel extends SessionAwareViewModel<UiEvent> {
   ///
   /// 加载完成后同步选中的周数
   /// 如果加载失败，将错误存储到 [_error] 中
-  Future<void> _loadTimetable() async {
+  /// [forceRefresh] 为 true 时绕过缓存 TTL 直接拉取（登录后强刷）。
+  Future<void> _loadTimetable({bool forceRefresh = false}) async {
     try {
-      final TimetableIndex index = await _dataService.getTimetableIndex();
+      final TimetableIndex index = forceRefresh
+          ? await _dataService.refreshTimetableIndex()
+          : await _dataService.getTimetableIndex();
       if (isGuest) {
         return;
       }

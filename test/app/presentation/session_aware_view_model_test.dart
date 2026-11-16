@@ -9,6 +9,7 @@ class _FakeSessionViewModel extends SessionAwareViewModel<UiEvent> {
   _FakeSessionViewModel({required super.sessionController});
 
   int loadCount = 0;
+  int reloadCount = 0;
   int clearCount = 0;
   bool dataLoaded = false;
   bool disposed = false;
@@ -25,6 +26,12 @@ class _FakeSessionViewModel extends SessionAwareViewModel<UiEvent> {
   }
 
   @override
+  Future<void> reloadAfterLogin() async {
+    reloadCount += 1;
+    await load();
+  }
+
+  @override
   void clearPersonalData() {
     clearCount += 1;
     dataLoaded = false;
@@ -35,6 +42,21 @@ class _FakeSessionViewModel extends SessionAwareViewModel<UiEvent> {
     disposed = true;
     super.dispose();
   }
+}
+
+/// 不覆写 reloadAfterLogin 的假子类：验证基类默认回落到 load。
+class _DefaultReloadViewModel extends SessionAwareViewModel<UiEvent> {
+  _DefaultReloadViewModel({required super.sessionController});
+
+  int loadCount = 0;
+
+  @override
+  Future<void> load() async {
+    loadCount += 1;
+  }
+
+  @override
+  void clearPersonalData() {}
 }
 
 void main() {
@@ -53,14 +75,35 @@ void main() {
   });
 
   group('SessionAwareViewModel 状态分发', () {
-    test('登录成功自动 load', () async {
+    test('登录成功走 reloadAfterLogin（强刷钩子）', () async {
       session.completeBoot(AuthStatus.guest);
 
       session.markAuthenticated();
       await Future<void>.delayed(Duration.zero);
 
+      expect(viewModel.reloadCount, 1);
       expect(viewModel.loadCount, 1);
       expect(viewModel.dataLoaded, isTrue);
+    });
+
+    test('未覆写钩子时登录成功默认回落到 load', () async {
+      final _DefaultReloadViewModel defaultViewModel =
+          _DefaultReloadViewModel(sessionController: session);
+      session.completeBoot(AuthStatus.guest);
+
+      session.markAuthenticated();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(defaultViewModel.loadCount, 1);
+      defaultViewModel.dispose();
+    });
+
+    test('引导发布已登录走 load 而非强刷钩子', () async {
+      session.completeBoot(AuthStatus.authenticated);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(viewModel.loadCount, 1);
+      expect(viewModel.reloadCount, 0);
     });
 
     test('进入游客态清内存并通知一次', () {

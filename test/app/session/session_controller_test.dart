@@ -187,5 +187,33 @@ void main() {
       expect(controller.status, AuthStatus.authenticated);
       expect(notifications, 0);
     });
+
+    test('引导期间的登出被忽略，completeBoot 正常发布结论', () {
+      final SessionController controller = SessionController();
+      int notifications = 0;
+      controller.addListener(() => notifications += 1);
+
+      controller.markSignedOut();
+
+      expect(controller.status, AuthStatus.unknown);
+      expect(notifications, 0);
+
+      controller.completeBoot(AuthStatus.authenticated);
+
+      expect(controller.status, AuthStatus.authenticated);
+    });
+
+    test('引导期间的游客选择被忽略，completeBoot 正常发布结论', () {
+      final SessionController controller = SessionController();
+
+      controller.continueAsGuest();
+
+      expect(controller.status, AuthStatus.unknown);
+
+      controller.completeBoot(AuthStatus.guest);
+
+      expect(controller.status, AuthStatus.guest);
+      expect(controller.lastReason, 'boot');
+    });
   });
 }
