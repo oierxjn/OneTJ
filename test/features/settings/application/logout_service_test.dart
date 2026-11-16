@@ -4,6 +4,7 @@ import 'package:onetj/features/cet_score/application/cet_score_data_service.dart
 import 'package:onetj/features/grades/application/grades_data_service.dart';
 import 'package:onetj/features/settings/application/logout_service.dart';
 import 'package:onetj/features/settings/models/logout_result.dart';
+// LogoutCleanupException 由 logout_service.dart 导出。
 import 'package:onetj/features/student_exams/application/student_exam_data_service.dart';
 import 'package:onetj/models/cet_score_data.dart';
 import 'package:onetj/models/undergraduate_score_data.dart';
@@ -140,56 +141,78 @@ void main() {
       expect(tokenStep.called, isTrue);
       expect(cookieStep.called, isTrue);
     });
+
+    test('缓存先于令牌清理（令牌是最后的关键步骤）', () async {
+      final List<String> order = <String>[];
+      studentInfoStep = _CleanupStep();
+      tokenStep = _CleanupStep();
+      service = LogoutService(
+        tokenRepository: TokenRepository(storage: InMemoryTokenStorage()),
+        studentInfoRepository:
+            StudentInfoRepository(storage: InMemoryStudentInfoStorage()),
+        schoolCalendarRepository:
+            SchoolCalendarRepository(storage: InMemorySchoolCalendarStorage()),
+        courseScheduleRepository:
+            CourseScheduleRepository(storage: InMemoryCourseScheduleStorage()),
+        cetScoreDataService: _FakeCetScoreDataService(cetStep),
+        gradesDataService: _FakeGradesDataService(gradesStep),
+        studentExamDataService: _FakeStudentExamDataService(examStep),
+        webViewEnvironmentService: WebViewEnvironmentService(),
+        sessionController: session,
+        clearTokenOverride: () async {
+          order.add('token');
+          await tokenStep.run();
+        },
+        clearStudentInfoOverride: () async {
+          order.add('studentInfo');
+          await studentInfoStep.run();
+        },
+        clearSchoolCalendarOverride: calendarStep.run,
+        clearCourseScheduleOverride: courseStep.run,
+        clearCookiesOverride: cookieStep.run,
+      );
+
+      await service.clearSession();
+
+      expect(order, <String>['studentInfo', 'token']);
+    });
   });
 
-  group('LogoutService.clearSession 部分失败路径', () {
-    test('Cookie 清理失败：其余步骤仍执行，状态仍翻转为游客态', () async {
-      cookieStep = _CleanupStep(error: StateError('cookie platform error'));
-      service = buildService();
-
-      final LogoutResult result = await service.clearSession();
-
-      expect(session.status, AuthStatus.guest);
-      expect(result.isFullyClean, isFalse);
-      expect(result.residualFailures.keys, contains('cookies'));
-      expect(examStep.called, isTrue);
-    });
-
-    test('中间缓存清理失败：不中断后续步骤，失败被记入结果', () async {
+  group('LogoutService.clearSession 缓存清理失败：不允许登出', () {
+    test('任一缓存失败：异常上抛，令牌未动，状态保持已登录', () async {
       calendarStep = _CleanupStep(error: StateError('disk full'));
-      gradesStep = _CleanupStep(error: StateError('box closed'));
       service = buildService();
 
-      final LogoutResult result = await service.clearSession();
+      await expectLater(
+        service.clearSession(),
+        throwsA(isA<LogoutCleanupException>()),
+      );
 
-      expect(session.status, AuthStatus.guest);
-      expect(result.residualFailures.keys,
-          containsAll(<String>['schoolCalendar', 'grades']));
-      expect(courseStep.called, isTrue);
-      expect(cetStep.called, isTrue);
-      expect(examStep.called, isTrue);
-      expect(cookieStep.called, isTrue);
+      expect(session.status, AuthStatus.authenticated);
+      expect(tokenStep.called, isFalse);
+      expect(cookieStep.called, isFalse);
     });
 
-    test('全部尽力步骤失败：状态仍翻转，结果记录所有失败', () async {
+    test('多项缓存失败：收集全部失败后上抛，令牌仍未动', () async {
       studentInfoStep = _CleanupStep(error: StateError('e1'));
-      calendarStep = _CleanupStep(error: StateError('e2'));
-      courseStep = _CleanupStep(error: StateError('e3'));
-      cetStep = _CleanupStep(error: StateError('e4'));
-      gradesStep = _CleanupStep(error: StateError('e5'));
-      examStep = _CleanupStep(error: StateError('e6'));
-      cookieStep = _CleanupStep(error: StateError('e7'));
+      gradesStep = _CleanupStep(error: StateError('e2'));
       service = buildService();
 
-      final LogoutResult result = await service.clearSession();
+      await expectLater(
+        service.clearSession(),
+        throwsA(isA<LogoutCleanupException>()),
+      );
 
-      expect(session.status, AuthStatus.guest);
-      expect(result.residualFailures.length, 7);
+      expect(session.status, AuthStatus.authenticated);
+      expect(tokenStep.called, isFalse);
+      // 失败不中断其余缓存步骤，便于一次重试清完。
+      expect(calendarStep.called, isTrue);
+      expect(examStep.called, isTrue);
     });
   });
 
-  group('LogoutService.clearSession 关键步骤失败', () {
-    test('token 清理失败：异常上抛，状态不变，后续步骤不执行', () async {
+  group('LogoutService.clearSession 令牌清理失败', () {
+    test('缓存已清但令牌删除失败：异常上抛，状态保持已登录', () async {
       tokenStep = _CleanupStep(error: StateError('token store locked'));
       service = buildService();
 
@@ -199,8 +222,22 @@ void main() {
       );
 
       expect(session.status, AuthStatus.authenticated);
-      expect(studentInfoStep.called, isFalse);
+      expect(studentInfoStep.called, isTrue);
       expect(cookieStep.called, isFalse);
+    });
+  });
+
+  group('LogoutService.clearSession Cookie 失败：降级放行', () {
+    test('Cookie 失败不阻塞登出：状态翻转，失败记入结果', () async {
+      cookieStep = _CleanupStep(error: StateError('cookie platform error'));
+      service = buildService();
+
+      final LogoutResult result = await service.clearSession();
+
+      expect(session.status, AuthStatus.guest);
+      expect(result.isFullyClean, isFalse);
+      expect(result.residualFailures.keys, <String>['cookies']);
+      expect(tokenStep.called, isTrue);
     });
   });
 
@@ -212,7 +249,20 @@ void main() {
       expect(session.status, AuthStatus.authenticated);
     });
 
-    test('token 清理失败时异常上抛且不翻转状态', () async {
+    test('缓存清理失败时异常上抛且不翻转状态，令牌未动', () async {
+      cetStep = _CleanupStep(error: StateError('box closed'));
+      service = buildService();
+
+      await expectLater(
+        service.clearLocalSessionData(),
+        throwsA(isA<LogoutCleanupException>()),
+      );
+
+      expect(session.status, AuthStatus.authenticated);
+      expect(tokenStep.called, isFalse);
+    });
+
+    test('令牌删除失败时异常上抛且不翻转状态', () async {
       tokenStep = _CleanupStep(error: StateError('token store locked'));
       service = buildService();
 

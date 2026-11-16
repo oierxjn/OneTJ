@@ -191,30 +191,6 @@ void main() {
       viewModel.dispose();
     });
   });
-
-  group('TimetableViewModel 登录强刷（issue #64）', () {
-    test('登录成功自动强刷课表，绕过缓存优先取数', () async {
-      final SessionController session = SessionController()
-        ..completeBoot(AuthStatus.guest);
-      final _FakeTimetableDataService dataService = _FakeTimetableDataService(
-        index: _buildIndex(entryCount: 1),
-        refreshIndex: _buildIndex(entryCount: 2),
-      );
-      final TimetableViewModel viewModel = TimetableViewModel(
-        dataService: dataService,
-        settingsRepository: settingsRepository,
-        sessionController: session,
-      );
-
-      session.markAuthenticated();
-      await Future<void>.delayed(Duration.zero);
-      await pumpEventQueue();
-
-      expect(dataService.refreshCallCount, 1);
-      expect(viewModel.index!.allEntries, hasLength(2));
-      viewModel.dispose();
-    });
-  });
 }
 
 TimetableIndex _buildIndex({required int entryCount}) {

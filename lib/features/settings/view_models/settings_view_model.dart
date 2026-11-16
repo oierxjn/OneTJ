@@ -252,9 +252,9 @@ class SettingsViewModel extends BaseViewModel<UiEvent> {
 
   /// 执行登出编排；成功返回 true，由视图决定导航（游客态首页）。
   ///
-  /// 令牌删除成功即视为登出成功（会话已翻转为游客态）；缓存/Cookie 的
-  /// 残留失败通过 [LogoutCompletedWithWarningEvent] 上报，由视图降级提示。
-  /// 只有令牌删除失败（会话保持原态）才返回 false。
+  /// 全有或全无：缓存或令牌清理失败时登出被拒绝（会话保持原态），
+  /// 返回 false 并提示重试；仅 Cookie 残留失败时仍登出成功，通过
+  /// [LogoutCompletedWithWarningEvent] 上报，由视图降级提示。
   Future<bool> logout() async {
     AppLogger.logUiAction(feature: 'Settings', action: 'logout_started');
     loading = true;

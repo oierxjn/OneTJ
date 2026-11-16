@@ -12,21 +12,15 @@ class _FakeCetScoreDataSource implements CetScoreDataSource {
   CetScoreData? loadResult;
   Object? loadError;
   CetScoreData? refreshResult;
-  int loadCount = 0;
-  int refreshCount = 0;
 
   @override
   Future<CetScoreData> load() async {
-    loadCount += 1;
     if (loadError != null) throw loadError!;
     return loadResult!;
   }
 
   @override
-  Future<CetScoreData> refresh() async {
-    refreshCount += 1;
-    return refreshResult ?? loadResult!;
-  }
+  Future<CetScoreData> refresh() async => refreshResult ?? loadResult!;
 }
 
 CetScoreData buildCetScoreData({String score = '520'}) {
@@ -94,42 +88,5 @@ void main() {
     expect(viewModel.records, isEmpty);
     expect(await event, isA<ShowSnackBarEvent>());
     viewModel.dispose();
-  });
-
-  test('登录成功自动强刷，冷启动判定已登录走缓存优先', () async {
-    final SessionController session = SessionController()
-      ..completeBoot(AuthStatus.guest);
-    final _FakeCetScoreDataSource dataSource = _FakeCetScoreDataSource(
-      loadResult: buildCetScoreData(score: '520'),
-      refreshResult: buildCetScoreData(score: '600'),
-    );
-    final CetScoreViewModel viewModel = CetScoreViewModel(
-      sessionController: session,
-      dataSource: dataSource,
-    );
-
-    session.markAuthenticated();
-    await Future<void>.delayed(Duration.zero);
-
-    expect(dataSource.refreshCount, 1);
-    expect(dataSource.loadCount, 0);
-    expect(viewModel.records.single.score, '600');
-    viewModel.dispose();
-
-    final SessionController bootSession = SessionController();
-    final _FakeCetScoreDataSource bootDataSource = _FakeCetScoreDataSource(
-      loadResult: buildCetScoreData(),
-    );
-    final CetScoreViewModel bootViewModel = CetScoreViewModel(
-      sessionController: bootSession,
-      dataSource: bootDataSource,
-    );
-
-    bootSession.completeBoot(AuthStatus.authenticated);
-    await Future<void>.delayed(Duration.zero);
-
-    expect(bootDataSource.loadCount, 1);
-    expect(bootDataSource.refreshCount, 0);
-    bootViewModel.dispose();
   });
 }

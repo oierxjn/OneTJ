@@ -283,7 +283,7 @@
 
   "logOut": "Log Out",
   "logOutConfirmLabel": "Are you sure you want to log out?",
-  "logoutResidualCleanupWarning": "Logged out, but some local data could not be cleared. It will be fixed after you log in again.",
+  "logoutResidualCleanupWarning": "Logged out, but browser session data could not be cleared. You may need to verify your identity again next time you log in.",
   "confirmLabel": "Confirm",
   "cancelLabel": "Cancel",
   "closeLabel": "Close",

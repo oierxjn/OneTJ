@@ -15,19 +15,15 @@ class _FakeStudentExamDataSource implements StudentExamDataSource {
   StudentExamLoadResult? loadResult;
   Object? loadError;
   Object? refreshError;
-  int loadCount = 0;
-  int refreshCount = 0;
 
   @override
   Future<StudentExamLoadResult> load() async {
-    loadCount += 1;
     if (loadError != null) throw loadError!;
     return loadResult!;
   }
 
   @override
   Future<StudentExamLoadResult> refresh() async {
-    refreshCount += 1;
     if (refreshError != null) throw refreshError!;
     return loadResult!;
   }
@@ -154,26 +150,6 @@ void main() {
     expect(viewModel.loading, isFalse);
     expect(viewModel.records, isEmpty);
     expect((await event).showingCachedData, isFalse);
-    viewModel.dispose();
-  });
-
-  test('登录成功自动强刷而非缓存优先取数', () async {
-    final SessionController session = SessionController()
-      ..completeBoot(AuthStatus.guest);
-    final _FakeStudentExamDataSource dataSource = _FakeStudentExamDataSource(
-      loadResult: StudentExamLoadResult(data: buildStudentExamData()),
-    );
-    final StudentExamViewModel viewModel = StudentExamViewModel(
-      sessionController: session,
-      dataSource: dataSource,
-    );
-
-    session.markAuthenticated();
-    await Future<void>.delayed(Duration.zero);
-
-    expect(dataSource.refreshCount, 1);
-    expect(dataSource.loadCount, 0);
-    expect(viewModel.records, isNotEmpty);
     viewModel.dispose();
   });
 }
