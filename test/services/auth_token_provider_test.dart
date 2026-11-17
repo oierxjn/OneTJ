@@ -573,4 +573,143 @@ void main() {
       expect(calls, 2, reason: '前一次刷新结束后应允许新的刷新');
     });
   });
+
+  group('AuthTokenProvider 处理 HTTP 200 包装的 OAuth 错误', () {
+    late SessionController session;
+
+    /// 网关把上游 OAuth 400 错误包成 HTTP 200 的响应体（线上实际形态）。
+    const String invalidGrantEnvelope = '{"error_error":{'
+        '"http_status_code":400,'
+        '"http_body":"{\\"error\\":\\"invalid_grant\\",'
+        '\\"error_description\\":\\"Session not active\\"}"}}';
+
+    /// 本地看 refresh token 未过期（access 已过期），从而走到真实刷新请求。
+    TokenData expiredAccessToken() => _buildToken(
+          accessTokenExpiresIn: -3600,
+          refreshTokenExpiresIn: 7200,
+        );
+
+    setUp(() {
+      session = SessionController()..completeBoot(AuthStatus.authenticated);
+    });
+
+    AuthTokenProvider providerWithBody(String responseBody) {
+      return AuthTokenProvider(
+        repository: repository,
+        sessionController: session,
+        httpPost: (
+          Uri uri, {
+          Map<String, String>? headers,
+          Object? body,
+          Encoding? encoding,
+          String loggerName = 'Http',
+        }) async =>
+            http.Response(responseBody, 200),
+      );
+    }
+
+    test('刷新收到 invalid_grant 包装时按凭证失效处理', () async {
+      await repository.saveToken(expiredAccessToken());
+      final AuthTokenProvider provider = providerWithBody(invalidGrantEnvelope);
+
+      await expectLater(
+        provider.getValidAccessToken(),
+        throwsA(
+          isA<NetworkException>()
+              .having((NetworkException e) => e.statusCode, 'statusCode', 400),
+        ),
+      );
+
+      expect(session.status, AuthStatus.expired);
+      expect(session.lastReason, 'refresh_rejected_invalid_grant');
+    });
+
+    test('未包装的 invalid_grant 错误体同样按凭证失效处理', () async {
+      await repository.saveToken(expiredAccessToken());
+      final AuthTokenProvider provider = providerWithBody(
+        '{"error":"invalid_grant","error_description":"Session not active"}',
+      );
+
+      await expectLater(
+        provider.getValidAccessToken(),
+        throwsA(isA<NetworkException>()),
+      );
+
+      expect(session.status, AuthStatus.expired);
+      expect(session.lastReason, 'refresh_rejected_invalid_grant');
+    });
+
+    test('包装的 5xx 瞬时错误不登出用户', () async {
+      await repository.saveToken(expiredAccessToken());
+      final AuthTokenProvider provider = providerWithBody(
+        '{"error_error":{"http_status_code":502,"http_body":"Bad Gateway"}}',
+      );
+
+      await expectLater(
+        provider.getValidAccessToken(),
+        throwsA(
+          isA<NetworkException>()
+              .having((NetworkException e) => e.statusCode, 'statusCode', 502),
+        ),
+      );
+
+      expect(session.status, AuthStatus.authenticated);
+    });
+
+    test('旧刷新的 invalid_grant 不误登出新会话', () async {
+      await repository.saveToken(expiredAccessToken());
+      final Completer<void> refreshGate = Completer<void>();
+      final AuthTokenProvider provider = AuthTokenProvider(
+        repository: repository,
+        sessionController: session,
+        httpPost: (
+          Uri uri, {
+          Map<String, String>? headers,
+          Object? body,
+          Encoding? encoding,
+          String loggerName = 'Http',
+        }) async {
+          final Map<String, dynamic> fields =
+              (body! as Map<String, dynamic>).cast<String, dynamic>();
+          if (fields['grant_type'] == 'authorization_code') {
+            return http.Response(
+              '{"access_token":"brand-new-access",'
+              '"refresh_token":"brand-new-refresh",'
+              '"token_type":"Bearer","scope":"s","id_token":"i",'
+              '"session_state":"ss","expires_in":3600,'
+              '"refresh_expires_in":7200}',
+              200,
+            );
+          }
+          await refreshGate.future;
+          return http.Response(invalidGrantEnvelope, 200);
+        },
+      );
+
+      final Future<String> pendingRefresh = provider.getValidAccessToken();
+      await Future<void>.delayed(Duration.zero);
+      await provider.exchangeCode('new-code');
+      session.markAuthenticated();
+      refreshGate.complete();
+
+      await expectLater(pendingRefresh, throwsA(isA<NetworkException>()));
+      final TokenData stored = (await repository.getToken())!;
+      expect(stored.accessToken, 'brand-new-access');
+      expect(session.status, AuthStatus.authenticated);
+    });
+
+    test('授权码交换收到错误包装时抛网络异常且不写入令牌', () async {
+      final AuthTokenProvider provider = providerWithBody(invalidGrantEnvelope);
+
+      await expectLater(
+        provider.exchangeCode('some-code'),
+        throwsA(
+          isA<NetworkException>()
+              .having((NetworkException e) => e.statusCode, 'statusCode', 400),
+        ),
+      );
+
+      expect(await repository.getToken(), isNull);
+    });
+  });
 }

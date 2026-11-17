@@ -68,6 +68,9 @@ class AuthTokenProvider {
   /// 调用方共享。
   Future<String>? _inFlightRefresh;
 
+  /// OAuth 规范中表示授权授予无效（会话失效、refresh token 已作废等）的错误码。
+  static const String _invalidGrantError = 'invalid_grant';
+
   /// 用授权码交换 token,成功后写入 [TokenRepository]。
   Future<void> exchangeCode(String code) async {
     final Uri uri = Uri.https(_baseUrl, code2tokenPath);
@@ -85,8 +88,9 @@ class AuthTokenProvider {
       },
     );
     if (response.statusCode >= 200 && response.statusCode < 300) {
-      final Code2TokenData data =
-          Code2TokenData.fromJson(json.decode(response.body));
+      final Code2TokenData data = Code2TokenData.fromJson(
+        _decodeTokenBody(response, uri),
+      );
       await _repository.saveFromCode2Token(data);
       return;
     }
@@ -144,10 +148,17 @@ class AuthTokenProvider {
     try {
       refreshed = await _refreshToken(refreshTokenUsed);
     } on NetworkException catch (error) {
-      // 只有当前令牌的 401 才算登录失效；旧刷新不得误伤新登录的会话。
-      if (error.statusCode == 401 &&
+      // 只有当前令牌的确定性拒绝才算登录失效；旧刷新不得误伤新登录的会话。
+      // invalid_grant（可能被网关包在 HTTP 200 里）与 401 同属凭证已作废。
+      final bool grantRejected = error.statusCode == 401 ||
+          _isInvalidGrantBody(error.responseBody);
+      if (grantRejected &&
           _repository.isCurrentRefreshToken(refreshTokenUsed)) {
-        _sessionController?.markUnauthenticated(reason: 'refresh_rejected_401');
+        _sessionController?.markUnauthenticated(
+          reason: error.statusCode == 401
+              ? 'refresh_rejected_401'
+              : 'refresh_rejected_invalid_grant',
+        );
       }
       rethrow;
     }
@@ -185,12 +196,64 @@ class AuthTokenProvider {
       },
     );
     if (response.statusCode >= 200 && response.statusCode < 300) {
-      return Code2TokenData.fromJson(json.decode(response.body));
+      return Code2TokenData.fromJson(_decodeTokenBody(response, uri));
     }
     throw NetworkException.http(
       statusCode: response.statusCode,
       uri: uri,
       responseBody: response.body,
     );
+  }
+
+  /// 解码 token 端点的 2xx 响应体，并拦截网关包装的「伪成功」错误。
+  ///
+  /// 服务端可能以 HTTP 200 返回
+  /// `{"error_error":{"http_status_code":400,"http_body":"{\"error\":...}"}}`，
+  /// 真实状态码与 OAuth 错误藏在包装里。这里还原为携带真实状态码的
+  /// [NetworkException]，避免错误体进入 [Code2TokenData.fromJson] 后以
+  /// 解析异常的面目穿透上层的凭证失效判定。
+  Map<String, dynamic> _decodeTokenBody(http.Response response, Uri uri) {
+    final dynamic decoded = json.decode(response.body);
+    if (decoded is Map<String, dynamic>) {
+      final dynamic wrapped = decoded['error_error'];
+      if (wrapped is Map<String, dynamic>) {
+        final dynamic embeddedStatus = wrapped['http_status_code'];
+        final dynamic embeddedBody = wrapped['http_body'];
+        throw NetworkException.http(
+          statusCode: embeddedStatus is int ? embeddedStatus : 400,
+          uri: uri,
+          responseBody: embeddedBody is String
+              ? embeddedBody
+              : json.encode(embeddedBody ?? wrapped),
+        );
+      }
+      // 未包装的 OAuth 错误体（如直接 200 返回 invalid_grant）同样按失败处理。
+      final dynamic oauthError = decoded['error'];
+      if (oauthError is String && oauthError.isNotEmpty) {
+        throw NetworkException.http(
+          statusCode: 400,
+          uri: uri,
+          responseBody: response.body,
+        );
+      }
+      return decoded;
+    }
+    throw JSONResolveException(
+      message: 'Token endpoint returned non-object JSON',
+    );
+  }
+
+  /// 判断错误响应体是否为 OAuth `invalid_grant`（授权授予已失效）。
+  static bool _isInvalidGrantBody(String? body) {
+    if (body == null || body.isEmpty) {
+      return false;
+    }
+    try {
+      final dynamic decoded = json.decode(body);
+      return decoded is Map<String, dynamic> &&
+          decoded['error'] == _invalidGrantError;
+    } on FormatException {
+      return false;
+    }
   }
 }

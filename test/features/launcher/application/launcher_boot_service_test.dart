@@ -202,6 +202,58 @@ void main() {
 
       expect(status, AuthStatus.expired);
     });
+
+    test('刷新被 HTTP 200 包装的 invalid_grant 拒绝时判定为失效态', () async {
+      await tokenRepository.saveToken(
+        _buildToken(
+          accessTokenExpiresIn: -3600,
+          refreshTokenExpiresIn: 7200,
+        ),
+      );
+
+      final AuthStatus status = await buildService(
+        httpPost: (
+          Uri uri, {
+          Map<String, String>? headers,
+          Object? body,
+          Encoding? encoding,
+          String loggerName = 'Http',
+        }) async =>
+            http.Response(
+          '{"error_error":{"http_status_code":400,'
+          '"http_body":"{\\"error\\":\\"invalid_grant\\",'
+          '\\"error_description\\":\\"Session not active\\"}"}}',
+          200,
+        ),
+      ).run();
+
+      expect(status, AuthStatus.expired);
+    });
+
+    test('刷新被 HTTP 200 包装的 5xx 瞬时错误仍乐观判已登录', () async {
+      await tokenRepository.saveToken(
+        _buildToken(
+          accessTokenExpiresIn: -3600,
+          refreshTokenExpiresIn: 7200,
+        ),
+      );
+
+      final AuthStatus status = await buildService(
+        httpPost: (
+          Uri uri, {
+          Map<String, String>? headers,
+          Object? body,
+          Encoding? encoding,
+          String loggerName = 'Http',
+        }) async =>
+            http.Response(
+          '{"error_error":{"http_status_code":502,"http_body":"Bad Gateway"}}',
+          200,
+        ),
+      ).run();
+
+      expect(status, AuthStatus.authenticated);
+    });
   });
 
   test('壁纸解析完成后回调恰好触发一次', () async {
