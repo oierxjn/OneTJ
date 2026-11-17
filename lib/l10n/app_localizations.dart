@@ -176,6 +176,12 @@ abstract class AppLocalizations {
   /// **'Sign in again to restore your data'**
   String get dashboardExpiredSubtitle;
 
+  /// No description provided for @dashboardLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Some data failed to load. Please try again later'**
+  String get dashboardLoadFailed;
+
   /// No description provided for @tabDashboard.
   ///
   /// In en, this message translates to:

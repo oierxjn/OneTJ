@@ -41,6 +41,22 @@ class TermKeyResolver {
     }
   }
 
+  /// 失效态（expired）缓存只读解析学期 key（#82）：优先校历缓存，
+  /// 缺失时回退课表缓存元数据里的学期 key，全程不发起网络请求；
+  /// 两者皆无返回 null，由调用方跳过课表加载。
+  Future<String?> resolveCurrentTermKeyFromCache() async {
+    await _calendarRepository.warmUp();
+    final SchoolCalendarData? calendar =
+        await _calendarRepository.getCached(refreshFromStorage: false);
+    if (calendar != null) {
+      return formatTermKey(calendar);
+    }
+    await _scheduleRepository.warmUp();
+    final CourseScheduleCacheMeta? meta =
+        await _scheduleRepository.getCachedMeta(refreshFromStorage: false);
+    return meta?.termKey;
+  }
+
   static String formatTermKey(SchoolCalendarData calendar) {
     return '${calendar.schoolCalendar.year}-${calendar.schoolCalendar.term}';
   }

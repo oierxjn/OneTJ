@@ -30,6 +30,7 @@ class LoginView extends StatefulWidget {
 class _LoginViewState extends State<LoginView> {
   late final LoginViewModel viewModel;
   StreamSubscription<UiEvent>? _eventSub;
+  bool _residualSnackBarsCleared = false;
 
   @override
   void initState() {
@@ -72,6 +73,18 @@ class _LoginViewState extends State<LoginView> {
         return;
       }
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // 清掉上一页（如仪表盘）遗留的提示队列：SnackBar 挂在应用级
+    // ScaffoldMessenger 上，不清会跟随到登录页继续排队展示（#82）。
+    // 只在首次进入时清一次，避免后续依赖变化误清登录页自己的提示。
+    if (!_residualSnackBarsCleared) {
+      _residualSnackBarsCleared = true;
+      ScaffoldMessenger.of(context).clearSnackBars();
+    }
   }
 
   @override

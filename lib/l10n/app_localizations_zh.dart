@@ -48,6 +48,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dashboardExpiredSubtitle => '重新登录后即可恢复数据展示';
 
   @override
+  String get dashboardLoadFailed => '部分数据加载失败，请稍后重试';
+
+  @override
   String get tabDashboard => '仪表板';
 
   @override

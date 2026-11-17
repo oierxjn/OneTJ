@@ -67,6 +67,17 @@ class _DashboardViewState extends State<DashboardView>
         );
         return;
       }
+      if (event is DashboardLoadFailedEvent) {
+        // 本轮加载的瞬时失败合并为一条本地化提示（#82）；凭证失败不发
+        // 此事件，失效态由登录引导卡片承载。
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context).dashboardLoadFailed),
+          ),
+        );
+        return;
+      }
       if (event is AppUpdateFailedEvent) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(

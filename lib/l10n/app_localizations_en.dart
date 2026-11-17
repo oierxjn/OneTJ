@@ -50,6 +50,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dashboardExpiredSubtitle => 'Sign in again to restore your data';
 
   @override
+  String get dashboardLoadFailed =>
+      'Some data failed to load. Please try again later';
+
+  @override
   String get tabDashboard => 'Dashboard';
 
   @override
