@@ -41,15 +41,11 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
   Timer? _upcomingRefreshTimer;
   DateTime? _lastCalendarSyncDate;
 
-  /// 本轮加载是否出现过瞬时失败（#82）。一轮内多个数据源失败只提示一次。
+  /// 本轮加载是否出现瞬时失败，落定后合并提示一次（#82）。
   bool _transientLoadFailed = false;
 
-  /// 当前是否具备联网拉取平台数据的条件。
-  ///
-  /// 仅已登录态允许联网。失效态（expired）只读缓存（见
-  /// [_loadPlatformDataFromCache]），游客态没有令牌，跳过一切鉴权请求，
-  /// 避免触发 401 干扰会话状态。
-  /// 注意与基类 [isGuest] 不等价：本护栏在 unknown 下也拦截，保留原语义。
+  /// 仅已登录态允许联网拉取；失效态只读缓存（[_loadPlatformDataFromCache]），
+  /// 游客态跳过鉴权请求。与基类 [isGuest] 不等价：unknown 下也拦截。
   bool get _canFetchPlatformData =>
       _sessionController.status == AuthStatus.authenticated;
 
@@ -125,8 +121,7 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
     unawaited(_checkUpdateInBackground());
     try {
       if (_sessionController.status == AuthStatus.expired) {
-        // 失效态：平台数据只读缓存，绝不联网（#82）。缓存缺失保持空态，
-        // 由视图的失效登录引导卡片承载后续动作。
+        // 失效态只读缓存不联网（#82），缺失保持空态，由登录引导卡片承载。
         await Future.wait([
           loadSettings(),
           _loadPlatformDataFromCache(),
@@ -155,8 +150,8 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
     }
   }
 
-  /// 失效态只读加载平台缓存（#82）：全程不发起网络请求，缓存缺失保持
-  /// 空态；读缓存异常只记日志，不弹提示（失效态已有登录引导卡片）。
+  /// 失效态只读加载平台缓存（#82）：不联网，缺失保持空态；
+  /// 读缓存异常只记日志不提示。
   Future<void> _loadPlatformDataFromCache() async {
     try {
       final StudentInfoData? studentInfo =
@@ -165,8 +160,7 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
           await _dataService.loadCachedSchoolCalendar();
       final CourseScheduleData? schedule =
           await _dataService.loadCachedCourseSchedule();
-      // 回写前复检：读缓存期间可能已登出/以游客身份继续进入游客态，
-      // 游客内存必须保持为空（基类约定该复检由子类承担）。
+      // 回写前复检：读缓存期间可能已进入游客态，游客内存须保持为空。
       if (isGuest) {
         return;
       }
@@ -192,8 +186,8 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
     }
   }
 
-  /// 瞬时失败一轮只提示一次（#82）：并发加载器只置标记，由加载入口在
-  /// 全部落定后统一发一个语义事件，视图映射为本地化提示。
+  /// 瞬时失败一轮只提示一次（#82）：加载器只置标记，
+  /// 入口在全部落定后统一发一个语义事件。
   void _notifyLoadFailureOnce() {
     if (!_transientLoadFailed) {
       return;
@@ -291,8 +285,7 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
       final StudentInfoData data = await _dataService.getStudentInfo();
       _departmentName = data.deptName;
     } catch (error, stackTrace) {
-      // 凭证失败是预期分支（会话转失效、视图出登录引导），只记日志；
-      // 瞬时失败置标记，由加载入口合并为一次提示（#82）。
+      // 凭证失败是预期分支（会话转失效、出登录引导），只记日志（#82）。
       final bool credentialFailure = AuthTokenProvider.isCredentialFailure(error);
       AppLogger.warning(
         credentialFailure
@@ -312,8 +305,7 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
   }
 
   Future<void> _uploadUserCollectionWhenStudentInfoLoaded() async {
-    // 埋点走 getOrFetch，失效态下会发起注定失败的鉴权请求；失效态不联网
-    // （#82），直接跳过。
+    // 埋点走 getOrFetch，失效态会发起注定失败的鉴权请求，跳过（#82）。
     if (!_canFetchPlatformData) {
       return;
     }
@@ -336,7 +328,7 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
       _calendar = data;
       _lastCalendarSyncDate = now;
     } catch (error, stackTrace) {
-      // 凭证失败只记日志；瞬时失败置标记，一轮合并提示一次（#82）。
+      // 凭证失败只记日志；瞬时失败置标记合并提示（#82）。
       final bool credentialFailure = AuthTokenProvider.isCredentialFailure(error);
       AppLogger.warning(
         credentialFailure
@@ -361,7 +353,7 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
       _applyCourseSchedule(data);
     } catch (error, stackTrace) {
       _timetableIndex = null;
-      // 凭证失败只记日志；瞬时失败置标记，一轮合并提示一次（#82）。
+      // 凭证失败只记日志；瞬时失败置标记合并提示（#82）。
       final bool credentialFailure = AuthTokenProvider.isCredentialFailure(error);
       AppLogger.warning(
         credentialFailure
@@ -380,7 +372,7 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
     }
   }
 
-  /// 由课表数据构建索引并排序课程条目，供联网与只读缓存两条路径复用。
+  /// 构建课表索引并排序条目，联网与只读缓存路径复用。
   void _applyCourseSchedule(CourseScheduleData data) {
     final TimetableIndex index = const TimetableIndexBuilder().buildIndex(data);
     final List<TimetableEntry> entries =
@@ -410,15 +402,14 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
         (_lastCalendarSyncDate == null ||
             !_isSameDate(_lastCalendarSyncDate!, now));
     if (shouldSyncCalendar) {
-      // 与 load() 并发时让位：整轮加载已覆盖校历同步与失败提示收口，
-      // 避免重复拉取/重复提示（#82）。
+      // 与 load() 并发时让位，整轮加载已覆盖同步与提示收口（#82）。
       if (_loading) {
         _scheduleUpcomingRefresh();
         return;
       }
       _transientLoadFailed = false;
       await loadSchoolCalendar();
-      // 在途期间转入失效态时不再提示：失效态由登录引导卡片承载。
+      // 在途转入失效态则不提示，由登录引导卡片承载。
       if (_canFetchPlatformData) {
         _notifyLoadFailureOnce();
       }
@@ -456,15 +447,14 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
         (_lastCalendarSyncDate == null ||
             !_isSameDate(_lastCalendarSyncDate!, now));
     if (shouldSyncCalendar) {
-      // 与 load() 并发时让位：整轮加载已覆盖校历同步与失败提示收口，
-      // 避免重复拉取/重复提示（#82）。
+      // 与 load() 并发时让位，整轮加载已覆盖同步与提示收口（#82）。
       if (_loading) {
         _scheduleUpcomingRefresh();
         return;
       }
       _transientLoadFailed = false;
       await loadSchoolCalendar();
-      // 在途期间转入失效态时不再提示：失效态由登录引导卡片承载。
+      // 在途转入失效态则不提示，由登录引导卡片承载。
       if (_canFetchPlatformData) {
         _notifyLoadFailureOnce();
       }

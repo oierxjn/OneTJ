@@ -59,8 +59,8 @@ SchoolCalendarData _calendarData() {
   );
 }
 
-/// 所有依赖显式注入的测试装配；HTTP 可注入，默认任何请求都判失败，
-/// 保证「不该联网」的用例一旦联网会立刻暴露。
+/// 依赖显式注入的测试装配；HTTP 可注入，默认任何请求判失败，
+/// 「不该联网」的用例一旦联网立刻暴露。
 class _Harness {
   _Harness({
     required this.viewModel,
@@ -102,8 +102,7 @@ Future<_Harness> _buildHarness({
       SchoolCalendarRepository(storage: calendarStorage);
   final StudentInfoRepository studentInfoRepository =
       StudentInfoRepository(storage: studentInfoStorage);
-  // 任何未显式放行的网络请求都判失败：既覆盖数据拉取，也覆盖
-  // 令牌刷新等潜在路径，保证用例不会悄悄触网。
+  // 未显式放行的请求一律判失败，覆盖数据拉取与令牌刷新等潜在路径。
   Future<http.Response> failOnNetwork(Uri uri) async {
     requests.add(uri);
     fail('测试中不应发起网络请求: $uri');
@@ -175,7 +174,7 @@ Future<_Harness> _buildHarness({
   );
 }
 
-/// 预置一份完整的个人数据缓存（学籍/校历/同学期课表）。
+/// 预置个人数据缓存（学籍/校历/同学期课表）。
 Future<void> _seedPersonalCache(_Harness harness) async {
   await harness.studentInfoStorage.save(buildStudentInfo());
   await harness.calendarStorage.save(_calendarData());
@@ -190,14 +189,14 @@ Future<void> _seedPersonalCache(_Harness harness) async {
   );
 }
 
-/// 记录一轮加载中的全部事件（broadcast 流需先订阅再触发）。
+/// 记录一轮加载的全部事件（broadcast 流先订阅再触发）。
 List<UiEvent> _recordEvents(DashboardViewModel viewModel) {
   final List<UiEvent> events = <UiEvent>[];
   viewModel.events.listen(events.add);
   return events;
 }
 
-/// broadcast 流的事件经微任务投递，断言前让事件循环落定。
+/// broadcast 事件经微任务投递，断言前先落定。
 Future<void> _flushEvents() async {
   await Future<void>.delayed(Duration.zero);
   await Future<void>.delayed(Duration.zero);
@@ -382,8 +381,7 @@ void main() {
       final _Harness harness =
           await _buildHarness(initialStatus: AuthStatus.expired);
       await _seedPersonalCache(harness);
-      // 覆盖课表缓存元数据为上一学期：校历缓存解析出 2026-1，
-      // 课表缓存属于 2025-2，不应展示。
+      // 课表缓存属于上一学期 2025-2，与校历解析的 2026-1 不符，不应展示。
       await harness.scheduleStorage.saveMeta(
         CourseScheduleCacheMeta(
           lastFetchedAtMillis: DateTime.now().millisecondsSinceEpoch,

@@ -17,8 +17,8 @@ class _FakeLogoutService implements LogoutService {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-/// 测试环境没有 WebView 平台实现，注入一个只渲染占位框的桩件，
-/// 让登录页其余部分（含提示队列清理）可以正常构建。
+/// 测试环境无 WebView 平台实现，注入只渲染占位框的桩件，
+/// 让登录页其余部分正常构建。
 class _FakeInAppWebViewPlatform extends InAppWebViewPlatform {
   @override
   PlatformInAppWebViewWidget createPlatformInAppWebViewWidget(

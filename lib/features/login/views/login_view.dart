@@ -78,9 +78,8 @@ class _LoginViewState extends State<LoginView> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // 清掉上一页（如仪表盘）遗留的提示队列：SnackBar 挂在应用级
-    // ScaffoldMessenger 上，不清会跟随到登录页继续排队展示（#82）。
-    // 只在首次进入时清一次，避免后续依赖变化误清登录页自己的提示。
+    // 清掉上一页遗留的应用级 SnackBar 队列（#82）；
+    // 只清一次，避免后续依赖变化误清本页提示。
     if (!_residualSnackBarsCleared) {
       _residualSnackBarsCleared = true;
       ScaffoldMessenger.of(context).clearSnackBars();

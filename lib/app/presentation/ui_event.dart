@@ -50,11 +50,8 @@ class AppUpdateFailedEvent extends UiEvent {
   final StackTrace? stackTrace;
 }
 
-/// 仪表盘本轮平台数据加载出现瞬时失败。
-///
-/// 语义结果事件：只描述「本轮加载有失败」，不携带错误原文、文案或目的地。
-/// 凭证失败不发此事件（失效态已有登录引导卡片）；视图将其映射为一条
-/// 本地化提示，同一轮多个数据源失败只提示一次（#82）。
+/// 仪表盘本轮加载出现瞬时失败（#82）。凭证失败不发此事件；
+/// 视图映射为一条本地化提示，一轮多个数据源失败只提示一次。
 class DashboardLoadFailedEvent extends UiEvent {
   const DashboardLoadFailedEvent();
 }

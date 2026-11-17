@@ -41,9 +41,8 @@ class TermKeyResolver {
     }
   }
 
-  /// 失效态（expired）缓存只读解析学期 key（#82）：优先校历缓存，
-  /// 缺失时回退课表缓存元数据里的学期 key，全程不发起网络请求；
-  /// 两者皆无返回 null，由调用方跳过课表加载。
+  /// 失效态缓存只读解析学期 key（#82）：优先校历缓存，缺失回退
+  /// 课表缓存元数据；不联网，两者皆无返回 null。
   Future<String?> resolveCurrentTermKeyFromCache() async {
     await _calendarRepository.warmUp();
     final SchoolCalendarData? calendar =

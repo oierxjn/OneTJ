@@ -78,22 +78,20 @@ class DashboardDataService {
     );
   }
 
-  /// 失效态（expired）只读加载学籍缓存（#82）：不发起网络请求，
-  /// 缓存缺失返回 null。
+  /// 失效态只读学籍缓存（#82）：不联网，缺失返回 null。
   Future<StudentInfoData?> loadCachedStudentInfo() async {
     await _studentInfoRepository.warmUp();
     return _studentInfoRepository.getCached(refreshFromStorage: true);
   }
 
-  /// 失效态（expired）只读加载校历缓存（#82）：不发起网络请求，
-  /// 缓存缺失返回 null。
+  /// 失效态只读校历缓存（#82）：不联网，缺失返回 null。
   Future<SchoolCalendarData?> loadCachedSchoolCalendar() async {
     await _schoolCalendarRepository.warmUp();
     return _schoolCalendarRepository.getCached(refreshFromStorage: true);
   }
 
-  /// 失效态（expired）只读加载课表缓存（#82）：学期 key 走缓存解析，
-  /// 全程不发起网络请求；无缓存或缓存学期与当前学期不符时返回 null。
+  /// 失效态只读课表缓存（#82）：学期 key 走缓存解析，不联网；
+  /// 无缓存或学期不符返回 null。
   Future<CourseScheduleData?> loadCachedCourseSchedule() async {
     await _courseScheduleRepository.warmUp();
     final String? termKey =
