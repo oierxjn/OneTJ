@@ -68,7 +68,7 @@ class AuthTokenProvider {
   /// 调用方共享。
   Future<String>? _inFlightRefresh;
 
-  /// OAuth 规范中表示授权授予无效（会话失效、refresh token 已作废等）的错误码。
+  /// OAuth 规范中表示授权授予无效的错误码。
   static const String _invalidGrantError = 'invalid_grant';
 
   /// 用授权码交换 token,成功后写入 [TokenRepository]。
@@ -87,17 +87,18 @@ class AuthTokenProvider {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
     );
-    if (response.statusCode >= 200 && response.statusCode < 300) {
-      final Code2TokenData data = Code2TokenData.fromJson(
-        _decodeTokenBody(response, uri),
-      );
+    final ({int statusCode, String body}) effective =
+        _unwrapTokenResponse(response);
+    if (effective.statusCode >= 200 && effective.statusCode < 300) {
+      final Code2TokenData data =
+          Code2TokenData.fromJson(json.decode(effective.body));
       await _repository.saveFromCode2Token(data);
       return;
     }
     throw NetworkException.http(
-      statusCode: response.statusCode,
+      statusCode: effective.statusCode,
       uri: uri,
-      responseBody: response.body,
+      responseBody: effective.body,
     );
   }
 
@@ -192,34 +193,38 @@ class AuthTokenProvider {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
     );
-    if (response.statusCode >= 200 && response.statusCode < 300) {
-      return Code2TokenData.fromJson(_decodeTokenBody(response, uri));
+    final ({int statusCode, String body}) effective =
+        _unwrapTokenResponse(response);
+    if (effective.statusCode >= 200 && effective.statusCode < 300) {
+      return Code2TokenData.fromJson(json.decode(effective.body));
     }
     throw NetworkException.http(
-      statusCode: response.statusCode,
+      statusCode: effective.statusCode,
       uri: uri,
-      responseBody: response.body,
+      responseBody: effective.body,
     );
   }
 
-  /// 解码 token 端点的 2xx 响应体，并拦截网关包装的「伪成功」错误。
+  /// 还原 token 端点响应的真实状态码与响应体——纯转换，不携带请求上下文。
   ///
-  /// 服务端可能以 HTTP 200 返回
-  /// `{"error_error":{"http_status_code":400,"http_body":"{\"error\":...}"}}`，
-  /// 真实状态码与 OAuth 错误藏在包装里。这里还原为携带真实状态码的
-  /// [NetworkException]，避免错误体进入 [Code2TokenData.fromJson] 后以
-  /// 解析异常的面目穿透上层的凭证失效判定。
-  Map<String, dynamic> _decodeTokenBody(http.Response response, Uri uri) {
+  /// 网关可能把上游错误包在 HTTP 200 里：
+  /// `{"error_error":{"http_status_code":400,"http_body":"{\"error\":...}"}}`。
+  /// 这里把包装（及未包装的 OAuth 错误体）还原成真实状态码，由调用方走
+  /// 同一条状态码判定与 [NetworkException] 构造路径，避免错误体进入
+  /// [Code2TokenData.fromJson] 后以解析异常的面目穿透凭证失效判定。
+  ({int statusCode, String body}) _unwrapTokenResponse(http.Response response) {
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      return (statusCode: response.statusCode, body: response.body);
+    }
     final dynamic decoded = json.decode(response.body);
     if (decoded is Map<String, dynamic>) {
       final dynamic wrapped = decoded['error_error'];
       if (wrapped is Map<String, dynamic>) {
         final dynamic embeddedStatus = wrapped['http_status_code'];
         final dynamic embeddedBody = wrapped['http_body'];
-        throw NetworkException.http(
+        return (
           statusCode: embeddedStatus is int ? embeddedStatus : 400,
-          uri: uri,
-          responseBody: embeddedBody is String
+          body: embeddedBody is String
               ? embeddedBody
               : json.encode(embeddedBody ?? wrapped),
         );
@@ -227,13 +232,9 @@ class AuthTokenProvider {
       // 未包装的 OAuth 错误体（如直接 200 返回 invalid_grant）同样按失败处理。
       final dynamic oauthError = decoded['error'];
       if (oauthError is String && oauthError.isNotEmpty) {
-        throw NetworkException.http(
-          statusCode: 400,
-          uri: uri,
-          responseBody: response.body,
-        );
+        return (statusCode: 400, body: response.body);
       }
-      return decoded;
+      return (statusCode: response.statusCode, body: response.body);
     }
     throw JSONResolveException(
       message: 'Token endpoint returned non-object JSON',
@@ -245,7 +246,7 @@ class AuthTokenProvider {
   /// * `AUTH_EXPIRED`：本地 refresh token 已过期，或令牌被替换/清除；
   /// * 刷新被服务端 401 拒绝：refresh token 已作废；
   /// * 服务端以 OAuth `invalid_grant` 拒绝（含网关包在 HTTP 200 里的
-  ///   `error_error` 包装，已由 [_decodeTokenBody] 还原为真实状态码）：
+  ///   `error_error` 包装，已由 [_unwrapTokenResponse] 还原为真实状态码）：
   ///   会话在服务端已失效。
   ///
   /// 其余（网络不可达、5xx 等瞬时错误）不算凭证失败——此时凭证大概率仍

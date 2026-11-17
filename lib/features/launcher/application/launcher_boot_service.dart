@@ -132,8 +132,7 @@ class LauncherBootService {
     }
   }
 
-  /// 是否为确定性凭证失败：判定标准由 [AuthTokenProvider.isCredentialFailure]
-  /// 单一维护，本层只据此选择初始会话状态（expired 或乐观 authenticated）。
+  /// 只据此选择初始会话状态。
   bool _isCredentialFailure(Object error) =>
       AuthTokenProvider.isCredentialFailure(error);
 }
