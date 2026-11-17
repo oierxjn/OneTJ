@@ -149,10 +149,7 @@ class AuthTokenProvider {
       refreshed = await _refreshToken(refreshTokenUsed);
     } on NetworkException catch (error) {
       // 只有当前令牌的确定性拒绝才算登录失效；旧刷新不得误伤新登录的会话。
-      // invalid_grant（可能被网关包在 HTTP 200 里）与 401 同属凭证已作废。
-      final bool grantRejected = error.statusCode == 401 ||
-          _isInvalidGrantBody(error.responseBody);
-      if (grantRejected &&
+      if (isCredentialFailure(error) &&
           _repository.isCurrentRefreshToken(refreshTokenUsed)) {
         _sessionController?.markUnauthenticated(
           reason: error.statusCode == 401
@@ -243,17 +240,38 @@ class AuthTokenProvider {
     );
   }
 
-  /// 判断错误响应体是否为 OAuth `invalid_grant`（授权授予已失效）。
-  static bool _isInvalidGrantBody(String? body) {
-    if (body == null || body.isEmpty) {
-      return false;
+  /// 是否为确定性凭证失败（重新登录是必要且有效的动作）——唯一出处。
+  ///
+  /// * `AUTH_EXPIRED`：本地 refresh token 已过期，或令牌被替换/清除；
+  /// * 刷新被服务端 401 拒绝：refresh token 已作废；
+  /// * 服务端以 OAuth `invalid_grant` 拒绝（含网关包在 HTTP 200 里的
+  ///   `error_error` 包装，已由 [_decodeTokenBody] 还原为真实状态码）：
+  ///   会话在服务端已失效。
+  ///
+  /// 其余（网络不可达、5xx 等瞬时错误）不算凭证失败——此时凭证大概率仍
+  /// 有效，只是无法验证，不应把用户导向「重新登录」。
+  ///
+  /// 运行期由 [_refreshOnce] 决定是否上报会话失效；启动引导由
+  /// `LauncherBootService` 决定初始状态判 expired 还是乐观判 authenticated。
+  static bool isCredentialFailure(Object error) {
+    if (error is AppException && error.code == 'AUTH_EXPIRED') {
+      return true;
     }
-    try {
-      final dynamic decoded = json.decode(body);
-      return decoded is Map<String, dynamic> &&
-          decoded['error'] == _invalidGrantError;
-    } on FormatException {
-      return false;
+    if (error is NetworkException) {
+      if (error.statusCode == 401) {
+        return true;
+      }
+      final String? body = error.responseBody;
+      if (body != null && body.isNotEmpty) {
+        try {
+          final dynamic decoded = json.decode(body);
+          return decoded is Map<String, dynamic> &&
+              decoded['error'] == _invalidGrantError;
+        } on FormatException {
+          // 非 JSON 响应体无法证明凭证失效，按瞬时错误处理。
+        }
+      }
     }
+    return false;
   }
 }
