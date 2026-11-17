@@ -102,28 +102,41 @@ Future<_Harness> _buildHarness({
       SchoolCalendarRepository(storage: calendarStorage);
   final StudentInfoRepository studentInfoRepository =
       StudentInfoRepository(storage: studentInfoStorage);
+  // 任何未显式放行的网络请求都判失败：既覆盖数据拉取，也覆盖
+  // 令牌刷新等潜在路径，保证用例不会悄悄触网。
+  Future<http.Response> failOnNetwork(Uri uri) async {
+    requests.add(uri);
+    fail('测试中不应发起网络请求: $uri');
+  }
+
   final TongjiApi api = TongjiApi(
-    auth: AuthTokenProvider(repository: tokenRepository),
+    auth: AuthTokenProvider(
+      repository: tokenRepository,
+      httpPost: (
+        Uri uri, {
+        Map<String, String>? headers,
+        Object? body,
+        Encoding? encoding,
+        String loggerName = 'Http',
+      }) =>
+          failOnNetwork(uri),
+    ),
     sessionController: session,
     httpGet: httpGet ??
         (
           Uri uri, {
           Map<String, String>? headers,
           String loggerName = 'Http',
-        }) async {
-          requests.add(uri);
-          fail('测试中不应发起网络请求: $uri');
-        },
+        }) =>
+            failOnNetwork(uri),
     httpPost: (
       Uri uri, {
       Map<String, String>? headers,
       Object? body,
       Encoding? encoding,
       String loggerName = 'Http',
-    }) async {
-      requests.add(uri);
-      fail('测试中不应发起网络请求: $uri');
-    },
+    }) =>
+        failOnNetwork(uri),
   );
   final DashboardViewModel viewModel = DashboardViewModel(
     dataService: DashboardDataService(
@@ -362,6 +375,54 @@ void main() {
       expect(viewModel.timetableEntries, isEmpty);
       expect(events.whereType<DashboardLoadFailedEvent>(), isEmpty);
       expect(events.whereType<ShowSnackBarEvent>(), isEmpty);
+      viewModel.dispose();
+    });
+
+    test('课表缓存学期与当前学期不符时保持空态，不联网', () async {
+      final _Harness harness =
+          await _buildHarness(initialStatus: AuthStatus.expired);
+      await _seedPersonalCache(harness);
+      // 覆盖课表缓存元数据为上一学期：校历缓存解析出 2026-1，
+      // 课表缓存属于 2025-2，不应展示。
+      await harness.scheduleStorage.saveMeta(
+        CourseScheduleCacheMeta(
+          lastFetchedAtMillis: DateTime.now().millisecondsSinceEpoch,
+          termKey: '2025-2',
+        ),
+      );
+      final DashboardViewModel viewModel = harness.viewModel;
+
+      await viewModel.load();
+
+      expect(harness.requests, isEmpty);
+      expect(viewModel.departmentName, 'Computer Science');
+      expect(viewModel.calendar?.week, 2);
+      expect(viewModel.timetableEntries, isEmpty);
+      expect(viewModel.timetableIndex, isNull);
+      viewModel.dispose();
+    });
+
+    test('校历缓存缺失时回退课表缓存元数据解析学期 key', () async {
+      final _Harness harness =
+          await _buildHarness(initialStatus: AuthStatus.expired);
+      await harness.studentInfoStorage.save(buildStudentInfo());
+      // 不预置校历缓存：学期 key 只能来自课表缓存元数据。
+      await harness.scheduleStorage.save(
+        const CourseScheduleData(items: <CourseScheduleItemData>[]),
+      );
+      await harness.scheduleStorage.saveMeta(
+        CourseScheduleCacheMeta(
+          lastFetchedAtMillis: DateTime.now().millisecondsSinceEpoch,
+          termKey: '2026-1',
+        ),
+      );
+      final DashboardViewModel viewModel = harness.viewModel;
+
+      await viewModel.load();
+
+      expect(harness.requests, isEmpty);
+      expect(viewModel.calendar, isNull);
+      expect(viewModel.timetableIndex, isNotNull);
       viewModel.dispose();
     });
 

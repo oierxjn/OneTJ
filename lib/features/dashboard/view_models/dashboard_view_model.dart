@@ -161,12 +161,17 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
     try {
       final StudentInfoData? studentInfo =
           await _dataService.loadCachedStudentInfo();
-      _departmentName = studentInfo?.deptName;
       final SchoolCalendarData? calendar =
           await _dataService.loadCachedSchoolCalendar();
-      _calendar = calendar;
       final CourseScheduleData? schedule =
           await _dataService.loadCachedCourseSchedule();
+      // 回写前复检：读缓存期间可能已登出/以游客身份继续进入游客态，
+      // 游客内存必须保持为空（基类约定该复检由子类承担）。
+      if (isGuest) {
+        return;
+      }
+      _departmentName = studentInfo?.deptName;
+      _calendar = calendar;
       if (schedule == null) {
         _timetableIndex = null;
         _timetableEntries = const [];
@@ -405,9 +410,18 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
         (_lastCalendarSyncDate == null ||
             !_isSameDate(_lastCalendarSyncDate!, now));
     if (shouldSyncCalendar) {
+      // 与 load() 并发时让位：整轮加载已覆盖校历同步与失败提示收口，
+      // 避免重复拉取/重复提示（#82）。
+      if (_loading) {
+        _scheduleUpcomingRefresh();
+        return;
+      }
       _transientLoadFailed = false;
       await loadSchoolCalendar();
-      _notifyLoadFailureOnce();
+      // 在途期间转入失效态时不再提示：失效态由登录引导卡片承载。
+      if (_canFetchPlatformData) {
+        _notifyLoadFailureOnce();
+      }
       _scheduleUpcomingRefresh();
       return;
     }
@@ -442,9 +456,18 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
         (_lastCalendarSyncDate == null ||
             !_isSameDate(_lastCalendarSyncDate!, now));
     if (shouldSyncCalendar) {
+      // 与 load() 并发时让位：整轮加载已覆盖校历同步与失败提示收口，
+      // 避免重复拉取/重复提示（#82）。
+      if (_loading) {
+        _scheduleUpcomingRefresh();
+        return;
+      }
       _transientLoadFailed = false;
       await loadSchoolCalendar();
-      _notifyLoadFailureOnce();
+      // 在途期间转入失效态时不再提示：失效态由登录引导卡片承载。
+      if (_canFetchPlatformData) {
+        _notifyLoadFailureOnce();
+      }
       _scheduleUpcomingRefresh();
       return;
     }
