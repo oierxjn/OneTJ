@@ -68,6 +68,9 @@ class AuthTokenProvider {
   /// 调用方共享。
   Future<String>? _inFlightRefresh;
 
+  /// OAuth 规范中表示授权授予无效的错误码。
+  static const String _invalidGrantError = 'invalid_grant';
+
   /// 用授权码交换 token,成功后写入 [TokenRepository]。
   Future<void> exchangeCode(String code) async {
     final Uri uri = Uri.https(_baseUrl, code2tokenPath);
@@ -84,16 +87,18 @@ class AuthTokenProvider {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
     );
-    if (response.statusCode >= 200 && response.statusCode < 300) {
+    final ({int statusCode, String body}) effective =
+        _unwrapTokenResponse(response);
+    if (effective.statusCode >= 200 && effective.statusCode < 300) {
       final Code2TokenData data =
-          Code2TokenData.fromJson(json.decode(response.body));
+          Code2TokenData.fromJson(json.decode(effective.body));
       await _repository.saveFromCode2Token(data);
       return;
     }
     throw NetworkException.http(
-      statusCode: response.statusCode,
+      statusCode: effective.statusCode,
       uri: uri,
-      responseBody: response.body,
+      responseBody: effective.body,
     );
   }
 
@@ -144,10 +149,14 @@ class AuthTokenProvider {
     try {
       refreshed = await _refreshToken(refreshTokenUsed);
     } on NetworkException catch (error) {
-      // 只有当前令牌的 401 才算登录失效；旧刷新不得误伤新登录的会话。
-      if (error.statusCode == 401 &&
+      // 只有当前令牌的确定性拒绝才算登录失效；旧刷新不得误伤新登录的会话。
+      if (isCredentialFailure(error) &&
           _repository.isCurrentRefreshToken(refreshTokenUsed)) {
-        _sessionController?.markUnauthenticated(reason: 'refresh_rejected_401');
+        _sessionController?.markUnauthenticated(
+          reason: error.statusCode == 401
+              ? 'refresh_rejected_401'
+              : 'refresh_rejected_invalid_grant',
+        );
       }
       rethrow;
     }
@@ -184,13 +193,75 @@ class AuthTokenProvider {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
     );
-    if (response.statusCode >= 200 && response.statusCode < 300) {
-      return Code2TokenData.fromJson(json.decode(response.body));
+    final ({int statusCode, String body}) effective =
+        _unwrapTokenResponse(response);
+    if (effective.statusCode >= 200 && effective.statusCode < 300) {
+      return Code2TokenData.fromJson(json.decode(effective.body));
     }
     throw NetworkException.http(
-      statusCode: response.statusCode,
+      statusCode: effective.statusCode,
       uri: uri,
-      responseBody: response.body,
+      responseBody: effective.body,
     );
+  }
+
+  /// 还原 token 端点响应的真实状态码与响应体——纯转换，不携带请求上下文。
+  ///
+  /// 网关可能把上游错误包在 HTTP 200 里：
+  /// `{"error_error":{"http_status_code":400,"http_body":"{\"error\":...}"}}`。
+  /// 这里把包装（及未包装的 OAuth 错误体）还原成真实状态码。
+  ({int statusCode, String body}) _unwrapTokenResponse(http.Response response) {
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      return (statusCode: response.statusCode, body: response.body);
+    }
+    final dynamic decoded = json.decode(response.body);
+    if (decoded is Map<String, dynamic>) {
+      final dynamic wrapped = decoded['error_error'];
+      if (wrapped is Map<String, dynamic>) {
+        final dynamic embeddedStatus = wrapped['http_status_code'];
+        final dynamic embeddedBody = wrapped['http_body'];
+        return (
+          statusCode: embeddedStatus is int ? embeddedStatus : 400,
+          body: embeddedBody is String
+              ? embeddedBody
+              : json.encode(embeddedBody ?? wrapped),
+        );
+      }
+      // 未包装的 OAuth 错误体（如直接 200 返回 invalid_grant）同样按失败处理。
+      final dynamic oauthError = decoded['error'];
+      if (oauthError is String && oauthError.isNotEmpty) {
+        return (statusCode: 400, body: response.body);
+      }
+      return (statusCode: response.statusCode, body: response.body);
+    }
+    throw JSONResolveException(
+      message: 'Token endpoint returned non-object JSON',
+    );
+  }
+
+  /// 是否为确定性凭证失败的唯一出处。
+  ///
+  /// 网络不可达、5xx 等瞬时错误不算凭证失败——此时凭证大概率仍
+  /// 有效，只是无法验证，不应把用户导向「重新登录」。
+  static bool isCredentialFailure(Object error) {
+    if (error is AppException && error.code == 'AUTH_EXPIRED') {
+      return true;
+    }
+    if (error is NetworkException) {
+      if (error.statusCode == 401) {
+        return true;
+      }
+      final String? body = error.responseBody;
+      if (body != null && body.isNotEmpty) {
+        try {
+          final dynamic decoded = json.decode(body);
+          return decoded is Map<String, dynamic> &&
+              decoded['error'] == _invalidGrantError;
+        } on FormatException {
+          // 非 JSON 响应体无法证明凭证失效，按瞬时错误处理。
+        }
+      }
+    }
+    return false;
   }
 }

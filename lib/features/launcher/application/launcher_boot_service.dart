@@ -1,4 +1,3 @@
-import 'package:onetj/app/exception/app_exception.dart';
 import 'package:onetj/app/logging/logger.dart';
 import 'package:onetj/app/session/session_controller.dart';
 import 'package:onetj/app/theme/theme_change_notifier.dart';
@@ -133,20 +132,7 @@ class LauncherBootService {
     }
   }
 
-  /// 是否为确定性凭证失败（重新登录是必要且有效的动作）。
-  ///
-  /// * `AUTH_EXPIRED`：本地 refresh token 已过期，或令牌被替换/清除；
-  /// * 刷新被服务端 401 拒绝：refresh token 已作废。
-  ///
-  /// 其余（网络不可达、5xx 等瞬时错误）不算凭证失败——此时凭证大概率仍
-  /// 有效，只是无法验证，不应把用户导向「重新登录」。
-  bool _isCredentialFailure(Object error) {
-    if (error is AppException && error.code == 'AUTH_EXPIRED') {
-      return true;
-    }
-    if (error is NetworkException && error.statusCode == 401) {
-      return true;
-    }
-    return false;
-  }
+  /// 只据此选择初始会话状态。
+  bool _isCredentialFailure(Object error) =>
+      AuthTokenProvider.isCredentialFailure(error);
 }
