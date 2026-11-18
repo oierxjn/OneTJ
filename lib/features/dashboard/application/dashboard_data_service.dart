@@ -13,17 +13,12 @@ import 'package:onetj/services/user_collection_service.dart';
 
 /// 仪表盘平台数据的取数编排。
 ///
-/// 「能不能联网」是会话策略，由本层依据 [SessionController] 单点判定，
-/// 调用方只表达「要这份数据」，不选择通路：
-/// * 已登录：按 TTL 走缓存或联网；
-/// * 失效态：只读缓存，缺失返回 null（个人数据缓存保留，重新登录即恢复）；
-/// * 游客态与 unknown：无令牌，返回 null，不发鉴权请求。
+/// 按会话选择展示策略：已登录按 TTL 走缓存或联网；失效态展示缓存
+/// （不论新旧，重新登录即刷新），无缓存返回 null；游客态与 unknown
+/// 返回 null。「非登录态不联网」由 TongjiApi 的会话边界统一兜底。
 ///
 /// 返回 null 表示「当前会话下没有可展示的数据」，属正常空态而非失败；
 /// 真正的取数失败仍抛异常，由调用方分类处理。
-///
-/// 存储介质（内存/硬盘）与新鲜度（TTL/学期/跨周）判定仍留在仓库层，
-/// 本层不介入。
 class DashboardDataService {
   DashboardDataService({
     required TongjiApi api,
@@ -53,12 +48,10 @@ class DashboardDataService {
   final SessionController _sessionController;
 
   /// 仅已登录态允许联网；与基类的游客判断不等价，unknown 下也拦截。
-  bool get _mayFetch =>
-      _sessionController.status == AuthStatus.authenticated;
+  bool get _mayFetch => _sessionController.status == AuthStatus.authenticated;
 
   /// 失效态保留个人数据缓存，只读展示。
-  bool get _cacheReadable =>
-      _sessionController.status == AuthStatus.expired;
+  bool get _cacheReadable => _sessionController.status == AuthStatus.expired;
 
   Future<StudentInfoData> fetchStudentInfo() {
     return _api.fetchStudentInfo();
@@ -132,8 +125,8 @@ class DashboardDataService {
     }
     final CourseScheduleData? data =
         await _courseScheduleRepository.getCached(refreshFromStorage: true);
-    final CourseScheduleCacheMeta? meta =
-        await _courseScheduleRepository.getCachedMeta(refreshFromStorage: false);
+    final CourseScheduleCacheMeta? meta = await _courseScheduleRepository
+        .getCachedMeta(refreshFromStorage: false);
     if (data == null || meta?.termKey != termKey) {
       return null;
     }

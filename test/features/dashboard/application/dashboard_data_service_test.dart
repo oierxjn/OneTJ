@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:onetj/app/session/session_controller.dart';
 import 'package:onetj/features/dashboard/application/dashboard_data_service.dart';
+import 'package:onetj/features/timetable/application/timetable_data_service.dart';
 import 'package:onetj/models/course_schedule_data.dart';
 import 'package:onetj/models/school_calendar_data.dart';
 import 'package:onetj/models/token_data.dart';
@@ -64,6 +65,10 @@ class _Harness {
     required this.studentInfoStorage,
     required this.calendarStorage,
     required this.scheduleStorage,
+    required this.api,
+    required this.calendarRepository,
+    required this.scheduleRepository,
+    required this.termKeyResolver,
   });
 
   final DashboardDataService service;
@@ -72,6 +77,10 @@ class _Harness {
   final InMemoryStudentInfoStorage studentInfoStorage;
   final InMemorySchoolCalendarStorage calendarStorage;
   final InMemoryCourseScheduleStorage scheduleStorage;
+  final TongjiApi api;
+  final SchoolCalendarRepository calendarRepository;
+  final CourseScheduleRepository scheduleRepository;
+  final TermKeyResolver termKeyResolver;
 }
 
 Future<_Harness> _buildHarness({
@@ -130,13 +139,14 @@ Future<_Harness> _buildHarness({
     }) =>
         failOnNetwork(uri),
   );
+  final TermKeyResolver termKeyResolver = TermKeyResolver(
+    calendarRepository: calendarRepository,
+    scheduleRepository: scheduleRepository,
+  );
   return _Harness(
     service: DashboardDataService(
       api: api,
-      termKeyResolver: TermKeyResolver(
-        calendarRepository: calendarRepository,
-        scheduleRepository: scheduleRepository,
-      ),
+      termKeyResolver: termKeyResolver,
       studentInfoRepository:
           StudentInfoRepository(storage: studentInfoStorage),
       courseScheduleRepository: scheduleRepository,
@@ -156,6 +166,10 @@ Future<_Harness> _buildHarness({
     studentInfoStorage: studentInfoStorage,
     calendarStorage: calendarStorage,
     scheduleStorage: scheduleStorage,
+    api: api,
+    calendarRepository: calendarRepository,
+    scheduleRepository: scheduleRepository,
+    termKeyResolver: termKeyResolver,
   );
 }
 
@@ -266,6 +280,26 @@ void main() {
       expect(await harness.service.getStudentInfo(), isNull);
       expect(await harness.service.getSchoolCalendar(), isNull);
       expect(await harness.service.getCourseSchedule(), isNull);
+      expect(harness.requests, isEmpty);
+    });
+  });
+
+  group('会话边界对其他功能页的兜底', () {
+    test('课表数据服务与仪表盘共用同一 API，失效态取数零联网', () async {
+      final _Harness harness =
+          await _buildHarness(status: AuthStatus.expired);
+      await _seedCache(harness);
+      // 课表页走自己的 TimetableDataService，但复用同一批仓库与 API：
+      // 边界守卫生效后无需任何改造即获得「失效态不撞网」。
+      final TimetableDataService timetableService = TimetableDataService(
+        api: harness.api,
+        scheduleRepository: harness.scheduleRepository,
+        calendarRepository: harness.calendarRepository,
+        termKeyResolver: harness.termKeyResolver,
+      );
+
+      expect(await timetableService.getSchoolCalendarCurrentWeek(), 2);
+      expect(await timetableService.getTimetableIndex(), isNotNull);
       expect(harness.requests, isEmpty);
     });
   });

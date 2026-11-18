@@ -33,9 +33,6 @@ abstract class SessionAwareViewModel<TEvent> extends BaseViewModel<TEvent> {
   bool get isGuest => _sessionController.status == AuthStatus.guest;
 
   /// 当前是否为已登录态。
-  ///
-  /// 供子类做界面决策（如是否提示取数失败）；取数通路的会话判定在
-  /// application 层，子类不要据此自行选择联网或缓存。
   @protected
   bool get isAuthenticated =>
       _sessionController.status == AuthStatus.authenticated;
