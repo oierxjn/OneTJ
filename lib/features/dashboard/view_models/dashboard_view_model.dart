@@ -17,6 +17,7 @@ import 'package:onetj/repo/settings_repository.dart';
 import 'package:onetj/models/student_info_data.dart';
 import 'package:onetj/services/timetable_index_builder.dart';
 import 'package:onetj/services/app_update_service.dart';
+import 'package:onetj/services/auth_token_provider.dart';
 import 'package:onetj/app/logging/logger.dart';
 
 class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
@@ -40,14 +41,13 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
   Timer? _upcomingRefreshTimer;
   DateTime? _lastCalendarSyncDate;
 
-  /// 当前是否具备拉取平台数据的条件。
-  ///
-  /// 失效态（expired）本机缓存仍可读，允许走缓存；游客态没有令牌，
-  /// 跳过一切鉴权请求，避免触发 401 干扰会话状态。
-  /// 注意与基类 [isGuest] 不等价：本护栏在 unknown 下也拦截，保留原语义。
+  /// 本轮加载是否出现过瞬时失败。
+  bool _transientLoadFailed = false;
+
+  /// 仅已登录态允许联网拉取；失效态只读缓存（[_loadPlatformDataFromCache]），
+  /// 游客态跳过鉴权请求。与基类 [isGuest] 不等价：unknown 下也拦截。
   bool get _canFetchPlatformData =>
-      _sessionController.status == AuthStatus.authenticated ||
-      _sessionController.status == AuthStatus.expired;
+      _sessionController.status == AuthStatus.authenticated;
 
   /// 清空内存中的个人数据（学籍/校历/课表），保留本地设置。
   /// 登录恢复重载与游客态清内存的分发由基类监听承担。
@@ -112,6 +112,7 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
       return;
     }
     _loading = true;
+    _transientLoadFailed = false;
     _studentLoading = true;
     _calendarLoading = true;
     _timetableLoading = true;
@@ -119,8 +120,17 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
     notifyListeners();
     unawaited(_checkUpdateInBackground());
     try {
+      if (_sessionController.status == AuthStatus.expired) {
+        // 失效态只读缓存。
+        await Future.wait([
+          loadSettings(),
+          _loadPlatformDataFromCache(),
+        ]);
+        notifyListeners();
+        return;
+      }
       if (!_canFetchPlatformData) {
-        // 游客态：只加载本地设置，平台数据留空，由视图展示登录引导。
+        // 游客态/其他未知状态只加载本地设置。
         clearPersonalData();
         await loadSettings();
         notifyListeners();
@@ -133,10 +143,57 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
         loadCourseSchedule(),
         _uploadUserCollectionWhenStudentInfoLoaded(),
       ]);
+      _notifyLoadFailureOnce();
     } finally {
       _loading = false;
       _scheduleUpcomingRefresh();
     }
+  }
+
+  /// 失效态只读加载平台缓存：不联网，缺失保持空态；
+  /// 读缓存异常只记日志不提示。
+  Future<void> _loadPlatformDataFromCache() async {
+    try {
+      final StudentInfoData? studentInfo =
+          await _dataService.loadCachedStudentInfo();
+      final SchoolCalendarData? calendar =
+          await _dataService.loadCachedSchoolCalendar();
+      final CourseScheduleData? schedule =
+          await _dataService.loadCachedCourseSchedule();
+      // 回写前复检：读缓存期间可能已进入游客态，游客内存须保持为空。
+      if (isGuest) {
+        return;
+      }
+      _departmentName = studentInfo?.deptName;
+      _calendar = calendar;
+      if (schedule == null) {
+        _timetableIndex = null;
+        _timetableEntries = const [];
+      } else {
+        _applyCourseSchedule(schedule);
+      }
+    } catch (error, stackTrace) {
+      AppLogger.warning(
+        'Dashboard cache read failed in expired state',
+        loggerName: 'DashboardViewModel',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    } finally {
+      _studentLoading = false;
+      _calendarLoading = false;
+      _timetableLoading = false;
+    }
+  }
+
+  /// 瞬时失败一轮只提示一次：加载器只置标记，
+  /// 入口在全部落定后统一发一个语义事件。
+  void _notifyLoadFailureOnce() {
+    if (!_transientLoadFailed) {
+      return;
+    }
+    _transientLoadFailed = false;
+    emit(const DashboardLoadFailedEvent());
   }
 
   Future<void> _checkUpdateInBackground() async {
@@ -227,10 +284,21 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
     try {
       final StudentInfoData data = await _dataService.getStudentInfo();
       _departmentName = data.deptName;
-    } catch (error) {
-      emit(
-        ShowSnackBarEvent(message: 'Failed to load student info: $error'),
+    } catch (error, stackTrace) {
+      // 凭证失败是预期分支（会话转失效、出登录引导），只记日志。
+      final bool credentialFailure =
+          AuthTokenProvider.isCredentialFailure(error);
+      AppLogger.warning(
+        credentialFailure
+            ? 'Student info load failed: credential failure'
+            : 'Student info load failed',
+        loggerName: 'DashboardViewModel',
+        error: error,
+        stackTrace: stackTrace,
       );
+      if (!credentialFailure) {
+        _transientLoadFailed = true;
+      }
     } finally {
       _studentLoading = false;
       notifyListeners();
@@ -238,6 +306,10 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
   }
 
   Future<void> _uploadUserCollectionWhenStudentInfoLoaded() async {
+    // 埋点走 getOrFetch，失效态会发起注定失败的鉴权请求，跳过。
+    if (!_canFetchPlatformData) {
+      return;
+    }
     try {
       await _dataService.uploadUserCollectionForProduction();
     } catch (error, stackTrace) {
@@ -257,15 +329,20 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
       _calendar = data;
       _lastCalendarSyncDate = now;
     } catch (error, stackTrace) {
+      // 凭证失败只记日志；瞬时失败置标记合并提示。
+      final bool credentialFailure =
+          AuthTokenProvider.isCredentialFailure(error);
       AppLogger.warning(
-        'School calendar load failed',
+        credentialFailure
+            ? 'School calendar load failed: credential failure'
+            : 'School calendar load failed',
         loggerName: 'DashboardViewModel',
         error: error,
         stackTrace: stackTrace,
       );
-      emit(
-        ShowSnackBarEvent(message: 'Failed to load school calendar: $error'),
-      );
+      if (!credentialFailure) {
+        _transientLoadFailed = true;
+      }
     } finally {
       _calendarLoading = false;
       notifyListeners();
@@ -275,36 +352,51 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
   Future<void> loadCourseSchedule() async {
     try {
       final CourseScheduleData data = await _dataService.getCourseSchedule();
-      final TimetableIndex index =
-          const TimetableIndexBuilder().buildIndex(data);
-      final List<TimetableEntry> entries =
-          List<TimetableEntry>.from(index.allEntries)
-            ..sort((a, b) {
-              final int dayA = a.dayOfWeek;
-              final int dayB = b.dayOfWeek;
-              if (dayA != dayB) {
-                return dayA.compareTo(dayB);
-              }
-              final int startA = a.timeStart;
-              final int startB = b.timeStart;
-              if (startA != startB) {
-                return startA.compareTo(startB);
-              }
-              final int endA = a.timeEnd;
-              final int endB = b.timeEnd;
-              return endA.compareTo(endB);
-            });
-      _timetableEntries = entries;
-      _timetableIndex = index;
-    } catch (error) {
+      _applyCourseSchedule(data);
+    } catch (error, stackTrace) {
       _timetableIndex = null;
-      emit(
-        ShowSnackBarEvent(message: 'Failed to load timetable: $error'),
+      // 凭证失败只记日志；瞬时失败置标记合并提示。
+      final bool credentialFailure =
+          AuthTokenProvider.isCredentialFailure(error);
+      AppLogger.warning(
+        credentialFailure
+            ? 'Timetable load failed: credential failure'
+            : 'Timetable load failed',
+        loggerName: 'DashboardViewModel',
+        error: error,
+        stackTrace: stackTrace,
       );
+      if (!credentialFailure) {
+        _transientLoadFailed = true;
+      }
     } finally {
       _timetableLoading = false;
       notifyListeners();
     }
+  }
+
+  /// 构建课表索引并排序条目，联网与只读缓存路径复用。
+  void _applyCourseSchedule(CourseScheduleData data) {
+    final TimetableIndex index = const TimetableIndexBuilder().buildIndex(data);
+    final List<TimetableEntry> entries =
+        List<TimetableEntry>.from(index.allEntries)
+          ..sort((a, b) {
+            final int dayA = a.dayOfWeek;
+            final int dayB = b.dayOfWeek;
+            if (dayA != dayB) {
+              return dayA.compareTo(dayB);
+            }
+            final int startA = a.timeStart;
+            final int startB = b.timeStart;
+            if (startA != startB) {
+              return startA.compareTo(startB);
+            }
+            final int endA = a.timeEnd;
+            final int endB = b.timeEnd;
+            return endA.compareTo(endB);
+          });
+    _timetableEntries = entries;
+    _timetableIndex = index;
   }
 
   Future<void> onAppResumed() async {
@@ -313,7 +405,17 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
         (_lastCalendarSyncDate == null ||
             !_isSameDate(_lastCalendarSyncDate!, now));
     if (shouldSyncCalendar) {
+      // 与 load() 并发时让位，整轮加载已覆盖同步与提示收口。
+      if (_loading) {
+        _scheduleUpcomingRefresh();
+        return;
+      }
+      _transientLoadFailed = false;
       await loadSchoolCalendar();
+      // 在途转入失效态则不提示，由登录引导卡片承载。
+      if (_canFetchPlatformData) {
+        _notifyLoadFailureOnce();
+      }
       _scheduleUpcomingRefresh();
       return;
     }
@@ -348,7 +450,17 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
         (_lastCalendarSyncDate == null ||
             !_isSameDate(_lastCalendarSyncDate!, now));
     if (shouldSyncCalendar) {
+      // 与 load() 并发时让位，整轮加载已覆盖同步与提示收口。
+      if (_loading) {
+        _scheduleUpcomingRefresh();
+        return;
+      }
+      _transientLoadFailed = false;
       await loadSchoolCalendar();
+      // 在途转入失效态则不提示，由登录引导卡片承载。
+      if (_canFetchPlatformData) {
+        _notifyLoadFailureOnce();
+      }
       _scheduleUpcomingRefresh();
       return;
     }

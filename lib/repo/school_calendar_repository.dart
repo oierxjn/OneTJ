@@ -115,6 +115,17 @@ class SchoolCalendarRepository extends BaseNetCachedRepository<
     SchoolCalendarStorage? storage,
   }) : super(storage ?? HiveSchoolCalendarStorage());
 
+  /// 只读缓存不联网：失效态按缓存展示，
+  /// 缺失返回 null，由调用方保持空态。
+  Future<SchoolCalendarData?> getCached({
+    bool refreshFromStorage = false,
+  }) async {
+    if (!refreshFromStorage && cachedData != null) {
+      return cachedData;
+    }
+    return readDataFromStorage();
+  }
+
   @override
   SchoolCalendarCacheMeta buildMeta(
     DateTime now,

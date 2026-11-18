@@ -30,6 +30,7 @@ class LoginView extends StatefulWidget {
 class _LoginViewState extends State<LoginView> {
   late final LoginViewModel viewModel;
   StreamSubscription<UiEvent>? _eventSub;
+  bool _residualSnackBarsCleared = false;
 
   @override
   void initState() {
@@ -72,6 +73,17 @@ class _LoginViewState extends State<LoginView> {
         return;
       }
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // 清掉上一页遗留的应用级 SnackBar 队列；
+    // 只清一次，避免后续依赖变化误清本页提示。
+    if (!_residualSnackBarsCleared) {
+      _residualSnackBarsCleared = true;
+      ScaffoldMessenger.of(context).clearSnackBars();
+    }
   }
 
   @override

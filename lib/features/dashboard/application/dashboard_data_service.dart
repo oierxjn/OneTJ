@@ -78,6 +78,37 @@ class DashboardDataService {
     );
   }
 
+  /// 失效态只读学籍缓存：不联网，缺失返回 null。
+  Future<StudentInfoData?> loadCachedStudentInfo() async {
+    await _studentInfoRepository.warmUp();
+    return _studentInfoRepository.getCached(refreshFromStorage: true);
+  }
+
+  /// 失效态只读校历缓存：不联网，缺失返回 null。
+  Future<SchoolCalendarData?> loadCachedSchoolCalendar() async {
+    await _schoolCalendarRepository.warmUp();
+    return _schoolCalendarRepository.getCached(refreshFromStorage: true);
+  }
+
+  /// 失效态只读课表缓存：学期 key 走缓存解析，不联网；
+  /// 无缓存或学期不符返回 null。
+  Future<CourseScheduleData?> loadCachedCourseSchedule() async {
+    await _courseScheduleRepository.warmUp();
+    final String? termKey =
+        await _termKeyResolver.resolveCurrentTermKeyFromCache();
+    if (termKey == null) {
+      return null;
+    }
+    final CourseScheduleData? data =
+        await _courseScheduleRepository.getCached(refreshFromStorage: true);
+    final CourseScheduleCacheMeta? meta =
+        await _courseScheduleRepository.getCachedMeta(refreshFromStorage: false);
+    if (data == null || meta?.termKey != termKey) {
+      return null;
+    }
+    return data;
+  }
+
   /// 学生信息加载后按用户采集策略上报一次埋点。
   ///
   /// 组合学生信息与当前设置；失败由调用方决定如何处理。
