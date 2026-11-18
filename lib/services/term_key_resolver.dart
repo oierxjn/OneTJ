@@ -41,7 +41,7 @@ class TermKeyResolver {
     }
   }
 
-  /// 失效态缓存只读解析学期 key（#82）：优先校历缓存，缺失回退
+  /// 失效态缓存只读解析学期 key：优先校历缓存，缺失回退
   /// 课表缓存元数据；不联网，两者皆无返回 null。
   Future<String?> resolveCurrentTermKeyFromCache() async {
     await _calendarRepository.warmUp();

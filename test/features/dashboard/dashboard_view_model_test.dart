@@ -336,7 +336,7 @@ void main() {
     });
   });
 
-  group('DashboardViewModel 失效态只读缓存（#82）', () {
+  group('DashboardViewModel 失效态只读缓存', () {
     test('失效态 load 只读缓存展示个人数据，全程不联网', () async {
       final _Harness harness =
           await _buildHarness(initialStatus: AuthStatus.expired);
@@ -445,7 +445,7 @@ void main() {
     });
   });
 
-  group('DashboardViewModel 加载失败提示（#82）', () {
+  group('DashboardViewModel 加载失败提示', () {
     test('凭证失败（401）只记日志：不弹提示且会话转失效', () async {
       final _Harness harness = await _buildHarness(
         httpGet: (

@@ -62,7 +62,7 @@ void main() {
     InAppWebViewPlatform.instance = _FakeInAppWebViewPlatform();
   });
 
-  testWidgets('进入登录页清掉上一页遗留的 SnackBar 队列（#82）', (tester) async {
+  testWidgets('进入登录页清掉上一页遗留的 SnackBar 队列', (tester) async {
     final GlobalKey<NavigatorState> navigatorKey =
         GlobalKey<NavigatorState>();
     final LoginViewModel loginViewModel = _buildViewModel();

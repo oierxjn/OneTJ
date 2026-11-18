@@ -41,7 +41,7 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
   Timer? _upcomingRefreshTimer;
   DateTime? _lastCalendarSyncDate;
 
-  /// 本轮加载是否出现瞬时失败，落定后合并提示一次（#82）。
+  /// 本轮加载是否出现过瞬时失败。
   bool _transientLoadFailed = false;
 
   /// 仅已登录态允许联网拉取；失效态只读缓存（[_loadPlatformDataFromCache]），
@@ -121,7 +121,7 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
     unawaited(_checkUpdateInBackground());
     try {
       if (_sessionController.status == AuthStatus.expired) {
-        // 失效态只读缓存不联网（#82），缺失保持空态，由登录引导卡片承载。
+        // 失效态只读缓存。
         await Future.wait([
           loadSettings(),
           _loadPlatformDataFromCache(),
@@ -130,7 +130,7 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
         return;
       }
       if (!_canFetchPlatformData) {
-        // 游客态：只加载本地设置，平台数据留空，由视图展示登录引导。
+        // 游客态/其他未知状态只加载本地设置。
         clearPersonalData();
         await loadSettings();
         notifyListeners();
@@ -150,7 +150,7 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
     }
   }
 
-  /// 失效态只读加载平台缓存（#82）：不联网，缺失保持空态；
+  /// 失效态只读加载平台缓存：不联网，缺失保持空态；
   /// 读缓存异常只记日志不提示。
   Future<void> _loadPlatformDataFromCache() async {
     try {
@@ -186,7 +186,7 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
     }
   }
 
-  /// 瞬时失败一轮只提示一次（#82）：加载器只置标记，
+  /// 瞬时失败一轮只提示一次：加载器只置标记，
   /// 入口在全部落定后统一发一个语义事件。
   void _notifyLoadFailureOnce() {
     if (!_transientLoadFailed) {
@@ -285,8 +285,9 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
       final StudentInfoData data = await _dataService.getStudentInfo();
       _departmentName = data.deptName;
     } catch (error, stackTrace) {
-      // 凭证失败是预期分支（会话转失效、出登录引导），只记日志（#82）。
-      final bool credentialFailure = AuthTokenProvider.isCredentialFailure(error);
+      // 凭证失败是预期分支（会话转失效、出登录引导），只记日志。
+      final bool credentialFailure =
+          AuthTokenProvider.isCredentialFailure(error);
       AppLogger.warning(
         credentialFailure
             ? 'Student info load failed: credential failure'
@@ -305,7 +306,7 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
   }
 
   Future<void> _uploadUserCollectionWhenStudentInfoLoaded() async {
-    // 埋点走 getOrFetch，失效态会发起注定失败的鉴权请求，跳过（#82）。
+    // 埋点走 getOrFetch，失效态会发起注定失败的鉴权请求，跳过。
     if (!_canFetchPlatformData) {
       return;
     }
@@ -328,8 +329,9 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
       _calendar = data;
       _lastCalendarSyncDate = now;
     } catch (error, stackTrace) {
-      // 凭证失败只记日志；瞬时失败置标记合并提示（#82）。
-      final bool credentialFailure = AuthTokenProvider.isCredentialFailure(error);
+      // 凭证失败只记日志；瞬时失败置标记合并提示。
+      final bool credentialFailure =
+          AuthTokenProvider.isCredentialFailure(error);
       AppLogger.warning(
         credentialFailure
             ? 'School calendar load failed: credential failure'
@@ -353,8 +355,9 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
       _applyCourseSchedule(data);
     } catch (error, stackTrace) {
       _timetableIndex = null;
-      // 凭证失败只记日志；瞬时失败置标记合并提示（#82）。
-      final bool credentialFailure = AuthTokenProvider.isCredentialFailure(error);
+      // 凭证失败只记日志；瞬时失败置标记合并提示。
+      final bool credentialFailure =
+          AuthTokenProvider.isCredentialFailure(error);
       AppLogger.warning(
         credentialFailure
             ? 'Timetable load failed: credential failure'
@@ -402,7 +405,7 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
         (_lastCalendarSyncDate == null ||
             !_isSameDate(_lastCalendarSyncDate!, now));
     if (shouldSyncCalendar) {
-      // 与 load() 并发时让位，整轮加载已覆盖同步与提示收口（#82）。
+      // 与 load() 并发时让位，整轮加载已覆盖同步与提示收口。
       if (_loading) {
         _scheduleUpcomingRefresh();
         return;
@@ -447,7 +450,7 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
         (_lastCalendarSyncDate == null ||
             !_isSameDate(_lastCalendarSyncDate!, now));
     if (shouldSyncCalendar) {
-      // 与 load() 并发时让位，整轮加载已覆盖同步与提示收口（#82）。
+      // 与 load() 并发时让位，整轮加载已覆盖同步与提示收口。
       if (_loading) {
         _scheduleUpcomingRefresh();
         return;

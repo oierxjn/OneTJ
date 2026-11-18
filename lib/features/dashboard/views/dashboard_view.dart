@@ -68,7 +68,7 @@ class _DashboardViewState extends State<DashboardView>
         return;
       }
       if (event is DashboardLoadFailedEvent) {
-        // 本轮瞬时失败合并为一条本地化提示（#82）；凭证失败不发此事件。
+        // 本轮瞬时失败合并为一条本地化提示；凭证失败不发此事件。
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

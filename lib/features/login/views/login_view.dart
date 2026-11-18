@@ -78,7 +78,7 @@ class _LoginViewState extends State<LoginView> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // 清掉上一页遗留的应用级 SnackBar 队列（#82）；
+    // 清掉上一页遗留的应用级 SnackBar 队列；
     // 只清一次，避免后续依赖变化误清本页提示。
     if (!_residualSnackBarsCleared) {
       _residualSnackBarsCleared = true;
