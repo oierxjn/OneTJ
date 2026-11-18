@@ -13,6 +13,7 @@
     "dashboardGuestLogin": "登录",
     "dashboardExpiredTitle": "登录已失效",
     "dashboardExpiredSubtitle": "重新登录后即可恢复数据展示",
+    "dashboardLoadFailed": "部分数据加载失败，请稍后重试",
     "tabDashboard": "仪表板",
     "tabTimetable": "课程表",
     "tabSettings": "设置",

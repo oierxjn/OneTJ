@@ -67,6 +67,16 @@ class _DashboardViewState extends State<DashboardView>
         );
         return;
       }
+      if (event is DashboardLoadFailedEvent) {
+        // 本轮瞬时失败合并为一条本地化提示；凭证失败不发此事件。
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context).dashboardLoadFailed),
+          ),
+        );
+        return;
+      }
       if (event is AppUpdateFailedEvent) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
