@@ -119,4 +119,101 @@ void main() {
       expect(notifications, 1);
     });
   });
+
+  group('SessionController 引导与显式事件的合并语义', () {
+    test('引导期间的登录成功被忽略，completeBoot 正常发布结论', () {
+      final SessionController controller = SessionController();
+      int notifications = 0;
+      controller.addListener(() => notifications += 1);
+
+      controller.markAuthenticated();
+
+      expect(controller.status, AuthStatus.unknown);
+      expect(notifications, 0);
+
+      controller.completeBoot(AuthStatus.guest);
+
+      expect(controller.status, AuthStatus.guest);
+      expect(notifications, 1);
+    });
+
+    test('引导期间的失效上报被忽略，completeBoot 正常发布结论', () {
+      final SessionController controller = SessionController();
+
+      controller.markUnauthenticated(reason: 'http_401');
+
+      expect(controller.status, AuthStatus.unknown);
+
+      controller.completeBoot(AuthStatus.authenticated);
+
+      expect(controller.status, AuthStatus.authenticated);
+      expect(controller.lastReason, 'boot');
+    });
+
+    test('completeBoot 不覆盖已登录状态，也不通知', () {
+      final SessionController controller = SessionController()
+        ..completeBoot(AuthStatus.authenticated);
+      int notifications = 0;
+      controller.addListener(() => notifications += 1);
+
+      controller.completeBoot(AuthStatus.guest);
+      controller.completeBoot(AuthStatus.expired);
+
+      expect(controller.status, AuthStatus.authenticated);
+      expect(controller.lastReason, 'boot');
+      expect(notifications, 0);
+    });
+
+    test('completeBoot 不覆盖失效态与游客态', () {
+      final SessionController expired = SessionController()
+        ..completeBoot(AuthStatus.expired);
+      expired.completeBoot(AuthStatus.authenticated);
+      expect(expired.status, AuthStatus.expired);
+
+      final SessionController guest = SessionController()
+        ..completeBoot(AuthStatus.guest);
+      guest.completeBoot(AuthStatus.authenticated);
+      expect(guest.status, AuthStatus.guest);
+    });
+
+    test('completeBoot 重复发布相同结论不重复通知', () {
+      final SessionController controller = SessionController();
+      controller.completeBoot(AuthStatus.authenticated);
+      int notifications = 0;
+      controller.addListener(() => notifications += 1);
+
+      controller.completeBoot(AuthStatus.authenticated);
+
+      expect(controller.status, AuthStatus.authenticated);
+      expect(notifications, 0);
+    });
+
+    test('引导期间的登出被忽略，completeBoot 正常发布结论', () {
+      final SessionController controller = SessionController();
+      int notifications = 0;
+      controller.addListener(() => notifications += 1);
+
+      controller.markSignedOut();
+
+      expect(controller.status, AuthStatus.unknown);
+      expect(notifications, 0);
+
+      controller.completeBoot(AuthStatus.authenticated);
+
+      expect(controller.status, AuthStatus.authenticated);
+    });
+
+    test('引导期间的游客选择被忽略，completeBoot 正常发布结论', () {
+      final SessionController controller = SessionController();
+
+      controller.continueAsGuest();
+
+      expect(controller.status, AuthStatus.unknown);
+
+      controller.completeBoot(AuthStatus.guest);
+
+      expect(controller.status, AuthStatus.guest);
+      expect(controller.lastReason, 'boot');
+    });
+  });
 }
