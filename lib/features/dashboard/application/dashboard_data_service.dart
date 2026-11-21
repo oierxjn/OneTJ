@@ -14,10 +14,9 @@ import 'package:onetj/services/user_collection_service.dart';
 /// 仪表盘平台数据的取数编排。
 ///
 /// 按会话选择展示策略：已登录按 TTL 走缓存或联网；失效态展示缓存
-/// （不论新旧，重新登录即刷新），无缓存返回 null；游客态与 unknown
-/// 返回 null。「非登录态不联网」由 TongjiApi 的会话边界统一兜底。
+/// ，无缓存返回 null；游客态与 unknown 返回 null。
 ///
-/// 返回 null 表示「当前会话下没有可展示的数据」，属正常空态而非失败；
+/// 返回 null 表示「当前会话下没有可展示的数据」，
 /// 真正的取数失败仍抛异常，由调用方分类处理。
 class DashboardDataService {
   DashboardDataService({
@@ -50,16 +49,16 @@ class DashboardDataService {
   /// 仅已登录态允许联网；与基类的游客判断不等价，unknown 下也拦截。
   bool get _mayFetch => _sessionController.status == AuthStatus.authenticated;
 
-  /// 失效态保留个人数据缓存，只读展示。
-  bool get _cacheReadable => _sessionController.status == AuthStatus.expired;
-
   Future<StudentInfoData> fetchStudentInfo() {
     return _api.fetchStudentInfo();
   }
 
   Future<StudentInfoData?> getStudentInfo() async {
     if (!_mayFetch) {
-      return _cacheReadable ? _readCachedStudentInfo() : null;
+      // 失效态展示缓存（不论新旧）；游客/unknown 无可展示数据。
+      return _sessionController.status == AuthStatus.expired
+          ? _readCachedStudentInfo()
+          : null;
     }
     await _studentInfoRepository.warmUp();
     return _studentInfoRepository.getOrFetch(
@@ -75,7 +74,9 @@ class DashboardDataService {
 
   Future<SchoolCalendarData?> getSchoolCalendar() async {
     if (!_mayFetch) {
-      return _cacheReadable ? _readCachedSchoolCalendar() : null;
+      return _sessionController.status == AuthStatus.expired
+          ? _readCachedSchoolCalendar()
+          : null;
     }
     await _schoolCalendarRepository.warmUp();
     return _schoolCalendarRepository.getOrFetch(
@@ -91,7 +92,9 @@ class DashboardDataService {
   Future<CourseScheduleData?> getCourseSchedule() async {
     final DateTime now = DateTime.now();
     if (!_mayFetch) {
-      return _cacheReadable ? _readCachedCourseSchedule() : null;
+      return _sessionController.status == AuthStatus.expired
+          ? _readCachedCourseSchedule()
+          : null;
     }
     await _courseScheduleRepository.warmUp();
     final String? termKey = await _termKeyResolver.resolveCurrentTermKey(
