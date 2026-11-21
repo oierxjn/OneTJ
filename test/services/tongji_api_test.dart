@@ -171,6 +171,82 @@ void main() {
     });
   });
 
+  group('TongjiApi 会话边界', () {
+    /// 装配指定会话状态的 API，并记录实际发出的请求，
+    /// 用于证明边界拒绝发生在请求发出之前。
+    Future<(TongjiApi, List<Uri>)> apiWithStatus(AuthStatus? status) async {
+      final TokenRepository repository =
+          TokenRepository(storage: InMemoryTokenStorage());
+      await repository.saveToken(_validToken());
+      final SessionController? session = status == null
+          ? null
+          : (SessionController()..completeBoot(status));
+      final List<Uri> requests = <Uri>[];
+      final TongjiApi api = TongjiApi(
+        auth: AuthTokenProvider(repository: repository),
+        sessionController: session,
+        httpGet: (
+          Uri uri, {
+          Map<String, String>? headers,
+          String loggerName = 'Http',
+        }) async {
+          requests.add(uri);
+          return http.Response('{}', 200);
+        },
+      );
+      return (api, requests);
+    }
+
+    test('失效态拒绝鉴权请求：抛 AUTH_REQUIRED 且不发请求', () async {
+      final (TongjiApi api, List<Uri> requests) =
+          await apiWithStatus(AuthStatus.expired);
+
+      await expectLater(
+        api.fetchCetScores(),
+        throwsA(
+          isA<AppException>().having((e) => e.code, 'code', 'AUTH_REQUIRED'),
+        ),
+      );
+      expect(requests, isEmpty);
+    });
+
+    test('游客态与 unknown 同样被边界拒绝', () async {
+      for (final AuthStatus status in <AuthStatus>[
+        AuthStatus.guest,
+        AuthStatus.unknown,
+      ]) {
+        final (TongjiApi api, List<Uri> requests) = await apiWithStatus(status);
+        await expectLater(
+          api.fetchCetScores(),
+          throwsA(
+            isA<AppException>().having((e) => e.code, 'code', 'AUTH_REQUIRED'),
+          ),
+        );
+        expect(requests, isEmpty);
+      }
+    });
+
+    test('边界拒绝属于凭证失败，不按瞬时错误提示', () {
+      expect(
+        AuthTokenProvider.isCredentialFailure(
+          AppException('AUTH_REQUIRED', 'Session not authenticated'),
+        ),
+        isTrue,
+      );
+    });
+
+    test('未注入会话的只读场景不受边界限制', () async {
+      final (TongjiApi api, List<Uri> requests) = await apiWithStatus(null);
+
+      // 请求会发出（此处以解析失败收尾），证明边界没有拦截。
+      await expectLater(
+        api.fetchCetScores(),
+        throwsA(isA<JSONResolveException>()),
+      );
+      expect(requests, hasLength(1));
+    });
+  });
+
   group('TongjiApi 请求构造', () {
     test('GET 携带 Bearer 令牌', () async {
       final TokenRepository repository =

@@ -49,3 +49,8 @@ class AppUpdateFailedEvent extends UiEvent {
   final Object error;
   final StackTrace? stackTrace;
 }
+
+/// 仪表盘本轮加载出现瞬时失败时发此事件。
+class DashboardLoadFailedEvent extends UiEvent {
+  const DashboardLoadFailedEvent();
+}

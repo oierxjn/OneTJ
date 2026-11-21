@@ -13,6 +13,7 @@
   "dashboardGuestLogin": "Sign in",
   "dashboardExpiredTitle": "Session expired",
   "dashboardExpiredSubtitle": "Sign in again to restore your data",
+  "dashboardLoadFailed": "Some data failed to load. Please try again later",
   "tabDashboard": "Dashboard",
   "tabTimetable": "Timetable",
   "tabSettings": "Settings",

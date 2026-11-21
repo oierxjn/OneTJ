@@ -123,6 +123,7 @@ void configureDependencies() {
       schoolCalendarRepository: appLocator<SchoolCalendarRepository>(),
       settingsRepository: appLocator<SettingsRepository>(),
       userCollectionService: appLocator<UserCollectionService>(),
+      sessionController: appLocator<SessionController>(),
     ),
   );
   appLocator.registerLazySingleton<CookieClearer>(

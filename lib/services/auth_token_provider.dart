@@ -244,7 +244,8 @@ class AuthTokenProvider {
   /// 网络不可达、5xx 等瞬时错误不算凭证失败——此时凭证大概率仍
   /// 有效，只是无法验证，不应把用户导向「重新登录」。
   static bool isCredentialFailure(Object error) {
-    if (error is AppException && error.code == 'AUTH_EXPIRED') {
+    if (error is AppException &&
+        (error.code == 'AUTH_EXPIRED' || error.code == 'AUTH_REQUIRED')) {
       return true;
     }
     if (error is NetworkException) {
