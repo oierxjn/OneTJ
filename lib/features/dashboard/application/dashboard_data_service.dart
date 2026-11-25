@@ -13,8 +13,8 @@ import 'package:onetj/services/user_collection_service.dart';
 
 /// 仪表盘平台数据的取数编排。
 ///
-/// 按会话选择展示策略：已登录按 TTL 走缓存或联网；失效态展示缓存
-/// ，无缓存返回 null；游客态与 unknown 返回 null。
+/// 按会话选择展示策略：已登录按 TTL 走缓存或联网；失效态展示缓存，
+/// 无缓存返回 null；游客态与 unknown 返回 null。
 ///
 /// 返回 null 表示「当前会话下没有可展示的数据」，
 /// 真正的取数失败仍抛异常，由调用方分类处理。
@@ -46,15 +46,14 @@ class DashboardDataService {
   final UserCollectionService _userCollectionService;
   final SessionController _sessionController;
 
-  /// 仅已登录态允许联网；与基类的游客判断不等价，unknown 下也拦截。
-  bool get _mayFetch => _sessionController.status == AuthStatus.authenticated;
+  bool get _canGoOnline => _sessionController.isAuthenticated;
 
   Future<StudentInfoData> fetchStudentInfo() {
     return _api.fetchStudentInfo();
   }
 
   Future<StudentInfoData?> getStudentInfo() async {
-    if (!_mayFetch) {
+    if (!_canGoOnline) {
       // 失效态展示缓存（不论新旧）；游客/unknown 无可展示数据。
       return _sessionController.status == AuthStatus.expired
           ? _readCachedStudentInfo()
@@ -73,7 +72,7 @@ class DashboardDataService {
   }
 
   Future<SchoolCalendarData?> getSchoolCalendar() async {
-    if (!_mayFetch) {
+    if (!_canGoOnline) {
       return _sessionController.status == AuthStatus.expired
           ? _readCachedSchoolCalendar()
           : null;
@@ -90,12 +89,12 @@ class DashboardDataService {
   }
 
   Future<CourseScheduleData?> getCourseSchedule() async {
-    final DateTime now = DateTime.now();
-    if (!_mayFetch) {
+    if (!_canGoOnline) {
       return _sessionController.status == AuthStatus.expired
           ? _readCachedCourseSchedule()
           : null;
     }
+    final DateTime now = DateTime.now();
     await _courseScheduleRepository.warmUp();
     final String? termKey = await _termKeyResolver.resolveCurrentTermKey(
       now: now,
@@ -140,7 +139,7 @@ class DashboardDataService {
   /// 这里刻意不复用 [getStudentInfo]：那条路径会先 `warmUp()` 读一次存储，
   /// 而埋点只需要内存缓存/网络结果，保持与原有行为一致以避免多余的 I/O。
   Future<void> uploadUserCollectionForProduction() async {
-    if (!_mayFetch) {
+    if (!_canGoOnline) {
       return;
     }
     final StudentInfoData studentInfo = await _studentInfoRepository.getOrFetch(

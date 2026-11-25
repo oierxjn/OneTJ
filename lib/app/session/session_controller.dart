@@ -27,6 +27,9 @@ class SessionController extends ChangeNotifier {
 
   AuthStatus get status => _status;
 
+  /// 当前是否为已登录态（持有可用令牌）。
+  bool get isAuthenticated => _status == AuthStatus.authenticated;
+
   /// 最近一次状态变化的原因，便于排查跳转时机。
   String? get lastReason => _lastReason;
 
