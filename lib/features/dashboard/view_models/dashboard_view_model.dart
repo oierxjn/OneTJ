@@ -277,7 +277,6 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
         _lastCalendarSyncDate = now;
       }
     } catch (error, stackTrace) {
-      // 凭证失败只记日志；瞬时失败置标记合并提示。
       final bool credentialFailure =
           AuthTokenProvider.isCredentialFailure(error);
       AppLogger.warning(
@@ -288,6 +287,7 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
         error: error,
         stackTrace: stackTrace,
       );
+      // 瞬时失败幂等标记。
       if (!credentialFailure) {
         _transientLoadFailed = true;
       }
@@ -311,7 +311,6 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
       }
     } catch (error, stackTrace) {
       _timetableIndex = null;
-      // 凭证失败只记日志；瞬时失败置标记合并提示。
       final bool credentialFailure =
           AuthTokenProvider.isCredentialFailure(error);
       AppLogger.warning(
@@ -322,6 +321,7 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
         error: error,
         stackTrace: stackTrace,
       );
+      // 瞬时失败幂等标记。
       if (!credentialFailure) {
         _transientLoadFailed = true;
       }
@@ -355,29 +355,8 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
     _timetableIndex = index;
   }
 
-  Future<void> onAppResumed() async {
-    // 只判「何时该同步」；能否联网由数据服务按会话决定。
-    final DateTime now = DateTime.now();
-    final bool shouldSyncCalendar = _lastCalendarSyncDate == null ||
-        !_isSameDate(_lastCalendarSyncDate!, now);
-    if (shouldSyncCalendar) {
-      // 与 load() 并发时让位，整轮加载已覆盖同步与提示收口。
-      if (_loading) {
-        _scheduleUpcomingRefresh();
-        return;
-      }
-      _transientLoadFailed = false;
-      await loadSchoolCalendar();
-      // 在途转入失效态则不提示，由登录引导卡片承载。
-      if (isAuthenticated) {
-        _notifyLoadFailureOnce();
-      }
-      _scheduleUpcomingRefresh();
-      return;
-    }
-    notifyListeners();
-    _scheduleUpcomingRefresh();
-  }
+  /// 前台恢复入口：回到前台时补一次跨天同步。
+  Future<void> onAppResumed() => _syncCalendarIfNeeded();
 
   /// 计划下次即将到来的课程时间刷新
   void _scheduleUpcomingRefresh() {
@@ -392,12 +371,14 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
       delay = Duration.zero;
     }
     _upcomingRefreshTimer = Timer(delay, () {
-      unawaited(_onUpcomingRefreshTick());
+      unawaited(_syncCalendarIfNeeded());
     });
   }
 
-  /// 刷新即将到来的课程时间
-  Future<void> _onUpcomingRefreshTick() async {
+  /// 只判「何时该同步」；能否联网由数据服务按会话决定。
+  /// [load] 在跑时让位，否则重复请求与重复提示。
+  /// 失效/游客态由登录引导卡片说明，不重复提示。
+  Future<void> _syncCalendarIfNeeded() async {
     if (isDisposed) {
       return;
     }
@@ -405,7 +386,6 @@ class DashboardViewModel extends SessionAwareViewModel<UiEvent> {
     final bool shouldSyncCalendar = _lastCalendarSyncDate == null ||
         !_isSameDate(_lastCalendarSyncDate!, now);
     if (shouldSyncCalendar) {
-      // 与 load() 并发时让位，整轮加载已覆盖同步与提示收口。
       if (_loading) {
         _scheduleUpcomingRefresh();
         return;
