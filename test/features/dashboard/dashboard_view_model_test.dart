@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:onetj/app/session/session_controller.dart';
 import 'package:onetj/features/dashboard/application/dashboard_data_service.dart';
+import 'package:onetj/features/dashboard/models/event.dart';
 import 'package:onetj/features/dashboard/view_models/dashboard_view_model.dart';
 import 'package:onetj/app/presentation/ui_event.dart';
 import 'package:onetj/models/app_update_info.dart';

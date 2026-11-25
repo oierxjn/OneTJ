@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:onetj/features/dashboard/application/dashboard_data_service.dart';
 import 'package:onetj/features/dashboard/models/dashboard_upcoming_entry_data.dart';
+import 'package:onetj/features/dashboard/models/event.dart';
 import 'package:onetj/features/dashboard/models/upcoming_entries_calculator.dart';
 import 'package:onetj/app/presentation/session_aware_view_model.dart';
 import 'package:onetj/models/dashboard_upcoming_mode.dart';
