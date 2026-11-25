@@ -110,30 +110,26 @@ class DashboardDataService {
 
   Future<StudentInfoData?> _readCachedStudentInfo() async {
     await _studentInfoRepository.warmUp();
-    return _studentInfoRepository.getCached(refreshFromStorage: true);
+    return _studentInfoRepository.getCached();
   }
 
   Future<SchoolCalendarData?> _readCachedSchoolCalendar() async {
     await _schoolCalendarRepository.warmUp();
-    return _schoolCalendarRepository.getCached(refreshFromStorage: true);
+    return _schoolCalendarRepository.getCached();
   }
 
   /// 缓存课表须与缓存解析出的当前学期一致才展示，避免跨学期串数据。
+  /// 学期只认校历缓存，解析不出则不展示课表。
   Future<CourseScheduleData?> _readCachedCourseSchedule() async {
     await _courseScheduleRepository.warmUp();
     final String? termKey =
         await _termKeyResolver.resolveCurrentTermKeyFromCache();
-    if (termKey == null) {
+    final CourseScheduleCacheMeta? meta =
+        await _courseScheduleRepository.getCachedMeta();
+    if (termKey == null || meta?.termKey != termKey) {
       return null;
     }
-    final CourseScheduleData? data =
-        await _courseScheduleRepository.getCached(refreshFromStorage: true);
-    final CourseScheduleCacheMeta? meta = await _courseScheduleRepository
-        .getCachedMeta(refreshFromStorage: false);
-    if (data == null || meta?.termKey != termKey) {
-      return null;
-    }
-    return data;
+    return _courseScheduleRepository.getCached();
   }
 
   /// 学生信息加载后按用户采集策略上报一次埋点。

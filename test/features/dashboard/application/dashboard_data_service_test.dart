@@ -231,9 +231,10 @@ void main() {
       expect(harness.requests, isEmpty);
     });
 
-    test('校历缓存缺失时回退课表缓存元数据解析学期 key', () async {
+    test('校历缓存缺失时不展示课表，避免学期未知下串数据', () async {
       final _Harness harness =
           await _buildHarness(status: AuthStatus.expired);
+      // 只写课表缓存与元数据，不写校历：学期无从判定。
       await harness.scheduleStorage.save(
         const CourseScheduleData(items: <CourseScheduleItemData>[]),
       );
@@ -245,7 +246,7 @@ void main() {
       );
 
       expect(await harness.service.getSchoolCalendar(), isNull);
-      expect(await harness.service.getCourseSchedule(), isNotNull);
+      expect(await harness.service.getCourseSchedule(), isNull);
       expect(harness.requests, isEmpty);
     });
 
