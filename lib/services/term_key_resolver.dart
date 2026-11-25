@@ -41,6 +41,20 @@ class TermKeyResolver {
     }
   }
 
+  /// 只读缓存解析当前学期 key。
+  ///
+  /// 唯一来源是校历缓存。
+  /// 由调用方决定是否展示课表。
+  Future<String?> resolveCurrentTermKeyFromCache() async {
+    await _calendarRepository.warmUp();
+    final SchoolCalendarData? calendar =
+        await _calendarRepository.getCached(refreshFromStorage: false);
+    if (calendar == null) {
+      return null;
+    }
+    return formatTermKey(calendar);
+  }
+
   static String formatTermKey(SchoolCalendarData calendar) {
     return '${calendar.schoolCalendar.year}-${calendar.schoolCalendar.term}';
   }

@@ -11,6 +11,7 @@ import 'package:onetj/features/app_update/app_update_flow_coordinator.dart';
 import 'package:onetj/features/dashboard/view_models/dashboard_view_model.dart';
 import 'package:onetj/features/dashboard/views/widgets/function_grid.dart';
 import 'package:onetj/features/dashboard/models/dashboard_upcoming_entry_data.dart';
+import 'package:onetj/features/dashboard/models/event.dart';
 import 'package:onetj/models/app_update_info.dart';
 import 'package:onetj/models/dashboard_upcoming_mode.dart';
 import 'package:onetj/app/presentation/ui_event.dart';
@@ -64,6 +65,16 @@ class _DashboardViewState extends State<DashboardView>
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(event.message ?? '')),
+        );
+        return;
+      }
+      if (event is DashboardLoadFailedEvent) {
+        // 本轮瞬时失败合并为一条本地化提示；凭证失败不发此事件。
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context).dashboardLoadFailed),
+          ),
         );
         return;
       }

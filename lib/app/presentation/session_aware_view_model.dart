@@ -32,6 +32,10 @@ abstract class SessionAwareViewModel<TEvent> extends BaseViewModel<TEvent> {
   @protected
   bool get isGuest => _sessionController.status == AuthStatus.guest;
 
+  /// 当前是否为已登录态。
+  @protected
+  bool get isAuthenticated => _sessionController.isAuthenticated;
+
   /// 加载本页数据。子类自行编排（含游客护栏与回写复检）。
   Future<void> load();
 

@@ -71,10 +71,25 @@ class TongjiApi {
     }
   }
 
+  /// 鉴权请求的会话边界：非已登录态一律拒绝，请求不发出。
+  ///
+  /// 全应用所有鉴权请求都经过这里，失效态/游客态不再撞网，各数据页
+  /// 无需各自护栏。未注入会话的只读场景不做检查，保持原行为。
+  void _ensureAuthenticated() {
+    final SessionController? session = _sessionController;
+    if (session != null && session.status != AuthStatus.authenticated) {
+      throw AppException(
+        'AUTH_REQUIRED',
+        'Session not authenticated (${session.status.name})',
+      );
+    }
+  }
+
   Future<http.Response> _authorizedGet(
     Uri uri, {
     Map<String, String>? headers,
   }) async {
+    _ensureAuthenticated();
     final String accessToken = await _auth.getValidAccessToken();
     final Map<String, String> requestHeaders = <String, String>{
       'Authorization': 'Bearer $accessToken',
@@ -147,6 +162,7 @@ class TongjiApi {
     Object? body,
     Encoding? encoding,
   }) async {
+    _ensureAuthenticated();
     final String accessToken = await _auth.getValidAccessToken();
     final Map<String, String> requestHeaders = <String, String>{
       'Authorization': 'Bearer $accessToken',
